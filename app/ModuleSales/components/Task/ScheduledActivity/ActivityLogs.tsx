@@ -239,9 +239,9 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
               `}
             >
               <div>
-                <div>
-                  <strong>Activity Type:</strong> {act.typeactivity}
-                </div>
+                <div><strong>Activity Type:</strong> {act.typeactivity}</div>
+                <div><strong>Quotation #:</strong> {act.quotationnumber}</div>
+                <div><strong>SO #:</strong> {act.sonumber}</div>
                 <div className="flex gap-1 text-green-600">
                   <strong><FaClock /></strong> {formatTimeSpent(act.startdate, act.enddate)}
                 </div>
