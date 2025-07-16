@@ -7,8 +7,9 @@ import Form from "./Form";
 import PersonalModalForm from "./Modal/PersonalModalForm";
 
 import { FaTable, FaTasks, FaCalendarAlt } from "react-icons/fa";
-import { CiSquarePlus, } from "react-icons/ci";
-import { PiHandTapThin } from "react-icons/pi";
+import { CiSquarePlus } from "react-icons/ci";
+// import { PiHandTapThin } from "react-icons/pi";
+import { ToastContainer, toast } from "react-toastify";
 
 interface Post {
     id: string;
@@ -53,6 +54,9 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
     const [showPersonalForm, setShowPersonalForm] = useState(false);
     const [editUser, setEditUser] = useState<Post | null>(null);
 
+    const [postToDelete, setPostToDelete] = useState<string | null>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
     const postsByDate = useMemo(() => {
         const map = new Map<string, Post[]>();
         for (const post of posts) {
@@ -71,6 +75,37 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
         setShowMainForm(true);
     };
 
+    const confirmDelete = (id: string) => {
+        setPostToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleDelete = async () => {
+        if (!postToDelete) return;
+        try {
+            const response = await fetch(`/api/ModuleSales/Task/DailyActivity/DeleteActivity`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ id: postToDelete }),
+            });
+
+            if (response.ok) {
+                toast.success("Post deleted successfully.");
+                fetchAccount(); // Refresh data
+            } else {
+                toast.error("Failed to delete post.");
+            }
+        } catch (error) {
+            console.error("Error deleting post:", error);
+            toast.error("Failed to delete post.");
+        } finally {
+            setShowDeleteModal(false);
+            setPostToDelete(null);
+        }
+    };
+
     const handleButtonClick = () => {
         setShowPersonalForm(true);
     };
@@ -85,38 +120,28 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
             <div className="mb-2 flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0">
                 <div className="flex flex-wrap gap-2 text-[10px] justify-center md:justify-start">
                     <button onClick={() => setView("table")}
-                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "table" ? "bg-blue-400 text-white" : "bg-gray-100"
-                            }`}>
+                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "table" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
                         <FaTable size={12} />
                         Table
                     </button>
 
                     <button onClick={() => setView("grid")}
-                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "grid" ? "bg-blue-400 text-white" : "bg-gray-100"
-                            }`}>
+                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "grid" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
                         <FaTasks size={12} />
                         Logs
                     </button>
 
                     <button onClick={() => setView("card")}
-                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "card" ? "bg-blue-400 text-white" : "bg-gray-100"
-                            }`}>
+                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "card" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
                         <FaCalendarAlt size={12} />
                         Calendar
                     </button>
 
                     <button
-                        className="flex items-center gap-1 bg-green-700 text-white text-[10px] px-4 py-2 shadow-md rounded hover:bg-green-800 hover:text-white transition"
+                        className="flex items-center gap-1 bg-green-700 text-white text-[10px] px-4 py-2 shadow-md rounded hover:bg-green-800 transition"
                         onClick={() => setShowMainForm(true)}>
                         <CiSquarePlus size={15} /> Create Activity
                     </button>
-
-                    {/*<button
-                        className="flex items-center gap-1 border bg-white text-black text-[10px] px-4 py-2 shadow-sm rounded hover:bg-blue-400 hover:text-white transition"
-                        onClick={handleButtonClick}>
-                        <PiHandTapThin size={15} /> Tap
-                    </button>*/}
-                    
                 </div>
 
                 <div className="flex items-center justify-center md:justify-end gap-2 text-[10px] text-gray-600">
@@ -138,14 +163,10 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                     refreshPosts={fetchAccount}
                     userDetails={{
                         id: editUser ? editUser.id : userDetails.UserId,
-                        referenceid: editUser
-                            ? (editUser as any).referenceid
-                            : userDetails.ReferenceID,
+                        referenceid: editUser ? (editUser as any).referenceid : userDetails.ReferenceID,
                         manager: editUser ? (editUser as any).manager : userDetails.Manager,
                         tsm: editUser ? (editUser as any).tsm : userDetails.TSM,
-                        targetquota: editUser
-                            ? (editUser as any).targetquota
-                            : userDetails.TargetQuota,
+                        targetquota: editUser ? (editUser as any).targetquota : userDetails.TargetQuota,
                     }}
                     editUser={editUser}
                 />
@@ -155,6 +176,7 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                         <TableView
                             posts={currentDatePosts}
                             handleEdit={handleEdit}
+                            handleDelete={confirmDelete}
                             refreshPosts={fetchAccount}
                         />
                     )}
@@ -179,6 +201,33 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                 />
             )}
 
+            {/* Delete Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-[999]">
+                    <div className="bg-white rounded-lg p-4 w-[300px]">
+                        <h2 className="text-sm font-bold mb-2">Confirm Delete</h2>
+                        <p className="text-xs mb-4">
+                            Deleting this activity will <strong>not</strong> remove its historical records.
+                            Those entries will remain in the archive unless you delete them from the Historical&nbsp;Records</p>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                className="px-3 py-1 text-xs rounded bg-gray-200"
+                                onClick={() => setShowDeleteModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-3 py-1 text-xs rounded bg-red-500 text-white"
+                                onClick={handleDelete}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ToastContainer />
         </div>
     );
 };

@@ -54,23 +54,23 @@ const EditRecordModal: React.FC<EditRecordModalProps> = ({
 
         <div className="grid grid-cols-2 gap-4 text-xs">
           {/* Hidden Fields */}
-          <input type="hidden" name="referenceid" value={selectedActivity.referenceid} onChange={handleInputChange} />
-          <input type="hidden" name="manager" value={selectedActivity.manager} onChange={handleInputChange} />
-          <input type="hidden" name="tsm" value={selectedActivity.tsm} onChange={handleInputChange} />
-          <input type="hidden" name="activitynumber" value={selectedActivity.activitynumber} onChange={handleInputChange} />
-          <input type="hidden" name="companyname" value={selectedActivity.companyname} onChange={handleInputChange} />
-          <input type="hidden" name="contactperson" value={selectedActivity.contactperson} onChange={handleInputChange} />
-          <input type="hidden" name="contactnumber" value={selectedActivity.contactnumber} onChange={handleInputChange} />
-          <input type="hidden" name="emailaddress" value={selectedActivity.emailaddress} onChange={handleInputChange} />
-          <input type="hidden" name="typeclient" value={selectedActivity.typeclient} onChange={handleInputChange} />
-          <input type="hidden" name="address" value={selectedActivity.address} onChange={handleInputChange} />
-          <input type="hidden" name="deliveryaddress" value={selectedActivity.deliveryaddress} onChange={handleInputChange} />
-          <input type="hidden" name="area" value={selectedActivity.area} onChange={handleInputChange} />
-          <input type="hidden" name="projectname" value={selectedActivity.projectname} onChange={handleInputChange} />
-          <input type="hidden" name="projectcategory" value={selectedActivity.projectcategory} onChange={handleInputChange} />
-          <input type="hidden" name="projecttype" value={selectedActivity.projecttype} onChange={handleInputChange} />
-          <input type="hidden" name="source" value={selectedActivity.source} onChange={handleInputChange} />
-          <input type="hidden" name="targetquota" value={selectedActivity.targetquota} onChange={handleInputChange} />
+          <input type="hidden" name="referenceid" value={selectedActivity.referenceid || ""} onChange={handleInputChange} />
+          <input type="hidden" name="manager" value={selectedActivity.manager || ""} onChange={handleInputChange} />
+          <input type="hidden" name="tsm" value={selectedActivity.tsm || ""} onChange={handleInputChange} />
+          <input type="hidden" name="activitynumber" value={selectedActivity.activitynumber || ""} onChange={handleInputChange} />
+          <input type="hidden" name="companyname" value={selectedActivity.companyname || ""} onChange={handleInputChange} />
+          <input type="hidden" name="contactperson" value={selectedActivity.contactperson || ""} onChange={handleInputChange} />
+          <input type="hidden" name="contactnumber" value={selectedActivity.contactnumber || ""} onChange={handleInputChange} />
+          <input type="hidden" name="emailaddress" value={selectedActivity.emailaddress || ""} onChange={handleInputChange} />
+          <input type="hidden" name="typeclient" value={selectedActivity.typeclient || ""} onChange={handleInputChange} />
+          <input type="hidden" name="address" value={selectedActivity.address || ""} onChange={handleInputChange} />
+          <input type="hidden" name="deliveryaddress" value={selectedActivity.deliveryaddress || ""} onChange={handleInputChange} />
+          <input type="hidden" name="area" value={selectedActivity.area || ""} onChange={handleInputChange} />
+          <input type="hidden" name="projectname" value={selectedActivity.projectname || ""} onChange={handleInputChange} />
+          <input type="hidden" name="projectcategory" value={selectedActivity.projectcategory || ""} onChange={handleInputChange} />
+          <input type="hidden" name="projecttype" value={selectedActivity.projecttype || ""} onChange={handleInputChange} />
+          <input type="hidden" name="source" value={selectedActivity.source || ""} onChange={handleInputChange} />
+          <input type="hidden" name="targetquota" value={selectedActivity.targetquota || ""} onChange={handleInputChange} />
           {/* Hidden Fields */}
 
           <input

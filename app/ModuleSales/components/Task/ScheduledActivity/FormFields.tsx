@@ -119,6 +119,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
     const [showQuotationField, setShowQuotationField] = useState(false);
     const [showSOField, setShowSOField] = useState(false);
     const [showDeliverField, setShowDeliverField] = useState(false);
+    const [showFBMarketplaceField, setShowFBMarketplaceField] = useState(false);
     const dropdownRef = useRef<HTMLUListElement>(null);
 
     const getFormattedTimestamp = () => {
@@ -200,6 +201,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
                 setShowQuotationField={setShowQuotationField}
                 setShowSOField={setShowSOField}
                 setShowDeliverField={setShowDeliverField}
+                setShowFBMarketplaceField={setShowFBMarketplaceField}
             />
         </>
     );

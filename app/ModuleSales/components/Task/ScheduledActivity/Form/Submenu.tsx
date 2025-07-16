@@ -6,6 +6,7 @@ import InboundFields from "../HiddenFields/InboundFields";
 import QuotationFields from "../HiddenFields/QuotationFields";
 import SoFields from "../HiddenFields/SoFields";
 import DeliveryFields from "../HiddenFields/DeliveryFields";
+import FBMarketplaceFields from "../HiddenFields/FBMarketplaceFields";
 import Remarks from "./Remarks";
 import ActivityStatus from "./ActivityStatus";
 
@@ -31,12 +32,14 @@ interface SubmenuProps {
   setShowQuotationField: (value: boolean) => void;
   setShowSOField: (value: boolean) => void;
   setShowDeliverField: (value: boolean) => void;
+  setShowFBMarketplaceField: (value: boolean) => void;
 }
 
 const activityOptions = [
   "Customer Order",
   "Customer Inquiry Sales",
   "Follow Up",
+  "FB-Marketplace",
   "After Sales-Refund",
   "After Sales-Repair/Replacement",
   "Quotation Preparation",
@@ -45,6 +48,7 @@ const activityOptions = [
   "Accounting Concern",
   "Admin- Supplier Accreditation",
   "Admin- Credit Terms Application",
+  "Inbound Call",
   "Outbound calls",
   "Site Visit",
   "Check/Read emails",
@@ -75,7 +79,8 @@ const Submenu: React.FC<SubmenuProps> = ({
   setShowInboundFields,
   setShowQuotationField,
   setShowSOField,
-  setShowDeliverField
+  setShowDeliverField,
+  setShowFBMarketplaceField
 }) => {
   const [currentRecords, setcurrentRecords] = useState<any[]>([]);
 
@@ -95,6 +100,7 @@ const Submenu: React.FC<SubmenuProps> = ({
     setShowQuotationField(false);
     setShowSOField(false);
     setShowDeliverField(false);
+    setShowFBMarketplaceField(false);
 
     if (activity === "Outbound calls") {
       setShowFields(true);
@@ -111,6 +117,9 @@ const Submenu: React.FC<SubmenuProps> = ({
     } else if (activity === "Delivery Concern") {
       setShowFields(true);
       setShowDeliverField(true);
+    } else if (activity === "FB-Marketplace") {
+      setShowFields(true);
+      setShowFBMarketplaceField(true);
     }
   };
 
@@ -156,6 +165,10 @@ const Submenu: React.FC<SubmenuProps> = ({
 
         {typeactivity === "Inbound Call" && (
           <InboundFields {...{ callback, setcallback, callstatus, setcallstatus, typecall, settypecall }} />
+        )}
+
+        {typeactivity === "FB-Marketplace" && (
+          <FBMarketplaceFields {...{ typecall, settypecall }} />
         )}
 
         {typeactivity === "Quotation Preparation" && (

@@ -24,6 +24,7 @@ interface InquiriesContainerProps {
   formatDistanceToNow: (date: Date, options?: any) => string;
   CiLocationArrow1: React.ComponentType<any>;
   handlePost: (post: Post) => void;
+  handleDiscard: (id: string) => void;    // <-- Added here
   userDetails: {
     ReferenceID: string;
     TSM?: string;
@@ -37,6 +38,7 @@ const InquiriesContainer: React.FC<InquiriesContainerProps> = ({
   formatDistanceToNow,
   CiLocationArrow1,
   handlePost,
+  handleDiscard,   // <-- Destructure here
   userDetails,
 }) => {
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
@@ -92,7 +94,7 @@ const InquiriesContainer: React.FC<InquiriesContainerProps> = ({
                 <div
                   className="flex flex-col"
                   style={{
-                    maxWidth: "calc(100% - 60px)",
+                    maxWidth: "calc(100% - 110px)", // give room for 2 buttons
                     wordBreak: "break-word",
                     overflowWrap: "break-word",
                     whiteSpace: "normal",
@@ -106,17 +108,31 @@ const InquiriesContainer: React.FC<InquiriesContainerProps> = ({
                   </span>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePost(post);
-                  }}
-                  className="flex items-center gap-1 text-white text-[10px] px-3 py-1 rounded-full shadow bg-blue-400 hover:bg-blue-700"
-                  title="Add"
-                >
-                  <FaPlusCircle size={10} />
-                  Add
-                </button>
+                <div className="inline-flex rounded-full shadow overflow-hidden text-[10px]">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePost(post);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 bg-blue-400 text-white hover:bg-blue-700 transition-colors"
+                    title="Add"
+                  >
+                    <FaPlusCircle size={10} />
+                    Add
+                  </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDiscard(post.id);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 bg-red-400 text-white hover:bg-red-700 transition-colors"
+                    title="Discard"
+                  >
+                    Discard
+                  </button>
+                </div>
+
               </div>
 
               {isExpanded && (

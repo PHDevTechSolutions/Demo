@@ -48,7 +48,9 @@ const Inquiries: React.FC<InquiriesProps> = ({
     });
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    const [discardId, setDiscardId] = useState<string | null>(null);
 
+    // Fetch user details on mount
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -85,13 +87,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
         fetchUserData();
     }, []);
 
+    // Fetch inquiries list
     const fetchInquiries = async () => {
         try {
             const response = await fetch("/api/ModuleSales/Task/CSRInquiries/FetchInquiries");
             const data = await response.json();
             setPosts(data.data);
         } catch (error) {
-            toast.error("Error fetching users.");
+            toast.error("Error fetching inquiries.");
             console.error("Error Fetching", error);
         }
     };
@@ -100,6 +103,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
         fetchInquiries();
     }, []);
 
+    // Create new inquiry post
     const handlePost = async (post: Post) => {
         try {
             const postData = { ...post, targetquota: TargetQuota };
@@ -113,6 +117,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
             if (result.success) {
                 toast.success("Post submitted successfully!");
                 fetchAccount();
+                fetchInquiries();
             } else {
                 toast.error(`Failed to submit post: ${result.error}`);
             }
@@ -121,16 +126,57 @@ const Inquiries: React.FC<InquiriesProps> = ({
         }
     };
 
+    // Discard inquiry
+    const doDiscard = async (id: string) => {
+        try {
+            const response = await fetch(
+                "/api/ModuleSales/Task/CSRInquiries/DiscardData",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id }),
+                }
+            );
+            const result = await response.json();
+
+            if (result.success) {
+                toast.success("Inquiry discarded successfully.");
+                await fetchInquiries();
+                fetchAccount();
+            } else {
+                toast.error(`Failed to discard inquiry: ${result.error}`);
+            }
+        } catch (error) {
+            toast.error("An error occurred while discarding the inquiry.");
+            console.error(error);
+        }
+    };
+
+    /* function passed to child – just opens modal */
+    const askDiscard = (id: string) => setDiscardId(id);
+
+    /* modal actions */
+    const closeModal = () => setDiscardId(null);
+    const confirmModal = () => {
+        if (discardId) doDiscard(discardId);
+        closeModal();
+    };
+
+
+    // Filter and sort posts for display
     const filteredPosts = posts
         .filter(
             (post) =>
                 (post.referenceid === userDetails.ReferenceID || userDetails.Role === "Special Access") &&
-                post.status !== "Used"
+                post.status !== "Used" && post.status !== "Wrong Tagging"
         )
         .sort(
             (a, b) =>
                 new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
         );
+
+    if (loading) return <p>Loading user data...</p>;
+    if (error) return <p className="text-red-600">{error}</p>;
 
     return (
         <>
@@ -141,8 +187,31 @@ const Inquiries: React.FC<InquiriesProps> = ({
                 formatDistanceToNow={formatDistanceToNow}
                 CiLocationArrow1={CiLocationArrow1}
                 handlePost={handlePost}
+                handleDiscard={askDiscard}
                 userDetails={userDetails}
             />
+
+            {discardId && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white rounded-lg w-[280px] p-4">
+                        <h2 className="text-sm font-bold mb-2">Discard Inquiry</h2>
+                        <p className="text-xs mb-4">
+                            Are you sure you want to discard this inquiry?
+                        </p>
+                        <div className="flex justify-end gap-2 text-xs">
+                            <button className="px-3 py-1 rounded bg-gray-200" onClick={closeModal}>
+                                Cancel
+                            </button>
+                            <button
+                                className="px-3 py-1 rounded bg-red-500 text-white"
+                                onClick={confirmModal}
+                            >
+                                Discard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

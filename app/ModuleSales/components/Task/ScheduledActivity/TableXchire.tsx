@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from "react";
 import { IoIosSettings } from "react-icons/io";
 import { RiEditCircleLine } from "react-icons/ri";
+import { MdDeleteForever } from "react-icons/md";
 
 export interface Post {
   id: string;
@@ -20,7 +21,8 @@ export interface Post {
 interface TableViewProps {
   posts: Post[];
   handleEdit: (post: Post) => void;
-  refreshPosts: () => void;
+  handleDelete: (id: string) => void; 
+  refreshPosts: () => void;  
 }
 
 const statusColors: Record<string, string> = {
@@ -80,7 +82,7 @@ const formatDate = (dateStr: string | null): string => {
     });
 };
 
-const TableView: React.FC<TableViewProps> = ({ posts, handleEdit }) => {
+const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const groupedPosts = useMemo(() => {
     const map: Record<string, Post[]> = {};
     for (const post of posts) {
@@ -91,11 +93,13 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit }) => {
     return map;
   }, [posts]);
 
-  const onEdit = useCallback(
-    (post: Post) => {
-      handleEdit(post);
+  const onEdit = useCallback((post: Post) => handleEdit(post), [handleEdit]);
+  const onDelete = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+      e.stopPropagation();
+      handleDelete(id);
     },
-    [handleEdit]
+    [handleDelete]
   );
 
   const renderedRows = useMemo(() => {
@@ -153,15 +157,25 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit }) => {
                   onClick={(e) => e.stopPropagation()}
                 >
                   {!isFieldStatus && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(post);
-                      }}
-                      className="flex items-center shadow-md gap-1 bg-blue-500 text-white text-[10px] px-2 py-1 rounded hover:bg-blue-700 hover:rounded-full transition-colors"
-                    >
-                      <RiEditCircleLine size={12} /> Update
-                    </button>
+                    <div className="flex gap-1">
+                      {/* UPDATE */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(post);
+                        }}
+                        className="flex items-center gap-1 bg-blue-500 text-white text-[10px] px-2 py-1 rounded hover:bg-blue-700 transition-colors shadow-md"
+                      >
+                        <RiEditCircleLine size={12} /> Update
+                      </button>
+                      {/* DELETE — NEW */}
+                      <button
+                        onClick={(e) => onDelete(e, post.id)}
+                        className="flex items-center gap-1 bg-red-500 text-white text-[10px] px-2 py-1 rounded hover:bg-red-700 transition-colors shadow-md"
+                      >
+                        <MdDeleteForever size={12} /> Delete
+                      </button>
+                    </div>
                   )}
                 </td>
 

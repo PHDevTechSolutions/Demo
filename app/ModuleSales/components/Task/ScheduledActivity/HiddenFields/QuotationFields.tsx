@@ -71,9 +71,9 @@ const QuotationFields: React.FC<QuotationFieldsProps> = ({
           required
         >
           <option value="">Select Status</option>
-          <option value="Follow Up Pending">Follow Up Pending</option>
-          <option value="Requirements">No Requirements</option>
-          <option value="Request for Quotation">Request for Quotation</option>
+          {/*<option value="Follow Up Pending">Follow Up Pending</option>*/}
+          {/*<option value="Requirements">No Requirements</option>*/}
+          {/*<option value="Request for Quotation">Request for Quotation</option>*/}
           <option value="Sent Quotation - Standard">Sent Quotation - Standard</option>
           <option value="Sent Quotation - With Special Price">Sent Quotation - With Special Price</option>
           <option value="Sent Quotation - With SPF">Sent Quotation - With SPF</option>

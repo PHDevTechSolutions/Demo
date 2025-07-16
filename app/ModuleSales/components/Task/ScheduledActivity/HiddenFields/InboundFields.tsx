@@ -63,41 +63,6 @@ const InboundFields: React.FC<InboundFieldsProps> = ({
     return (
         <>
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                <label className="block text-xs font-bold mb-2">Callback</label>
-                <select
-                    className="w-full px-3 py-2 border-b text-xs bg-white"
-                    onChange={handleCallbackChange}
-                >
-                    <option>Select Callback</option>
-                    <option>Callback Tomorrow</option>
-                    <option>Callback After 3 Days</option>
-                    <option>Callback After a Week</option>
-                    <option>Pick a DateTime</option>
-                </select>
-                {showInput && (
-                    <input
-                        type="datetime-local"
-                        value={callback}
-                        onChange={(e) => setcallback(e.target.value)}
-                        className="w-full px-3 py-2 border-b text-xs mt-2 bg-white"
-                    />
-                )}
-            </div>
-
-            <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                <label className="block text-xs font-bold mb-2">Call Status</label>
-                <select
-                    value={callstatus}
-                    onChange={(e) => setcallstatus(e.target.value)}
-                    className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
-                >
-                    <option value="">Select Status</option>
-                    <option value="Successful">Successful</option>
-                    <option value="Unsuccessful">Unsuccessful</option>
-                </select>
-            </div>
-
-            <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                 <label className="block text-xs font-bold mb-2">Type of Call</label>
                 <select
                     value={typecall}
@@ -105,28 +70,13 @@ const InboundFields: React.FC<InboundFieldsProps> = ({
                     className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
                 >
                     <option value="">Select Type</option>
-                    {callstatus === "Successful" ? (
-                        <>
-                            <option value="No Requirements">No Requirements</option>
-                            <option value="Waiting for Future Projects">Waiting for Future Projects</option>
-                        </>
-                    ) : callstatus === "Unsuccessful" ? (
-                        <>
-                            <option value="Ringing Only">Ringing Only</option>
-                            <option value="Cannot Be Reached">Cannot Be Reached</option>
-                            <option value="Not Connected with the Company">Not Connected with the Company</option>
-                            <option value="Touch Base">Touch Base</option>
-                        </>
-                    ) : (
-                        <>
-                            <option value="Ringing Only">Ringing Only</option>
-                            <option value="No Requirements">No Requirements</option>
-                            <option value="Cannot Be Reached">Cannot Be Reached</option>
-                            <option value="Not Connected with the Company">Not Connected with the Company</option>
-                            <option value="Waiting for Future Projects">Waiting for Future Projects</option>
-                            <option value="Touch Base">Touch Base</option>
-                        </>
-                    )}
+                    <option value="After Sales">After sales ( Warranty, Replacement, Certificates) </option>
+                    <option value="Delivery concern">Delivery concern</option>
+                    <option value="Accounting Concern">Accounting Concern</option>
+                    <option value="Technical / Product concern">Technical / Product concern</option>
+                    <option value="Request for Quotation">Request for Quotation</option>
+                    <option value="Inquiries">Inquiries</option>
+                    <option value="Follow Up Pending">Follow Up</option>
                 </select>
             </div>
         </>

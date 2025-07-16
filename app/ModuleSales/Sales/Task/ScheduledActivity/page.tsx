@@ -78,6 +78,9 @@ const ListofUser: React.FC = () => {
   const filteredAccounts = useMemo(() => {
     return posts
       .filter((post) => {
+        // Don't include posts marked as 'Deleted'
+        if (post.activitystatus === 'Deleted') return false;
+
         const company = post?.companyname?.toLowerCase() || "";
         const matchCompany = company.includes(searchTerm.toLowerCase());
 

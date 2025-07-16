@@ -1,5 +1,5 @@
 import React from "react";
-import { MdModeEdit } from "react-icons/md";
+import { MdModeEdit, MdDeleteForever } from "react-icons/md";
 
 interface Activity {
   id: number | string;
@@ -50,7 +50,7 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
             <th className="px-6 py-4 font-semibold text-gray-700">Type of Activity</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Callback</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Call Status</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Type of Call</th>
+            <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Q# Number</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Q-Amount</th>
             <th className="px-6 py-4 font-semibold text-gray-700">SO-Amount</th>
@@ -63,36 +63,45 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
           {sortedRecords.length > 0 ? (
             sortedRecords.map((activity) => (
               <tr key={activity.id} className="border-b whitespace-nowrap">
-                <td className="px-6 py-4 text-xs flex">
-                  <button
-                    onClick={() => handleEditClick(activity.id)}
-                    className="hover:shadow-md bg-blue-400 text-white p-2 rounded-full"
-                    aria-label="Edit activity"
-                  >
-                    <MdModeEdit size={10} />
-                  </button>
+                <td className="px-6 py-4 text-xs">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDeleteClick(activity.id.toString())}
+                      className="hover:shadow-md bg-red-400 text-white p-2 rounded-full"
+                      aria-label="Delete activity"
+                    >
+                      <MdDeleteForever size={12} />
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(activity.id)}
+                      className="hover:shadow-md bg-blue-400 text-white p-2 rounded-full"
+                      aria-label="Edit activity"
+                    >
+                      <MdModeEdit size={12} />
+                    </button>
+                  </div>
                 </td>
+
                 <td className="px-6 py-4 text-xs">
                   <span
-                    className={`px-2 py-1 text-[8px] font-semibold rounded-full whitespace-nowrap ${
-                      activity.activitystatus === "Assisted"
-                        ? "bg-blue-400 text-white"
-                        : activity.activitystatus === "Paid"
+                    className={`px-2 py-1 text-[8px] font-semibold rounded-full whitespace-nowrap ${activity.activitystatus === "Assisted"
+                      ? "bg-blue-400 text-white"
+                      : activity.activitystatus === "Paid"
                         ? "bg-green-500 text-white"
                         : activity.activitystatus === "Delivered"
-                        ? "bg-cyan-400 text-white"
-                        : activity.activitystatus === "Collected"
-                        ? "bg-indigo-500 text-white"
-                        : activity.activitystatus === "Quote-Done"
-                        ? "bg-slate-500 text-white"
-                        : activity.activitystatus === "SO-Done"
-                        ? "bg-purple-500 text-white"
-                        : activity.activitystatus === "Cancelled"
-                        ? "bg-red-500 text-white"
-                        : activity.activitystatus === "Loss"
-                        ? "bg-red-800 text-white"
-                        : "bg-slate-200 text-blue-700"
-                    }`}
+                          ? "bg-cyan-400 text-white"
+                          : activity.activitystatus === "Collected"
+                            ? "bg-indigo-500 text-white"
+                            : activity.activitystatus === "Quote-Done"
+                              ? "bg-slate-500 text-white"
+                              : activity.activitystatus === "SO-Done"
+                                ? "bg-purple-500 text-white"
+                                : activity.activitystatus === "Cancelled"
+                                  ? "bg-red-500 text-white"
+                                  : activity.activitystatus === "Loss"
+                                    ? "bg-red-800 text-white"
+                                    : "bg-slate-200 text-blue-700"
+                      }`}
                   >
                     {activity.activitystatus}
                   </span>
@@ -115,13 +124,13 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
                 <td className="px-6 py-4 text-xs">
                   {activity.callback
                     ? new Date(activity.callback).toLocaleString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
                     : ""}
                 </td>
                 <td className="px-6 py-4 text-xs">{activity.callstatus}</td>

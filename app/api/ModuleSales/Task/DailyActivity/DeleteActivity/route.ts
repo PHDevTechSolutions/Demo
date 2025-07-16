@@ -9,37 +9,38 @@ if (!Xchire_databaseUrl) {
 const Xchire_sql = neon(Xchire_databaseUrl);
 
 /**
- * Deletes an activity from the database.
- * @param activityId - The ID of the activity to delete.
+ * Soft deletes an activity by updating its activitystatus to 'Deleted'.
+ * @param activityId - The ID of the activity to soft delete.
  * @returns Success or error response.
  */
-async function remove(activityId: string) {
+async function softDeleteActivity(activityId: string) {
     try {
         if (!activityId) {
             throw new Error("Activity ID is required.");
         }
 
-        const Xchire_delete = await Xchire_sql`
-            DELETE FROM activity 
+        const Xchire_update = await Xchire_sql`
+            UPDATE activity 
+            SET activitystatus = 'Deleted'
             WHERE id = ${activityId}
             RETURNING *;
         `;
 
-        if (Xchire_delete.length === 0) {
-            return { success: false, error: "Activity not found or already deleted." };
+        if (Xchire_update.length === 0) {
+            return { success: false, error: "Activity not found." };
         }
 
-        return { success: true, data: Xchire_delete };
+        return { success: true, data: Xchire_update };
     } catch (error: any) {
-        console.error("Error deleting activity:", error);
-        return { success: false, error: error.message || "Failed to delete activity." };
+        console.error("Error updating activity status:", error);
+        return { success: false, error: error.message || "Failed to update activity status." };
     }
 }
 
 export async function DELETE(req: Request) {
     try {
-        const Xchire_body = await req.json();
-        const { id } = Xchire_body; // Ensure frontend sends `{ id: "activity_id" }`
+        const body = await req.json();
+        const { id } = body;
 
         if (!id) {
             return NextResponse.json(
@@ -48,9 +49,9 @@ export async function DELETE(req: Request) {
             );
         }
 
-        const Xchire_result = await remove(id);
+        const result = await softDeleteActivity(id);
 
-        return NextResponse.json(Xchire_result);
+        return NextResponse.json(result);
     } catch (error: any) {
         console.error("Error in DELETE /api/ModuleSales/Task/DailyActivity/DeleteActivity:", error);
         return NextResponse.json(

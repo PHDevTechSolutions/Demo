@@ -99,14 +99,14 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
             setarea(selected.area);
             setstatus(selected.status);
         } else {
-            setcompanyname(""); 
-            setcontactperson(""); 
+            setcompanyname("");
+            setcontactperson("");
             setcontactnumber("");
-            setemailaddress(""); 
-            settypeclient(""); 
+            setemailaddress("");
+            settypeclient("");
             setaddress("");
-            setdeliveryaddress(""); 
-            setcompanygroup(""); 
+            setdeliveryaddress("");
+            setcompanygroup("");
             setarea("");
             setstatus("");
         }
@@ -173,11 +173,10 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                                 <input
                                     type="text"
                                     value={companyname ?? ""}
-                                    onChange={(e) =>
-                                        setcompanyname(e.target.value.replace(/[^a-zA-Z,\s]/g, ""))
-                                    }
+                                    onChange={(e) => setcompanyname(e.target.value)}
                                     className="w-full text-xs capitalize p-2 border-b"
                                 />
+
                             )}
                         </div>
 

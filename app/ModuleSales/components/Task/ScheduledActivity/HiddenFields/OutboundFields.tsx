@@ -115,6 +115,7 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                         <>
                             <option value="No Requirements">No Requirements</option>
                             <option value="Waiting for Future Projects">Waiting for Future Projects</option>
+                            <option value="With RFQ">With RFQ</option>
                         </>
                     ) : callstatus === "Unsuccessful" ? (
                         <>

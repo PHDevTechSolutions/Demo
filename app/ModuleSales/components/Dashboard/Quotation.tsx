@@ -131,11 +131,11 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
         {/* Gauges Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-            <GaugeQChart value={quoteToSO} label="Quote to SO Conversion" color="#3B82F6" />
+            <GaugeQChart value={quoteToSO} label="Quote to SO Conversion (QTY)" color="#3B82F6" />
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-            <GaugeQChart value={valuePeso} label="Quote to SO Conversion" color="#10B981" />
+            <GaugeQChart value={valuePeso} label="Quote to SO Conversion (Peso Value)" color="#10B981" />
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
@@ -153,8 +153,8 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
                   <th className="px-4 py-2">Total Count</th>
                   <th className="px-4 py-2">Total Amount</th>
                   <th className="px-4 py-2">Handling Time</th>
-                  <th className="px-4 py-2">Quote to SO Conversion</th>
-                  <th className="px-4 py-2">Quote to SO Conversion</th>
+                  <th className="px-4 py-2">Quote to SO Conversion (QTY)</th>
+                  <th className="px-4 py-2">Quote to SO Conversion (Peso Value)</th>
                   <th className="px-4 py-2">Quotation to SI Conversion</th>
                 </tr>
               </thead>
