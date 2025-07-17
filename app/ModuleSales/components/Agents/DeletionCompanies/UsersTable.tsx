@@ -77,7 +77,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
     <div className="mb-4">
       {/* Modal Confirmation */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999]">
           <div className="bg-white p-6 rounded-md shadow-lg max-w-sm text-center">
             <h3 className="text-lg font-bold text-yellow-600">Confirm Action</h3>
             <p className="text-sm text-gray-700 mt-2">
@@ -86,13 +86,13 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
             <div className="flex justify-center gap-4 mt-4">
               <button
                 onClick={handleUpdate}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-xs"
               >
                 Proceed
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 text-xs"
               >
                 Cancel
               </button>
@@ -123,11 +123,11 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
             {updatedUser.length > 0 ? (
               updatedUser.map((post) => (
                 <tr key={post.id} className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs">
+                  <td className="px-6 py-4 text-[8px]">
                     {post.status !== "Approve For Deletion" && (
                       <button
                         onClick={() => confirmUpdate(post.id)}
-                        className="block px-4 py-2 text-xs text-gray-700 text-white bg-green-500 rounded-full hover:bg-orange-400 hover:rounded-full w-full text-left flex items-center gap-1"
+                        className="block px-3 py-2 text-[10px] text-gray-700 text-white bg-green-500 rounded-full hover:bg-orange-400 hover:rounded-full w-full text-left flex items-center gap-1"
                       >
                         Approve
                       </button>
@@ -144,12 +144,12 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
                   <td className="px-6 py-4 text-xs">
                     <span
                       className={`px-2 py-1 text-[8px] font-semibold rounded-full ${post.status === "For Deletion"
-                          ? "bg-yellow-400 text-gray-900"
-                          : post.status === "Remove"
-                            ? "bg-gray-100 text-gray-700"
-                            : post.status === "Approve For Deletion"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
+                        ? "bg-yellow-400 text-gray-900"
+                        : post.status === "Remove"
+                          ? "bg-gray-100 text-gray-700"
+                          : post.status === "Approve For Deletion"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-green-100 text-green-700"
                         }`}
                     >
                       {post.status}

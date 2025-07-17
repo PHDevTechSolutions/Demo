@@ -77,29 +77,6 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
 
   const filteredMenuItems = (() => {
     const role = userDetails.Role;
-    const agentModeMenu = [
-      "Customer Database",
-      "Activities",
-      "Projects",
-      "Xend Mail",
-      "Boards",
-      "Help Center",
-      "Global Employees",
-      "My Profile",
-      "What is Taskflow?",
-    ];
-    const tsmDefault = [
-      "Sales Performance",
-      "Xend Mail",
-      "National",
-      "My Team",
-      "Client Activity Board",
-      "Help Center",
-      "Global Employees",
-      "My Profile",
-      "What is Taskflow?",
-    ];
-
     if (role === "Admin" || role === "Super Admin") return menuItems;
 
     if (role === "Manager") {
@@ -140,7 +117,14 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
 
     if (role === "Territory Sales Manager") {
       return menuItems.filter(item =>
-        (agentMode ? agentModeMenu : tsmDefault).includes(item.title)
+        [
+          "Customer Database",
+          "National",
+          "My Team",
+          "Reports",
+          "Help Center",
+          "What is Taskflow?",
+        ].includes(item.title)
       );
     }
 
@@ -150,12 +134,7 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
           "Customer Database",
           "Activities",
           "Reports",
-          "Projects",
-          "Xend Mail",
-          "Boards",
           "Help Center",
-          "Global Employees",
-          "My Profile",
           "What is Taskflow?",
         ].includes(item.title)
       );

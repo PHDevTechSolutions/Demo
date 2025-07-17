@@ -76,6 +76,34 @@ const getMenuItems = (userId: string | null = "") => [
         ],
     },
     {
+        title: "National",
+        icon: CiPhone,
+        subItems: [
+            { 
+                title: "Daily Call Ranking", 
+                href: `/ModuleSales/Sales/National/NationalDailyRanking${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+        ],
+    },
+    {
+        title: "My Team",
+        icon: CiUser,
+        subItems: [
+            { 
+                title: "List of Sales Associate", 
+                href: `/ModuleSales/Sales/Agents/ListSalesAssociate${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
+                title: "Sales Associate Activity", 
+                href: `/ModuleSales/Sales/Agents/SalesAssociateActivity${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
+                title: "For Deletion", 
+                href: `/ModuleSales/Sales/Agents/DeletionCompanies${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+        ],
+    },
+    {
         title: "Reports",
         icon: SlChart,
         subItems: [
@@ -123,34 +151,6 @@ const getMenuItems = (userId: string | null = "") => [
             { 
                 title: "MTD and YTD", 
                 href: `/ModuleSales/Sales/SalesPerformance/MTDYTD${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
-            },
-        ],
-    },
-    {
-        title: "National",
-        icon: CiPhone,
-        subItems: [
-            { 
-                title: "Daily Call Ranking", 
-                href: `/ModuleSales/Sales/National/NationalDailyRanking${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
-            },
-        ],
-    },
-    {
-        title: "My Team",
-        icon: CiUser,
-        subItems: [
-            { 
-                title: "List of Sales Associate", 
-                href: `/ModuleSales/Sales/Agents/ListSalesAssociate${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
-            },
-            { 
-                title: "Sales Associate Activity", 
-                href: `/ModuleSales/Sales/Agents/SalesAssociateActivity${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
-            },
-            { 
-                title: "For Deletion", 
-                href: `/ModuleSales/Sales/Agents/DeletionCompanies${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
         ],
     },

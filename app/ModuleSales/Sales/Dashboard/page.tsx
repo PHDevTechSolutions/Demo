@@ -23,6 +23,9 @@ const DashboardPage: React.FC = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
+
   const fetchData = async () => {
     try {
       const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
@@ -39,26 +42,62 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchTSA = async () => {
+      if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
+
+      try {
+        const response = await fetch(
+          `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch agents");
+
+        const data = await response.json();
+
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
+
+        setTSAOptions(options);
+      } catch (error) {
+        console.error("Error fetching agents:", error);
+      }
+    };
+
+    fetchTSA();
+  }, [userDetails.ReferenceID, userDetails.Role]);
+
   const filteredAccounts = Array.isArray(posts)
     ? posts
-        .filter((post) => {
-          const postDate = post.date_created ? new Date(post.date_created) : null;
+      .filter((post) => {
+        const postDate = post.date_created ? new Date(post.date_created) : null;
 
-          const isWithinDateRange =
-            (!startDate || (postDate && postDate >= new Date(startDate))) &&
-            (!endDate || (postDate && postDate <= new Date(endDate)));
+        const isWithinDateRange =
+          (!startDate || (postDate && postDate >= new Date(startDate))) &&
+          (!endDate || (postDate && postDate <= new Date(endDate)));
 
-          const matchesReferenceID =
-            post?.referenceid === userDetails.ReferenceID ||
-            post?.ReferenceID === userDetails.ReferenceID;
+        const referenceID = userDetails.ReferenceID;
+        const matchesRole =
+          userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+            ? true
+            : userDetails.Role === "Territory Sales Associate"
+              ? post?.referenceid === referenceID
+              : userDetails.Role === "Territory Sales Manager"
+                ? post?.tsm === referenceID
+                : false;
 
-          return isWithinDateRange && matchesReferenceID;
-        })
-        .sort(
-          (a, b) =>
-            new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-        )
+        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+
+        return isWithinDateRange && matchesRole && matchesAgentFilter;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+      )
     : [];
+
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -93,7 +132,13 @@ const DashboardPage: React.FC = () => {
   return (
     <SessionChecker>
       <ParentLayout>
-        <MainContainer filteredAccounts={filteredAccounts} />
+        <MainContainer
+          filteredAccounts={filteredAccounts}
+          userDetails={userDetails}
+          selectedAgent={selectedAgent}
+          setSelectedAgent={setSelectedAgent}
+          tsaOptions={tsaOptions}
+        />
       </ParentLayout>
     </SessionChecker>
   );

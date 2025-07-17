@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import Pagination from "./Pagination";
+import Export from "./Export";
 
 interface Post {
   id: string;
@@ -47,8 +47,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       typeof value === "string"
         ? parseFloat(value)
         : typeof value === "number"
-        ? value
-        : 0;
+          ? value
+          : 0;
     const number = isNaN(parsed) ? 0 : parsed;
     return number.toLocaleString("en-PH", {
       style: "currency",
@@ -146,53 +146,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     0
   );
 
-  const averageAchievement =
-    filteredAndSortedData.length > 0
-      ? (totalAchievement / filteredAndSortedData.length).toFixed(2)
-      : "N/A";
-
-  const handleExportToExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Sales Report");
-
-    worksheet.columns = [
-      { header: "Company Name", key: "companyName", width: 30 },
-      { header: "Type of Client", key: "typeClients", width: 30 },
-      { header: "Total Sales (SI)", key: "totalSales", width: 20 },
-      { header: "Average Sales", key: "averageSales", width: 20 },
-    ];
-
-    filteredAndSortedData.forEach(
-      ({ companyName, typeClients, totalSales, averageSales }) => {
-        worksheet.addRow({
-          companyName,
-          typeClients,
-          totalSales,
-          averageSales,
-        });
-      }
-    );
-
-    worksheet.addRow({
-      companyName: "Grand Total",
-      typeClients: "",
-      totalSales: grandTotal,
-      averageSales: "",
-    });
-
-    worksheet.getColumn("totalSales").numFmt =
-      '"₱"#,##0.00;[Red]\-"₱"#,##0.00';
-    worksheet.getColumn("averageSales").numFmt =
-      '"₱"#,##0.00;[Red]\-"₱"#,##0.00';
-    worksheet.getRow(1).font = { bold: true };
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, "sales_report.xlsx");
-  };
-
   const goToPage = (page: number) => {
     if (page < 1) page = 1;
     else if (page > totalPages) page = totalPages;
@@ -262,10 +215,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
               </option>
             ))}
           </select>
-          <button onClick={handleExportToExcel}
-            className="bg-green-600 text-white text-xs px-4 py-2 rounded hover:bg-green-700 whitespace-nowrap">
-            Export to Excel
-          </button>
+          <Export data={filteredAndSortedData} grandTotal={grandTotal} />
         </div>
       </div>
 
@@ -305,7 +255,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                       <td className="px-6 py-4 text-xs uppercase">{companyName}</td>
                       <td className="px-6 py-4 text-xs">{typeClients}</td>
                       <td className="px-6 py-4 text-xs">{formatSales(totalSales)}</td>
-                      <td className={`px-6 py-4 text-xs font-semibold ${ isSuccess ? "text-green-600" : "text-red-600"}`}>
+                      <td className={`px-6 py-4 text-xs font-semibold ${isSuccess ? "text-green-600" : "text-red-600"}`}>
                         {isValidTarget
                           ? `${achievement.toFixed(2)}%`
                           : "0.00%"}
@@ -328,21 +278,11 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
-        <button
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`bg-gray-200 text-xs px-4 py-2 rounded`}>
-          Previous
-        </button>
-        <span>Page {currentPage} of {totalPages || 1}</span>
-        <button
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages || totalPages === 0}
-          className={`bg-gray-200 text-xs px-4 py-2 rounded`}>
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        goToPage={goToPage}
+      />
     </div>
   );
 };

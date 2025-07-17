@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-
-// Doughnut Chart
-import { Doughnut } from "react-chartjs-2";
-import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-
-Chart.register(ArcElement, Tooltip, Legend, ChartDataLabels);
+import InformationCard from "./InformationCard";
+import CallActivityChart from "./Chart/CallActivityChart";
+import ClienEngagementOverview from "./Chart/ClientEngagementOverview";
+import DailyTimeMotionAnalysis from "./Chart/DailyTimeMotionAnalysis";
+import DailyCallProductivityReport from "./Chart/DailyCallProductivityReport";
+import QuotationProductivityOverview from "./Chart/QuotationProductivityOverview";
+import SalesPerformanceSummary from "./Chart/SalesPerformanceSummary";
+import DailyActivitySummary from "./Chart/DailyActivitySummary";
 
 interface FormFieldsProps {
   Firstname: string;
@@ -27,63 +28,15 @@ interface FormFieldsProps {
 
 const INBOUND_ACTIVITIES = [
   "Inbound Call",
-  "Assisting Other Agents Client",
-  "Preparation: Bidding Preparation",
+  "Bidding Preperation",
   "Client Meeting",
   "Site Visit",
-  "Coordination of Pick-Up / Delivery to Client",
-  "Email and Viber Checking",
-  "Email Blast",
-  "Email, SMS & Viber Replies",
-  "Inbound Call - Existing",
-  "Payment Follow-Up",
-  "Quotation Follow-Up",
-  "Preparation: Preparation of Quote: Existing Client",
-  "Preparation: Preparation of Quote: New Client",
-  "Preparation: Preparation of Report",
-  "Walk-In Client",
+  "Check/Read emails",
+  "Viber Replies",
+  "Follow Up",
+  "Quotation Preparation",
+  "FB-Marketplace",
 ];
-
-const validActivities = new Set([
-  "Account Development",
-  "Accounting: Accounts Receivable and Payment",
-  "Accounting: Billing Concern",
-  "Accounting: Refund Request",
-  "Accounting: Sales Order Concern",
-  "Accounting: TPC Request",
-  "Admin Concern: Coordination of Payment Terms Request",
-  "CSR Inquiries",
-  "Coordination of Pick-Up / Delivery to Client",
-  "Coordination With CS (Email Acknowledgement)",
-  "Marketing Concern",
-  "Email and Viber Checking",
-  "Email Blast",
-  "Email, SMS & Viber Replies",
-  "Inbound Call",
-  "Payment Follow-Up",
-  "Quotation Follow-Up",
-  "Logistic Concern: Shipping Cost Estimation",
-  "Outbound Call",
-  "Preparation: Bidding Preparation",
-  "Preparation: Preparation of Report",
-  "Preparation: Preparation of SPF",
-  "Preparation: Preparation of Quote: New Client",
-  "Preparation: Preparation of Quote: Existing Client",
-  "Preparation: Sales Order Preparation",
-  "Technical: Dialux Simulation Request",
-  "Technical: Drawing Request",
-  "Technical: Inquiry",
-  "Technical: Site Visit Request",
-  "Technical: TDS Request",
-  "Walk-In Client",
-  "Warehouse: Coordination to Billing",
-  "Warehouse: Coordination to Dispatch",
-  "Warehouse: Coordination to Inventory",
-  "Warehouse: Delivery / Helper Concern",
-  "Warehouse: Replacement Request / Concern",
-  "Warehouse: Sample Request / Concern",
-  "Warehouse: SO Status Follow Up",
-]);
 
 const UserFormFields: React.FC<FormFieldsProps> = ({
   Firstname, setFirstname,
@@ -108,34 +61,6 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
 
   const today = new Date().toISOString().split("T")[0];
   const currentMonth = new Date().toISOString().slice(0, 7);
-
-  const chartData = {
-    labels: ["Outbound Call", "Inbound Call"],
-    datasets: [
-      {
-        data: [
-          callData.dailyOutbound || 0, // Total Outbound Calls
-          callData.dailyInbound || 0, // Total Inbound Calls
-        ],
-        backgroundColor: ["#990000", "#000068"], // Colors for the segments
-        hoverOffset: 4,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    plugins: {
-      legend: {},
-      datalabels: {
-        color: "#FFFFFF",
-        font: {
-          weight: "bold" as "bold",
-          size: 14,
-        },
-        formatter: (value: number) => value,
-      },
-    },
-  };
 
   useEffect(() => {
     fetchProgressData();
@@ -219,7 +144,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
   // Count Quote Productivity
   const countActivities = (data: any[]) =>
     data.reduce((acc: Record<string, number>, item) => {
-      if (["Account Development", "Preparation: Preparation of Quote: Existing Client"].includes(item.typeactivity)) {
+      if (["Account Development", "Quotation Preparation"].includes(item.typeactivity)) {
         acc[item.typeactivity] = (acc[item.typeactivity] || 0) + 1;
       }
       return acc;
@@ -248,7 +173,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
           if (item.typeactivity === "Inbound Call") {
             acc.dailyInbound += 1;
           }
-          if (item.typeactivity === "Outbound Call") {
+          if (item.typeactivity === "Outbound calls") {
             acc.dailyOutbound += 1;
           }
           if (item.callstatus === "Successful") {
@@ -265,7 +190,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
           if (item.typeactivity === "Inbound Call") {
             acc.mtdInbound += 1;
           }
-          if (item.typeactivity === "Outbound Call") {
+          if (item.typeactivity === "Outbound calls") {
             acc.mtdOutbound += 1;
           }
           if (item.callstatus === "Successful") {
@@ -302,7 +227,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
 
           if (INBOUND_ACTIVITIES.includes(item.typeactivity)) {
             acc.inbound += duration;
-          } else if (item.typeactivity === "Outbound Call") {
+          } else if (item.typeactivity === "Outbound calls") {
             acc.outbound += duration;
           } else {
             acc.others += duration;
@@ -310,44 +235,26 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
 
           // List of valid activity keys
           const validActivities = new Set([
-            "Account Development",
-            "Accounting: Accounts Receivable and Payment",
-            "Accounting: Billing Concern",
-            "Accounting: Refund Request",
-            "Accounting: Sales Order Concern",
-            "Accounting: TPC Request",
-            "Admin Concern: Coordination of Payment Terms Request",
-            "CSR Inquiries",
-            "Coordination of Pick-Up / Delivery to Client",
-            "Coordination With CS (Email Acknowledgement)",
-            "Marketing Concern",
-            "Email and Viber Checking",
-            "Email Blast",
-            "Email, SMS & Viber Replies",
+            "Customer Order",
+            "Customer Inquiry Sales",
+            "Follow Up",
+            "FB-Marketplace",
+            "After Sales-Refund",
+            "After Sales-Repair/Replacement",
+            "Quotation Preparation",
+            "Sales Order Preparation",
+            "Delivery Concern",
+            "Accounting Concern",
+            "Admin- Supplier Accreditation",
+            "Admin- Credit Terms Application",
             "Inbound Call",
-            "Payment Follow-Up",
-            "Quotation Follow-Up",
-            "Logistic Concern: Shipping Cost Estimation",
-            "Outbound Call",
-            "Preparation: Bidding Preparation",
-            "Preparation: Preparation of Report",
-            "Preparation: Preparation of SPF",
-            "Preparation: Preparation of Quote: New Client",
-            "Preparation: Preparation of Quote: Existing Client",
-            "Preparation: Sales Order Preparation",
-            "Technical: Dialux Simulation Request",
-            "Technical: Drawing Request",
-            "Technical: Inquiry",
-            "Technical: Site Visit Request",
-            "Technical: TDS Request",
-            "Walk-In Client",
-            "Warehouse: Coordination to Billing",
-            "Warehouse: Coordination to Dispatch",
-            "Warehouse: Coordination to Inventory",
-            "Warehouse: Delivery / Helper Concern",
-            "Warehouse: Replacement Request / Concern",
-            "Warehouse: Sample Request / Concern",
-            "Warehouse: SO Status Follow Up",
+            "Outbound calls",
+            "Site Visit",
+            "Check/Read emails",
+            "Bidding Preperation",
+            "Viber Replies",
+            "Technical Concern",
+            "Sample Request",
           ]);
 
           if (validActivities.has(item.typeactivity)) {
@@ -376,8 +283,8 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
   // Count Touchbase on Table
   const countTouchBase = (data: any[]) =>
     data.reduce((acc: Record<string, number>, item) => {
-      if (item.typecall === "Touch Base") {
-        const key = `${item.typeclient}-${item.typecall}`;
+      if (item.source === "Outbound - Touchbase") {
+        const key = `${item.typeclient}-${item.source}`;
         acc[key] = (acc[key] || 0) + 1;
       }
       return acc;
@@ -387,296 +294,51 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
     <>
       <div className="bg-white w-full max-width mx-auto mb-4">
         {/* Grid Container */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Profile Picture Card */}
-          <div className="flex flex-col items-center justify-center border rounded-lg p-6">
-            <div className="w-32 h-32 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 text-sm">Profile Picture</span>
-            </div>
-          </div>
-
+          
           {/* User Information Card */}
-          <div className="border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-2">Agent Profile Overview</h3>
-            <p className="text-gray-700 capitalize">
-              <strong>Full Name:</strong> {Lastname}, {Firstname} ({ReferenceID})
-            </p>
-            <p className="text-gray-700">
-              <strong>Email Address:</strong> {Email}
-            </p>
-            <p className="text-gray-700 capitalize">
-              <strong>Username:</strong> {userName}
-            </p>
-            <p className="text-gray-700 flex items-center mt-2">
-              <strong>Account Status:</strong>
-              <span
-                className={`ml-2 pb-1 px-3 py-1 font-semibold rounded-full text-[10px]
-                  ${Status === "Active" ? "bg-green-500 text-white" : ""}
-                  ${Status === "Resigned" ? "bg-red-400 text-white" : ""}
-                  ${Status === "Terminated" ? "bg-red-500 text-white" : ""}
-                  ${Status === "Inactive" ? "bg-red-100 text-red-800" : ""}
-                  ${Status === "Locked" ? "bg-red-100 text-red-800" : ""}
-                  ${!Status ? "bg-gray-100 text-gray-600" : ""}`}
-              >
-                {Status || "N/A"}
-              </span>
-            </p>
-            <span className="text-xs text-gray-500">
-              Indicates whether the agent's account is active, inactive, or locked.
-            </span>
+          <InformationCard
+            Firstname={Firstname}
+            Lastname={Lastname}
+            ReferenceID={ReferenceID}
+            Email={Email}
+            userName={userName}
+            Status={Status}
+            TargetQuota={TargetQuota}
+            startdate={startdate}
+            enddate={enddate}
+            setStatus={setStatus}
+            setTargetQuota={setTargetQuota}
+            setStartdate={setStartdate}
+            setEnddate={setEnddate}
+          />
 
-            {/* Additional Fields */}
-            <div className="grid grid-cols-2 gap-6 mt-6">
-              {/* Status Dropdown */}
-              <div>
-                <label className="block text-xs font-bold mb-2" htmlFor="Status">
-                  Update Account Status
-                </label>
-                <select
-                  id="Status"
-                  value={Status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs bg-gray-50"
-                >
-                  <option value="">Select Status</option>
-                  <option value="Resigned">Resigned</option>
-                  <option value="Terminated">Terminated</option>
-                </select>
-                <span className="text-xs text-gray-500">
-                  Modify the agent's current account status.
-                </span>
-              </div>
-
-              {/* Target Quota Input */}
-              <div>
-                <label className="block text-xs font-bold mb-2" htmlFor="TargetQuota">
-                  Sales Target Quota
-                </label>
-                <input
-                  type="text"
-                  id="TargetQuota"
-                  value={TargetQuota}
-                  onChange={(e) => setTargetQuota(e.target.value)}
-                  className="w-full px-3 py-2 border rounded text-xs capitalize"
-                  required
-                />
-                <span className="text-xs text-gray-500">
-                  Specify the sales goal assigned to the agent.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Date Range */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div>
-            <label className="text-xs font-medium text-gray-600">Start Date</label>
-            <input
-              type="date"
-              value={startdate}
-              onChange={(e) => setStartdate(e.target.value)}
-              className="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-600">End Date</label>
-            <input
-              type="date"
-              value={enddate}
-              onChange={(e) => setEnddate(e.target.value)}
-              className="w-full px-3 py-2 border rounded text-xs bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-400"
-            />
-          </div>
         </div>
 
         {/* Additional Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
           {/* Chart Doughnut */}
-          <div className="border rounded-lg p-4 text-center">
-            <h3 className="font-semibold text-sm mb-2">Call Activity Chart</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              This chart provides a visual representation of daily call activities, categorized into outbound calls, inbound calls, and other related activities. It helps in analyzing call distribution and performance trends over time.
-            </p>
-            <Doughnut data={chartData} options={chartOptions} />
-          </div>
+          <CallActivityChart callData={callData} />
 
           {/* Touch Base Summary */}
-          <div className="border rounded-lg p-4 text-center overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-2">Client Engagement Overview</h3>
-            <p className="text-gray-600 mt-1 mb-4 text-xs">
-              This table provides a summary of client interactions, categorized by client type. It helps in tracking engagement levels and understanding communication patterns.
-            </p>
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                  <th className="px-6 py-4 font-semibold text-gray-700">Type of Client</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700 text-center">Counts</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {Object.entries(touchbaseData).map(([key, count], index) => {
-                  const [typeclient] = key.split("-");
-                  return (
-                    <tr key={index} className="border-b whitespace-nowrap">
-                      <td className="px-6 py-4 text-xs text-left">{typeclient}</td>
-                      <td className="px-6 py-4 px-2 py-1 text-center">{count}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Time Motion */}
-          <div className="border rounded-lg p-4 text-center overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-2">Daily Time and Motion Analysis</h3>
-            <p className="text-gray-600 mt-1 mb-4 text-xs">
-              This summary provides an overview of time spent on client interactions, outbound calls, and other activities. It helps in assessing productivity and optimizing workflow efficiency.
-            </p>
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                  <th className="px-6 py-4 font-semibold text-gray-700">Client Engagement</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700">Outbound Calls</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700">Other Activities</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">{formatDuration(timeMotionData.inbound)}</td>
-                  <td className="px-6 py-4 text-xs text-left">{formatDuration(timeMotionData.outbound)}</td>
-                  <td className="px-6 py-4 text-xs text-left">{formatDuration(timeMotionData.others)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <ClienEngagementOverview touchbaseData={touchbaseData} />
 
           {/* Daily Productivity */}
-          <div className="border rounded-lg p-4 text-center overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-2">Daily Call Productivity Report</h3>
-            <p className="text-gray-600 mt-1 mb-4 text-xs">
-              This table provides an overview of daily and month-to-date (MTD) call productivity, including total outbound calls, successful and unsuccessful attempts, and inbound call volume.
-            </p>
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                  <th className="px-6 py-4 text-xs text-left">Call Productivity</th>
-                  <th className="px-6 py-4 text-xs text-center">Daily</th>
-                  <th className="px-6 py-4 text-xs text-center">MTD</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Total Outbound Calls</td>
-                  <td className="px-6 py-4 text-xs font-semibold">{callData.dailyOutbound || 0}</td>
-                  <td className="px-6 py-4 text-xs font-semibold">{callData.mtdOutbound || 0}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Successful Calls</td>
-                  <td className="px-6 py-4 text-xs">{callData.dailySuccessful || 0}</td>
-                  <td className="px-6 py-4 text-xs">{callData.mtdSuccessful || 0}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Unsuccessful Calls</td>
-                  <td className="px-6 py-4 text-xs">{callData.dailyUnsuccessful || 0}</td>
-                  <td className="px-6 py-4 text-xs">{callData.mtdUnsuccessful || 0}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Total Inbound Calls</td>
-                  <td className="px-6 py-4 text-xs">{callData.dailyInbound || 0}</td>
-                  <td className="px-6 py-4 text-xs">{callData.mtdInbound || 0}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <DailyCallProductivityReport callData={callData} />
+
+          {/* Time Motion */}
+          <DailyTimeMotionAnalysis timeMotionData={timeMotionData} />
+
 
           {/* Quote Productivity */}
-          <div className="border rounded-lg p-4 text-center overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-2">Quotation Productivity Overview</h3>
-            <p className="text-gray-600 mt-1 mb-4 text-xs">
-              This table presents a summary of quotation-related activities, including new account development and quotes prepared for existing clients. The data is categorized into daily and month-to-date (MTD) metrics.
-            </p>
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                  <th className="px-6 py-4 text-xs text-left">Quotation Productivity</th>
-                  <th className="px-6 py-4 text-xs text-center">Daily</th>
-                  <th className="px-6 py-4 text-xs text-center">MTD</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">New Account Development</td>
-                  <td className="px-6 py-4 text-xs text-center">{activityData["Account Development"] || 0}</td>
-                  <td className="px-6 py-4 text-xs text-center">{activityData["Account Development"] || 0}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Existing Client</td>
-                  <td className="px-6 py-4 text-xs text-center">{activityData["Preparation: Preparation of Quote: Existing Client"] || 0}</td>
-                  <td className="px-6 py-4 text-xs text-center">{activityData["Preparation: Preparation of Quote: Existing Client"] || 0}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <QuotationProductivityOverview activityData={activityData} />
 
           {/* Performance */}
-          <div className="border rounded-lg p-4 text-center overflow-x-auto">
-            <h3 className="font-semibold text-sm mb-2">Sales Performance Summary</h3>
-            <p className="text-gray-600 mt-1 mb-4 text-xs">
-              This table provides an overview of sales performance, tracking actual sales from Sales Orders (SO) to Delivery Receipts (DR). Metrics include Month-to-Date (MTD) and Year-to-Date (YTD) sales figures.
-            </p>
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                  <th className="px-6 py-4 text-xs text-left">Sales Performance</th>
-                  <th className="px-6 py-4 text-xs text-center">SO to DR (Actual Sales)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Month to Date</td>
-                  <td className="px-6 py-4 text-xs text-center">{formatCurrency(countsales["MonthToDateSales"] || 0)}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left">Year to Date</td>
-                  <td className="px-6 py-4 text-xs text-center">{formatCurrency(countsales["YearToDateSales"] || 0)}</td>
-                </tr>
-                <tr className="border-b whitespace-nowrap">
-                  <td className="px-6 py-4 text-xs text-left font-bold">Total Actual Sales</td>
-                  <td className="px-6 py-4 text-xs text-center font-bold">{formatCurrency(countsales["TotalActualSales"] || 0)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          {/* Large Card - Full Width */}
+          <SalesPerformanceSummary countsales={countsales} />
+          <DailyActivitySummary timeMotionData={timeMotionData} />
         </div>
 
-        <div className="border rounded-lg p-6 col-span-3 mt-6 overflow-x-auto">
-          <h3 className="font-semibold text-sm mb-2">Daily Activity Summary</h3>
-          <p className="text-gray-600 mt-1 mb-4 text-xs">
-            A detailed breakdown of time spent on various daily activities, providing insights into productivity and task distribution.
-          </p>
-          <table className="min-w-full table-auto">
-            <thead className="bg-gray-100">
-              <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                <th className="px-6 py-4 text-xs text-left">Daily Activities Breakdown</th>
-                <th className="px-6 py-4 text-xs text-left">Time Spent</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {Object.entries(timeMotionData)
-                .filter(([activity]) => validActivities.has(activity)) // Filter only valid activities
-                .sort(([a], [b]) => a.localeCompare(b)) // Sort activities alphabetically
-                .map(([activity, duration]) => (
-                  <tr key={activity} className="border-b whitespace-nowrap">
-                    <td className="px-6 py-4 text-xs text-left">{activity}</td>
-                    <td className="px-6 py-4 text-xs text-left font-bold">{formatDuration(duration)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
       </div >
     </>
   );

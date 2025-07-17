@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState, useEffect } from "react";
 import Source from "./Source";
 import CSRMetrics from "./CSRMetrics";
@@ -9,6 +8,13 @@ import SalesOrder from "./SalesOrder";
 
 interface MainContainerProps {
   filteredAccounts: any[];
+  userDetails: {
+    Role: string;
+    ReferenceID: string;
+  };
+  selectedAgent: string;
+  setSelectedAgent: (value: string) => void;
+  tsaOptions: { value: string; label: string }[];
 }
 
 const STORAGE_KEY = "mainContainerDateRange";
@@ -53,7 +59,13 @@ const presets = {
   },
 };
 
-const MainContainer: React.FC<MainContainerProps> = ({ filteredAccounts }) => {
+const MainContainer: React.FC<MainContainerProps> = ({
+  filteredAccounts,
+  userDetails,
+  selectedAgent,
+  setSelectedAgent,
+  tsaOptions,
+}) => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -103,9 +115,34 @@ const MainContainer: React.FC<MainContainerProps> = ({ filteredAccounts }) => {
     });
   }, [filteredAccounts, dateRange]);
 
+  const filteredByAgent = useMemo(() => {
+    if (userDetails.Role !== "Territory Sales Manager") return filteredByDate;
+    if (!selectedAgent) return filteredByDate;
+    return filteredByDate.filter((acc) => acc.referenceid === selectedAgent);
+  }, [filteredByDate, selectedAgent, userDetails.Role]);
+
   return (
     <div className="container mx-auto p-4">
-      {/* Date inputs + Preset select */}
+      {/* Filter by Agent (if TSM) */}
+      {userDetails.Role === "Territory Sales Manager" && (
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-gray-700 mb-1">Filter by Agent</label>
+          <select
+            className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+            value={selectedAgent}
+            onChange={(e) => setSelectedAgent(e.target.value)}
+          >
+            <option value="">All Agents</option>
+            {tsaOptions.map((agent) => (
+              <option key={agent.value} value={agent.value}>
+                {agent.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Date Range Filters */}
       <div className="mb-4 flex flex-wrap gap-4 items-center">
         <div>
           <label htmlFor="datePreset" className="block text-xs font-medium">Filter</label>
@@ -154,12 +191,13 @@ const MainContainer: React.FC<MainContainerProps> = ({ filteredAccounts }) => {
         </div>
       </div>
 
+      {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-        <Source filteredAccounts={filteredByDate} />
-        <CSRMetrics filteredAccounts={filteredByDate} />
-        <OutboundCalls filteredCalls={filteredByDate} dateRange={dateRange} />
-        <Quotation records={filteredByDate} />
-        <SalesOrder records={filteredByDate} />
+        <Source filteredAccounts={filteredByAgent} />
+        <CSRMetrics filteredAccounts={filteredByAgent} />
+        <OutboundCalls filteredCalls={filteredByAgent} dateRange={dateRange} />
+        <Quotation records={filteredByAgent} />
+        <SalesOrder records={filteredByAgent} />
       </div>
     </div>
   );

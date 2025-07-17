@@ -3,148 +3,210 @@ import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
-// Components
 import Filters from "../../../components/Companies/GroupCompanies/Filters";
 import Table from "../../../components/Companies/GroupCompanies/Table";
-// Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 const GroupAccounts: React.FC = () => {
-    const [posts, setPosts] = useState<any[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
-    const [userDetails, setUserDetails] = useState({
-        UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
-    });
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClientType, setSelectedClientType] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 10;
 
-    // Fetch user data based on query parameters (user ID)
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const userId = params.get("id");
+  const [userDetails, setUserDetails] = useState({
+    UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
+  });
 
-            if (userId) {
-                try {
-                    const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
-                    if (!response.ok) throw new Error("Failed to fetch user data");
-                    const data = await response.json();
-                    setUserDetails({
-                        UserId: data._id, // Set the user's id here
-                        ReferenceID: data.ReferenceID || "",
-                        Firstname: data.Firstname || "",
-                        Lastname: data.Lastname || "",
-                        Email: data.Email || "",
-                        Role: data.Role || "",
-                        Department: data.Department || "",
-                        Company: data.Company || "",
-                    });
-                } catch (err: unknown) {
-                    console.error("Error fetching user data:", err);
-                    setError("Failed to load user data. Please try again later.");
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setError("User ID is missing.");
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const userId = params.get("id");
 
-        fetchUserData();
-    }, []);
-
-    // Fetch all users from the API
-    const fetchAccount = async () => {
-        setLoading(true);
+      if (userId) {
         try {
-            const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
-            const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
-        } catch (error) {
-            toast.error("Error fetching users.");
-            console.error("Error Fetching", error);
+          const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
+          if (!response.ok) throw new Error("Failed to fetch user data");
+          const data = await response.json();
+          setUserDetails({
+            UserId: data._id,
+            ReferenceID: data.ReferenceID || "",
+            Firstname: data.Firstname || "",
+            Lastname: data.Lastname || "",
+            Email: data.Email || "",
+            Role: data.Role || "",
+            Department: data.Department || "",
+            Company: data.Company || "",
+          });
+        } catch (err: unknown) {
+          console.error("Error fetching user data:", err);
+          setError("Failed to load user data. Please try again later.");
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
+      } else {
+        setError("User ID is missing.");
+        setLoading(false);
+      }
     };
 
-    useEffect(() => {
-        fetchAccount();
-    }, []);
+    fetchUserData();
+  }, []);
 
-    // Filter users by search term (firstname, lastname)
-    const filteredAccounts = Array.isArray(posts)
-        ? posts.filter((post) => {
-            // Check if the company name matches the search term
-            const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
+  const fetchAccount = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
+      const data = await response.json();
+      setPosts(data.data);
+    } catch (error) {
+      toast.error("Error fetching users.");
+      console.error("Error Fetching", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            // Parse the date_created field
-            const postDate = post.date_created ? new Date(post.date_created) : null;
+  useEffect(() => {
+    fetchAccount();
+  }, []);
 
-            // Check if the post's date is within the selected date range
-            const isWithinDateRange = (
-                (!startDate || (postDate && postDate >= new Date(startDate))) &&
-                (!endDate || (postDate && postDate <= new Date(endDate)))
-            );
+  useEffect(() => {
+    const fetchTSA = async () => {
+      if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
 
-            // Check if the post matches the selected client type
-            const matchesClientType = selectedClientType
-                ? post?.typeclient === selectedClientType
-                : true;
+      try {
+        const response = await fetch(
+          `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
+        );
 
-            // Get the reference ID from userDetails
-            const referenceID = userDetails.ReferenceID; // Manager's ReferenceID from MongoDB
+        if (!response.ok) throw new Error("Failed to fetch agents");
 
-            // Check the user's role for filtering
-            const matchesRole =
-                userDetails.Role === "Super Admin"
-                    ? true // Super Admin sees all data
-                    : userDetails.Role === "Territory Sales Associate" || userDetails.Role === "Territory Sales Manager"
-                        ? post?.referenceid === referenceID // TSA and TSM see only their assigned companies
-                        : false; // Default false if no match
+        const data = await response.json();
 
-            // Return the filtered result
-            return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole;
-        })
-        : [];
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
 
-    return (
-        <SessionChecker>
-            <ParentLayout>
-                <UserFetcher>
-                    {(user) => (
-                        <div className="container mx-auto p-4 text-gray-900">
-                            <div className="grid grid-cols-1 md:grid-cols-1">
+        setTSAOptions(options);
+      } catch (error) {
+        console.error("Error fetching agents:", error);
+      }
+    };
 
-                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                    <h2 className="text-lg font-bold mb-2">List of Accounts - Company Groups</h2>
-                                    <p className="text-xs text-gray-600 mb-4">
-                                        This section allows you to filter and search through different company groups.
-                                        You can use the search bar to search for company names and apply various filters based on client type and the date range.
-                                        The filter options help you narrow down your results efficiently, making it easier to manage and track company groups.
-                                    </p>
-                                    <Filters
-                                        searchTerm={searchTerm}
-                                        setSearchTerm={setSearchTerm}
-                                    />
-                                    <Table
-                                        posts={filteredAccounts}
-                                    />
-                                </div>
-                                <ToastContainer className="text-xs" autoClose={1000} />
-                            </div>
-                        </div>
-                    )}
-                </UserFetcher>
-            </ParentLayout>
-        </SessionChecker>
-    );
+    fetchTSA();
+  }, [userDetails.ReferenceID, userDetails.Role]);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedClientType, startDate, endDate, selectedAgent]);
+
+  const filteredAccounts = Array.isArray(posts)
+    ? posts.filter((post) => {
+        const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
+        const postDate = post.date_created ? new Date(post.date_created) : null;
+        const isWithinDateRange =
+          (!startDate || (postDate && postDate >= new Date(startDate))) &&
+          (!endDate || (postDate && postDate <= new Date(endDate)));
+        const matchesClientType = selectedClientType ? post?.typeclient === selectedClientType : true;
+        const referenceID = userDetails.ReferenceID;
+
+        const matchesRole =
+          userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+            ? true
+            : userDetails.Role === "Territory Sales Associate"
+            ? post?.referenceid === referenceID
+            : userDetails.Role === "Territory Sales Manager"
+            ? post?.tsm === referenceID
+            : false;
+
+        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+
+        return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesAgentFilter;
+      })
+    : [];
+
+  // PAGINATION LOGIC
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
+
+  return (
+    <SessionChecker>
+      <ParentLayout>
+        <UserFetcher>
+          {(user) => (
+            <div className="container mx-auto p-4 text-gray-900">
+              <div className="grid grid-cols-1 md:grid-cols-1">
+                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                  <h2 className="text-lg font-bold mb-2">List of Accounts - Company Groups</h2>
+                  <p className="text-xs text-gray-600 mb-4">
+                    This section allows you to filter and search through different company groups.
+                  </p>
+
+                  {/* Agent Filter */}
+                  {userDetails.Role === "Territory Sales Manager" && (
+                    <div className="mb-4">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Filter by Agent</label>
+                      <select
+                        className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                        value={selectedAgent}
+                        onChange={(e) => setSelectedAgent(e.target.value)}
+                      >
+                        <option value="">All Agents</option>
+                        {tsaOptions.map((agent) => (
+                          <option key={agent.value} value={agent.value}>
+                            {agent.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <Filters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+                  <Table posts={currentPosts} />
+
+                  {/* Pagination Controls */}
+                  <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      className="bg-gray-200 text-xs px-4 py-2 rounded disabled:opacity-50"
+                    >
+                      Previous
+                    </button>
+
+                    <span className="text-xs">
+                      Page {currentPage} of {totalPages}
+                    </span>
+
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      className="bg-gray-200 text-xs px-4 py-2 rounded disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+                <ToastContainer className="text-xs" autoClose={1000} />
+              </div>
+            </div>
+          )}
+        </UserFetcher>
+      </ParentLayout>
+    </SessionChecker>
+  );
 };
 
 export default GroupAccounts;

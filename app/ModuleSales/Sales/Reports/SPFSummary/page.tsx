@@ -37,6 +37,9 @@ const ListofUser: React.FC = () => {
         Company: "",
     });
 
+    const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
+    const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
+
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +106,33 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
+    useEffect(() => {
+        const fetchTSA = async () => {
+            if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
+
+            try {
+                const response = await fetch(
+                    `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
+                );
+
+                if (!response.ok) throw new Error("Failed to fetch agents");
+
+                const data = await response.json();
+
+                const options = data.map((user: any) => ({
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
+                }));
+
+                setTSAOptions(options);
+            } catch (error) {
+                console.error("Error fetching agents:", error);
+            }
+        };
+
+        fetchTSA();
+    }, [userDetails.ReferenceID, userDetails.Role]);
+
     // Filter users by search term (company name), date range, referenceID, and client type
     const filteredAccounts = Array.isArray(posts)
         ? posts
@@ -117,13 +147,28 @@ const ListofUser: React.FC = () => {
                     (!startDate || (postDate && postDate >= new Date(startDate))) &&
                     (!endDate || (postDate && postDate <= new Date(endDate)));
 
-                const matchesReferenceID =
-                    post?.referenceid === userDetails.ReferenceID ||
-                    post?.ReferenceID === userDetails.ReferenceID;
+                const isFromCSRInquiries =
+                    post?.typecall?.toLowerCase() === "sent quotation - with spf";
 
-                const isFromCSRInquiries = post?.typecall?.toLowerCase() === "sent quotation - with spf";
+                const referenceID = userDetails.ReferenceID;
+                const matchesRole =
+                    userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                        ? true
+                        : userDetails.Role === "Territory Sales Associate"
+                            ? post?.referenceid === referenceID
+                            : userDetails.Role === "Territory Sales Manager"
+                                ? post?.tsm === referenceID
+                                : false;
 
-                return matchesSearchTerm && isWithinDateRange && matchesReferenceID && isFromCSRInquiries;
+                const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+
+                return (
+                    matchesSearchTerm &&
+                    isWithinDateRange &&
+                    isFromCSRInquiries &&
+                    matchesRole &&
+                    matchesAgentFilter
+                );
             })
             .sort(
                 (a, b) =>
@@ -185,6 +230,28 @@ const ListofUser: React.FC = () => {
                                         support effective relationship management and ensure client needs are
                                         consistently met.
                                     </p>
+
+                                    {/* Filter by Agent */}
+                                    {userDetails.Role === "Territory Sales Manager" && (
+                                        <div className="mb-4">
+                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                Filter by Agent
+                                            </label>
+                                            <select
+                                                className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                                                value={selectedAgent}
+                                                onChange={(e) => setSelectedAgent(e.target.value)}
+                                            >
+                                                <option value="">All Agents</option>
+                                                {tsaOptions.map((agent) => (
+                                                    <option key={agent.value} value={agent.value}>
+                                                        {agent.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
                                     <Filters
                                         searchTerm={searchTerm}
                                         setSearchTerm={setSearchTerm}

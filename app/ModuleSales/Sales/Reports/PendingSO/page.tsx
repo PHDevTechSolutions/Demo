@@ -21,6 +21,10 @@ const ListofUser: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
         UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
     });
+
+    const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
+    const [selectedAgent, setSelectedAgent] = useState("");
+
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
 
@@ -81,43 +85,81 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
+    useEffect(() => {
+        const fetchTSA = async () => {
+            if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
+
+            try {
+                const response = await fetch(
+                    `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
+                );
+
+                if (!response.ok) throw new Error("Failed to fetch agents");
+
+                const data = await response.json();
+
+                const options = data.map((user: any) => ({
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
+                }));
+
+                setTSAOptions(options);
+            } catch (error) {
+                console.error("Error fetching agents:", error);
+            }
+        };
+
+        fetchTSA();
+    }, [userDetails.ReferenceID, userDetails.Role]);
+
     // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
-  ? posts
-      .filter((post) => {
-        const matchesSearchTerm = post?.companyname
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        ? posts
+            .filter((post) => {
+                const matchesSearchTerm = post?.companyname
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase());
 
-        const postDate = post.date_created ? new Date(post.date_created) : null;
+                const postDate = post.date_created ? new Date(post.date_created) : null;
 
-        const isWithinDateRange =
-          (!startDate || (postDate && postDate >= new Date(startDate))) &&
-          (!endDate || (postDate && postDate <= new Date(endDate)));
+                const isWithinDateRange =
+                    (!startDate || (postDate && postDate >= new Date(startDate))) &&
+                    (!endDate || (postDate && postDate <= new Date(endDate)));
 
-        const matchesReferenceID =
-          post?.referenceid === userDetails.ReferenceID ||
-          post?.ReferenceID === userDetails.ReferenceID;
+                // Role-based access
+                const referenceID = userDetails.ReferenceID;
+                const matchesRole =
+                    userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                        ? true
+                        : userDetails.Role === "Territory Sales Associate"
+                            ? post?.referenceid === referenceID
+                            : userDetails.Role === "Territory Sales Manager"
+                                ? post?.tsm === referenceID
+                                : false;
 
-        // Only consider SO-DONE records that are overdue for more than 15 days
-        const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
-        const isOverdue =
-          isSoDone &&
-          postDate &&
-          (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
+                const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-        return (
-          matchesSearchTerm &&
-          isWithinDateRange &&
-          matchesReferenceID &&
-          isOverdue
-        );
-      })
-      .sort(
-        (a, b) =>
-          new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-      )
-  : [];
+                // Only consider SO-DONE records that are overdue for more than 15 days
+                const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
+                const isOverdue =
+                    isSoDone &&
+                    postDate &&
+                    (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
+
+                return (
+                    matchesSearchTerm &&
+                    isWithinDateRange &&
+                    isOverdue &&
+                    matchesRole &&
+                    matchesAgentFilter
+                );
+            })
+            .sort(
+                (a, b) =>
+                    new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+            )
+        : [];
+
 
     return (
         <SessionChecker>
@@ -132,6 +174,28 @@ const ListofUser: React.FC = () => {
                                         <p className="text-xs text-gray-600 mb-4">
                                             This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
                                         </p>
+
+                                        {/* Filter by Agent */}
+                                        {userDetails.Role === "Territory Sales Manager" && (
+                                            <div className="mb-4">
+                                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                    Filter by Agent
+                                                </label>
+                                                <select
+                                                    className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                                                    value={selectedAgent}
+                                                    onChange={(e) => setSelectedAgent(e.target.value)}
+                                                >
+                                                    <option value="">All Agents</option>
+                                                    {tsaOptions.map((agent) => (
+                                                        <option key={agent.value} value={agent.value}>
+                                                            {agent.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
                                         <Filters
                                             searchTerm={searchTerm}
                                             setSearchTerm={setSearchTerm}

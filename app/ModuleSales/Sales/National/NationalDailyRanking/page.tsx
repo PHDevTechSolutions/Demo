@@ -149,8 +149,8 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchAccount}  // Pass the refreshPosts callback
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}  // Ensure id is passed correctly
+                                        refreshPosts={fetchAccount}
+                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}
                                         editUser={editUser}
                                     />
                                 ) : (
