@@ -9,6 +9,7 @@ interface SidebarUserInfoProps {
     Lastname: string;
     Company: string;
     Role: string;
+    Position: string;
     Status: string;
     Email: string;
     Department: string;
@@ -119,7 +120,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
             {userDetails.Firstname}, {userDetails.Lastname}
           </p>
           <p className="italic">{userDetails.Company}</p>
-          <p className="italic">( {userDetails.Role} )</p>
+          <p className="italic">( {userDetails.Position} )</p>
         </div>
       </div>
 
