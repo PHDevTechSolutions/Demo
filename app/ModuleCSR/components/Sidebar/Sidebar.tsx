@@ -204,8 +204,8 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
           <p className="font-bold uppercase">
             {userDetails.Firstname}, {userDetails.Lastname}
           </p>
-          <p>{userDetails.Company}</p>
-          <p className="italic">( {userDetails.Position} )</p>
+          <p className="text-[10px]">{userDetails.Company}</p>
+          <p className="italic text-[10px]">{userDetails.Position}</p>
           <span
             className={`text-white text-[8px] font-semibold px-3 py-1 rounded-full inline-block mt-2 ${userDetails.Status === "Active"
               ? "bg-green-900"
