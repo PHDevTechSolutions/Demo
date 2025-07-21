@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 
 interface Post {
     id: string;
+    referenceid: string;
     date_created: string;
     companyname: string;
     contactperson: string;
@@ -23,7 +24,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
 
-    const [activityStatusFilter, setActivityStatusFilter] = useState<string>("all");
+    const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
     // Parse dates helper (returns Date or null)
     const parseDate = (dateStr: string) => {
@@ -114,11 +115,28 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         return `${formattedDateStr} ${hours}:${minutesStr} ${ampm}`;
     };
 
-    const activityStatusOptions = useMemo(() => {
-        const uniqueStatuses = Array.from(
-            new Set(posts.map((post) => post.activitystatus.toLowerCase()))
-        );
-        return uniqueStatuses;
+    useEffect(() => {
+        const fetchAgents = async () => {
+            const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
+            const nameMap: Record<string, string> = {};
+
+            await Promise.all(uniqueReferenceIds.map(async (id) => {
+                try {
+                    const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+                    const data = await res.json();
+                    nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+                } catch (error) {
+                    console.error(`Error fetching user ${id}`, error);
+                    nameMap[id] = "";
+                }
+            }));
+
+            setAgentNames(nameMap);
+        };
+
+        if (posts.length > 0) {
+            fetchAgents();
+        }
     }, [posts]);
 
     return (
@@ -176,6 +194,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                         <tr className="text-left border-l-4 border-orange-400">
                             <th className="px-6 py-3 font-semibold text-gray-700">Status</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Date</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">SO No.</th>
@@ -204,6 +223,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-3">{formatDate(post.date_created)}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
                                     <td className="px-6 py-3 uppercase">{post.companyname}</td>
                                     <td className="px-6 py-3 capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-3 uppercase">{post.sonumber}</td>

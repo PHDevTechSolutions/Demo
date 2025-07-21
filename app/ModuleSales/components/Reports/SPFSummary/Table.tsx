@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CiEdit } from "react-icons/ci";
 
 interface Post {
     id: string;
+    referenceid: string;
     date_created: string;
     companyname: string;
     contactperson: string;
@@ -22,6 +23,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+
+    const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -69,6 +72,30 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         setCurrentPage(Math.min(Math.max(page, 1), totalPages));
     };
 
+    useEffect(() => {
+        const fetchAgents = async () => {
+            const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
+            const nameMap: Record<string, string> = {};
+
+            await Promise.all(uniqueReferenceIds.map(async (id) => {
+                try {
+                    const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+                    const data = await res.json();
+                    nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+                } catch (error) {
+                    console.error(`Error fetching user ${id}`, error);
+                    nameMap[id] = "";
+                }
+            }));
+
+            setAgentNames(nameMap);
+        };
+
+        if (posts.length > 0) {
+            fetchAgents();
+        }
+    }, [posts]);
+
     return (
         <div>
             {/* Filters */}
@@ -95,6 +122,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                     <thead className="bg-gray-100">
                         <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
                             <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Amount</th>
@@ -110,6 +138,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                             paginatedData.map((post) => (
                                 <tr key={post.id} className="border-b whitespace-nowrap">
                                     <td className="px-6 py-4 text-xs">{formatDate(post.date_created)}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
                                     <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{formatCurrency(post.quotationamount)}</td>

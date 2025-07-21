@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Pagination from "./Pagination";
 import Export from "./Export";
 
 interface Post {
   id: string;
+  referenceid: string;
   companyname: string;
   typeclient: string;
   actualsales: number | string;
@@ -20,15 +21,38 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
-  // Date range filter state
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
-  // Parse dates helper (returns Date or null)
   const parseDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
   };
+
+  useEffect(() => {
+    const fetchAgents = async () => {
+      const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
+      const nameMap: Record<string, string> = {};
+
+      await Promise.all(uniqueReferenceIds.map(async (id) => {
+        try {
+          const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+          const data = await res.json();
+          nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+        } catch (error) {
+          console.error(`Error fetching user ${id}`, error);
+          nameMap[id] = "";
+        }
+      }));
+
+      setAgentNames(nameMap);
+    };
+
+    if (posts.length > 0) {
+      fetchAgents();
+    }
+  }, [posts]);
 
   const groupedData: Record<string, Post[]> = posts.reduce(
     (acc: Record<string, Post[]>, post: Post) => {
@@ -61,15 +85,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     return ["All", ...Array.from(new Set(allTypes))];
   }, [posts]);
 
-  // Filter and sort by average sales descending
   const filteredAndSortedData = useMemo(() => {
     const start = parseDate(startDate);
     const end = parseDate(endDate);
 
-    // Filter groups by type client and date range
     const filteredGroups = Object.entries(groupedData).filter(
       ([_, entries]) => {
-        // Filter entries by type client & date range
         const filteredEntries = entries.filter((post) => {
           const matchesTypeClient =
             filterTypeClient === "All" ||
@@ -87,7 +108,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       }
     );
 
-    // Map each group to aggregate values
     const mapped = filteredGroups.map(([companyName, entries]) => {
       const filteredEntries = entries.filter((post) => {
         const matchesTypeClient =
@@ -116,15 +136,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       const typeClients = Array.from(
         new Set(filteredEntries.map((e) => e.typeclient.toUpperCase()))
       ).join(", ");
+      const referenceid = filteredEntries[0]?.referenceid || "";
+      const agentName = agentNames[referenceid] || "";
 
-      return { companyName, totalSales, averageSales, typeClients, targetQuota };
+      return { companyName, totalSales, averageSales, typeClients, targetQuota, agentName };
     });
 
-    // Sort by average sales descending
     mapped.sort((a, b) => b.averageSales - a.averageSales);
-
     return mapped;
-  }, [groupedData, filterTypeClient, startDate, endDate]);
+  }, [groupedData, filterTypeClient, startDate, endDate, agentNames]);
 
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
@@ -163,7 +183,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     <div>
       {/* Filters & Export */}
       <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
-        {/* Left side: Filter + ItemsPerPage */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <label htmlFor="typeClientFilter" className="font-semibold text-xs whitespace-nowrap">Filter by Type of Client:</label>
@@ -204,7 +223,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
           </div>
         </div>
 
-        {/* Right side: Export Button */}
         <div className="flex-shrink-0 flex items-center gap-2">
           <select id="itemsPerPage" value={itemsPerPage}
             onChange={handleItemsPerPageChange}
@@ -224,6 +242,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
+              <th className="px-6 py-4 font-semibold text-gray-700">Agent Name</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Type of Client</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales (SI)</th>
@@ -233,17 +252,14 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
           <tbody className="divide-y divide-gray-100">
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-4 text-xs">
+                <td colSpan={5} className="text-center py-4 text-xs">
                   No records available
                 </td>
               </tr>
             ) : (
               paginatedData.map(
-                ({ companyName, totalSales, typeClients, averageSales, targetQuota }) => {
-                  // Safely calculate achievement % and color
-                  const target = Number(
-                    String(targetQuota).replace(/,/g, "")
-                  );
+                ({ companyName, totalSales, typeClients, averageSales, targetQuota, agentName }) => {
+                  const target = Number(String(targetQuota).replace(/,/g, ""));
                   const isValidTarget = !isNaN(target) && target > 0;
                   const achievement = isValidTarget
                     ? (totalSales / target) * 100
@@ -252,6 +268,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
 
                   return (
                     <tr key={companyName} className="bg-white hover:bg-gray-50">
+                      <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentName}</td>
                       <td className="px-6 py-4 text-xs uppercase">{companyName}</td>
                       <td className="px-6 py-4 text-xs">{typeClients}</td>
                       <td className="px-6 py-4 text-xs">{formatSales(totalSales)}</td>
@@ -270,6 +287,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
             <tr className="text-xs font-bold text-gray-700">
               <td className="px-6 py-3 uppercase">Grand Total</td>
               <td></td>
+              <td></td>
               <td className="px-6 py-3">{formatSales(grandTotal)}</td>
               <td></td>
             </tr>
@@ -277,7 +295,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

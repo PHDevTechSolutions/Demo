@@ -10,16 +10,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const db = await connectToDatabase();
 
   try {
-    const { Role, tsm } = req.query;
+    const { Role, tsm, id } = req.query;
 
+    // Fetch by ID only (single agent by ReferenceID)
+    if (id) {
+      const user = await db.collection("users").findOne(
+        { ReferenceID: id },
+        { projection: { Firstname: 1, Lastname: 1, ReferenceID: 1, _id: 0 } }
+      );
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      return res.status(200).json(user);
+    }
+
+    // Otherwise fetch list of users by Role and TSM
     if (!Role) {
       return res.status(400).json({ error: "Role is required" });
     }
 
-    // Build the query filter
     const filter: any = {
       Role,
-      Status: { $nin: ["Resigned", "Terminated"] }, // exclude resigned or terminated users
+      Status: { $nin: ["Resigned", "Terminated"] },
     };
 
     if (tsm) {

@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
+import * as ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 // Components
 import Form from "../../../components/Reports/CSRSummary/Form";
@@ -38,12 +40,11 @@ const ListofUser: React.FC = () => {
     });
 
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
-    const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
+    const [selectedAgent, setSelectedAgent] = useState("");
 
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -86,13 +87,11 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
         setLoading(true);
         try {
             const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
             setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
@@ -133,22 +132,15 @@ const ListofUser: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Filter users by search term (company name), date range, referenceID, and client type
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
-                const matchesSearchTerm = post?.companyname
-                    ?.toLowerCase()
-                    .includes(searchTerm.toLowerCase());
-
+                const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
                 const postDate = post.date_created ? new Date(post.date_created) : null;
-
                 const isWithinDateRange =
                     (!startDate || (postDate && postDate >= new Date(startDate))) &&
                     (!endDate || (postDate && postDate <= new Date(endDate)));
-
                 const isFromCSRInquiries = post?.typeclient?.toLowerCase() === "csr inquiries";
-
                 const referenceID = userDetails.ReferenceID;
                 const matchesRole =
                     userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
@@ -158,22 +150,55 @@ const ListofUser: React.FC = () => {
                             : userDetails.Role === "Territory Sales Manager"
                                 ? post?.tsm === referenceID
                                 : false;
-
                 const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-                return matchesSearchTerm && isWithinDateRange && isFromCSRInquiries && matchesRole && matchesAgentFilter;
+                return (
+                    matchesSearchTerm &&
+                    isWithinDateRange &&
+                    isFromCSRInquiries &&
+                    matchesRole &&
+                    matchesAgentFilter
+                );
             })
-            .sort(
-                (a, b) =>
-                    new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-            )
+            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
-
 
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
     };
+
+    const exportToExcel = async () => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("CSR Inquiries");
+
+        worksheet.columns = [
+            { header: "Date Created", key: "date_created", width: 20 },
+            { header: "Company Name", key: "companyname", width: 25 },
+            { header: "Contact Person", key: "contactperson", width: 25 },
+            { header: "Type", key: "typeclient", width: 20 },
+            { header: "Status", key: "status", width: 15 },
+            { header: "Amount", key: "quotationamount", width: 20 }, // ✅ added
+        ];
+
+        filteredAccounts.forEach((item) => {
+            worksheet.addRow({
+                date_created: item.date_created,
+                companyname: item.companyname,
+                contactperson: item.contactperson,
+                typeclient: item.typeclient,
+                status: item.status,
+                quotationamount: item.quotationamount || "", // ✅ added
+            });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        saveAs(blob, "csr_inquiries.xlsx");
+    };
+
 
     return (
         <SessionChecker>
@@ -182,7 +207,6 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="container mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
-                                {/* Backdrop overlay */}
                                 {showForm && (
                                     <div
                                         className="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -193,10 +217,9 @@ const ListofUser: React.FC = () => {
                                     ></div>
                                 )}
                                 <div
-                                    className={`fixed top-0 right-0 h-full w-full shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${showForm ? "translate-x-0" : "translate-x-full"
-                                        }`}
+                                    className={`fixed top-0 right-0 h-full w-full shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${showForm ? "translate-x-0" : "translate-x-full"}`}
                                 >
-                                    {showForm ? (
+                                    {showForm && (
                                         <Form
                                             onCancel={() => {
                                                 setShowForm(false);
@@ -211,28 +234,23 @@ const ListofUser: React.FC = () => {
                                             }}
                                             editUser={editUser}
                                         />
-                                    ) : null}
+                                    )}
                                 </div>
 
                                 <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
                                     <h2 className="text-lg font-bold mb-2">CSR Inquiry Summary</h2>
                                     <p className="text-xs text-gray-600 mb-4">
-                                        This section provides an organized overview of{" "}
-                                        <strong>client accounts</strong> handled by the Sales team. It enables users
-                                        to efficiently monitor account status, track communications, and manage key
-                                        activities and deliverables. The table below offers a detailed summary to
-                                        support effective relationship management and ensure client needs are
-                                        consistently met.
+                                        This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users
+                                        to efficiently monitor account status, track communications, and manage key activities and deliverables.
                                     </p>
 
-                                    {/* Filter by Agent */}
                                     {userDetails.Role === "Territory Sales Manager" && (
-                                        <div className="mb-4">
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
                                                 Filter by Agent
                                             </label>
                                             <select
-                                                className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                                                className="border rounded px-3 py-2 text-xs capitalize w-full md:w-1/3"
                                                 value={selectedAgent}
                                                 onChange={(e) => setSelectedAgent(e.target.value)}
                                             >
@@ -243,6 +261,12 @@ const ListofUser: React.FC = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            <button
+                                                onClick={exportToExcel}
+                                                className="bg-green-700 hover:bg-green-800 text-white text-[10px] px-4 py-2 rounded whitespace-nowrap"
+                                            >
+                                                Export to Excel
+                                            </button>
                                         </div>
                                     )}
 
@@ -254,6 +278,7 @@ const ListofUser: React.FC = () => {
                                         endDate={endDate}
                                         setEndDate={setEndDate}
                                     />
+
                                     <Table posts={filteredAccounts} handleEdit={handleEdit} />
                                 </div>
 

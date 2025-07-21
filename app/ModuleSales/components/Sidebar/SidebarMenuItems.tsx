@@ -142,6 +142,11 @@ const getMenuItems = (userId: string | null = "") => [
                 description: "Recently Onboarded Clients", 
                 href: `/ModuleSales/Sales/Reports/NewClientSummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
+            { 
+                title: "FB Marketplace", 
+                description: "Inquiries and Leads from Facebook Marketplace", 
+                href: `/ModuleSales/Sales/Reports/FbMarketplaceSummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
         ],
     },
     {

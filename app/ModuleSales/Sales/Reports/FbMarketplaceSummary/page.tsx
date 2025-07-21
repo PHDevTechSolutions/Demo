@@ -4,16 +4,13 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
-// Components
 import Form from "../../../components/Reports/CSRSummary/Form";
-import Filters from "../../../components/Reports/SPFSummary/Filters";
-import Table from "../../../components/Reports/SPFSummary/Table";
+import Filters from "../../../components/Reports/NewClientSummary/Filters";
+import Table from "../../../components/Reports/NewClientSummary/Table";
 
-// Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ExcelJS
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
@@ -42,8 +39,7 @@ const ListofUser: React.FC = () => {
     });
 
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
-    const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
-
+    const [selectedAgent, setSelectedAgent] = useState("");
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +90,6 @@ const ListofUser: React.FC = () => {
         try {
             const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
             const data = await response.json();
-            console.log("Fetched data:", data);
             setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
@@ -113,14 +108,10 @@ const ListofUser: React.FC = () => {
             if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
 
             try {
-                const response = await fetch(
-                    `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
-                );
-
+                const response = await fetch(`/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`);
                 if (!response.ok) throw new Error("Failed to fetch agents");
 
                 const data = await response.json();
-
                 const options = data.map((user: any) => ({
                     value: user.ReferenceID,
                     label: `${user.Firstname} ${user.Lastname}`,
@@ -137,44 +128,37 @@ const ListofUser: React.FC = () => {
 
     const filteredAccounts = Array.isArray(posts)
         ? posts
-            .filter((post) => {
-                const matchesSearchTerm = post?.companyname
-                    ?.toLowerCase()
-                    .includes(searchTerm.toLowerCase());
+              .filter((post) => {
+                  const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
+                  const postDate = post.date_created ? new Date(post.date_created) : null;
+                  const isWithinDateRange =
+                      (!startDate || (postDate && postDate >= new Date(startDate))) &&
+                      (!endDate || (postDate && postDate <= new Date(endDate)));
 
-                const postDate = post.date_created ? new Date(post.date_created) : null;
+                  const typeActivity = post?.typeactivity?.toLowerCase();
+                  const isFromCSRInquiries = typeActivity === "fb-marketplace";
 
-                const isWithinDateRange =
-                    (!startDate || (postDate && postDate >= new Date(startDate))) &&
-                    (!endDate || (postDate && postDate <= new Date(endDate)));
+                  const referenceID = userDetails.ReferenceID;
+                  const matchesRole =
+                      userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                          ? true
+                          : userDetails.Role === "Territory Sales Associate"
+                          ? post?.referenceid === referenceID
+                          : userDetails.Role === "Territory Sales Manager"
+                          ? post?.tsm === referenceID
+                          : false;
 
-                const isFromCSRInquiries =
-                    post?.typecall?.toLowerCase() === "sent quotation - with spf";
+                  const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-                const referenceID = userDetails.ReferenceID;
-                const matchesRole =
-                    userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-                        ? true
-                        : userDetails.Role === "Territory Sales Associate"
-                            ? post?.referenceid === referenceID
-                            : userDetails.Role === "Territory Sales Manager"
-                                ? post?.tsm === referenceID
-                                : false;
-
-                const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
-
-                return (
-                    matchesSearchTerm &&
-                    isWithinDateRange &&
-                    isFromCSRInquiries &&
-                    matchesRole &&
-                    matchesAgentFilter
-                );
-            })
-            .sort(
-                (a, b) =>
-                    new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-            )
+                  return (
+                      matchesSearchTerm &&
+                      isWithinDateRange &&
+                      isFromCSRInquiries &&
+                      matchesRole &&
+                      matchesAgentFilter
+                  );
+              })
+              .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
 
     const handleEdit = (post: any) => {
@@ -184,14 +168,15 @@ const ListofUser: React.FC = () => {
 
     const exportToExcel = async () => {
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("SPF Summary");
+        const worksheet = workbook.addWorksheet("FB Marketplace");
 
         worksheet.columns = [
             { header: "Date Created", key: "date_created", width: 20 },
             { header: "Company Name", key: "companyname", width: 25 },
             { header: "Contact Person", key: "contactperson", width: 25 },
             { header: "Amount", key: "quotationamount", width: 20 },
-            { header: "Remarks", key: "remarks", width: 25 },
+            { header: "Type", key: "typeclient", width: 20 },
+            { header: "Status", key: "status", width: 15 },
         ];
 
         filteredAccounts.forEach((item) => {
@@ -200,15 +185,14 @@ const ListofUser: React.FC = () => {
                 companyname: item.companyname,
                 contactperson: item.contactperson,
                 quotationamount: item.quotationamount,
-                remarks: item.remarks,
+                typeclient: item.typeclient,
+                status: item.status,
             });
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], {
-            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-        saveAs(blob, "spf_summary.xlsx");
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        saveAs(blob, "fb_marketplace_summary.xlsx");
     };
 
     return (
@@ -219,23 +203,12 @@ const ListofUser: React.FC = () => {
                         <div className="container mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
                                 {showForm && (
-                                    <div
-                                        className="fixed inset-0 bg-black bg-opacity-50 z-30"
-                                        onClick={() => {
-                                            setShowForm(false);
-                                            setEditUser(null);
-                                        }}
-                                    ></div>
+                                    <div className="fixed inset-0 bg-black bg-opacity-50 z-30" onClick={() => { setShowForm(false); setEditUser(null); }}></div>
                                 )}
-                                <div
-                                    className={`fixed top-0 right-0 h-full w-full shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${showForm ? "translate-x-0" : "translate-x-full"}`}
-                                >
-                                    {showForm && (
+                                <div className={`fixed top-0 right-0 h-full w-full shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${showForm ? "translate-x-0" : "translate-x-full"}`}>
+                                    {showForm ? (
                                         <Form
-                                            onCancel={() => {
-                                                setShowForm(false);
-                                                setEditUser(null);
-                                            }}
+                                            onCancel={() => { setShowForm(false); setEditUser(null); }}
                                             refreshPosts={fetchAccount}
                                             userDetails={{
                                                 id: editUser ? editUser.id : userDetails.UserId,
@@ -245,20 +218,18 @@ const ListofUser: React.FC = () => {
                                             }}
                                             editUser={editUser}
                                         />
-                                    )}
+                                    ) : null}
                                 </div>
 
                                 <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                    <h2 className="text-lg font-bold mb-2">SPF Summary</h2>
+                                    <h2 className="text-lg font-bold mb-2">FB Marketplace</h2>
                                     <p className="text-xs text-gray-600 mb-4">
-                                        This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
+                                        This section provides an organized overview of <strong>FB Marketplace client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
                                     </p>
 
                                     {userDetails.Role === "Territory Sales Manager" && (
                                         <div className="mb-4 flex flex-wrap items-center gap-2">
-                                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                                Filter by Agent
-                                            </label>
+                                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Filter by Agent</label>
                                             <select
                                                 className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
                                                 value={selectedAgent}
@@ -266,17 +237,10 @@ const ListofUser: React.FC = () => {
                                             >
                                                 <option value="">All Agents</option>
                                                 {tsaOptions.map((agent) => (
-                                                    <option key={agent.value} value={agent.value}>
-                                                        {agent.label}
-                                                    </option>
+                                                    <option key={agent.value} value={agent.value}>{agent.label}</option>
                                                 ))}
                                             </select>
-                                            <button
-                                                onClick={exportToExcel}
-                                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs"
-                                            >
-                                                Export to Excel
-                                            </button>
+                                            <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs">Export to Excel</button>
                                         </div>
                                     )}
 

@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
@@ -12,11 +13,15 @@ import Table from "../../../components/Reports/SOSummary/Table";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
+// Excel Export
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
 const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
@@ -28,7 +33,37 @@ const ListofUser: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch user data based on query parameters (user ID)
+    const exportToExcel = async () => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("SO Summary");
+
+        worksheet.columns = [
+            { header: "Date", key: "date_created", width: 20 },
+            { header: "Company Name", key: "companyname", width: 30 },
+            { header: "Contact Person", key: "contactperson", width: 25 },
+            { header: "SO Number", key: "sono", width: 20 },
+            { header: "SO Amount", key: "soamount", width: 15 },
+            { header: "Status", key: "activitystatus", width: 15 },
+            { header: "Remarks", key: "remarks", width: 30 },
+        ];
+
+        filteredAccounts.forEach((post) => {
+            worksheet.addRow({
+                date_created: post.date_created,
+                companyname: post.companyname,
+                contactperson: post.contactperson,
+                sono: post.sono,
+                soamount: post.soamount,
+                activitystatus: post.activitystatus,
+                remarks: post.remarks,
+            });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        saveAs(blob, "SO_Summary.xlsx");
+    };
+
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -40,7 +75,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
                         Email: data.Email || "",
@@ -65,14 +100,12 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
         setLoading(true);
         try {
             const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -112,7 +145,6 @@ const ListofUser: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -163,47 +195,50 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="container mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
-                                <>
-                                    <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                        <h2 className="text-lg font-bold mb-2">SO Summary</h2>
-                                        <p className="text-xs text-gray-600 mb-4">
-                                            This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
-                                        </p>
-                                        
-                                        {/* Filter by Agent */}
-                                        {userDetails.Role === "Territory Sales Manager" && (
-                                            <div className="mb-4">
-                                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                                    Filter by Agent
-                                                </label>
-                                                <select
-                                                    className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                                                    value={selectedAgent}
-                                                    onChange={(e) => setSelectedAgent(e.target.value)}
-                                                >
-                                                    <option value="">All Agents</option>
-                                                    {tsaOptions.map((agent) => (
-                                                        <option key={agent.value} value={agent.value}>
-                                                            {agent.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
+                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                                    <h2 className="text-lg font-bold mb-2">SO Summary</h2>
+                                    <p className="text-xs text-gray-600 mb-4">
+                                        This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
+                                    </p>
 
-                                        <Filters
-                                            searchTerm={searchTerm}
-                                            setSearchTerm={setSearchTerm}
-                                            startDate={startDate}
-                                            setStartDate={setStartDate}
-                                            endDate={endDate}
-                                            setEndDate={setEndDate}
-                                        />
-                                        <Table
-                                            posts={filteredAccounts}
-                                        />
-                                    </div>
-                                </>
+                                    {userDetails.Role === "Territory Sales Manager" && (
+                                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                                                Filter by Agent:
+                                            </label>
+
+                                            <select
+                                                className="border rounded px-3 py-2 text-xs capitalize w-full md:w-1/3"
+                                                value={selectedAgent}
+                                                onChange={(e) => setSelectedAgent(e.target.value)}
+                                            >
+                                                <option value="">All Agents</option>
+                                                {tsaOptions.map((agent) => (
+                                                    <option key={agent.value} value={agent.value}>
+                                                        {agent.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            <button
+                                                onClick={exportToExcel}
+                                                className="bg-green-700 hover:bg-green-800 text-white text-[10px] px-4 py-2 rounded whitespace-nowrap"
+                                            >
+                                                Export to Excel
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    <Filters
+                                        searchTerm={searchTerm}
+                                        setSearchTerm={setSearchTerm}
+                                        startDate={startDate}
+                                        setStartDate={setStartDate}
+                                        endDate={endDate}
+                                        setEndDate={setEndDate}
+                                    />
+                                    <Table posts={filteredAccounts} />
+                                </div>
 
                                 <ToastContainer className="text-xs" autoClose={1000} />
                             </div>
