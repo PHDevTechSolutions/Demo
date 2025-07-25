@@ -70,20 +70,18 @@ const fieldOnlyStatus = [
   "TSM Coaching"
 ];
 
-const formatDate = (dateStr: string | null): string => {
-  if (!dateStr) return "N/A";
-
-  const date = new Date(dateStr);
+const formatDate = (timestamp: string | null): string => {
+  if (!timestamp) return "N/A";
+  const date = new Date(timestamp);
   if (isNaN(date.getTime())) return "Invalid date";
 
-  return date.toLocaleDateString("en-PH", {
-    timeZone: "Asia/Manila", // ✅ Important fix for live servers
+  return new Intl.DateTimeFormat("en-PH", {
     year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+    month: "long",
+    day: "2-digit",
+    timeZone: "Asia/Manila",
+  }).format(date);
 };
-
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const groupedPosts = useMemo(() => {
@@ -134,7 +132,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                     <span style={{ transform: "skew(20deg)" }}>On Progress</span>
                   </span>
                 )}
-
               </div>
             </td>
           </tr>
@@ -161,7 +158,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                 >
                   {!isFieldStatus && (
                     <div className="flex gap-1">
-                      {/* UPDATE */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -171,7 +167,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                       >
                         <RiEditCircleLine size={12} /> Update
                       </button>
-                      {/* DELETE — NEW */}
                       <button
                         onClick={(e) => onDelete(e, post.id)}
                         className="flex items-center gap-1 bg-red-500 text-white text-[10px] px-2 py-1 rounded hover:bg-red-700 transition-colors shadow-md"
@@ -184,8 +179,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
 
                 <td className="px-6 py-4">
                   <span
-                    className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"
-                      }`}
+                    className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"}`}
                   >
                     {post.activitystatus}
                   </span>
