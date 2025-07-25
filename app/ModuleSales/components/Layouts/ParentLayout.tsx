@@ -46,44 +46,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       </div>
 
       {/* Floating Button and Chat Options */}
-      <div
-        className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 group"
-        onMouseEnter={() => setShowOptions(true)}
-        onMouseLeave={() => setShowOptions(false)}
-      >
-        {showOptions && (
-          <div className="flex flex-col gap-2 mb-2 z-[999]">
-            <button
-              onClick={() => {
-                setRightbarOpen(true);
-                setShowOptions(false);
-              }}
-              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded-lg shadow hover:bg-gray-100 dark:hover:bg-gray-700 text-xs"
-            >
-              Chat with Tasky
-            </button>
-          </div>
-        )}
-
-        {/* Hover Text appears outside the button */}
-        <div className="mb-1 pr-1">
-          <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white px-3 py-1 rounded shadow text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            Hello there! I’m Tasky, your AI sidekick.
-          </span>
-        </div>
-
-        {/* Floating Button */}
-        <button
-          onClick={() => setShowOptions(!showOptions)}
-          className="bg-orange-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition w-20 h-20 flex items-center justify-center animate-bounce"
-        >
-          <img
-            src="/tasky.png"
-            alt="Tasky Icon"
-            className="w-12 h-12 hover:scale-110 transition-transform duration-300"
-          />
-        </button>
-      </div>
+      
 
 
       {/* Tasky Sidebar */}
