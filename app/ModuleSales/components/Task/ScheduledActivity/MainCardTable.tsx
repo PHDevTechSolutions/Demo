@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
 import TableView from "./TableXchire";
 import Pagination from "./Pagination";
@@ -8,7 +10,6 @@ import PersonalModalForm from "./Modal/PersonalModalForm";
 
 import { FaTable, FaTasks, FaCalendarAlt } from "react-icons/fa";
 import { CiSquarePlus } from "react-icons/ci";
-// import { PiHandTapThin } from "react-icons/pi";
 import { ToastContainer, toast } from "react-toastify";
 
 interface Post {
@@ -43,6 +44,8 @@ interface MainCardTableProps {
     fetchAccount: () => void;
 }
 
+const POSTS_PER_PAGE = 20;
+
 const MainCardTable: React.FC<MainCardTableProps> = ({
     posts,
     userDetails,
@@ -53,22 +56,15 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
     const [showMainForm, setShowMainForm] = useState(false);
     const [showPersonalForm, setShowPersonalForm] = useState(false);
     const [editUser, setEditUser] = useState<Post | null>(null);
-
     const [postToDelete, setPostToDelete] = useState<string | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    const postsByDate = useMemo(() => {
-        const map = new Map<string, Post[]>();
-        for (const post of posts) {
-            const dateKey = new Date(post.date_created).toISOString().split("T")[0];
-            if (!map.has(dateKey)) map.set(dateKey, []);
-            map.get(dateKey)!.push(post);
-        }
-        return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-    }, [posts]);
-
-    const totalPages = postsByDate.length;
-    const currentDatePosts = postsByDate[currentPage - 1]?.[1] || [];
+    const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+    const currentDatePosts = useMemo(() => {
+        const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+        const endIndex = startIndex + POSTS_PER_PAGE;
+        return posts.slice(startIndex, endIndex);
+    }, [posts, currentPage]);
 
     const handleEdit = (post: Post) => {
         setEditUser(post);
@@ -85,15 +81,13 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
         try {
             const response = await fetch(`/api/ModuleSales/Task/DailyActivity/DeleteActivity`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: postToDelete }),
             });
 
             if (response.ok) {
                 toast.success("Post deleted successfully.");
-                fetchAccount(); // Refresh data
+                fetchAccount();
             } else {
                 toast.error("Failed to delete post.");
             }
@@ -116,27 +110,21 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
 
     return (
         <div className="bg-white col-span-3">
-            {/* View and Controls */}
+            {/* View & Buttons */}
             <div className="mb-2 flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0">
                 <div className="flex flex-wrap gap-2 text-[10px] justify-center md:justify-start">
                     <button onClick={() => setView("table")}
                         className={`flex items-center gap-1 px-3 py-1 rounded ${view === "table" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
-                        <FaTable size={12} />
-                        Table
+                        <FaTable size={12} /> Table
                     </button>
-
                     <button onClick={() => setView("grid")}
                         className={`flex items-center gap-1 px-3 py-1 rounded ${view === "grid" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
-                        <FaTasks size={12} />
-                        Logs
+                        <FaTasks size={12} /> Logs
                     </button>
-
                     <button onClick={() => setView("card")}
                         className={`flex items-center gap-1 px-3 py-1 rounded ${view === "card" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
-                        <FaCalendarAlt size={12} />
-                        Calendar
+                        <FaCalendarAlt size={12} /> Calendar
                     </button>
-
                     <button
                         className="flex items-center gap-1 bg-green-700 text-white text-[10px] px-4 py-2 shadow-md rounded hover:bg-green-800 transition"
                         onClick={() => setShowMainForm(true)}>
@@ -189,7 +177,7 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                 </>
             )}
 
-            {/* Personal Tap Form */}
+            {/* Personal Form */}
             {showPersonalForm && (
                 <PersonalModalForm
                     onClose={closePersonalForm}
@@ -208,7 +196,8 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                         <h2 className="text-sm font-bold mb-2">Confirm Delete</h2>
                         <p className="text-xs mb-4">
                             Deleting this activity will <strong>not</strong> remove its historical records.
-                            Those entries will remain in the archive unless you delete them from the Historical&nbsp;Records</p>
+                            Those entries will remain in the archive unless you delete them from the Historical&nbsp;Records
+                        </p>
                         <div className="flex justify-end gap-2">
                             <button
                                 className="px-3 py-1 text-xs rounded bg-gray-200"

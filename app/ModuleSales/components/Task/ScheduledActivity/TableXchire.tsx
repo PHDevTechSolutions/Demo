@@ -21,8 +21,8 @@ export interface Post {
 interface TableViewProps {
   posts: Post[];
   handleEdit: (post: Post) => void;
-  handleDelete: (id: string) => void;
-  refreshPosts: () => void;
+  handleDelete: (id: string) => void; 
+  refreshPosts: () => void;  
 }
 
 const statusColors: Record<string, string> = {
@@ -73,17 +73,13 @@ const fieldOnlyStatus = [
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return "N/A";
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return "Invalid date";
-
-  // convert to Manila time manually
-  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-  const manilaTime = new Date(utc + 8 * 60 * 60000); // UTC+8
-
-  return manilaTime.toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
 };
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
@@ -96,7 +92,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
     }
     return map;
   }, [posts]);
-
 
   const onEdit = useCallback((post: Post) => handleEdit(post), [handleEdit]);
   const onDelete = useCallback(
