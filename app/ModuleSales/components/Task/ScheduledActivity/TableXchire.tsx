@@ -72,15 +72,18 @@ const fieldOnlyStatus = [
 
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return "N/A";
+
   const date = new Date(dateStr);
-  return isNaN(date.getTime())
-    ? "Invalid date"
-    : date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  if (isNaN(date.getTime())) return "Invalid date";
+
+  return new Intl.DateTimeFormat("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
 };
+
+
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const groupedPosts = useMemo(() => {
