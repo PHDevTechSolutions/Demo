@@ -21,8 +21,8 @@ export interface Post {
 interface TableViewProps {
   posts: Post[];
   handleEdit: (post: Post) => void;
-  handleDelete: (id: string) => void; 
-  refreshPosts: () => void;  
+  handleDelete: (id: string) => void;
+  refreshPosts: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -70,29 +70,38 @@ const fieldOnlyStatus = [
   "TSM Coaching"
 ];
 
-const formatDate = (timestamp: string | null): string => {
-  if (!timestamp) return "N/A";
-  const date = new Date(timestamp);
-  if (isNaN(date.getTime())) return "Invalid date";
-
-  return new Intl.DateTimeFormat("en-PH", {
-    year: "numeric",
-    month: "long",
-    day: "2-digit",
-    timeZone: "Asia/Manila",
-  }).format(date);
+const formatDate = (dateStr: string | null): string => {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr);
+  return isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      timeZone: "Asia/Manila", // fix timezone issue
+    });
 };
+
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const groupedPosts = useMemo(() => {
     const map: Record<string, Post[]> = {};
     for (const post of posts) {
-      const dateKey = formatDate(post.date_created);
+      const date = new Date(post.date_created);
+      const dateKey = date.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "Asia/Manila",
+      });
+
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(post);
     }
     return map;
   }, [posts]);
+
 
   const onEdit = useCallback((post: Post) => handleEdit(post), [handleEdit]);
   const onDelete = useCallback(
@@ -132,6 +141,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                     <span style={{ transform: "skew(20deg)" }}>On Progress</span>
                   </span>
                 )}
+
               </div>
             </td>
           </tr>
@@ -158,6 +168,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                 >
                   {!isFieldStatus && (
                     <div className="flex gap-1">
+                      {/* UPDATE */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -167,6 +178,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
                       >
                         <RiEditCircleLine size={12} /> Update
                       </button>
+                      {/* DELETE — NEW */}
                       <button
                         onClick={(e) => onDelete(e, post.id)}
                         className="flex items-center gap-1 bg-red-500 text-white text-[10px] px-2 py-1 rounded hover:bg-red-700 transition-colors shadow-md"
@@ -179,7 +191,8 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
 
                 <td className="px-6 py-4">
                   <span
-                    className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"}`}
+                    className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"
+                      }`}
                   >
                     {post.activitystatus}
                   </span>
