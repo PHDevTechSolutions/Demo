@@ -62,12 +62,17 @@ const fieldOnlyStatus = [
   "Group Meeting", "Last Break", "Lunch Break", "TSM Coaching"
 ];
 
-const formatDate = (timestamp: string) => {
-  return new Date(timestamp).toLocaleDateString("en-PH", {
+const formatDate = (timestamp: number): string => {
+  if (!timestamp) return "Invalid date";
+
+  const date = new Date(timestamp);
+
+  // Format the date to a readable string in UTC
+  return date.toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
     year: "numeric",
-    month: "long",
-    day: "2-digit",
-    timeZone: "Asia/Manila",
   });
 };
 
@@ -142,14 +147,14 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
 
           {isFieldStatus ? (
             <>
-              <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
+              <td className="px-6 py-4 text-[10px]">{formatDate(new Date(post.date_created).getTime())}</td>
               <td className="px-6 py-4 text-[10px]" colSpan={6}>
                 {post.activityremarks || "—"}
               </td>
             </>
           ) : (
             <>
-              <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
+              <td className="px-6 py-4 text-[10px]">{formatDate(new Date(post.date_created).getTime())}</td>
               <td className="px-6 py-4 text-[10px] uppercase">{post.companyname}</td>
               <td className="px-6 py-4 text-[10px] capitalize">{post.contactperson}</td>
               <td className="px-6 py-4 text-[10px]">{post.contactnumber}</td>
