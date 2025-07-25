@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useMemo } from "react";
 import TableView from "./TableXchire";
 import Pagination from "./Pagination";
