@@ -63,13 +63,13 @@ const fieldOnlyStatus = [
 ];
 
 const formatDate = (timestamp: string) => {
-    return new Intl.DateTimeFormat("en-PH", {
-      year: "numeric",
-      month: "long",
-      day: "2-digit",
-      timeZone: "Asia/Manila",
-    }).format(new Date(timestamp));
-  };
+  return new Date(timestamp).toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+    timeZone: "Asia/Manila",
+  });
+};
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const onEdit = useCallback((post: Post) => handleEdit(post), [handleEdit]);
@@ -100,9 +100,8 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
       return (
         <tr
           key={post.id}
-          className={`whitespace-nowrap ${
-            isFieldStatus ? "bg-gray-50" : "hover:bg-gray-100 cursor-pointer"
-          } ${isCsrInquiry ? "shadow-lg hover:bg-red-500 hover:text-white" : ""}`}
+          className={`whitespace-nowrap ${isFieldStatus ? "bg-gray-50" : "hover:bg-gray-100 cursor-pointer"
+            } ${isCsrInquiry ? "shadow-lg hover:bg-red-500 hover:text-white" : ""}`}
           onClick={() => !isFieldStatus && onEdit(post)}
           tabIndex={0}
           onKeyDown={(e) => !isFieldStatus && e.key === "Enter" && onEdit(post)}
@@ -134,9 +133,8 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
 
           <td className="px-6 py-4">
             <span
-              className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${
-                statusColors[post.activitystatus] || "bg-gray-300 text-black"
-              }`}
+              className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"
+                }`}
             >
               {post.activitystatus}
             </span>
