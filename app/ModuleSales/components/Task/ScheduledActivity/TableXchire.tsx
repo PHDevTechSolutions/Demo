@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { IoIosSettings } from "react-icons/io";
 import { RiEditCircleLine } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
@@ -21,8 +21,8 @@ export interface Post {
 interface TableViewProps {
   posts: Post[];
   handleEdit: (post: Post) => void;
-  handleDelete: (id: string) => void; 
-  refreshPosts: () => void;  
+  handleDelete: (id: string) => void;
+  refreshPosts: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -53,47 +53,30 @@ const statusColors: Record<string, string> = {
 };
 
 const fieldOnlyStatus = [
-  "Client Visit",
-  "Site Visit",
-  "On Field",
+  "Client Visit", "Site Visit", "On Field",
   "Assisting other Agents Client",
   "Coordination of SO to Warehouse",
   "Coordination of SO to Orders",
-  "Updating Reports",
-  "Email and Viber Checking",
-  "1st Break",
-  "Client Meeting",
-  "Coffee Break",
-  "Group Meeting",
-  "Last Break",
-  "Lunch Break",
-  "TSM Coaching"
+  "Updating Reports", "Email and Viber Checking",
+  "1st Break", "Client Meeting", "Coffee Break",
+  "Group Meeting", "Last Break", "Lunch Break", "TSM Coaching"
 ];
 
-const formatDate = (dateStr: string | null): string => {
-  if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return isNaN(date.getTime())
-    ? "Invalid date"
-    : date.toLocaleDateString(undefined, {
+const formatDate = (timestamp: string) => {
+    return new Intl.DateTimeFormat("en-PH", {
       year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-};
+      month: "long",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "Asia/Manila",
+    }).format(new Date(timestamp));
+  };
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
-  const groupedPosts = useMemo(() => {
-    const map: Record<string, Post[]> = {};
-    for (const post of posts) {
-      const dateKey = formatDate(post.date_created);
-      if (!map[dateKey]) map[dateKey] = [];
-      map[dateKey].push(post);
-    }
-    return map;
-  }, [posts]);
-
   const onEdit = useCallback((post: Post) => handleEdit(post), [handleEdit]);
+
   const onDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
       e.stopPropagation();
@@ -113,112 +96,84 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
       );
     }
 
-    return Object.entries(groupedPosts).map(([date, postsForDate]) => {
-      const showColdTag = postsForDate.some((p) => p.activitystatus === "On Progress");
+    return posts.map((post) => {
+      const isFieldStatus = fieldOnlyStatus.includes(post.activitystatus);
+      const isCsrInquiry = post.typeclient?.toLowerCase() === "csr client";
 
       return (
-        <React.Fragment key={date}>
-          <tr className="bg-gray-100 font-semibold text-[10px] text-gray-600">
-            <td colSpan={9} className="px-6 py-2 sticky top-10 z-10">
-              <div className="flex items-center gap-2">
-                <span>{date}</span>
-                {showColdTag && (
-                  <span
-                    className="bg-orange-500 px-4 py-1 text-white text-[10px] font-semibold shadow-md inline-flex items-center"
-                    style={{ transform: "skew(-20deg)" }}
-                  >
-                    <IoIosSettings className="animate-spin mr-1" style={{ transform: "skew(20deg)" }} />
-                    <span style={{ transform: "skew(20deg)" }}>On Progress</span>
-                  </span>
-                )}
-
-              </div>
-            </td>
-          </tr>
-
-          {postsForDate.map((post) => {
-            const isFieldStatus = fieldOnlyStatus.includes(post.activitystatus);
-            const isCsrInquiry = post.typeclient?.toLowerCase() === "csr client";
-
-            return (
-              <tr
-                key={post.id}
-                className={`
-                  whitespace-nowrap
-                  ${isFieldStatus ? "bg-gray-50" : "hover:bg-gray-100 cursor-pointer"}
-                  ${isCsrInquiry ? "shadow-lg hover:bg-red-500 hover:text-white" : ""}
-                `}
-                onClick={() => !isFieldStatus && onEdit(post)}
-                tabIndex={0}
-                onKeyDown={(e) => !isFieldStatus && e.key === "Enter" && onEdit(post)}
-              >
-                <td
-                  className="px-6 py-4 text-xs sticky left-0 bg-white border-r border-gray-200 z-20"
-                  onClick={(e) => e.stopPropagation()}
+        <tr
+          key={post.id}
+          className={`whitespace-nowrap ${
+            isFieldStatus ? "bg-gray-50" : "hover:bg-gray-100 cursor-pointer"
+          } ${isCsrInquiry ? "shadow-lg hover:bg-red-500 hover:text-white" : ""}`}
+          onClick={() => !isFieldStatus && onEdit(post)}
+          tabIndex={0}
+          onKeyDown={(e) => !isFieldStatus && e.key === "Enter" && onEdit(post)}
+        >
+          <td
+            className="px-6 py-4 text-xs sticky left-0 bg-white border-r border-gray-200 z-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {!isFieldStatus && (
+              <div className="flex gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(post);
+                  }}
+                  className="flex items-center gap-1 bg-blue-500 text-white text-[10px] px-2 py-1 rounded hover:bg-blue-700 transition-colors shadow-md"
                 >
-                  {!isFieldStatus && (
-                    <div className="flex gap-1">
-                      {/* UPDATE */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(post);
-                        }}
-                        className="flex items-center gap-1 bg-blue-500 text-white text-[10px] px-2 py-1 rounded hover:bg-blue-700 transition-colors shadow-md"
-                      >
-                        <RiEditCircleLine size={12} /> Update
-                      </button>
-                      {/* DELETE — NEW */}
-                      <button
-                        onClick={(e) => onDelete(e, post.id)}
-                        className="flex items-center gap-1 bg-red-500 text-white text-[10px] px-2 py-1 rounded hover:bg-red-700 transition-colors shadow-md"
-                      >
-                        <MdDeleteForever size={12} /> Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
+                  <RiEditCircleLine size={12} /> Update
+                </button>
+                <button
+                  onClick={(e) => onDelete(e, post.id)}
+                  className="flex items-center gap-1 bg-red-500 text-white text-[10px] px-2 py-1 rounded hover:bg-red-700 transition-colors shadow-md"
+                >
+                  <MdDeleteForever size={12} /> Delete
+                </button>
+              </div>
+            )}
+          </td>
 
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${statusColors[post.activitystatus] || "bg-gray-300 text-black"
-                      }`}
-                  >
-                    {post.activitystatus}
+          <td className="px-6 py-4">
+            <span
+              className={`px-2 py-1 text-[8px] rounded-full shadow-md font-semibold ${
+                statusColors[post.activitystatus] || "bg-gray-300 text-black"
+              }`}
+            >
+              {post.activitystatus}
+            </span>
+          </td>
+
+          {isFieldStatus ? (
+            <>
+              <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
+              <td className="px-6 py-4 text-[10px]" colSpan={6}>
+                {post.activityremarks || "—"}
+              </td>
+            </>
+          ) : (
+            <>
+              <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
+              <td className="px-6 py-4 text-[10px] uppercase">{post.companyname}</td>
+              <td className="px-6 py-4 text-[10px] capitalize">{post.contactperson}</td>
+              <td className="px-6 py-4 text-[10px]">{post.contactnumber}</td>
+              <td className="px-6 py-4 text-[10px]">
+                {isCsrInquiry ? (
+                  <span className="bg-red-500 text-white rounded-full px-2 py-1 text-[8px] font-bold capitalize">
+                    CSR Client
                   </span>
-                </td>
-
-                {isFieldStatus ? (
-                  <>
-                    <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
-                    <td className="px-6 py-4 text-[10px]" colSpan={6}>
-                      {post.activityremarks || "—"}
-                    </td>
-                  </>
                 ) : (
-                  <>
-                    <td className="px-6 py-4 text-[10px]">{formatDate(post.date_created)}</td>
-                    <td className="px-6 py-4 text-[10px] uppercase">{post.companyname}</td>
-                    <td className="px-6 py-4 text-[10px] capitalize">{post.contactperson}</td>
-                    <td className="px-6 py-4 text-[10px]">{post.contactnumber}</td>
-                    <td className="px-6 py-4 text-[10px]">
-                      {isCsrInquiry ? (
-                        <span className="bg-red-500 text-white rounded-full px-2 py-1 text-[8px] font-bold capitalize">CSR Client</span>
-                      ) : (
-                        post.typeclient
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-[10px]">{post.ticketreferencenumber}</td>
-                    <td className="px-6 py-4 text-[10px]">{formatDate(post.date_updated)}</td>
-                  </>
+                  post.typeclient
                 )}
-              </tr>
-            );
-          })}
-        </React.Fragment>
+              </td>
+              <td className="px-6 py-4 text-[10px]">{post.ticketreferencenumber}</td>
+            </>
+          )}
+        </tr>
       );
     });
-  }, [groupedPosts, onEdit, posts]);
+  }, [posts, onEdit, onDelete]);
 
   return (
     <div className="overflow-x-auto">
@@ -235,7 +190,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }
             <th className="px-6 py-4 font-semibold text-gray-700">Contact Number</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Type of Client</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Ticket Reference</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Date Updated</th>
           </tr>
         </thead>
         <tbody>{renderedRows}</tbody>
