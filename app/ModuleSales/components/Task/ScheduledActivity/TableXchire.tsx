@@ -73,29 +73,24 @@ const fieldOnlyStatus = [
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return "N/A";
   const date = new Date(dateStr);
-  return isNaN(date.getTime())
-    ? "Invalid date"
-    : date.toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      timeZone: "Asia/Manila", // fix timezone issue
-    });
-};
+  if (isNaN(date.getTime())) return "Invalid date";
 
+  // convert to Manila time manually
+  const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+  const manilaTime = new Date(utc + 8 * 60 * 60000); // UTC+8
+
+  return manilaTime.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
   const groupedPosts = useMemo(() => {
     const map: Record<string, Post[]> = {};
     for (const post of posts) {
-      const date = new Date(post.date_created);
-      const dateKey = date.toLocaleDateString("en-PH", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        timeZone: "Asia/Manila",
-      });
-
+      const dateKey = formatDate(post.date_created);
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(post);
     }
