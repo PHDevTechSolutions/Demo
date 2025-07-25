@@ -76,13 +76,13 @@ const formatDate = (dateStr: string | null): string => {
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return "Invalid date";
 
-  return new Intl.DateTimeFormat("en-PH", {
+  return date.toLocaleDateString("en-PH", {
+    timeZone: "Asia/Manila", // ✅ Important fix for live servers
     year: "numeric",
     month: "short",
     day: "numeric",
-  }).format(date);
+  });
 };
-
 
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
