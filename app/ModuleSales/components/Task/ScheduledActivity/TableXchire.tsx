@@ -73,18 +73,13 @@ const fieldOnlyStatus = [
 const formatDate = (dateStr: string | null): string => {
   if (!dateStr) return "N/A";
   const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return "Invalid date";
-
-  return new Intl.DateTimeFormat("en-PH", {
-    year: "numeric",
-    month: "long", // Use "short" if you want "Jul" instead of "July"
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Manila",
-  }).format(date);
+  return isNaN(date.getTime())
+    ? "Invalid date"
+    : date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
 };
 
 const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete }) => {
