@@ -6,7 +6,7 @@ import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
 import AddPostForm from "../../../components/Boards/Notes/AddUserForm";
-import UsersCard from "../../../components/Boards/Notes/UsersTable"; // Assuming this is the component handling the Kanban-style cards
+import UsersCard from "../../../components/Boards/Notes/UsersTable";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
@@ -19,8 +19,8 @@ const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [postToDelete, setPostToDelete] = useState<string | null>(null);
 

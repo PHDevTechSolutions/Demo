@@ -28,8 +28,8 @@ const Remarks: React.FC<RemarksProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     let input = e.target.value;
 
-    // Remove all characters except letters, numbers, spaces, dot, comma, and #
-    const pattern = /[^a-zA-Z0-9\s.,#]/g;
+    // Remove all characters except letters, numbers, spaces, dot, comma, slash, minus and #
+    const pattern = /[^a-zA-Z0-9\s.,#/-]/g;
     let filtered = input.replace(pattern, "");
 
     // Convert to lowercase first
