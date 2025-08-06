@@ -151,6 +151,7 @@ const Accordion: React.FC<AccordionProps> = ({
                         <option value="Outbound - Touchbase">Outbound - Touchbase</option>
                         <option value="Government">Government</option>
                         <option value="Philgeps- Website">Philgeps- Website</option>
+                        <option value="Philgeps">Philgeps</option>
                         <option value="Distributor">Distributor</option>
                         <option value="Modern Trade">Modern Trade</option>
                         <option value="Facebook Marketplace">Facebook Marketplace</option>

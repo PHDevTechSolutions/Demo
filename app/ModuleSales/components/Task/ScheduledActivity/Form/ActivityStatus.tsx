@@ -23,6 +23,8 @@ const statusColorClasses: Record<string, string> = {
   "SO-Done": "bg-purple-500",
   Cancelled: "bg-red-500",
   Loss: "bg-red-800",
+  Ongoing: "bg-yellow-600",
+  Done: "bg-green-600",
 };
 
 const statusOptions = [
@@ -35,6 +37,8 @@ const statusOptions = [
   { value: "SO-Done", label: "SO-Done" },
   { value: "Cancelled", label: "Cancelled" },
   { value: "Loss", label: "Loss" },
+  { value: "Ongoing", label: "Ongoing" },
+  { value: "Done", label: "Done" },
 ];
 
 const ActivityStatus: React.FC<ActivityStatusProps> = ({

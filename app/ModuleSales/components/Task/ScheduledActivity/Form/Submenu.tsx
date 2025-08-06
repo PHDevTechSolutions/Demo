@@ -38,6 +38,7 @@ interface SubmenuProps {
 const activityOptions = [
   "Customer Order",
   "Customer Inquiry Sales",
+  "Documentation",
   "Follow Up",
   "FB-Marketplace",
   "After Sales-Refund",
