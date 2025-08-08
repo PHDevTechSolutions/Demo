@@ -119,7 +119,9 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
 
     if (role === "Territory Sales Manager") {
       return menuItems.filter(item =>
-        [
+        [ 
+          "Sales Performance",
+          "Conversion Rates",
           "Customer Database",
           "National",
           "My Team",

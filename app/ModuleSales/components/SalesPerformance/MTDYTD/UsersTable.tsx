@@ -58,7 +58,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
 
   useEffect(() => {
     const fixedDays = 26;
-
     const parPercentages: { [key: number]: number } = {
       1: 8.3,
       2: 16.6,

@@ -11,6 +11,7 @@ interface Post {
     actualsales: number;
     typeactivity: string;
     activitystatus: string;
+    source: string;
 }
 
 interface GroupedData {
@@ -107,10 +108,10 @@ const UsersCard: React.FC<UsersCardProps> = React.memo(({ posts }) => {
             acc[key].records.push(post);
             acc[key].totalSOAmount += post.soamount;
             acc[key].totalActualSales += post.actualsales;
-            acc[key].preparationQuoteCount += post.typeactivity === "Preparation: Preparation of Quote: Existing Client" || post.typeactivity === "Preparation: Preparation of Quote: New Client" ? 1 : 0;
-            acc[key].salesorderCount += post.typeactivity === "Preparation: Sales Order Preparation" ? 1 : 0;
-            acc[key].siCount += post.activitystatus === "Done" ? 1 : 0;
-            acc[key].OutboundCalls += post.typeactivity === "Outbound Call" ? 1 : 0;
+            acc[key].preparationQuoteCount += post.typeactivity === "Quotation Preparation" ? 1 : 0;
+            acc[key].salesorderCount += post.typeactivity === "Sales Order Preparation" ? 1 : 0;
+            acc[key].siCount += post.activitystatus === "Delivered" ? 1 : 0;
+            acc[key].OutboundCalls += post.source === "Outbound - Touchbase" ? 1 : 0;
 
             // Compute Average Daily Sales
             const daysLapsed = activeTab === "MTD" ? Math.min(today.getDate(), fixedDays) : fixedDays * 12;
