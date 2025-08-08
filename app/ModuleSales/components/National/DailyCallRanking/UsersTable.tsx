@@ -35,7 +35,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 };
             }
 
-            if (post.typecall === "Touch Base") {
+            if (post.source === "Outbound - Touchbase") {
                 acc[key].TotalOutbound += 1;
                 acc[key].TotalCalls += 1;
                 totalOutbound += 1;
