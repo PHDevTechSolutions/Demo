@@ -235,7 +235,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                     </tbody>
                     <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700">
                         <tr>
-                            <td className="px-6 py-3" colSpan={4}>Total SO Amount</td>
+                            <td className="px-6 py-3" colSpan={5}></td>
+                            <td className="px-6 py-3 text-green-700" colSpan={1}>Total SO Amount</td>
                             <td className="px-6 py-3">{formatCurrency(totalSOAmount)}</td>
                             <td colSpan={2}></td>
                         </tr>

@@ -95,12 +95,20 @@ const ListofUser: React.FC = () => {
     // Fetch TSA agents for the dropdown (only those handled by this TSM)
     useEffect(() => {
         const fetchTSA = async () => {
-            if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
-
             try {
-                const response = await fetch(
-                    `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
-                );
+                let url = "";
+
+                if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+                    url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
+                } else if (userDetails.Role === "Super Admin") {
+                    // Get all TS Associates for Super Admin
+                    url = `/api/fetchtsadata?Role=Territory Sales Associate`;
+                } else {
+                    // Other roles don't fetch TS Associates
+                    return;
+                }
+
+                const response = await fetch(url);
 
                 if (!response.ok) throw new Error("Failed to fetch agents");
 
@@ -119,7 +127,6 @@ const ListofUser: React.FC = () => {
 
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
-
 
     // Filter posts based on search, date, role, and selected agent
     const filteredAccounts = Array.isArray(posts)
@@ -171,9 +178,9 @@ const ListofUser: React.FC = () => {
                                     </p>
 
                                     {/* Filter by Agent */}
-                                    {userDetails.Role === "Territory Sales Manager" && (
-                                        <div className="mb-4">
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
+                                        <div className="mb-4 flex items-center space-x-4">
+                                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
                                                 Filter by Agent
                                             </label>
                                             <select
@@ -188,7 +195,9 @@ const ListofUser: React.FC = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
                                         </div>
+
                                     )}
 
                                     {/* Other Filters */}

@@ -134,15 +134,15 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
           activeTab === "MTD"
             ? Math.min(today.getDate(), fixedDays)
             : activeTab === "YTD"
-            ? fixedDays * 12
-            : fixedDays * 3; // approx for quarter (3 months)
+              ? fixedDays * 12
+              : fixedDays * 3; // approx for quarter (3 months)
 
         const parPercentage =
           activeTab === "YTD"
             ? parPercentages[month] || 0
             : activeTab === "MTD"
-            ? (daysLapsed / fixedDays) * 100
-            : (daysLapsed / (fixedDays * 3)) * 100;
+              ? (daysLapsed / fixedDays) * 100
+              : (daysLapsed / (fixedDays * 3)) * 100;
 
         acc[key] = {
           AgentFirstname: post.AgentFirstname,
@@ -180,11 +180,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setActiveTab("MTD");
               setSelectedQuarter(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${
-              activeTab === "MTD"
+            className={`py-2 px-4 text-xs font-medium ${activeTab === "MTD"
                 ? "border-b-2 border-blue-500 text-blue-600"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             MTD
           </button>
@@ -194,11 +193,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setSelectedMonth(null);
               setSelectedQuarter(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${
-              activeTab === "YTD"
+            className={`py-2 px-4 text-xs font-medium ${activeTab === "YTD"
                 ? "border-b-2 border-blue-500 text-blue-600"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             YTD
           </button>
@@ -207,11 +205,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setActiveTab("Quarterly");
               setSelectedMonth(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${
-              activeTab === "Quarterly"
+            className={`py-2 px-4 text-xs font-medium ${activeTab === "Quarterly"
                 ? "border-b-2 border-blue-500 text-blue-600"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             Quarterly
           </button>
@@ -295,15 +292,16 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               {activeTab === "MTD"
                 ? "Month"
                 : activeTab === "YTD"
-                ? "Year"
-                : "Quarter"}
+                  ? "Year"
+                  : "Quarter"}
             </th>
             <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">SO Amount</th>
+            {/*<th className="px-6 py-4 font-semibold text-gray-700">SO Amount</th>*/}
             <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Achievement</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Par</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Variance</th>
+            <th className="px-6 py-4 font-semibold text-gray-700">% To Plan</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -329,9 +327,9 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                   <td className="px-6 py-4 text-xs">
                     ₱{formatCurrency(group.targetQuota)}
                   </td>
-                  <td className="px-6 py-4 text-xs">
+                  {/*<td className="px-6 py-4 text-xs">
                     ₱{formatCurrency(group.totalSOAmount)}
-                  </td>
+                  </td>*/}
                   <td className="px-6 py-4 text-xs">
                     ₱{formatCurrency(group.totalActualSales)}
                   </td>
@@ -340,12 +338,18 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                   <td className="px-6 py-4 text-xs font-semibold text-red-700">
                     ₱{formatCurrency(group.mtdVariance)}
                   </td>
+                  <td className="px-6 py-4 text-xs">
+                    {group.targetQuota
+                      ? Math.round((group.totalActualSales / group.targetQuota) * 100)
+                      : 0}%
+                  </td>
+
                 </tr>
               );
             })
           ) : (
             <tr>
-              <td colSpan={8} className="text-center py-4 border">
+              <td colSpan={9} className="text-center py-4 border">
                 No accounts available
               </td>
             </tr>

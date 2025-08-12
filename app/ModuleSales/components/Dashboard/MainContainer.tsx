@@ -15,6 +15,7 @@ interface MainContainerProps {
   selectedAgent: string;
   setSelectedAgent: (value: string) => void;
   tsaOptions: { value: string; label: string }[];
+  tsmOptions: { value: string; label: string }[];
 }
 
 const STORAGE_KEY = "mainContainerDateRange";
@@ -65,6 +66,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
   selectedAgent,
   setSelectedAgent,
   tsaOptions,
+  tsmOptions,
 }) => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>(() => {
     if (typeof window !== "undefined") {
@@ -72,11 +74,14 @@ const MainContainer: React.FC<MainContainerProps> = ({
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch {}
+        } catch { }
       }
     }
     return presets.today();
   });
+
+  // New: selectedTSM state
+  const [selectedTSM, setSelectedTSM] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -115,37 +120,85 @@ const MainContainer: React.FC<MainContainerProps> = ({
     });
   }, [filteredAccounts, dateRange]);
 
+  const canFilterByAgent = userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin";
+
+  // New: canFilterByTSM, show TSM filter only if role is Super Admin
+  const canFilterByTSM = userDetails.Role === "Super Admin";
+
+  const filteredByTSM = useMemo(() => {
+    if (!canFilterByTSM) return filteredByDate;
+    if (!selectedTSM) return filteredByDate;
+    // Filter accounts that belong to the selected TSM
+    return filteredByDate.filter((acc) => acc.tsm === selectedTSM);
+  }, [filteredByDate, selectedTSM, canFilterByTSM]);
+
   const filteredByAgent = useMemo(() => {
-    if (userDetails.Role !== "Territory Sales Manager") return filteredByDate;
-    if (!selectedAgent) return filteredByDate;
-    return filteredByDate.filter((acc) => acc.referenceid === selectedAgent);
-  }, [filteredByDate, selectedAgent, userDetails.Role]);
+    // If user can't filter by agent, return filteredByTSM (already filtered by date & TSM)
+    if (!canFilterByAgent) return filteredByTSM;
+
+    // Super Admin sees all regardless of selectedAgent (but filtered by TSM if selected)
+    if (userDetails.Role === "Super Admin") return filteredByTSM;
+
+    // Territory Sales Manager filters by selectedAgent if selected
+    if (!selectedAgent) return filteredByTSM;
+
+    return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
+  }, [filteredByTSM, selectedAgent, userDetails.Role, canFilterByAgent]);
 
   return (
     <div className="container mx-auto p-4">
-      {/* Filter by Agent (if TSM) */}
-      {userDetails.Role === "Territory Sales Manager" && (
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-700 mb-1">Filter by Agent</label>
-          <select
-            className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-            value={selectedAgent}
-            onChange={(e) => setSelectedAgent(e.target.value)}
-          >
-            <option value="">All Agents</option>
-            {tsaOptions.map((agent) => (
-              <option key={agent.value} value={agent.value}>
-                {agent.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Filter by TSM (Super Admin only) */}
+      {/* Filters Row */}
+      <div className="mb-4 flex flex-wrap gap-4 items-end">
+        {/* Filter by TSM (Super Admin only) */}
+        {canFilterByTSM && (
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Filter by Territory Sales Manager
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 text-xs capitalize"
+              value={selectedTSM}
+              onChange={(e) => setSelectedTSM(e.target.value)}
+            >
+              <option value="">All TSM</option>
+              {tsmOptions.map((tsm) => (
+                <option key={tsm.value} value={tsm.value}>
+                  {tsm.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Filter by Agent (if Territory Sales Manager or Super Admin) */}
+        {canFilterByAgent && (
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Filter by Agent
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 text-xs capitalize"
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+            >
+              <option value="">All Agents</option>
+              {tsaOptions.map((agent) => (
+                <option key={agent.value} value={agent.value}>
+                  {agent.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
       {/* Date Range Filters */}
       <div className="mb-4 flex flex-wrap gap-4 items-center">
         <div>
-          <label htmlFor="datePreset" className="block text-xs font-medium">Filter</label>
+          <label htmlFor="datePreset" className="block text-xs font-medium">
+            Filter
+          </label>
           <select
             id="datePreset"
             onChange={handlePresetChange}
@@ -167,7 +220,9 @@ const MainContainer: React.FC<MainContainerProps> = ({
         </div>
 
         <div>
-          <label htmlFor="start" className="block text-xs font-medium">Start Date</label>
+          <label htmlFor="start" className="block text-xs font-medium">
+            Start Date
+          </label>
           <input
             type="date"
             id="start"
@@ -179,7 +234,9 @@ const MainContainer: React.FC<MainContainerProps> = ({
         </div>
 
         <div>
-          <label htmlFor="end" className="block text-xs font-medium">End Date</label>
+          <label htmlFor="end" className="block text-xs font-medium">
+            End Date
+          </label>
           <input
             type="date"
             id="end"

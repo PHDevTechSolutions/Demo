@@ -193,6 +193,7 @@ const DeletionAccounts: React.FC = () => {
                                     <p className="text-xs text-gray-600 mb-4">
                                         This section displays a list of <strong>Deletion Companies</strong> within the system. You can filter the companies based on various criteria such as client type, start date, end date, and search term. Use the filters to narrow down your search and quickly find the relevant inactive companies you need to manage or review.
                                     </p>
+                                    
                                     <Filters
                                         searchTerm={searchTerm}
                                         setSearchTerm={setSearchTerm}

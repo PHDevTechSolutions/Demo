@@ -61,11 +61,23 @@ const GroupAccounts: React.FC = () => {
   }, []);
 
   const fetchAccount = async () => {
+    if (!userDetails.Role) return;
     setLoading(true);
+
     try {
-      const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
+      let url = "/api/ModuleSales/Companies/GroupCompanies";
+      if (userDetails.Role !== "Super Admin") {
+        url += `?referenceid=${encodeURIComponent(userDetails.ReferenceID)}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
-      setPosts(data.data);
+
+      if (data.success) {
+        setPosts(data.data);
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
       toast.error("Error fetching users.");
       console.error("Error Fetching", error);
@@ -74,18 +86,31 @@ const GroupAccounts: React.FC = () => {
     }
   };
 
+
+  // Fetch after userDetails loaded
   useEffect(() => {
-    fetchAccount();
-  }, []);
+    if (userDetails.Role) {
+      fetchAccount();
+    }
+  }, [userDetails.Role, userDetails.ReferenceID]);
+
 
   useEffect(() => {
     const fetchTSA = async () => {
-      if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
-
       try {
-        const response = await fetch(
-          `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
-        );
+        let url = "";
+
+        if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
+        } else if (userDetails.Role === "Super Admin") {
+          // Get all TS Associates for Super Admin
+          url = `/api/fetchtsadata?Role=Territory Sales Associate`;
+        } else {
+          // Other roles don't fetch TS Associates
+          return;
+        }
+
+        const response = await fetch(url);
 
         if (!response.ok) throw new Error("Failed to fetch agents");
 
@@ -112,27 +137,27 @@ const GroupAccounts: React.FC = () => {
 
   const filteredAccounts = Array.isArray(posts)
     ? posts.filter((post) => {
-        const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
-        const postDate = post.date_created ? new Date(post.date_created) : null;
-        const isWithinDateRange =
-          (!startDate || (postDate && postDate >= new Date(startDate))) &&
-          (!endDate || (postDate && postDate <= new Date(endDate)));
-        const matchesClientType = selectedClientType ? post?.typeclient === selectedClientType : true;
-        const referenceID = userDetails.ReferenceID;
+      const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
+      const postDate = post.date_created ? new Date(post.date_created) : null;
+      const isWithinDateRange =
+        (!startDate || (postDate && postDate >= new Date(startDate))) &&
+        (!endDate || (postDate && postDate <= new Date(endDate)));
+      const matchesClientType = selectedClientType ? post?.typeclient === selectedClientType : true;
+      const referenceID = userDetails.ReferenceID;
 
-        const matchesRole =
-          userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-            ? true
-            : userDetails.Role === "Territory Sales Associate"
+      const matchesRole =
+        userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+          ? true
+          : userDetails.Role === "Territory Sales Associate"
             ? post?.referenceid === referenceID
             : userDetails.Role === "Territory Sales Manager"
-            ? post?.tsm === referenceID
-            : false;
+              ? post?.tsm === referenceID
+              : false;
 
-        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+      const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-        return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesAgentFilter;
-      })
+      return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesAgentFilter;
+    })
     : [];
 
   // PAGINATION LOGIC
@@ -155,9 +180,11 @@ const GroupAccounts: React.FC = () => {
                   </p>
 
                   {/* Agent Filter */}
-                  {userDetails.Role === "Territory Sales Manager" && (
-                    <div className="mb-4">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Filter by Agent</label>
+                  {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
+                    <div className="mb-4 flex items-center space-x-4">
+                      <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                        Filter by Agent
+                      </label>
                       <select
                         className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
                         value={selectedAgent}
@@ -170,7 +197,9 @@ const GroupAccounts: React.FC = () => {
                           </option>
                         ))}
                       </select>
+                      <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
                     </div>
+
                   )}
 
                   <Filters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />

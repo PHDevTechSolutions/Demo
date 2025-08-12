@@ -68,13 +68,14 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
 
 
         {/* Hover Text appears outside the button */}
+        
+        {/*
         <div className="mb-1 pr-1">
           <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white px-3 py-1 rounded shadow text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500">
             Hello there! I’m Tasky, your AI sidekick.
           </span>
         </div>
 
-        {/*
         <button
           onClick={() => setShowOptions(!showOptions)}
           className="bg-orange-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition w-20 h-20 flex items-center justify-center animate-bounce"

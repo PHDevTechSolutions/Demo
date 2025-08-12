@@ -120,12 +120,20 @@ const ListofUser: React.FC = () => {
 
     useEffect(() => {
         const fetchTSA = async () => {
-            if (!userDetails.ReferenceID || userDetails.Role !== "Territory Sales Manager") return;
-
             try {
-                const response = await fetch(
-                    `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
-                );
+                let url = "";
+
+                if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+                    url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
+                } else if (userDetails.Role === "Super Admin") {
+                    // Get all TS Associates for Super Admin
+                    url = `/api/fetchtsadata?Role=Territory Sales Associate`;
+                } else {
+                    // Other roles don't fetch TS Associates
+                    return;
+                }
+
+                const response = await fetch(url);
 
                 if (!response.ok) throw new Error("Failed to fetch agents");
 
@@ -201,14 +209,13 @@ const ListofUser: React.FC = () => {
                                         This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
                                     </p>
 
-                                    {userDetails.Role === "Territory Sales Manager" && (
-                                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                                    {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
+                                        <div className="mb-4 flex items-center space-x-4">
                                             <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                                Filter by Agent:
+                                                Filter by Agent
                                             </label>
-
                                             <select
-                                                className="border rounded px-3 py-2 text-xs capitalize w-full md:w-1/3"
+                                                className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
                                                 value={selectedAgent}
                                                 onChange={(e) => setSelectedAgent(e.target.value)}
                                             >
@@ -219,14 +226,15 @@ const ListofUser: React.FC = () => {
                                                     </option>
                                                 ))}
                                             </select>
-
                                             <button
                                                 onClick={exportToExcel}
-                                                className="bg-green-700 hover:bg-green-800 text-white text-[10px] px-4 py-2 rounded whitespace-nowrap"
+                                                className="bg-green-700 hover:bg-green-800 text-white text-xs px-4 py-2 rounded whitespace-nowrap"
                                             >
                                                 Export to Excel
                                             </button>
+                                            <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
                                         </div>
+
                                     )}
 
                                     <Filters

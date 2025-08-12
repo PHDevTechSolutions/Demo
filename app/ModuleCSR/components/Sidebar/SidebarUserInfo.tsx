@@ -15,63 +15,28 @@ interface SidebarUserInfoProps {
     Department: string;
     profilePicture?: string;
   };
-  agentMode: boolean;
-  setAgentMode: (value: boolean) => void;
 }
 
 const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
   collapsed,
   userDetails,
-  agentMode,
-  setAgentMode,
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const router = useRouter();
-  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 🔹 Function para i-reset yung timer
-  //const resetLogoutTimer = () => {
-    //if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-    //logoutTimerRef.current = setTimeout(() => {
-      //handleLogout(); // Auto logout trigger
-    //}, 180000); // 3 minutes = 180,000 ms
-  //};
-
-  // 🔹 Auto logout with idle detection
-  //useEffect(() => {
-    //if (isMounted) {
-      // Start initial timer
-      //resetLogoutTimer();
-
-      // Activity listeners
-      //const activityEvents = ["mousemove", "keydown", "click", "scroll"];
-      //activityEvents.forEach((event) =>
-        //window.addEventListener(event, resetLogoutTimer)
-      //);
-
-      //return () => {
-        //if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-        //activityEvents.forEach((event) =>
-          //window.removeEventListener(event, resetLogoutTimer)
-        //);
-      //};
-    //}
-  //}, [isMounted]);
-
-  const statusColor =
-    {
-      Active: "bg-green-600",
-      Inactive: "bg-red-400",
-      Locked: "bg-gray-400",
-      Busy: "bg-yellow-400",
-      "Do not Disturb": "bg-gray-800",
-    }[userDetails.Status] || "bg-blue-500";
+  const statusColor = {
+    Active: "bg-green-600",
+    Inactive: "bg-red-400",
+    Locked: "bg-gray-400",
+    Busy: "bg-yellow-400",
+    "Do not Disturb": "bg-gray-800",
+  }[userDetails.Status] || "bg-blue-500";
 
   useEffect(() => {
     if (!isLoggingOut && audioRef.current) {
@@ -81,7 +46,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
   }, [isLoggingOut]);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return; // prevent double logout
     setIsLoggingOut(true);
 
     // Play logout sound
@@ -137,7 +101,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       <div className="flex items-center gap-3 z-10">
         <div className="relative w-12 h-12">
           <img
-            src={userDetails.profilePicture || "/taskflow.png"}
+            src={userDetails.profilePicture || "/ecodesk.png"}
             alt="Avatar"
             className="w-12 h-12 object-cover rounded-full"
           />
@@ -163,7 +127,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         title="Logout"
         className="ml-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-red-900 transition z-10"
       >
-        <GrPowerShutdown size={20} className="text-orange-500" />
+        <GrPowerShutdown size={20} className="text-emerald-500" />
       </button>
     </div>
   );
