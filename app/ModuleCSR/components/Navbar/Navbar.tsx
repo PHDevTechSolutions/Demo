@@ -908,10 +908,6 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
         <button onClick={onToggleSidebar} title="Show Sidebar" className="rounded-full shadow-lg block sm:hidden">
           <img src="/ecodesk.png" alt="Logo" className="h-8" />
         </button>
-
-        <span className="flex items-center border shadow-md text-xs font-medium px-3 py-1 rounded-full">
-          <CiClock2 size={15} className="mr-1" /> {currentTime}
-        </span>
       </div>
 
       <div className="relative flex items-center text-center text-xs space-x-2" ref={dropdownRef}>
@@ -1334,36 +1330,6 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
             </div>
           </div>
         )}
-
-        {/* User Dropdown */}
-        <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center space-x-2 focus:outline-none hover:bg-gray-200 p-2 hover:rounded-full">
-          <CiUser size={20} />
-          <span className="capitalize">Hello, {userName}</span>
-        </button>
-
-        {showDropdown && (
-          <div className="absolute top-full left-0 mt-2 w-40 bg-white border border-gray-300 rounded shadow-lg z-50">
-            <p className="px-4 py-2 text-gray-700 text-xs border-b">{userReferenceId}</p>
-            <button
-              className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-gray-100 flex justify-center items-center"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 mr-2 text-red-500" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                  </svg>
-                  Logging out...
-                </>
-              ) : (
-                "Logout"
-              )}
-            </button>
-          </div>
-        )}
-
       </div>
     </div>
   );
