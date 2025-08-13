@@ -229,9 +229,12 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         <input
                             type="text"
                             value={companygroup ?? ""}
-                            onChange={(e) => setcompanygroup(e.target.value.replace(/[^a-zA-Z,\s]/g, ""))}
+                            onChange={(e) =>
+                                setcompanygroup(e.target.value.replace(/[^a-zA-Z0-9,\s]/g, ""))
+                            }
                             className="w-full px-3 py-2 border-b text-xs capitalize"
                         />
+
                     </div>
 
                     {/* Contact Person */}
