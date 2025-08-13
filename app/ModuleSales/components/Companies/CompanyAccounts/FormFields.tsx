@@ -151,7 +151,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
           <label className="block text-xs font-bold mb-2" htmlFor="companygroup">Affiliate or Group</label>
           <input type="text" id="companygroup" value={companygroup} onChange={(e) => {
             const input = e.target.value;
-            const sanitized = input.replace(/[^a-zA-Z,\s]/g, "");
+            const sanitized = input.replace(/[^a-zA-Z0-9,\s]/g, "");
             setcompanygroup(sanitized);
           }}
 
