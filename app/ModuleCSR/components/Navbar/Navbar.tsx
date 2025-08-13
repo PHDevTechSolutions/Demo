@@ -897,7 +897,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
 
   useEffect(() => {
     if (showModal && notif) {
-      const audio = new Audio('/alertmessage.mp3');
+      const audio = new Audio('/icantlive.mp3');
       audio.play().catch((err) => console.error("Audio play failed:", err));
     }
   }, [showModal, notif]);
