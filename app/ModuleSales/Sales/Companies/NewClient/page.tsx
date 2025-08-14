@@ -146,7 +146,7 @@ const NewClientAccounts: React.FC = () => {
         ? posts
             .filter((post) => {
                 // Only allow Top 50, Next 30, Balance 20
-                const validClientTypes = ["CSR Inquiries", "CSR Inquiry", "New Account - Client Development", "CSR Client"];
+                const validClientTypes = ["CSR Inquiries", "CSR Inquiry", "New Account - Client Development", "CSR Client", "TSA Client"];
                 const isValidTypeClient = validClientTypes.includes(post?.typeclient);
 
                 const matchesSearchTerm =
