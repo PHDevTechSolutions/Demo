@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { GrPowerShutdown } from "react-icons/gr";
 import { useRouter } from "next/navigation";
@@ -15,40 +17,75 @@ interface SidebarUserInfoProps {
     Department: string;
     profilePicture?: string;
   };
+  agentMode: boolean;
+  setAgentMode: (value: boolean) => void;
+}
+
+interface SessionData {
+  email: string;
+  status: string;
+  timestamp: string;
 }
 
 const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
   collapsed,
   userDetails,
+  agentMode,
+  setAgentMode,
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [sessionInfo, setSessionInfo] = useState<SessionData | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    const fetchSession = async () => {
+      try {
+        const response = await fetch(`/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`);
+        if (!response.ok) throw new Error("Failed to fetch session");
+        const data: SessionData[] = await response.json();
 
-  const statusColor = {
-    Active: "bg-green-600",
-    Inactive: "bg-red-400",
-    Locked: "bg-gray-400",
-    Busy: "bg-yellow-400",
-    "Do not Disturb": "bg-gray-800",
-  }[userDetails.Status] || "bg-blue-500";
+        // Filter by email and today
+        const today = new Date();
+        const todaySessions = data
+          .filter(item => item.email === userDetails.Email)
+          .filter(item => {
+            const sessionDate = new Date(item.timestamp);
+            return (
+              sessionDate.getFullYear() === today.getFullYear() &&
+              sessionDate.getMonth() === today.getMonth() &&
+              sessionDate.getDate() === today.getDate()
+            );
+          });
 
-  useEffect(() => {
-    if (!isLoggingOut && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-  }, [isLoggingOut]);
+        // Get the earliest timestamp for today
+        const firstSession = todaySessions.sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        )[0];
+
+        setSessionInfo(firstSession || null);
+      } catch (err) {
+        console.error("Error fetching session:", err);
+      }
+    };
+
+    fetchSession();
+  }, [userDetails.Email]);
+
+
+  const statusColor =
+    {
+      Active: "bg-green-600",
+      Inactive: "bg-red-400",
+      Locked: "bg-gray-400",
+      Busy: "bg-yellow-400",
+      "Do not Disturb": "bg-gray-800",
+    }[userDetails.Status] || "bg-blue-500";
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    // Play logout sound
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play();
@@ -78,14 +115,9 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
   if (collapsed) return null;
 
   return (
-    <div
-      className="relative p-6 dark:bg-gray-900 dark:border-gray-700 flex items-center justify-between flex-shrink-0 overflow-hidden"
-      style={{ position: "sticky", bottom: 0, zIndex: 10 }}
-    >
-      {/* 🔈 Logout Sound */}
+    <div className="relative p-6 dark:bg-gray-900 dark:border-gray-700 flex items-center justify-between flex-shrink-0 overflow-hidden" style={{ position: "sticky", bottom: 0, zIndex: 10 }}>
       <audio src="/binary-logout-sfx.mp3" ref={audioRef} />
 
-      {/* 🔄 Logging Out Overlay */}
       {isLoggingOut && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-900 backdrop-blur-sm">
           <div className="absolute inset-0 opacity-20 animate-pulse-slow bg-[radial-gradient(circle,_#00ffff33_1px,_transparent_1px)] bg-[length:20px_20px]" />
@@ -97,7 +129,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         </div>
       )}
 
-      {/* 👤 User Info */}
       <div className="flex items-center gap-3 z-10">
         <div className="relative w-12 h-12">
           <img
@@ -112,22 +143,24 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         </div>
 
         <div className="text-[10px]">
-          <p className="font-bold uppercase">
-            {userDetails.Firstname}, {userDetails.Lastname}
-          </p>
+          <p className="font-bold uppercase">{userDetails.Firstname}, {userDetails.Lastname}</p>
           <p className="italic">{userDetails.Company}</p>
           <p className="italic">( {userDetails.Position} )</p>
+          {sessionInfo && (
+            <p className="italic text-[10px] text-gray-500 capitalize">
+              Status: {sessionInfo.status} | Time: {new Date(sessionInfo.timestamp).toLocaleString()}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* 🚪 Logout Button */}
       <button
         onClick={handleLogout}
         disabled={isLoggingOut}
         title="Logout"
         className="ml-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-red-900 transition z-10"
       >
-        <GrPowerShutdown size={20} className="text-emerald-500" />
+        <GrPowerShutdown size={20} className="text-orange-500" />
       </button>
     </div>
   );
