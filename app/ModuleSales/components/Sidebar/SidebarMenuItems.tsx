@@ -13,6 +13,10 @@ const getMenuItems = (userId: string | null = "") => [
                 href: `/ModuleSales/Sales/Profile${userId ? `?id=${encodeURIComponent(userId)}` : ""}`
             },
             { 
+                title: "Session Logs", 
+                href: `/ModuleSales/Sales/Profile/SessionLogs${userId ? `?id=${encodeURIComponent(userId)}` : ""}`
+            },
+            { 
                 title: "Developers", 
                 href: `/ModuleSales/Sales/Profile/Developers${userId ? `?id=${encodeURIComponent(userId)}` : ""}`
             },

@@ -49,6 +49,10 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
         title: "Developers",
         href: `/ModuleSales/Sales/Profile/Developers${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
       },
+      {
+        title: "Session Logs",
+        href: `/ModuleSales/Sales/Profile/SessionLogs${userId ? `?id=${encodeURIComponent(userId)}` : ""}`
+      },
     ],
   };
 

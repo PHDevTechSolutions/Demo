@@ -84,6 +84,7 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
     if (role === "Manager") {
       return menuItems.filter(item =>
         [
+          "Session Logs",
           "Sales Performance",
           "Conversion Rates",
           "National",
@@ -120,6 +121,7 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
     if (role === "Territory Sales Manager") {
       return menuItems.filter(item =>
         [ 
+          "Session Logs",
           "Sales Performance",
           "Conversion Rates",
           "Customer Database",
@@ -135,6 +137,7 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
     if (role === "Territory Sales Associate") {
       return menuItems.filter(item =>
         [ 
+          "Session Logs",
           "Sales Performance",
           "Conversion Rates",
           "Customer Database",
