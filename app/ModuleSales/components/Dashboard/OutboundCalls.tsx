@@ -97,6 +97,9 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
         <h2 className="text-sm font-bold mb-4">Outbound Calls (Touch-Based Only)</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Call activities focused on touch-based outbound interactions with clients.
+        </p>
 
         {groupedBySource.length === 0 ? (
           <p className="text-gray-500 text-xs">No calls found in selected date range.</p>
@@ -121,6 +124,9 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
 
             {/* Bar Chart */}
             <h2 className="text-sm font-bold mb-4">Sales & Quotation Amounts Comparison</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              A side-by-side view of sales performance versus quoted amounts to track conversion and effectiveness.
+            </p>
             <div className="mb-4 border rounded-md shadow-md">
               <BarChart data={barChartData} />
             </div>

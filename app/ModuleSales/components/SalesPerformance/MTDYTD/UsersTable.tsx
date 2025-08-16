@@ -181,8 +181,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setSelectedQuarter(null);
             }}
             className={`py-2 px-4 text-xs font-medium ${activeTab === "MTD"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500"
+              ? "border-b-2 border-blue-500 text-blue-600"
+              : "text-gray-500"
               }`}
           >
             MTD
@@ -194,8 +194,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setSelectedQuarter(null);
             }}
             className={`py-2 px-4 text-xs font-medium ${activeTab === "YTD"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500"
+              ? "border-b-2 border-blue-500 text-blue-600"
+              : "text-gray-500"
               }`}
           >
             YTD
@@ -206,8 +206,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
               setSelectedMonth(null);
             }}
             className={`py-2 px-4 text-xs font-medium ${activeTab === "Quarterly"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500"
+              ? "border-b-2 border-blue-500 text-blue-600"
+              : "text-gray-500"
               }`}
           >
             Quarterly
@@ -304,6 +304,46 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
             <th className="px-6 py-4 font-semibold text-gray-700">% To Plan</th>
           </tr>
         </thead>
+        {Object.keys(groupedData).length > 0 && (
+          <thead className="bg-gray-200 font-semibold text-xs">
+            {(() => {
+              const totals = Object.values(groupedData).reduce(
+                (acc, group) => {
+                  acc.totalTarget += group.targetQuota;
+                  acc.totalActual += group.totalActualSales;
+                  acc.totalVariance += group.mtdVariance;
+                  return acc;
+                },
+                { totalTarget: 0, totalActual: 0, totalVariance: 0 }
+              );
+
+              const achievement =
+                totals.totalTarget > 0
+                  ? (totals.totalActual / totals.totalTarget) * 100
+                  : 0;
+
+              const percentToPlan =
+                totals.totalTarget > 0
+                  ? (totals.totalActual / totals.totalTarget) * 100
+                  : 0;
+
+              return (
+                <tr>
+                  <td className="px-6 py-3 text-left">Grand Total</td>
+                  <td className="px-6 py-3 text-right" colSpan={1}></td>
+                  <td className="px-6 py-3">₱{formatCurrency(totals.totalTarget)}</td>
+                  <td className="px-6 py-3">₱{formatCurrency(totals.totalActual)}</td>
+                  <td className="px-6 py-3">{achievement.toFixed(2)}%</td>
+                  <td className="px-6 py-3">-</td>
+                  <td className="px-6 py-3 text-red-700">
+                    ₱{formatCurrency(totals.totalVariance)}
+                  </td>
+                  <td className="px-6 py-3">{percentToPlan.toFixed(2)}%</td>
+                </tr>
+              );
+            })()}
+          </thead>
+        )}
         <tbody className="divide-y divide-gray-100">
           {Object.keys(groupedData).length > 0 ? (
             Object.values(groupedData).map((group) => {

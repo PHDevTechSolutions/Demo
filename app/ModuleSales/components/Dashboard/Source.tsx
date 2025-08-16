@@ -100,7 +100,9 @@ const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
     <section className="bg-white shadow-md rounded-lg overflow-hidden p-6 select-none">
       {/* Header / Title */}
       <h2 className="text-sm font-bold text-gray-800 mb-4">Source Breakdown</h2>
-
+      <p className="text-xs text-gray-500 mb-4">
+        Overview of accounts grouped by their source type for better tracking.
+      </p>
       <div className="flex gap-8">
         {/* Chart area */}
         <div className="flex-1 relative" style={{ minWidth: 0, height: 400 }}>

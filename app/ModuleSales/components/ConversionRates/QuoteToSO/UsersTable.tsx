@@ -161,6 +161,29 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                         <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
                     </tr>
                 </thead>
+                <thead className="bg-gray-200 font-semibold">
+    <tr>
+      <td className="px-6 py-2 text-xs">TOTAL</td>
+      <td className="px-6 py-2 text-xs">-</td>
+      <td className="px-6 py-2 text-xs">
+        ₱{formatCurrency(Object.values(groupedData).reduce((sum, g) => sum + g.targetQuota, 0))}
+      </td>
+      <td className="px-6 py-2 text-xs">
+        {Object.values(groupedData).reduce((sum, g) => sum + g.preparationQuoteCount, 0)}
+      </td>
+      <td className="px-6 py-2 text-xs">
+        {Object.values(groupedData).reduce((sum, g) => sum + g.salesorderCount, 0)}
+      </td>
+      <td className="px-6 py-2 text-xs">
+        {(() => {
+          const totalQuotes = Object.values(groupedData).reduce((sum, g) => sum + g.preparationQuoteCount, 0);
+          const totalSO = Object.values(groupedData).reduce((sum, g) => sum + g.salesorderCount, 0);
+          return totalQuotes > 0 ? ((totalSO / totalQuotes) * 100).toFixed(2) + '%' : '0%';
+        })()}
+      </td>
+      <td className="px-6 py-2 text-xs">-</td>
+    </tr>
+  </thead>
                 <tbody className="divide-y divide-gray-100">
                     {Object.keys(groupedData).length > 0 ? (
                         Object.values(groupedData).map((group) => {
@@ -173,8 +196,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                                     <td className="px-6 py-4 text-xs capitalize font-bold">{group.AgentFirstname} {group.AgentLastname}<br /><span className="text-gray-900 text-[8px]">({group.ReferenceID})</span></td>
                                     <td className="px-6 py-4 text-xs">{group.date_created}</td>
                                     <td className="px-6 py-4 text-xs">₱{formatCurrency(group.targetQuota)}</td>
-                                    <td className="px-6 py-4 text-xs">{group.salesorderCount}</td>
                                     <td className="px-6 py-4 text-xs">{group.preparationQuoteCount}</td>
+                                    <td className="px-6 py-4 text-xs">{group.salesorderCount}</td>
                                     <td className="px-6 py-4 text-xs">{percentageCalls.toFixed(2)}%</td>
                                     <td className="px-6 py-4 text-xs">
                                         {percentageCalls > 30 ? (

@@ -145,7 +145,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                     ))}
                 </select>
             </div>
-            
+
             <div className="mb-4 border-b border-gray-200">
                 <nav className="flex space-x-4">
                     <button onClick={() => setActiveTab("MTD")} className={`py-2 px-4 text-xs font-medium ${activeTab === "MTD" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>MTD</button>
@@ -163,6 +163,23 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                         <th className="px-6 py-4 font-semibold text-gray-700">(MTD) # of SI</th>
                         <th className="px-6 py-4 font-semibold text-gray-700">% SO to SI</th>
                         <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
+                    </tr>
+                </thead>
+                <thead className="bg-gray-200 font-semibold">
+                    <tr>
+                        <td className="px-6 py-2 text-xs">TOTAL</td>
+                        <td className="px-6 py-2 text-xs">-</td>
+                        <td className="px-6 py-2 text-xs">₱{formatCurrency(Object.values(groupedData).reduce((sum, g) => sum + g.targetQuota, 0))}</td>
+                        <td className="px-6 py-2 text-xs">{Object.values(groupedData).reduce((sum, g) => sum + g.salesorderCount, 0)}</td>
+                        <td className="px-6 py-2 text-xs">{Object.values(groupedData).reduce((sum, g) => sum + g.siCount, 0)}</td>
+                        <td className="px-6 py-2 text-xs">
+                            {(() => {
+                                const totalSO = Object.values(groupedData).reduce((sum, g) => sum + g.salesorderCount, 0);
+                                const totalSI = Object.values(groupedData).reduce((sum, g) => sum + g.siCount, 0);
+                                return totalSO > 0 ? ((totalSI / totalSO) * 100).toFixed(2) + '%' : '0%';
+                            })()}
+                        </td>
+                        <td className="px-6 py-2 text-xs">-</td>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

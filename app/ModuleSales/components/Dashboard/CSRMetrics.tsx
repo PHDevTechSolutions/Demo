@@ -198,7 +198,9 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
     return (
         <div className="bg-white shadow-md rounded-lg p-6 font-sans overflow-x-auto text-black">
             <h2 className="text-sm font-bold mb-2">CSR Metrics</h2>
-
+            <p className="text-xs text-gray-500 mb-4">
+                Key performance indicators of Customer Service Representatives including their productivity and efficiency.
+            </p>
             {data.length === 0 ? (
                 <p className="text-center text-gray-500 text-xs">No CSR metrics available.</p>
             ) : (

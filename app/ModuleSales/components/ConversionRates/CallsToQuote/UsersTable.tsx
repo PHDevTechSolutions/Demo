@@ -157,6 +157,31 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                         <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
                     </tr>
                 </thead>
+                <thead className="bg-gray-50 font-semibold text-xs">
+                    <tr>
+                        <td className="px-6 py-4">TOTAL</td>
+                        <td></td>
+                        <td className="px-6 py-4">
+                            ₱{formatCurrency(
+                                Object.values(groupedData).reduce((sum, g) => sum + g.targetQuota, 0)
+                            )}
+                        </td>
+                        <td className="px-6 py-4">
+                            {Object.values(groupedData).reduce((sum, g) => sum + g.OutboundCalls, 0)}
+                        </td>
+                        <td className="px-6 py-4">
+                            {Object.values(groupedData).reduce((sum, g) => sum + g.preparationQuoteCount, 0)}
+                        </td>
+                        <td className="px-6 py-4">
+                            {(() => {
+                                const totalCalls = Object.values(groupedData).reduce((sum, g) => sum + g.OutboundCalls, 0);
+                                const totalQuotes = Object.values(groupedData).reduce((sum, g) => sum + g.preparationQuoteCount, 0);
+                                return totalCalls > 0 ? ((totalQuotes / totalCalls) * 100).toFixed(2) + "%" : "0%";
+                            })()}
+                        </td>
+                        <td></td>
+                    </tr>
+                </thead>
                 <tbody className="divide-y divide-gray-100">
                     {Object.keys(groupedData).length > 0 ? (
                         Object.values(groupedData).map((group) => {
@@ -178,7 +203,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                                         ) : (
                                             <span className="text-red-600 ml-2 mr-2">&#8595;</span>
                                         )}
-                                         20%
+                                        20%
                                     </td>
                                 </tr>
                             );

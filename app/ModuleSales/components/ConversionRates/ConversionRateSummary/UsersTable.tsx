@@ -153,7 +153,7 @@ const UsersCard: React.FC<UsersCardProps> = React.memo(({ posts }) => {
                     ))}
                 </select>
             </div>
-            
+
             <div className="mb-4 border-b border-gray-200">
                 <nav className="flex space-x-4">
                     <button onClick={() => setActiveTab("MTD")} className={`py-2 px-4 text-xs font-medium ${activeTab === "MTD" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500"}`}>MTD</button>
@@ -171,6 +171,39 @@ const UsersCard: React.FC<UsersCardProps> = React.memo(({ posts }) => {
                         <th className="px-6 py-4 font-semibold text-gray-700">Calls to Quote</th>
                         <th className="px-6 py-4 font-semibold text-gray-700">Quote to SO</th>
                         <th className="px-6 py-4 font-semibold text-gray-700">SO to SI</th>
+                    </tr>
+                </thead>
+                <thead className="bg-gray-200 font-semibold">
+                    <tr>
+                        <td className="px-6 py-2 text-xs">TOTAL / AVG</td>
+                        <td className="px-6 py-2 text-xs">-</td>
+                        <td className="px-6 py-2 text-xs">
+                            ₱{formatCurrency(Object.values(groupedData).reduce((sum, g) => sum + g.targetQuota, 0))}
+                        </td>
+                        <td className="px-6 py-2 text-xs">
+                            {(
+                                Object.values(groupedData).reduce((sum, g) => sum + g.averageDailySales, 0) /
+                                (Object.values(groupedData).length || 1)
+                            ).toFixed(2)}
+                        </td>
+                        <td className="px-6 py-2 text-xs">
+                            {(
+                                Object.values(groupedData).reduce((sum, g) => sum + (g.OutboundCalls > 0 ? (g.preparationQuoteCount / g.OutboundCalls) * 100 : 0), 0) /
+                                (Object.values(groupedData).length || 1)
+                            ).toFixed(2)}%
+                        </td>
+                        <td className="px-6 py-2 text-xs">
+                            {(
+                                Object.values(groupedData).reduce((sum, g) => sum + (g.preparationQuoteCount > 0 ? (g.salesorderCount / g.preparationQuoteCount) * 100 : 0), 0) /
+                                (Object.values(groupedData).length || 1)
+                            ).toFixed(2)}%
+                        </td>
+                        <td className="px-6 py-2 text-xs">
+                            {(
+                                Object.values(groupedData).reduce((sum, g) => sum + (g.salesorderCount > 0 ? (g.siCount / g.salesorderCount) * 100 : 0), 0) /
+                                (Object.values(groupedData).length || 1)
+                            ).toFixed(2)}%
+                        </td>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

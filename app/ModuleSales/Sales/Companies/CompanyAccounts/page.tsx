@@ -300,7 +300,9 @@ const ActiveAccounts: React.FC = () => {
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
                                         <h2 className="text-lg font-bold mb-2">List of Accounts - Active</h2>
                                         <p className="text-xs text-gray-600 mb-4">
-                                            The <strong>Company Accounts Overview</strong> section displays a comprehensive list of all accounts related to various companies. It allows users to filter accounts based on various criteria like client type, date range, and more, ensuring efficient navigation and analysis of company data. The table below showcases the detailed information about each account.
+                                            The <strong>Active Company Accounts</strong> section displays all currently active accounts.
+                                            Users can filter and explore accounts by client type, date range, and other criteria,
+                                            making it easier to manage and analyze up-to-date company data.
                                         </p>
 
                                         {/* Filter by Agent */}

@@ -176,7 +176,9 @@ const GroupAccounts: React.FC = () => {
                 <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
                   <h2 className="text-lg font-bold mb-2">List of Accounts - Company Groups</h2>
                   <p className="text-xs text-gray-600 mb-4">
-                    This section allows you to filter and search through different company groups.
+                    The <strong>Company Groups</strong> section organizes accounts based on their respective parent or affiliated
+                    groups. This allows users to view related companies together, making it easier to analyze group-level performance,
+                    strengthen partnerships, and manage business relationships more efficiently.
                   </p>
 
                   {/* Agent Filter */}

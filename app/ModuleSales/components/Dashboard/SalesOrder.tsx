@@ -113,7 +113,9 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
         <h2 className="text-sm font-bold mb-4">Sales Orders Summary</h2>
-
+        <p className="text-xs text-gray-500 mb-4">
+          Overview of all sales orders, showing completed, pending, and canceled transactions for better tracking.
+        </p>
         {soDoneSummary.totalCount === 0 ? (
           <p className="text-gray-500 text-xs">
             No Sales Orders with status "SO-Done".
@@ -135,12 +137,18 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
             </div>
 
             <h2 className="text-sm font-bold mb-4">Total Amount vs Total Count</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Comparison between the total monetary value and the number of transactions to analyze sales performance.
+            </p>
             <div className="mb-6 border shadow-md p-4 rounded-md">
               {/* ✅ Grouped Bar Chart */}
               <GroupedBarChart data={chartData} />
             </div>
-            
+
             <h2 className="text-sm font-bold mb-4">Sales Orders & Conversion Trends</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Tracks the number of sales orders and analyzes conversion trends to measure overall sales efficiency.
+            </p>
             <div className="mb-6 border shadow-md p-4 rounded-md">
               {/* ✅ Combination Chart */}
               <CombinationChart data={comboData} />
@@ -160,8 +168,9 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 font-bold">{soDoneSummary.totalCount}</td>
                     <td className="px-4 py-2">
-                      ₱{soDoneSummary.totalAmount.toFixed(2)}
+                      ₱{soDoneSummary.totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
+
                     <td className="px-4 py-2">{conversionRate.toFixed(2)}%</td>
                     <td className="px-4 py-2">₱{pesoValueRate.toFixed(2)}</td>
                   </tr>

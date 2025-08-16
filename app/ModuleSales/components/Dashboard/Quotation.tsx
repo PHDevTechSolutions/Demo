@@ -117,7 +117,7 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
           if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
             return end.getTime() - start.getTime();
           }
-        } catch {}
+        } catch { }
         return 0;
       })
       .filter((ms) => ms > 0);
@@ -127,7 +127,9 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
         <h2 className="text-sm font-bold mb-4">Quotations</h2>
-
+        <p className="text-xs text-gray-500 mb-4">
+          A record of all customer quotations, including those pending approval, approved, or disapproved.
+        </p>
         {/* Gauges Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
@@ -163,7 +165,9 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
                   ({ totalCount, totalQuoteAmount, handlingTimeFormatted }, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
                       <td className="px-4 py-2">{totalCount}</td>
-                      <td className="px-4 py-2">{totalQuoteAmount.toFixed(2)}</td>
+                      <td className="px-4 py-2">
+                        ₱{totalQuoteAmount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </td>
                       <td className="px-4 py-2">{handlingTimeFormatted}</td>
                       <td className="px-4 py-2">{quoteToSO.toFixed(2)}%</td>
                       <td className="px-4 py-2">₱{valuePeso.toFixed(2)}</td>

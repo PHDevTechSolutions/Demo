@@ -124,6 +124,8 @@ const ListofUser: React.FC = () => {
                                 ? post?.manager === referenceID
                                 : userDetails.Role === "Territory Sales Manager"
                                     ? post?.tsm === referenceID
+                                : userDetails.Role === "Territory Sales Associate"
+                                    ? post?.referenceid === referenceID    
                                     : false;
 
                 return matchesSearchTerm && matchesClientType && matchesRole;

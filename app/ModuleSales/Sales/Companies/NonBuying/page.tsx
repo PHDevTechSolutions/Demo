@@ -283,7 +283,9 @@ const NewClientAccounts: React.FC = () => {
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
                                         <h2 className="text-lg font-bold mb-2">List of Accounts - Non-Buying</h2>
                                         <p className="text-xs text-gray-600 mb-4">
-                                            The <strong>Company Accounts Overview</strong> section displays a comprehensive list of all accounts related to various companies. It allows users to filter accounts based on various criteria like client type, date range, and more, ensuring efficient navigation and analysis of company data. The table below showcases the detailed information about each account.
+                                            The <strong>Non-Buying Accounts</strong> section lists company accounts that are currently not making purchases.
+                                            It allows users to identify inactive or undecided clients, analyze engagement history, and plan follow-up
+                                            strategies to encourage potential conversions in the future.
                                         </p>
 
                                         {/* Filter by Agent */}

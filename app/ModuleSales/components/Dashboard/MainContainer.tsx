@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
+import Card from "./Card";
 import Source from "./Source";
 import CSRMetrics from "./CSRMetrics";
 import OutboundCalls from "./OutboundCalls";
@@ -250,6 +251,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+        <Card filteredAccounts={filteredByAgent} userDetails={userDetails} />
         <Source filteredAccounts={filteredByAgent} />
         <CSRMetrics filteredAccounts={filteredByAgent} />
         <OutboundCalls filteredCalls={filteredByAgent} dateRange={dateRange} />
