@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // Mailjet API credentials
-const apiKey = "2541c8283c5f03a0ffd562ea1018cdaa";
-const apiSecret = "3f965d529872432598c593aed0acde12";
+const apiKey = "63bbb87e90252175d928527e8c6e9f13";
+const apiSecret = "e918d1ff726fea05ccbb499e081e78f5";
 
 // Survey link
 const surveyLink = "https://us3.list-manage.com/survey?u=77f60046e24103f876322654d&id=ab6262deaa&attribution=false";

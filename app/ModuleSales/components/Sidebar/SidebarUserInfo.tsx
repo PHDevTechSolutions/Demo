@@ -72,7 +72,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     fetchSession();
   }, [userDetails.Email]);
 
-
   const statusColor =
     {
       Active: "bg-green-600",
