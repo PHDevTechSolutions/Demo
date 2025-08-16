@@ -31,48 +31,48 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
       try {
         setLoading(true);
 
-        // Fetch for progress
-        let filtered: Post[] = [];
+        // Fetch calls
+        let calls: Post[] = [];
         if (filteredAccounts && filteredAccounts.length > 0) {
-          filtered = filteredAccounts.filter(
-            (item) => item.source === "Outbound - Touchbase"
-          );
+          calls = filteredAccounts;
         } else {
           const res = await fetch(
             "/api/ModuleSales/Task/DailyActivity/FetchProgress"
           );
           if (!res.ok) throw new Error("Failed to fetch progress");
           const json = await res.json();
-          const dataArray = Array.isArray(json) ? json : json.data || [];
-          filtered = dataArray.filter(
-            (item: Post) => item.source === "Outbound - Touchbase"
-          );
+          calls = Array.isArray(json) ? json : json.data || [];
         }
-        setTouchbaseCalls(filtered);
 
-        // Fetch for total companies
+        // Keep only Outbound - Touchbase
+        const outboundTouchbaseCalls = calls.filter(
+          (item) => item.source === "Outbound - Touchbase"
+        );
+
+        setTouchbaseCalls(outboundTouchbaseCalls);
+
+        // Fetch companies
         const companyRes = await fetch(
           "/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount"
         );
         if (!companyRes.ok) throw new Error("Failed to fetch companies");
         const companyJson = await companyRes.json();
-        const companiesArray: Post[] = Array.isArray(companyJson)
+        let companiesArray: Post[] = Array.isArray(companyJson)
           ? companyJson
           : companyJson.data || [];
 
-        // filter depende sa role
-        let filteredCompanies = companiesArray;
+        // Filter by role
         if (userDetails?.Role === "Territory Sales Associate") {
-          filteredCompanies = companiesArray.filter(
+          companiesArray = companiesArray.filter(
             (company) => company.referenceid === userDetails.ReferenceID
           );
         } else if (userDetails?.Role === "Territory Sales Manager") {
-          filteredCompanies = companiesArray.filter(
+          companiesArray = companiesArray.filter(
             (company) => company.tsm === userDetails.ReferenceID
           );
         }
 
-        setTotalCompanies(filteredCompanies.length || 0);
+        setTotalCompanies(companiesArray.length || 0);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -83,7 +83,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     fetchData();
   }, [filteredAccounts, userDetails]);
 
-  // ✅ filter calls per agent/role bago i-count
+  // Filter calls by agent/role
   const filteredTouchbaseCalls = touchbaseCalls.filter((call) => {
     if (userDetails?.Role === "Territory Sales Associate") {
       return call.referenceid === userDetails.ReferenceID;
@@ -93,20 +93,16 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     return true; // admin/higher roles see all
   });
 
-  const successfulCount =
-    filteredTouchbaseCalls.filter(
-      (item) => item.callstatus?.toLowerCase() === "successful"
-    ).length || 0;
+  const successfulCount = filteredTouchbaseCalls.filter(
+    (item) => item.callstatus === "Successful"
+  ).length;
 
-  const unsuccessfulCount =
-    filteredTouchbaseCalls.filter(
-      (item) => item.callstatus?.toLowerCase() === "unsuccessful"
-    ).length || 0;
+  const unsuccessfulCount = filteredTouchbaseCalls.filter(
+    (item) => item.callstatus === "Unsuccessful"
+  ).length;
 
-  // 🚫 Huwag i-render kung Territory Sales Manager
-  if (userDetails?.Role === "Territory Sales Manager") {
-    return null;
-  }
+  // Do not render for Territory Sales Manager
+  if (userDetails?.Role === "Territory Sales Manager") return null;
 
   return (
     <section className="bg-white shadow-md rounded-lg p-6 select-none">
@@ -157,6 +153,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
             This represents the total number of company accounts officially
             assigned or registered in the system.
           </p>
+
           <div className="grid grid-cols-1 gap-4">
             {/* Total Companies */}
             <div className="bg-blue-100 rounded-lg p-4 shadow flex items-center gap-3">
