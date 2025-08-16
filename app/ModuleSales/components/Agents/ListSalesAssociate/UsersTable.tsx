@@ -1,13 +1,8 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Menu } from "@headlessui/react";
-
-import { Doughnut } from "react-chartjs-2";
-import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-
-// Register necessary Chart.js components
-Chart.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 interface UsersCardProps {
   posts: any[];
@@ -15,12 +10,77 @@ interface UsersCardProps {
   userDetails: any;
 }
 
+interface Session {
+  email: string;
+  status: string;
+  timestamp: string;
+}
+
 const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails }) => {
   const [updatedUser, setUpdatedUser] = useState(posts);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
   useEffect(() => {
     setUpdatedUser(posts);
   }, [posts]);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const response = await fetch(`/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`);
+        if (!response.ok) throw new Error("Failed to fetch sessions");
+        const data: Session[] = await response.json();
+        setSessions(data);
+      } catch (err) {
+        console.error("Error fetching sessions:", err);
+      }
+    };
+    fetchSessions();
+  }, [userDetails.Email]);
+
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      month: "long",
+      day: "numeric",
+      weekday: "long",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    };
+    return date.toLocaleString("en-US", options);
+  };
+
+  const getUserLogins = (email: string) => {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+    const userSessions = sessions
+      .filter((s) => s.email === email)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const todaySessions = userSessions.filter(
+      (s) =>
+        new Date(s.timestamp) >= startOfDay &&
+        new Date(s.timestamp) <= endOfDay &&
+        s.status.toLowerCase() === "login"
+    );
+
+    const logoutSessions = userSessions.filter((s) => s.status.toLowerCase() === "logout");
+
+    return {
+      firstLoginToday:
+        todaySessions.length > 0
+          ? { timestamp: formatDateTime(todaySessions[0].timestamp), status: todaySessions[0].status }
+          : { timestamp: "No login today", status: "N/A" },
+      lastLogoutOverall:
+        logoutSessions.length > 0
+          ? { timestamp: formatDateTime(logoutSessions[logoutSessions.length - 1].timestamp), status: logoutSessions[logoutSessions.length - 1].status }
+          : { timestamp: "No logout yet", status: "N/A" },
+    };
+  };
 
   const statusColors: { [key: string]: string } = {
     Active: "bg-green-500",
@@ -32,38 +92,74 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails })
 
   return (
     <div className="mb-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {updatedUser.length > 0 ? (
-          updatedUser.map((post) => (
-            <div key={post._id} className="relative border rounded-md shadow-md p-4 flex flex-col bg-white">
-              <p className="text-xs capitalize">{post.Lastname}, {post.Firstname}</p>
-              <div className="flex justify-between items-center mt-2">
-                <div className="mt-4 mb-4 text-xs">
+          updatedUser.map((post) => {
+            const userLogins = getUserLogins(post.Email);
+
+            return (
+              <div
+                key={post._id}
+                className="relative border rounded-xl shadow-lg p-4 flex flex-col bg-white hover:scale-[1.03] hover:shadow-2xl transition-transform duration-300 overflow-hidden"
+              >
+                {/* Header with Avatar and Name */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <img
+                        src={post.profilePicture || "/taskflow.png"}
+                        alt="Avatar"
+                        className="w-12 h-12 object-cover rounded-full border-2 border-white shadow-md"
+                      />
+                      {/* Status indicator */}
+                      <span
+                        className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${statusColors[post.Status] || "bg-gray-400"} animate-pulse`}
+                        title={post.Status}
+                      />
+                    </div>
+                    <p className="text-sm font-bold capitalize">{post.Lastname}, {post.Firstname}</p>
+                  </div>
+                  <Menu as="div" className="relative inline-block text-left">
+                    <Menu.Button className="p-1 rounded hover:bg-gray-100">
+                      <BsThreeDotsVertical className="text-gray-600" />
+                    </Menu.Button>
+                    <Menu.Items className="absolute right-0 mt-2 w-36 bg-white shadow-md rounded-md z-10 animate-fade-in">
+                      <button
+                        className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 w-full text-left"
+                        onClick={() => handleEdit(post)}
+                      >
+                        View Information
+                      </button>
+                    </Menu.Items>
+                  </Menu>
+                </div>
+
+                {/* Body */}
+                <div className="text-xs space-y-1 mb-3">
                   <p><strong>Email:</strong> {post.Email}</p>
                   <p className="capitalize"><strong>Role:</strong> {post.Role}</p>
+                  <p className="text-green-700">
+                    <strong>First Login Today:</strong> {userLogins.firstLoginToday.timestamp} ({userLogins.firstLoginToday.status})
+                  </p>
+                  <p className="text-red-600">
+                    <strong>Last Logout:</strong> {userLogins.lastLogoutOverall.timestamp} ({userLogins.lastLogoutOverall.status})
+                  </p>
                 </div>
-                <Menu as="div" className="relative inline-block text-left">
-                  <div>
-                    <Menu.Button><BsThreeDotsVertical /></Menu.Button>
-                  </div>
-                  <Menu.Items className="absolute right-0 mt-2 w-29 bg-white shadow-md rounded-md z-10">
-                    <button className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 w-full text-left" onClick={() => handleEdit(post)}>View Information</button>
-                  </Menu.Items>
-                </Menu>
+
+                {/* Footer */}
+                <div className="mt-auto border-t pt-2 text-xs text-gray-900 flex flex-col gap-1">
+                  <p><strong>Department:</strong> {post.Department}</p>
+                  <p><strong>Location:</strong> {post.Location}</p>
+                </div>
+
+                {/* Animated blobs */}
+                <div className="absolute -top-6 -left-6 w-32 h-32 bg-gradient-to-r from-cyan-200 to-blue-300 opacity-30 rounded-full blur-2xl animate-blob animation-delay-2000 pointer-events-none"></div>
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-r from-pink-200 to-red-300 opacity-30 rounded-full blur-2xl animate-blob animation-delay-4000 pointer-events-none"></div>
               </div>
-              <div className="mt-auto border-t pt-2 text-xs text-gray-900">
-                <p><strong>Department:</strong> {post.Department}</p>
-                <p><strong>Location:</strong> {post.Location}</p>
-                <p className="mt-2">
-                  <span className={`badge text-white text-[8px] px-2 py-1 rounded-xl ${statusColors[post.Status] || "bg-gray-400"}`}>
-                    {post.Status}
-                  </span>
-                </p>
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
-          <div className="col-span-full text-center py-4 text-xs">No accounts available</div>
+          <div className="col-span-full text-center py-6 text-xs text-gray-500">No accounts available</div>
         )}
       </div>
     </div>
