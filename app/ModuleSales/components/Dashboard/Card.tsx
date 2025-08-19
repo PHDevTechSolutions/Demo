@@ -71,6 +71,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
             (company) => company.tsm === userDetails.ReferenceID
           );
         }
+        // Super Admin → walang filter (see all)
 
         setTotalCompanies(companiesArray.length || 0);
       } catch (error) {
@@ -90,8 +91,9 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     } else if (userDetails?.Role === "Territory Sales Manager") {
       return call.tsm === userDetails.ReferenceID;
     }
-    return true; // admin/higher roles see all
+    return true; // Super Admin or higher roles → see all
   });
+
 
   const successfulCount = filteredTouchbaseCalls.filter(
     (item) => item.callstatus === "Successful"
