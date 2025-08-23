@@ -202,7 +202,7 @@ const ListofUser: React.FC = () => {
                 <div className="flex flex-col space-y-2">
                   <button
                     onClick={() => setActiveTab("scheduled")}
-                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "scheduled" ? "bg-orange-100" : "bg-gray-100"
+                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "scheduled" ? "bg-orange-400 text-white" : "bg-gray-100"
                       }`}
                   >
                     <BsListTask />
@@ -210,7 +210,7 @@ const ListofUser: React.FC = () => {
 
                   <button
                     onClick={() => setActiveTab("activity")}
-                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity" ? "bg-orange-100" : "bg-gray-100"
+                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity" ? "bg-orange-400 text-white" : "bg-gray-100"
                       }`}
                   >
                     <BsCalendar4Week />

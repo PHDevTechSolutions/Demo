@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { CiBellOn, CiDark, CiSun } from "react-icons/ci";
+import { GrPowerShutdown } from "react-icons/gr";
+import { useRouter } from "next/navigation";
 
 // Route for Notifications
 import Notification from "./Notification";
@@ -62,12 +64,12 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
 
   const [showSidebar, setShowSidebar] = useState(false);
   const sidebarRef = useRef<HTMLDivElement | null>(null);
-  const [loadingId, setLoadingId] = useState<string | number | null>(null);
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedNotif, setSelectedNotif] = useState<any>(null);
 
   const [emailNotifications, setEmailNotifications] = useState<Email[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -280,28 +282,57 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
 
   const totalNotifCount = notifications.filter((notif) => notif.status === "Unread").length;
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/log-activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          status: "logout",
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      console.error("Logout log failed:", err);
+    }
+    sessionStorage.clear();
+    router.replace("/Login");
+  };
+
   return (
     <div className={`sticky top-0 z-[999] flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div
         className="relative flex items-center justify-between w-full text-xs z-[1000]"
         ref={dropdownRef}
       >
-        <button
-          onClick={onToggleTheme}
-          className="relative flex items-center bg-gray-200 dark:bg-gray-700 rounded-full w-16 h-8 p-1 transition-all duration-300"
-        >
-          {/* Toggle Knob with Icon Centered */}
-          <div
-            className={`w-6 h-6 bg-white dark:bg-yellow-400 rounded-full shadow-md flex justify-center items-center transform transition-transform duration-300 ${isDarkMode ? "translate-x-8" : "translate-x-0"
-              }`}
+        <div className="flex items-center gap-2">
+          {/* 🔴 Logout Button - Mobile only */}
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900 transition block md:hidden"
+            title="Logout"
           >
-            {isDarkMode ? (
-              <CiDark size={16} className="text-gray-900 dark:text-gray-300" />
-            ) : (
-              <CiSun size={16} className="text-yellow-500" />
-            )}
-          </div>
-        </button>
+            <GrPowerShutdown size={18} className="text-red-500" />
+          </button>
+          {/* 🌙 Theme Toggle */}
+          <button
+            onClick={onToggleTheme}
+            className="relative flex items-center bg-gray-200 dark:bg-gray-700 rounded-full w-16 h-8 p-1 transition-all duration-300"
+          >
+            <div
+              className={`w-6 h-6 bg-white dark:bg-yellow-400 rounded-full shadow-md flex justify-center items-center transform transition-transform duration-300 ${isDarkMode ? "translate-x-8" : "translate-x-0"
+                }`}
+            >
+              {isDarkMode ? (
+                <CiDark size={16} className="text-gray-900 dark:text-gray-300" />
+              ) : (
+                <CiSun size={16} className="text-yellow-500" />
+              )}
+            </div>
+          </button>
+        </div>
+
 
         {/* Notifications */}
         <button onClick={() => setShowSidebar((prev) => !prev)} className="p-2 relative flex items-center hover:bg-gray-200 hover:rounded-full">

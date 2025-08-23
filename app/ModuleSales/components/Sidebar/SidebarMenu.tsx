@@ -16,6 +16,7 @@ interface MenuItem {
   title: string;
   icon: React.ComponentType<{ size?: number }>;
   subItems: SubItem[];
+  isDashboard?: boolean; // ✅ para alam natin special siya
 }
 
 interface SidebarMenuProps {
@@ -24,9 +25,6 @@ interface SidebarMenuProps {
   handleToggle: (title: string) => void;
   menuItems: MenuItem[];
   userId: string | null;
-  pendingInquiryCount?: number;
-  pendingInactiveCount?: number;
-  pendingDeleteCount?: number;
 }
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({
@@ -36,6 +34,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   menuItems,
   userId,
 }) => {
+  // ✅ Define Dashboard item
+  const dashboardItem: MenuItem = {
+    title: "Dashboard",
+    icon: BsSpeedometer2,
+    subItems: [],
+    isDashboard: true,
+  };
+
   const myProfileItem: MenuItem = {
     title: "My Profile",
     icon: CiSettings,
@@ -55,7 +61,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
     ],
   };
 
-  const allItems: MenuItem[] = [myProfileItem, ...menuItems.filter(i => i.title !== "My Profile")];
+  // ✅ Dashboard always first
+  const allItems: MenuItem[] = [dashboardItem, myProfileItem, ...menuItems.filter(i => i.title !== "My Profile")];
 
   const renderSubItems = (items: SubItem[]) => (
     <div className="flex flex-col bg-gray-100 rounded-md">
@@ -74,24 +81,28 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
   return (
     <div className="flex flex-col flex-grow overflow-y-auto text-xs p-2">
-      {/* DASHBOARD (Common) */}
-      <div className="w-full mb-1">
-        <Link
-          href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
-          className={`flex items-center w-full p-4 rounded transition-all duration-300 
-            hover:bg-orange-400 hover:text-white hover:shadow-md active:scale-95 bg-orange-100 text-black
-            ${collapsed ? "justify-center" : "justify-start"}`}
-        >
-          <BsSpeedometer2 size={20} />
-          {!collapsed && <span className="ml-2">Dashboard</span>}
-        </Link>
-      </div>
-
-      {/* MENU ITEMS */}
       {allItems.map((item, index) => {
         const isOpen = !!openSections[item.title];
         const Icon = item.icon;
 
+        // ✅ Special case: Dashboard = simple link
+        if (item.isDashboard) {
+          return (
+            <div key={index} className="w-full mb-1">
+              <Link
+                href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
+                className={`flex items-center w-full p-4 rounded transition-all duration-300 
+                  hover:bg-orange-500 hover:text-white hover:shadow-md active:scale-95 bg-orange-400 text-white
+                  ${collapsed ? "justify-center" : "justify-start"}`}
+              >
+                <Icon size={20} />
+                {!collapsed && <span className="ml-2">Dashboard</span>}
+              </Link>
+            </div>
+          );
+        }
+
+        // ✅ Other menu items
         return (
           <div key={index} className="w-full relative">
             {/* Parent Row */}
@@ -111,7 +122,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
               )}
             </button>
 
-            {/* DESKTOP Submenu (in-flow accordion) */}
+            {/* DESKTOP Submenu */}
             <div
               className={`
                 hidden md:block overflow-hidden transition-all duration-300 ease-in-out 
@@ -121,8 +132,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
               {isOpen && renderSubItems(item.subItems)}
             </div>
 
-            {/* MOBILE Submenu (slide-up sheet above bottom bar) */}
-            {/* Backdrop */}
+            {/* MOBILE Submenu */}
             {isOpen && (
               <button
                 className="md:hidden fixed inset-0 bg-black/40 z-[65]"
@@ -130,8 +140,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
                 aria-label="Close submenu"
               />
             )}
-
-            {/* Sheet */}
             <div
               className={`
                 md:hidden fixed left-0 right-0 z-[70] 

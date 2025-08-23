@@ -5,6 +5,7 @@ import Link from "next/link";
 import SidebarMenu from "./SidebarMenu";
 import getMenuItems from "./SidebarMenuItems";
 import SidebarUserInfo from "./SidebarUserInfo";
+import { BsSpeedometer2 } from "react-icons/bs";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -183,16 +184,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
         )}
       </div>
 
-      {/* ✅ Mobile Bottom Nav + Submenu with Horizontal Scroll + Controls */}
+      {/* ✅ Mobile Bottom Nav with Dashboard Logo in Center */}
       <div
         className={`md:hidden fixed bottom-0 left-0 right-0 z-[9998] 
-        flex items-center shadow-t-lg text-sm relative
-        ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"} 
-        transition-all duration-300`}
+  flex items-center shadow-t-lg text-sm relative
+  ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"} 
+  transition-all duration-300`}
       >
         {/* Left Scroll Button */}
         <button
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-[10000] p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-[10000] 
+      p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
           onClick={() => {
             const container = document.getElementById("mobileMenuScroll");
             container?.scrollBy({ left: -100, behavior: "smooth" });
@@ -204,24 +206,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
         {/* Scrollable Menu Items */}
         <div
           id="mobileMenuScroll"
-          className="flex overflow-x-auto no-scrollbar flex-1 px-12 gap-x-4"
+          className="flex overflow-x-auto no-scrollbar flex-1 px-12 gap-x-4 items-center"
         >
-          {filteredMenuItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="relative flex-shrink-0 w-20 text-center"
+          {/* ✅ Dashboard as first item */}
+          <div className="relative flex-shrink-0 w-20 text-center">
+            <Link
+              href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""
+                }`}
+              className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
+              <BsSpeedometer2 className="text-xl mb-1" />
+              <span className="text-[11px] truncate">Dashboard</span>
+            </Link>
+          </div>
+
+          {/* ✅ Other Menu Items */}
+          {filteredMenuItems.map((item, idx) => (
+            <div key={idx} className="relative flex-shrink-0 w-20 text-center">
               <button
                 onClick={() => handleToggle(item.title)}
                 className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
               >
-                <span className="text-xl mb-1">
-                  {item.icon && <item.icon />}
-                </span>
+                <span className="text-xl mb-1">{item.icon && <item.icon />}</span>
                 <span className="text-[11px] truncate">{item.title}</span>
               </button>
 
-              {/* ✅ Show Submenu when clicked */}
+              {/* ✅ Submenu */}
               {openSections[item.title] && item.subItems && (
                 <div
                   className="fixed bottom-16 left-1/2 -translate-x-1/2 space-y-1
@@ -245,10 +255,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
           ))}
         </div>
 
-
         {/* Right Scroll Button */}
         <button
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-[10000] p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-[10000] 
+      p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
           onClick={() => {
             const container = document.getElementById("mobileMenuScroll");
             container?.scrollBy({ left: 100, behavior: "smooth" });
@@ -257,6 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
           ▶
         </button>
       </div>
+
     </>
   );
 };
