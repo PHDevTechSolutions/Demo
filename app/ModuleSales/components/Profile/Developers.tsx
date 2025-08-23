@@ -64,14 +64,14 @@ const Developer: React.FC = () => {
                     {currentContributors.map((c, idx) => (
                         <div key={idx}>
                             <div className="flex items-center justify-between mb-1">
-                                <label className="block text-sm font-medium">{c.role}</label>
+                                <label className="block text-xs font-medium">{c.role}</label>
                                 <span className={`text-xs px-2 py-1 rounded-full ${roleColors[c.roleTag]}`}>
                                     {c.roleTag}
                                 </span>
                             </div>
                             <input
                                 type="text"
-                                className="w-full bg-gray-100 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-100 rounded-lg px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
                                 value={c.name}
                                 readOnly
                             />
@@ -87,14 +87,14 @@ const Developer: React.FC = () => {
                     {previousContributors.map((c, idx) => (
                         <div key={idx}>
                             <div className="flex items-center justify-between mb-1">
-                                <label className="block text-sm font-medium">{c.role}</label>
+                                <label className="block text-xs font-medium">{c.role}</label>
                                 <span className={`text-xs px-2 py-1 rounded-full ${roleColors[c.roleTag]}`}>
                                     {c.roleTag}
                                 </span>
                             </div>
                             <input
                                 type="text"
-                                className="w-full bg-gray-100 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-100 rounded-lg px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
                                 value={c.name}
                                 readOnly
                             />
