@@ -16,14 +16,19 @@ const GroupAccounts: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 10;
 
   const [userDetails, setUserDetails] = useState({
     UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
   });
+
+  // Loading states
+  const [error, setError] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState<boolean>(true);
+  const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
+
+  const loading = loadingUser || loadingAccounts; // 🔑 combined state
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -49,11 +54,11 @@ const GroupAccounts: React.FC = () => {
           console.error("Error fetching user data:", err);
           setError("Failed to load user data. Please try again later.");
         } finally {
-          setLoading(false);
+          setLoadingUser(false);
         }
       } else {
         setError("User ID is missing.");
-        setLoading(false);
+        setLoadingUser(false);
       }
     };
 
@@ -62,7 +67,7 @@ const GroupAccounts: React.FC = () => {
 
   const fetchAccount = async () => {
     if (!userDetails.Role) return;
-    setLoading(true);
+    setLoadingAccounts(true);
 
     try {
       let url = "/api/ModuleSales/Companies/GroupCompanies";
@@ -82,7 +87,7 @@ const GroupAccounts: React.FC = () => {
       toast.error("Error fetching users.");
       console.error("Error Fetching", error);
     } finally {
-      setLoading(false);
+      setLoadingAccounts(false);
     }
   };
 
@@ -171,7 +176,7 @@ const GroupAccounts: React.FC = () => {
       <ParentLayout>
         <UserFetcher>
           {(user) => (
-            <div className="container mx-auto p-4 text-gray-900">
+            <div className="mx-auto p-4 text-gray-900">
               <div className="grid grid-cols-1 md:grid-cols-1">
                 <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
                   <h2 className="text-lg font-bold mb-2">List of Accounts - Company Groups</h2>
@@ -205,30 +210,18 @@ const GroupAccounts: React.FC = () => {
                   )}
 
                   <Filters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-                  <Table posts={currentPosts} />
 
-                  {/* Pagination Controls */}
-                  <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
-                    <button
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      className="bg-gray-200 text-xs px-4 py-2 rounded disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-
-                    <span className="text-xs">
-                      Page {currentPage} of {totalPages}
-                    </span>
-
-                    <button
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      className="bg-gray-200 text-xs px-4 py-2 rounded disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
+                  {/* Loader or Table */}
+                  {loading ? (
+                    <div className="flex justify-center items-center py-10">
+                      <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                      <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <Table posts={filteredAccounts} />
+                    </>
+                  )}
                 </div>
                 <ToastContainer className="text-xs" autoClose={1000} />
               </div>

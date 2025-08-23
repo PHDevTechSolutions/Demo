@@ -108,33 +108,11 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   return (
     <form
       onSubmit={handleSubmit}
-      className={`bg-white text-gray-900 rounded-lg p-4 text-xs mt-20 transition-all duration-300 fixed right-0 w-full ${isMaximized ? "max-w-7xl" : "max-w-md"
+      className={`bg-white text-gray-900 rounded-lg p-4 text-xs transition-all duration-300 w-full"
         }`}
     >
 
-      <div className="flex justify-end mb-4 gap-1">
-        <button
-          type="button"
-          className="px-4 py-2 border rounded text-xs flex gap-1"
-          onClick={() => setIsMaximized(!isMaximized)}
-        >
-          {isMaximized ? <CiCircleMinus size={15} /> : <CiCirclePlus size={15} />}
-          {isMaximized ? "Minimize" : "Maximize"}
-        </button>
-        <button type="submit" className="bg-blue-400 text-white px-4 py-2 rounded text-xs flex items-center">
-          {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
-          {editUser ? "Update" : "Submit"}
-        </button>
-        <button
-          type="button"
-          className="px-4 py-2 border rounded text-xs flex items-center gap-1"
-          onClick={onCancel}
-        >
-          <CiTurnL1 size={15} /> Back
-        </button>
-      </div>
-
-      <h2 className="text-lg font-bold mb-4">
+      <h2 className="text-lg font-bold mb-4 mt-6">
         {editUser ? "Edit Account Information" : "Add New Account"}
       </h2>
       <p className="text-xs text-gray-600 mb-4">
@@ -169,6 +147,20 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         status={status} setstatus={setstatus}
         isMaximized={isMaximized}
       />
+
+      <div className="flex justify-end mt-4 gap-1">
+        <button type="submit" className="bg-blue-400 text-white px-4 py-2 rounded text-xs flex items-center">
+          {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
+          {editUser ? "Update" : "Submit"}
+        </button>
+        <button
+          type="button"
+          className="px-4 py-2 border rounded text-xs flex items-center gap-1"
+          onClick={onCancel}
+        >
+          <CiTurnL1 size={15} /> Back
+        </button>
+      </div>
     </form>
   );
 };

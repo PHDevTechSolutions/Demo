@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import ExcelJS from "exceljs";
 import { toast } from "react-toastify";
-import { CiCircleMinus, CiCirclePlus, CiSaveUp2, CiTurnL1 } from "react-icons/ci";
+import { CiSaveUp2, CiTurnL1 } from "react-icons/ci";
 import { IoCloudDownloadOutline } from "react-icons/io5";
 import PreviewTable from "../../../components/Companies/CompanyAccounts/PreviewTable";
 
@@ -11,8 +11,6 @@ interface ImportFormProps {
     referenceid: string;
     manager: string;
     tsm: string;
-    isMaximized: boolean;
-    setIsMaximized: (value: boolean) => void;
     setShowImportForm: (value: boolean) => void;
     status: string;
     setstatus: (value: string) => void;
@@ -23,8 +21,6 @@ const ImportForm: React.FC<ImportFormProps> = ({
     referenceid,
     manager,
     tsm,
-    isMaximized,
-    setIsMaximized,
     setShowImportForm,
     status,
     setstatus,
@@ -155,14 +151,10 @@ const ImportForm: React.FC<ImportFormProps> = ({
     };
 
     return (
-        <div className={`bg-white text-gray-900 rounded-lg p-4 text-xs mt-20 transition-all duration-300 fixed right-0 w-full ${isMaximized ? "max-w-7xl" : "max-w-md"}`}>
+        <div className="bg-white text-gray-900 rounded-lg p-4 text-xs transition-all duration-300 w-full">
             <form onSubmit={handleFileUpload}>
                 {/* Buttons */}
                 <div className="flex justify-end mb-4 gap-1 flex-wrap">
-                    <button type="button" className="px-4 py-2 border rounded text-xs flex gap-1" onClick={() => setIsMaximized(!isMaximized)}>
-                        {isMaximized ? <CiCircleMinus size={15} /> : <CiCirclePlus size={15} />}
-                        {isMaximized ? "Minimize" : "Maximize"}
-                    </button>
                     <button type="submit" className="bg-blue-500 text-xs text-white px-4 py-2 rounded flex items-center gap-1" disabled={loading}>
                         <CiSaveUp2 size={15} />
                         {loading ? "Uploading..." : "Upload"}

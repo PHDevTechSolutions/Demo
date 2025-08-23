@@ -133,7 +133,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                     <tbody className="divide-y divide-gray-100">
                         {paginatedData.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-4">No records available</td>
+                                <td colSpan={7} className="text-center py-4 text-xs">No records available</td>
                             </tr>
                         ) : (
                             paginatedData.map((post) => (

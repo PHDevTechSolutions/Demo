@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from 'next/link';
+import Link from "next/link";
 import SidebarMenu from "./SidebarMenu";
 import getMenuItems from "./SidebarMenuItems";
 import SidebarUserInfo from "./SidebarUserInfo";
 
-const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: boolean; }> = ({ isOpen, onClose, isDarkMode }) => {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  isDarkMode: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
+  const [collapsed, setCollapsed] = useState(true);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -23,11 +29,6 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
     Status: "", 
     profilePicture: "", 
     ReferenceID: "" });
-
-  const [pendingInquiryCount, setPendingInquiryCount] = useState(0);
-  const [pendingInactiveCount, setPendingInactiveCount] = useState(0);
-  const [pendingDeleteCount, setPendingDeleteCount] = useState(0);
-  const [agentMode, setAgentMode] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -64,14 +65,10 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
     fetchUserDetails();
   }, [userId]);
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
-
   const handleToggle = (section: string) => {
-    setOpenSections((prevSections: any) => ({
-      ...prevSections,
-      [section]: !prevSections[section],
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
     }));
   };
 
@@ -141,6 +138,7 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
           "Sales Performance",
           "Conversion Rates",
           "Customer Database",
+          "National",
           "Activities",
           "Reports",
           "Help Center",
@@ -154,54 +152,42 @@ const Sidebar: React.FC<{ isOpen: boolean, onClose: () => void; isDarkMode: bool
 
   return (
     <>
-      {/* Overlay Background (Closes Sidebar on Click) */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={onClose}
-        ></div>
-      )}
-
       {/* Sidebar Container */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex flex-col
-      ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"} 
-      ${collapsed ? "w-16" : "w-64"} 
-      ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex flex-col shadow-lg
+        ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
+        ${isOpen ? "w-64" : "w-16"}`}
       >
         {/* Logo Section */}
-        <div className="flex items-center justify-between p-5">
-          <div className="flex items-center">
-            <img src="/taskflow.png" alt="Logo" className="h-8 mr-2" />
-            <Link href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ''}`}>
-              <h1 className={`text-md font-bold transition-opacity ${collapsed ? "opacity-0" : "opacity-100"}`}>
-                <span>TASK - </span>
-                <span className="inline-block transform scale-x-[-1]">FLOW</span>
-              </h1>
-            </Link>
-          </div>
+        <div className="flex items-center justify-center p-4">
+          <Link
+            href={`/ModuleSales/Sales/Dashboard${
+              userId ? `?id=${encodeURIComponent(userId)}` : ""
+            }`}
+          >
+            <img
+              src={isOpen ? "/taskflow-full.png" : "/taskflow.png"}
+              alt="Logo"
+              className={`${isOpen ? "w-40" : "w-30"} transition-all`}
+            />
+          </Link>
         </div>
 
         {/* Menu Section */}
         <SidebarMenu
-          collapsed={collapsed}
+          collapsed={!isOpen}
           openSections={openSections}
           handleToggle={handleToggle}
           menuItems={filteredMenuItems}
           userId={userId}
-          pendingInquiryCount={pendingInquiryCount}
-          pendingInactiveCount={pendingInactiveCount}
-          pendingDeleteCount={pendingDeleteCount}
         />
 
-        {/* User Details Section */}
-        {!collapsed && (
-          <div className="text-xs text-left">
+        {/* User Info (only show when expanded) */}
+        {isOpen && (
+          <div className="text-xs text-left mt-auto p-4">
             <SidebarUserInfo
-              collapsed={collapsed}
+              collapsed={!isOpen}
               userDetails={userDetails}
-              agentMode={agentMode}
-              setAgentMode={setAgentMode}
             />
           </div>
         )}

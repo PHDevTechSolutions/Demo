@@ -33,8 +33,6 @@ const NewClientAccounts: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Manager: "", TSM: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
     });
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
     const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
@@ -45,6 +43,12 @@ const NewClientAccounts: React.FC = () => {
     const [status, setstatus] = useState("");
     const [isMaximized, setIsMaximized] = useState(false);
 
+    // Loading states
+    const [error, setError] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState<boolean>(true);
+    const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
+
+    const loading = loadingUser || loadingAccounts; // 🔑 combined state
     // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
@@ -57,7 +61,7 @@ const NewClientAccounts: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         Manager: data.Manager || "",
                         TSM: data.TSM || "",
@@ -75,11 +79,11 @@ const NewClientAccounts: React.FC = () => {
                     console.error("Error fetching user data:", err);
                     setError("Failed to load user data. Please try again later.");
                 } finally {
-                    setLoading(false);
+                    setLoadingUser(false); // ✅ dito lang i-off
                 }
             } else {
                 setError("User ID is missing.");
-                setLoading(false);
+                setLoadingUser(false);
             }
         };
 
@@ -88,17 +92,16 @@ const NewClientAccounts: React.FC = () => {
 
     // Fetch all users from the API
     const fetchAccount = async () => {
-        setLoading(true);
+        setLoadingAccounts(true); // ✅ hiwalay na loading
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            setPosts(data.data || []);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
         } finally {
-            setLoading(false);
+            setLoadingAccounts(false); // ✅ dito lang i-off
         }
     };
 
@@ -224,7 +227,7 @@ const NewClientAccounts: React.FC = () => {
                 <UserFetcher>
                     {(user) => (
                         <>
-                            <div className="container mx-auto p-4 text-gray-900">
+                            <div className="mx-auto p-4 text-gray-900">
                                 <div className="grid grid-cols-1 md:grid-cols-1">
                                     {/* Backdrop overlay */}
                                     {(showForm || showImportForm) && (
@@ -239,7 +242,7 @@ const NewClientAccounts: React.FC = () => {
                                     )}
 
                                     <div
-                                        className={`fixed top-0 right-0 h-full w-full shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto ${(showForm || showImportForm) ? "translate-x-0" : "translate-x-full"
+                                        className={`fixed bottom-0 left-0 w-full h-[80%] shadow-lg z-[9999] transform transition-transform duration-500 ease-in-out overflow-y-auto bg-white ${(showForm || showImportForm) ? "translate-y-0" : "translate-y-full"
                                             }`}
                                     >
                                         {showForm ? (
@@ -262,8 +265,6 @@ const NewClientAccounts: React.FC = () => {
                                                 referenceid={userDetails.ReferenceID}
                                                 manager={userDetails.Manager}
                                                 tsm={userDetails.TSM}
-                                                isMaximized={isMaximized}
-                                                setIsMaximized={setIsMaximized}
                                                 setShowImportForm={setShowImportForm}
                                                 status={status}
                                                 setstatus={setstatus}
@@ -325,18 +326,28 @@ const NewClientAccounts: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
-                                        <Container
-                                            posts={currentPosts}
-                                            handleEdit={handleEdit}
-                                            referenceid={referenceid}
-                                            fetchAccount={fetchAccount}
-                                            Role={userDetails.Role}
-                                        />
-                                        <Pagination
-                                            currentPage={currentPage}
-                                            totalPages={totalPages}
-                                            setCurrentPage={setCurrentPage}
-                                        />
+                                        {/* Loader or Table */}
+                                        {loading ? (
+                                            <div className="flex justify-center items-center py-10">
+                                                <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                                <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Container
+                                                    posts={currentPosts}
+                                                    handleEdit={handleEdit}
+                                                    referenceid={referenceid}
+                                                    fetchAccount={fetchAccount}
+                                                    Role={userDetails.Role}
+                                                />
+                                                <Pagination
+                                                    currentPage={currentPage}
+                                                    totalPages={totalPages}
+                                                    setCurrentPage={setCurrentPage}
+                                                />
+                                            </>
+                                        )}
 
                                         <div className="text-xs mt-2">
                                             Showing {indexOfFirstPost + 1} to{" "}

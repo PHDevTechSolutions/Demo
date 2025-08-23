@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaGlobeAsia } from 'react-icons/fa';
+import { BsCalendar2Week } from 'react-icons/bs';
 
 const Login: React.FC = () => {
   const [Email, setEmail] = useState('');
@@ -13,14 +14,11 @@ const Login: React.FC = () => {
   const [Department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Store raw lock date (ISO format)
   const [lockUntil, setLockUntil] = useState<string | null>(null);
-  // Store formatted date (client-only)
   const [formattedLockUntil, setFormattedLockUntil] = useState<string | null>(null);
 
   const router = useRouter();
 
-  // Format lockUntil date client-side only
   useEffect(() => {
     if (lockUntil) {
       setFormattedLockUntil(new Date(lockUntil).toLocaleString());
@@ -42,6 +40,13 @@ const Login: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
+        // 🔹 Block login if Status is Resigned or Terminated
+        if (result.Status === "Resigned" || result.Status === "Terminated") {
+          toast.error(`Your account is ${result.Status}. Login not allowed.`);
+          setLoading(false);
+          return;
+        }
+
         if (result.Department !== Department) {
           toast.error('Department mismatch!');
           setLoading(false);
@@ -62,11 +67,17 @@ const Login: React.FC = () => {
 
         toast.success('Login successful!');
         setTimeout(() => {
-          router.push(`/Module${result.Department}/${result.Department}/Dashboard?id=${encodeURIComponent(result.userId)}`);
+          if (result.Department === "Sales") {
+            router.push(`/ModuleSales/Sales/Task/ScheduledActivity?id=${encodeURIComponent(result.userId)}`);
+          } else if (result.Department === "CSR") {
+            router.push(`/ModuleCSR/CSR/Dashboard?id=${encodeURIComponent(result.userId)}`);
+          } else {
+            router.push(`/Module${result.Department}/${result.Department}/Dashboard?id=${encodeURIComponent(result.userId)}`);
+          }
         }, 1000);
       } else {
         if (result.lockUntil) {
-          setLockUntil(result.lockUntil); // store raw date string
+          setLockUntil(result.lockUntil);
           toast.error(`Account locked! Try again after ${new Date(result.lockUntil).toLocaleString()}.`);
         } else {
           toast.error(result.message || 'Login failed!');
@@ -137,7 +148,7 @@ const Login: React.FC = () => {
             Enterprise Resource Planning - Developed By Taskflow Team
           </p>
 
-          <div className="text-xs space-y-1">
+          <div className="text-xs space-y-2">
             <p className="flex items-center gap-1">
               <FaGlobeAsia size={20} />
               Official Website:
@@ -146,6 +157,16 @@ const Login: React.FC = () => {
                 className="underline text-green-700 hover:text-green-800"
               >
                 ecoshiftcorp.com
+              </Link>
+            </p>
+            <p className="flex items-center gap-1">
+              <BsCalendar2Week size={20} />
+              For Site & Client Visit:
+              <Link
+                href="https://acculog.vercel.app/Login"
+                className="underline text-green-700 hover:text-green-800"
+              >
+                Acculog
               </Link>
             </p>
           </div>
@@ -157,7 +178,7 @@ const Login: React.FC = () => {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url('/eco.png')" }}
           />
-          <div className="absolute inset-0" /> {/* dark overlay */}
+          <div className="absolute inset-0" />
         </div>
       </div>
     </div>

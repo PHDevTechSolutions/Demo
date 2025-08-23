@@ -47,7 +47,7 @@ interface UsersTableProps {
 
 const Main: React.FC<UsersTableProps> = ({ posts, userDetails, fetchAccount }) => {
   return (
-    <div className="container mx-auto">
+    <div className=" mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
 
         {/* Main Table Section */}

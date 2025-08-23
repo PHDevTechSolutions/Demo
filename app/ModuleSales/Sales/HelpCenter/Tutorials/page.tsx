@@ -155,7 +155,7 @@ const ListofUser: React.FC = () => {
             <ParentLayout>
                 <UserFetcher>
                     {(user) => (
-                        <div className="container mx-auto p-4 text-gray-900">
+                        <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
                                 {showForm ? (
                                     <AddPostForm

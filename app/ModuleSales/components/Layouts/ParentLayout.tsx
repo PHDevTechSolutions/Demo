@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, ReactNode } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Navbar from "../Navbar/Navbar";
@@ -19,25 +21,81 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
   );
 
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<any | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  // Detect beforeinstallprompt (Android / Chrome / Desktop)
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+
+    // Detect kung installed na
+    window.addEventListener("appinstalled", () => {
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+      localStorage.setItem("appInstalled", "true");
+    });
+
+    // iOS check (Safari Add to Home Screen)
+    const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const isInStandaloneMode =
+      "standalone" in window.navigator &&
+      (window.navigator as any).standalone;
+
+    if (isIOS && !isInStandaloneMode && !localStorage.getItem("appInstalled")) {
+      setShowInstallBanner(true);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setShowInstallBanner(false);
+        localStorage.setItem("appInstalled", "true");
+      }
+      setDeferredPrompt(null);
+    }
+  };
+
   return (
     <div
-      className={`flex relative font-[Comic_Sans_MS] ${isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
-        }`}
+      className={`flex relative font-[Comic_Sans_MS] ${
+        isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
+      }`}
     >
-      {/* Left Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setSidebarOpen(!isSidebarOpen)}
-        isDarkMode={isDarkMode}
-      />
+      {/* Sidebar wrapper with hover detection */}
+      <div
+        className="relative"
+        onMouseEnter={() => setSidebarOpen(true)}
+        onMouseLeave={() => setSidebarOpen(false)}
+      >
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          isDarkMode={isDarkMode}
+        />
+      </div>
 
       {/* Main Content */}
       <div
-        className={`flex-grow transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-0"
-          } md:ml-64`}
+        className={`flex-grow transition-all duration-300 ${
+          isSidebarOpen ? "ml-64" : "ml-16"
+        }`}
       >
         <Navbar
-          onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          onToggleSidebar={() => {}} // hover lang gamit
           onToggleTheme={() => setDarkMode(!isDarkMode)}
           isDarkMode={isDarkMode}
         />
@@ -62,37 +120,42 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
             >
               Chat with Tasky
             </button>
-
           </div>
         )}
-
-
-        {/* Hover Text appears outside the button */}
-        
-        {/*
-        <div className="mb-1 pr-1">
-          <span className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white px-3 py-1 rounded shadow text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            Hello there! I’m Tasky, your AI sidekick.
-          </span>
-        </div>
-
-        <button
-          onClick={() => setShowOptions(!showOptions)}
-          className="bg-orange-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition w-20 h-20 flex items-center justify-center animate-bounce"
-        >
-          <img
-            src="/tasky.png"
-            alt="Tasky Icon"
-            className="w-12 h-12 hover:scale-110 transition-transform duration-300"
-          />
-        </button>*/}
       </div>
 
       {/* Tasky Sidebar */}
-      <AIRightbar isOpen={isRightbarOpen} onClose={() => setRightbarOpen(false)} />
+      <AIRightbar
+        isOpen={isRightbarOpen}
+        onClose={() => setRightbarOpen(false)}
+      />
 
       {/* GPT Sidebar */}
-      <GPTRightbar isOpen={isGPTRightbarOpen} onClose={() => setGPTRightbarOpen(false)} />
+      <GPTRightbar
+        isOpen={isGPTRightbarOpen}
+        onClose={() => setGPTRightbarOpen(false)}
+      />
+
+      {/* Install App Banner */}
+      {showInstallBanner && (
+        <div className="fixed bottom-0 left-0 right-0 bg-cyan-600 text-white p-3 flex items-center justify-between shadow-lg z-[1000]">
+          <p className="text-sm font-semibold">
+            📲 Install this app on your device for a better experience!
+          </p>
+          {deferredPrompt ? (
+            <button
+              onClick={handleInstallClick}
+              className="ml-4 bg-white text-cyan-600 px-3 py-1 rounded shadow hover:bg-gray-200 text-sm"
+            >
+              Install
+            </button>
+          ) : (
+            <p className="ml-4 text-xs italic">
+              Add to Home Screen from your browser menu.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

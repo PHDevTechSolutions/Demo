@@ -27,9 +27,13 @@ const ListofUser: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
     });
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
+    // Loading states
+    const [error, setError] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState<boolean>(true);
+    const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
+
+    const loading = loadingUser; // 🔑 combined state
     // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
@@ -55,11 +59,11 @@ const ListofUser: React.FC = () => {
                     console.error("Error fetching user data:", err);
                     setError("Failed to load user data. Please try again later.");
                 } finally {
-                    setLoading(false);
+                    setLoadingUser(false);
                 }
             } else {
                 setError("User ID is missing.");
-                setLoading(false);
+                setLoadingUser(false);
             }
         };
 
@@ -132,7 +136,7 @@ const ListofUser: React.FC = () => {
             <ParentLayout>
                 <UserFetcher>
                     {(user) => (
-                        <div className="container mx-auto p-4 text-gray-900">
+                        <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
                                 {showForm ? (
                                     <AddPostForm
@@ -163,11 +167,21 @@ const ListofUser: React.FC = () => {
                                                 postsPerPage={postsPerPage}
                                                 setPostsPerPage={setPostsPerPage}
                                             />
-                                            <UsersTable
-                                                posts={currentPosts}
-                                                handleEdit={handleEdit}
-                                                userDetails={userDetails}
-                                            />
+                                            {/* Loader or Table */}
+                                            {loading ? (
+                                                <div className="flex justify-center items-center py-10">
+                                                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                                    <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <UsersTable
+                                                        posts={currentPosts}
+                                                        handleEdit={handleEdit}
+                                                        userDetails={userDetails}
+                                                    />
+                                                </>
+                                            )}
                                             <Pagination
                                                 currentPage={currentPage}
                                                 totalPages={totalPages}

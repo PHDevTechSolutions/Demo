@@ -34,7 +34,13 @@ const roleColors: Record<string, string> = {
 };
 
 const versionLogs = [
-    { version: "v4.3", date: "2025-08-16", change: "New Features Updated | Session Logs, Conversion Rates | Sales Performance" },
+    {
+        version: "v4.4",
+        date: "2025-08-16",
+        change: "UI adjustments for the upcoming Activity Planner | Implemented global loading state across all pages | Added National Ranking view for TSAs"
+    },
+
+    { version: "v4.3", date: "2025-08-22", change: "New Features Updated | Session Logs, Conversion Rates | Sales Performance" },
     { version: "v3.1", date: "2025-07-15", change: "Revamp" },
     { version: "v2.3", date: "2025-07-15", change: "Adjustment" },
     { version: "v1.0", date: "2025-05-30", change: "Initial contributor list created" },

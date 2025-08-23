@@ -25,8 +25,12 @@ const ListofUser: React.FC = () => {
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
     const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
 
-    const [loading, setLoading] = useState<boolean>(true);
+    // Loading states
     const [error, setError] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState<boolean>(true);
+    const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
+
+    const loading = loadingUser || loadingAccounts; // 🔑 combined state
 
     // Fetch user data based on query parameters (user ID)
     useEffect(() => {
@@ -54,11 +58,11 @@ const ListofUser: React.FC = () => {
                     console.error("Error fetching user data:", err);
                     setError("Failed to load user data. Please try again later.");
                 } finally {
-                    setLoading(false);
+                    setLoadingUser(false);
                 }
             } else {
                 setError("User ID is missing.");
-                setLoading(false);
+                setLoadingUser(false);
             }
         };
 
@@ -67,7 +71,7 @@ const ListofUser: React.FC = () => {
 
     // Fetch all users from the API
     const fetchAccount = async () => {
-        setLoading(true);
+        setLoadingAccounts(true);
         try {
             const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
             const data = await response.json();
@@ -77,7 +81,7 @@ const ListofUser: React.FC = () => {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
         } finally {
-            setLoading(false);
+            setLoadingAccounts(false);
         }
     };
 
@@ -157,7 +161,7 @@ const ListofUser: React.FC = () => {
             <ParentLayout>
                 <UserFetcher>
                     {(user) => (
-                        <div className="container mx-auto p-4 text-gray-900">
+                        <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
                                 <>
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
@@ -195,9 +199,19 @@ const ListofUser: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
-                                        <Table
-                                            posts={filteredAccounts}
-                                        />
+                                        {/* Loader or Table */}
+                                        {loading ? (
+                                            <div className="flex justify-center items-center py-10">
+                                                <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                                <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Table
+                                                    posts={filteredAccounts}
+                                                />
+                                            </>
+                                        )}
                                     </div>
                                 </>
 

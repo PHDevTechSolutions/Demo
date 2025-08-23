@@ -40,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ userRole = "Sales Associate", systemSta
         <div className="container mx-auto text-center text-xs px-4">
           <p className="font-bold">
             &copy; {new Date().getFullYear()} Ecoshift Corporation | Taskflow Team - Taskflow
-            <span className="bg-orange-700 ml-2 px-2 py-1 rounded-md text-[10px]">Version 4.3</span>
+            <span className="bg-orange-700 ml-2 px-2 py-1 rounded-md text-[10px]">Version 4.4</span>
           </p>
 
           <div className="mt-2 text-[10px] italic flex justify-center items-center gap-2">

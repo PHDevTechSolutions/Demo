@@ -54,7 +54,7 @@ const ProfilePage: React.FC = () => {
     return (
         <SessionChecker>
             <ParentLayout>
-                <div className="container mx-auto p-4">
+                <div className="mx-auto p-4">
                     <div className="grid grid-cols-1 md:grid-cols-1">
                         <h1 className="text-lg font-bold mb-4">What is Taskflow?</h1>
                         {error && <div className="text-red-500 mb-4">{error}</div>}

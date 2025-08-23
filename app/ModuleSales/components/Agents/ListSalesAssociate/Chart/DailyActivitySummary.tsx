@@ -2,27 +2,29 @@
 
 import React from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  PieChart,
+  Pie,
   Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
 } from "recharts";
 
 interface Props {
   timeMotionData: Record<string, number>;
 }
 
-const formatDuration = (seconds: number): string => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return `${h > 0 ? `${h}h ` : ""}${m}m`;
-};
-
-const COLORS = ["#FF8C00", "#FFA500", "#FFB84D", "#FFD280", "#FFE0B3"];
+const COLORS = [
+  "#FF8C00",
+  "#FFA500",
+  "#FFB84D",
+  "#FFD280",
+  "#FFE0B3",
+  "#FFD966",
+  "#FF9933",
+  "#FFCC80",
+  "#FFE6B3",
+];
 
 const validActivities = new Set([
   "Customer Order",
@@ -44,56 +46,61 @@ const validActivities = new Set([
   "Bidding Preperation",
   "Viber Replies",
   "Technical Concern",
-  "Sample Request"
+  "Sample Request",
 ]);
+
+// Format duration into Hours and Minutes
+const formatDuration = (seconds: number): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return `${h > 0 ? `${h}h ` : ""}${m}m`;
+};
 
 const DailyActivitySummary: React.FC<Props> = ({ timeMotionData }) => {
   const data = Object.entries(timeMotionData)
     .filter(([activity]) => validActivities.has(activity))
-    .map(([activity, duration]) => ({
-      name: activity,
-      duration,
-    }))
-    .sort((a, b) => b.duration - a.duration);
+    .map(([activity, duration]) => ({ name: activity, value: duration }));
 
-  const dynamicHeight = Math.max(data.length * 40, 400); // 40px per row, min 400px
+  // compute total duration (raw seconds)
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  // convert to percentage
+  const percentageData = data.map((item) => ({
+    ...item,
+    value: total > 0 ? (item.value / total) * 100 : 0,
+  }));
 
   return (
     <div className="border rounded-lg p-6 col-span-2 bg-white shadow-md">
       <h3 className="font-semibold text-sm mb-2">Daily Activity Summary</h3>
       <p className="text-gray-600 mt-1 mb-4 text-xs">
-        A detailed breakdown of time spent on various daily activities, providing insights into productivity and task distribution.
+        A percentage breakdown of time spent on various daily activities, showing distribution out of 100%.
       </p>
 
-      <div style={{ width: "100%", height: dynamicHeight }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            layout="vertical"
-            margin={{ top: 20, right: 30, left: 80, bottom: 20 }}
-          >
-            <defs>
-              <linearGradient id="bar3d" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#FF8C00" stopOpacity={0.8} />
-                <stop offset="100%" stopColor="#FFA500" stopOpacity={0.6} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tickFormatter={formatDuration} />
-            <YAxis dataKey="name" type="category" width={200} />
-            <Tooltip formatter={(value: number) => formatDuration(value)} />
-            <Bar
-              dataKey="duration"
-              fill="url(#bar3d)"
-              barSize={20}
-              // removed radius here
+      <div style={{ width: "100%", height: 400 }}>
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={percentageData}
+              dataKey="value"
+              nameKey="name"
+              outerRadius={150}
+              label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
             >
-              {data.map((_, index) => (
+              {percentageData.map((_, index) => (
                 <Cell key={index} fill={COLORS[index % COLORS.length]} />
               ))}
-            </Bar>
-          </BarChart>
+            </Pie>
+            <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+            <Legend layout="vertical" align="right" verticalAlign="middle" />
+          </PieChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Total Work Hours under the chart */}
+      <div className="mt-4 text-center">
+        <span className="text-sm font-semibold">Total Work Hours: </span>
+        <span className="text-sm text-gray-700">{formatDuration(total)}</span>
       </div>
     </div>
   );

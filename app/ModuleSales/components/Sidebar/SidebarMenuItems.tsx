@@ -1,12 +1,10 @@
-import { CiUser, CiSettings, CiCoins1, CiViewBoard, CiMemoPad, CiWavePulse1, CiPhone, CiCircleInfo, } from "react-icons/ci";
-import { SlChart } from "react-icons/sl";
-import { IoHelp } from "react-icons/io5";
-import { BsBuildings } from "react-icons/bs";
+import { CiViewBoard } from "react-icons/ci";
+import { BsGearFill, BsBuildings, BsCalendarPlus, BsBarChartSteps, BsGraphUp, BsBullseye, BsQuestionLg, BsInfoCircle, BsTelephone, BsPeople } from 'react-icons/bs';
 
 const getMenuItems = (userId: string | null = "") => [
     {
         title: "My Profile",
-        icon: CiSettings,
+        icon: BsGearFill,
         subItems: [
             {
                 title: "Update Profile",
@@ -65,7 +63,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "Activities",
-        icon: CiMemoPad,
+        icon: BsCalendarPlus,
         subItems: [
             { 
                 title: "Scheduled Task", 
@@ -81,7 +79,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "National",
-        icon: CiPhone,
+        icon: BsTelephone,
         subItems: [
             { 
                 title: "Daily Call Ranking", 
@@ -91,7 +89,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "My Team",
-        icon: CiUser,
+        icon: BsPeople,
         subItems: [
             { 
                 title: "List of Sales Associate", 
@@ -109,7 +107,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "Reports",
-        icon: SlChart,
+        icon: BsBarChartSteps,
         subItems: [
             { 
                 title: "Account Management", 
@@ -155,7 +153,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "Sales Performance",
-        icon: CiWavePulse1,
+        icon: BsGraphUp,
         subItems: [
             { 
                 title: "MTD and YTD", 
@@ -165,7 +163,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "Conversion Rates",
-        icon: CiCoins1,
+        icon: BsBullseye,
         subItems: [
             { 
                 title: "Calls to Quote", 
@@ -201,7 +199,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "Help Center",
-        icon: IoHelp,
+        icon: BsQuestionLg,
         subItems: [
             { 
                 title: "Tutorials", 
@@ -211,7 +209,7 @@ const getMenuItems = (userId: string | null = "") => [
     },
     {
         title: "What is Taskflow?",
-        icon: CiCircleInfo,
+        icon: BsInfoCircle,
         subItems: [
             { 
                 title: "View Information", 

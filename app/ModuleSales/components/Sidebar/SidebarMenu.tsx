@@ -2,7 +2,9 @@ import React from "react";
 import Link from "next/link";
 import { RxCaretDown, RxCaretLeft } from "react-icons/rx";
 import { FaRegCircle } from "react-icons/fa";
-import { CiSettings } from "react-icons/ci"; // For My Profile icon
+import { CiSettings } from "react-icons/ci";
+import { MdOutlineSpaceDashboard } from 'react-icons/md';
+import { BsSpeedometer2 } from 'react-icons/bs';
 
 interface SubItem {
   title: string;
@@ -65,7 +67,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
           className={`flex items-center w-full p-4 hover:bg-orange-400 rounded hover:text-white transition-all duration-300 ease-in-out hover:shadow-md active:scale-95 ${collapsed ? "justify-center" : ""
             }`}
         >
-          <myProfileItem.icon size={18} />
+          <myProfileItem.icon size={20} />
           {!collapsed && <span className="ml-2">{myProfileItem.title}</span>}
           {!collapsed && (
             <span className="ml-auto">
@@ -98,17 +100,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
       {/* --- Dashboard Button --- */}
       <div className="w-full mt-1">
         <Link
-          href={`/ModuleSales/Sales/Dashboard/${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
-          className="flex items-center w-full p-4 bg-orange-400 mb-1 text-white rounded-md transition-all duration-300 ease-in-out hover:shadow-md active:scale-95"
+          href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
+          className={`flex items-center w-full p-4 mb-2 rounded transition-all duration-300 ease-in-out 
+      hover:bg-orange-400 hover:text-white hover:shadow-md active:scale-95 bg-orange-100 text-black
+      ${collapsed ? "justify-center" : "justify-start"}`}
         >
-          <span className="mr-1">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M3 3h4v4H3V3zm5 0h4v4H8V3zm5 0h4v4h-4V3zM3 8h4v4H3V8zm5 0h4v4H8V8zm5 0h4v4h-4V8zM3 13h4v4H3v-4zm5 0h4v4H8v-4zm5 0h4v4h-4v-4z" />
-            </svg>
-          </span>
-          Dashboard
+          <BsSpeedometer2 size={20} />
+          {!collapsed && <span className="ml-2">Dashboard</span>}
         </Link>
       </div>
+
 
       {/* --- Rest of the Menu Items --- */}
       {menuItems
@@ -120,7 +121,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
               className={`flex items-center w-full p-4 hover:bg-orange-400 rounded hover:text-white transition-all duration-300 ease-in-out hover:shadow-md active:scale-95 ${collapsed ? "justify-center" : ""
                 }`}
             >
-              <item.icon size={18} />
+              <item.icon size={20} />
               {!collapsed && <span className="ml-2">{item.title}</span>}
               {!collapsed && (
                 <span className="ml-auto">

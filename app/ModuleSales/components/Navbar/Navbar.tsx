@@ -282,13 +282,10 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onToggleTheme, isDarkM
 
   return (
     <div className={`sticky top-0 z-[999] flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
-      <div className="flex items-center space-x-4">
-        <button onClick={onToggleSidebar} title="Show Sidebar" className="rounded-full shadow-lg block sm:hidden">
-          <img src="/taskflow.png" alt="Logo" className="h-8" />
-        </button>
-      </div>
-
-      <div className="relative flex items-center text-center text-xs gap-2 z-[1000]" ref={dropdownRef}>
+      <div
+        className="relative flex items-center justify-between w-full text-xs z-[1000]"
+        ref={dropdownRef}
+      >
         <button
           onClick={onToggleTheme}
           className="relative flex items-center bg-gray-200 dark:bg-gray-700 rounded-full w-16 h-8 p-1 transition-all duration-300"

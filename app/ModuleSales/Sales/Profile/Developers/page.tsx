@@ -81,7 +81,7 @@ const ProfilePage: React.FC = () => {
     return (
         <SessionChecker>
             <ParentLayout>
-                <div className="container mx-auto p-4">
+                <div className="mx-auto p-4">
                     <div className="grid grid-cols-1 md:grid-cols-1">
                         {error && <div className="text-red-500 mb-4">{error}</div>}
                         {/* Use ProfileForm component here */}

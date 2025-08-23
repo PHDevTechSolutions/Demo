@@ -6,7 +6,6 @@ import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
 import AddPostForm from "../../../components/Companies/CompanyAccounts/Form";
-import Filters from "../../../components/Companies/CompanyAccounts/Filters";
 import UsersTable from "../../../components/Agents/DeletionCompanies/UsersTable";
 import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagination";
 
@@ -29,15 +28,16 @@ const ListofUser: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Manager: "", TSM: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
     });
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
 
     const [referenceid, setReferenceID] = useState("");
     const [manager, setManager] = useState("");
     const [tsm, setTsm] = useState("");
-    const [status, setstatus] = useState("");
-    const [jsonData, setJsonData] = useState<any[]>([]);
 
+    // Loading states
+    const [error, setError] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState<boolean>(true);
+
+    const loading = loadingUser; // 🔑 combined state
 
     // Fetch user data based on query parameters (user ID)
     useEffect(() => {
@@ -69,11 +69,11 @@ const ListofUser: React.FC = () => {
                     console.error("Error fetching user data:", err);
                     setError("Failed to load user data. Please try again later.");
                 } finally {
-                    setLoading(false);
+                    setLoadingUser(false);
                 }
             } else {
                 setError("User ID is missing.");
-                setLoading(false);
+                setLoadingUser(false);
             }
         };
 
@@ -157,7 +157,7 @@ const ListofUser: React.FC = () => {
             <ParentLayout>
                 <UserFetcher>
                     {(user) => (
-                        <div className="container mx-auto p-4 text-gray-900">
+                        <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
                                 {showForm ? (
                                     <AddPostForm
@@ -182,16 +182,27 @@ const ListofUser: React.FC = () => {
                                             <p className="text-xs text-gray-600 mb-4">
                                                 This section displays a list of <strong>Deletion Companies</strong> within the system. You can filter the companies based on various criteria such as client type, start date, end date, and search term. Use the filters to narrow down your search and quickly find the relevant inactive companies you need to manage or review.
                                             </p>
-                                            <UsersTable
-                                                posts={currentPosts}
-                                                handleEdit={handleEdit}
-                                                referenceid={referenceid}
-                                            />
+                                            {/* Loader or Table */}
+                                            {loading ? (
+                                                <div className="flex justify-center items-center py-10">
+                                                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                                    <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <UsersTable
+                                                        posts={currentPosts}
+                                                        handleEdit={handleEdit}
+                                                        referenceid={referenceid}
+                                                    />
+                                                </>
+                                            )}
                                             <Pagination
                                                 currentPage={currentPage}
                                                 totalPages={totalPages}
                                                 setCurrentPage={setCurrentPage}
                                             />
+
 
                                             <div className="text-xs mt-2">
                                                 Showing {indexOfFirstPost + 1} to{" "}

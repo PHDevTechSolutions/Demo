@@ -126,7 +126,7 @@ const SessionLogs: React.FC = () => {
   return (
     <SessionChecker>
       <ParentLayout>
-        <div className="container mx-auto p-4 space-y-6">
+        <div className="mx-auto p-4 space-y-6">
           {/* Profile Card */}
           <div className="flex items-center bg-white rounded-xl shadow-lg p-4 space-x-4 animate-fade-in">
             <img

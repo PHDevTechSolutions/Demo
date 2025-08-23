@@ -147,7 +147,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
   }, [filteredByTSM, selectedAgent, userDetails.Role, canFilterByAgent]);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="mx-auto p-4">
       {/* Filter by TSM (Super Admin only) */}
       {/* Filters Row */}
       <div className="mb-4 flex flex-wrap gap-4 items-end">

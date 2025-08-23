@@ -123,10 +123,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
     }
   }, [editPost]);
 
-  // Ensure selected values are updated when options are available
-  const fieldWidthClass = isMaximized ? "w-full sm:w-1/2 px-4 mb-4" : "w-full px-4 mb-4";
-  const isEditMode = !!editPost && Object.keys(editPost).length > 0;
-
+  const fieldWidthClass = "w-full";
 
   return (
     <>
@@ -138,7 +135,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
         </div>
       </div>
 
-      <div className={`flex flex-wrap -mx-4`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <div className={fieldWidthClass}>
           <label className="block text-xs font-bold mb-2" htmlFor="companyname">Company Name</label>
