@@ -62,11 +62,11 @@ const getMenuItems = (userId: string | null = "") => [
         ],
     },
     {
-        title: "Activities",
+        title: "Work Management",
         icon: BsCalendarPlus,
         subItems: [
             { 
-                title: "Scheduled Task", 
+                title: "Workspace", 
                 description: "Upcoming Tasks and Reminders", 
                 href: `/ModuleSales/Sales/Task/ScheduledActivity${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },

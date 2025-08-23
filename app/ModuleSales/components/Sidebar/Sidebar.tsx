@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
           "Conversion Rates",
           "Customer Database",
           "National",
-          "Activities",
+          "Work Management",
           "Reports",
           "Help Center",
           "What is Taskflow?",

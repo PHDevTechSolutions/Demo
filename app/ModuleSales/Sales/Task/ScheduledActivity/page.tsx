@@ -5,12 +5,14 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 import Filters from "../../../components/Task/ScheduledActivity/Filters/Filters";
 import Main from "../../../components/Task/ScheduledActivity/Main";
+import Notes from "../../../components/Task/Notes/Note";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsCalendar4Week, BsListTask, BsInfoCircle } from 'react-icons/bs';
+import { LuNotebookPen } from 'react-icons/lu';
 
 const ListofUser: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"scheduled" | "activity">("scheduled");
+  const [activeTab, setActiveTab] = useState<"scheduled" | "activity" | "notes">("scheduled");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -197,9 +199,11 @@ const ListofUser: React.FC = () => {
                   </div>
                 </div>
               )}
+
               <div className="flex gap-4">
                 {/* Left Sidebar Tabs */}
                 <div className="flex flex-col space-y-2">
+                  <h3 className="font-bold text-xs">Tools</h3>
                   <button
                     onClick={() => setActiveTab("scheduled")}
                     className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "scheduled" ? "bg-orange-400 text-white" : "bg-gray-100"
@@ -209,12 +213,21 @@ const ListofUser: React.FC = () => {
                   </button>
 
                   <button
+                    onClick={() => setActiveTab("notes")}
+                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "notes" ? "bg-orange-400 text-white" : "bg-gray-100"
+                      }`}
+                  >
+                    <LuNotebookPen />
+                  </button>
+
+                  <button
                     onClick={() => setActiveTab("activity")}
                     className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity" ? "bg-orange-400 text-white" : "bg-gray-100"
                       }`}
                   >
                     <BsCalendar4Week />
                   </button>
+
                 </div>
 
                 {/* Main Content */}
@@ -303,6 +316,14 @@ const ListofUser: React.FC = () => {
                         <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
                         <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {activeTab === "notes" && (
+                    <div className="bg-white shadow-md rounded-lg flex">
+                      {/* Render the actual Notes component */}
+                      <Notes userDetails={userDetails} />
                     </div>
                   )}
                 </div>
