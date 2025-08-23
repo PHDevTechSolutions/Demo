@@ -6,6 +6,7 @@ import SidebarMenu from "./SidebarMenu";
 import getMenuItems from "./SidebarMenuItems";
 import SidebarUserInfo from "./SidebarUserInfo";
 import { BsSpeedometer2 } from "react-icons/bs";
+import { LuSettings2 } from 'react-icons/lu';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -204,6 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
         </button>
 
         {/* Scrollable Menu Items */}
+        {/* Scrollable Menu Items */}
         <div
           id="mobileMenuScroll"
           className="flex overflow-x-auto no-scrollbar flex-1 px-12 gap-x-4 items-center"
@@ -211,8 +213,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
           {/* ✅ Dashboard as first item */}
           <div className="relative flex-shrink-0 w-20 text-center">
             <Link
-              href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""
-                }`}
+              href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
               className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
             >
               <BsSpeedometer2 className="text-xl mb-1" />
@@ -231,20 +232,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
                 <span className="text-[11px] truncate">{item.title}</span>
               </button>
 
-              {/* ✅ Submenu */}
+              {/* Submenu */}
               {openSections[item.title] && item.subItems && (
                 <div
                   className="fixed bottom-16 left-1/2 -translate-x-1/2 space-y-1
-          max-w-[80vw] max-h-[50vh] overflow-y-auto 
-          bg-white dark:bg-gray-800 border rounded-lg shadow-xl 
-          z-[99999] text-left p-2"
+            max-w-[80vw] max-h-[50vh] overflow-y-auto 
+            bg-white dark:bg-gray-800 border rounded-lg shadow-xl 
+            z-[99999] text-left p-2"
                 >
                   {item.subItems.map((sub: any, subIdx: number) => (
                     <Link
                       key={subIdx}
                       href={sub.href || "#"}
-                      className="block px-4 py-2 text-xs whitespace-nowrap 
-              hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                      className="block px-4 py-2 text-xs whitespace-nowrap hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                     >
                       {sub.title}
                     </Link>
@@ -253,7 +253,51 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
               )}
             </div>
           ))}
+
+          {/* ✅ My Profile Menu */}
+          <div className="relative flex-shrink-0 w-20 text-center">
+            <button
+              onClick={() => handleToggle("My Profile")}
+              className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              <span className="text-xl mb-1"><LuSettings2 /></span>
+              <span className="text-[11px] truncate">My Profile</span>
+            </button>
+
+            {openSections["My Profile"] && (
+              <div
+                className="fixed bottom-16 left-1/2 -translate-x-1/2 space-y-1
+          max-w-[80vw] max-h-[50vh] overflow-y-auto 
+          bg-white dark:bg-gray-800 border rounded-lg shadow-xl 
+          z-[99999] text-left p-2"
+              >
+                {[
+                  {
+                    title: "Update Profile",
+                    href: `/ModuleSales/Sales/Profile${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+                  },
+                  {
+                    title: "Developers",
+                    href: `/ModuleSales/Sales/Profile/Developers${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+                  },
+                  {
+                    title: "Session Logs",
+                    href: `/ModuleSales/Sales/Profile/SessionLogs${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
+                  },
+                ].map((sub, subIdx) => (
+                  <Link
+                    key={subIdx}
+                    href={sub.href || "#"}
+                    className="block px-4 py-2 text-xs whitespace-nowrap hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  >
+                    {sub.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
 
         {/* Right Scroll Button */}
         <button
