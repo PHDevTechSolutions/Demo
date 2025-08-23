@@ -13,22 +13,22 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
-  const [collapsed, setCollapsed] = useState(true);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState<string | null>(null);
 
-  const [userDetails, setUserDetails] = useState({ 
-    Firstname: "", 
-    Lastname: "", 
-    Email: "", 
+  const [userDetails, setUserDetails] = useState({
+    Firstname: "",
+    Lastname: "",
+    Email: "",
     Department: "",
-    Location: "", 
-    Role: "", 
+    Location: "",
+    Role: "",
     Position: "",
-    Company: "", 
-    Status: "", 
-    profilePicture: "", 
-    ReferenceID: "" });
+    Company: "",
+    Status: "",
+    profilePicture: "",
+    ReferenceID: "",
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -38,11 +38,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       if (!userId) return;
-
       try {
         const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
         if (!response.ok) throw new Error("Failed to fetch user details");
-
         const data = await response.json();
         setUserDetails({
           Firstname: data.Firstname || "Leroux ",
@@ -61,7 +59,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
         console.error("Error fetching user details:", error);
       }
     };
-
     fetchUserDetails();
   }, [userId]);
 
@@ -79,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     if (role === "Admin" || role === "Super Admin") return menuItems;
 
     if (role === "Manager") {
-      return menuItems.filter(item =>
+      return menuItems.filter((item) =>
         [
           "Session Logs",
           "Sales Performance",
@@ -97,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     }
 
     if (role === "Special Access") {
-      return menuItems.filter(item =>
+      return menuItems.filter((item) =>
         [
           "Customer Database",
           "Activities",
@@ -116,8 +113,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     }
 
     if (role === "Territory Sales Manager") {
-      return menuItems.filter(item =>
-        [ 
+      return menuItems.filter((item) =>
+        [
           "Session Logs",
           "Sales Performance",
           "Conversion Rates",
@@ -132,8 +129,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     }
 
     if (role === "Territory Sales Associate") {
-      return menuItems.filter(item =>
-        [ 
+      return menuItems.filter((item) =>
+        [
           "Session Logs",
           "Sales Performance",
           "Conversion Rates",
@@ -152,28 +149,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
 
   return (
     <>
-      {/* Sidebar Container */}
+      {/* ✅ Desktop Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex flex-col shadow-lg
+        className={`hidden md:flex fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex-col shadow-lg
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
         ${isOpen ? "w-64" : "w-16"}`}
       >
-        {/* Logo Section */}
         <div className="flex items-center justify-center p-4">
           <Link
-            href={`/ModuleSales/Sales/Dashboard${
-              userId ? `?id=${encodeURIComponent(userId)}` : ""
-            }`}
+            href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""
+              }`}
           >
             <img
               src={isOpen ? "/taskflow-full.png" : "/taskflow.png"}
               alt="Logo"
-              className={`${isOpen ? "w-40" : "w-30"} transition-all`}
+              className={`${isOpen ? "w-40" : "w-10"} transition-all`}
             />
           </Link>
         </div>
 
-        {/* Menu Section */}
         <SidebarMenu
           collapsed={!isOpen}
           openSections={openSections}
@@ -182,15 +176,86 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
           userId={userId}
         />
 
-        {/* User Info (only show when expanded) */}
         {isOpen && (
           <div className="text-xs text-left mt-auto p-4">
-            <SidebarUserInfo
-              collapsed={!isOpen}
-              userDetails={userDetails}
-            />
+            <SidebarUserInfo collapsed={!isOpen} userDetails={userDetails} />
           </div>
         )}
+      </div>
+
+      {/* ✅ Mobile Bottom Nav + Submenu with Horizontal Scroll + Controls */}
+      <div
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-[9998] 
+        flex items-center shadow-t-lg text-sm relative
+        ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"} 
+        transition-all duration-300`}
+      >
+        {/* Left Scroll Button */}
+        <button
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-[10000] p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
+          onClick={() => {
+            const container = document.getElementById("mobileMenuScroll");
+            container?.scrollBy({ left: -100, behavior: "smooth" });
+          }}
+        >
+          ◀
+        </button>
+
+        {/* Scrollable Menu Items */}
+        <div
+          id="mobileMenuScroll"
+          className="flex overflow-x-auto no-scrollbar flex-1 px-12 gap-x-4"
+        >
+          {filteredMenuItems.map((item, idx) => (
+            <div
+              key={idx}
+              className="relative flex-shrink-0 w-20 text-center"
+            >
+              <button
+                onClick={() => handleToggle(item.title)}
+                className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <span className="text-xl mb-1">
+                  {item.icon && <item.icon />}
+                </span>
+                <span className="text-[11px] truncate">{item.title}</span>
+              </button>
+
+              {/* ✅ Show Submenu when clicked */}
+              {openSections[item.title] && item.subItems && (
+                <div
+                  className="fixed bottom-16 left-1/2 -translate-x-1/2 space-y-1
+          max-w-[80vw] max-h-[50vh] overflow-y-auto 
+          bg-white dark:bg-gray-800 border rounded-lg shadow-xl 
+          z-[99999] text-left p-2"
+                >
+                  {item.subItems.map((sub: any, subIdx: number) => (
+                    <Link
+                      key={subIdx}
+                      href={sub.href || "#"}
+                      className="block px-4 py-2 text-xs whitespace-nowrap 
+              hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                    >
+                      {sub.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+
+        {/* Right Scroll Button */}
+        <button
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-[10000] p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
+          onClick={() => {
+            const container = document.getElementById("mobileMenuScroll");
+            container?.scrollBy({ left: 100, behavior: "smooth" });
+          }}
+        >
+          ▶
+        </button>
       </div>
     </>
   );

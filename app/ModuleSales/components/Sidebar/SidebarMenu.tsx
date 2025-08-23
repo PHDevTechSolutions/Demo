@@ -1,20 +1,20 @@
+"use client";
 import React from "react";
 import Link from "next/link";
 import { RxCaretDown, RxCaretLeft } from "react-icons/rx";
 import { FaRegCircle } from "react-icons/fa";
 import { CiSettings } from "react-icons/ci";
-import { MdOutlineSpaceDashboard } from 'react-icons/md';
-import { BsSpeedometer2 } from 'react-icons/bs';
+import { BsSpeedometer2 } from "react-icons/bs";
 
 interface SubItem {
   title: string;
   href: string;
-  description?: string; // added description field
+  description?: string;
 }
 
 interface MenuItem {
   title: string;
-  icon: any;
+  icon: React.ComponentType<{ size?: number }>;
   subItems: SubItem[];
 }
 
@@ -35,11 +35,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   handleToggle,
   menuItems,
   userId,
-  pendingInquiryCount = 0,
-  pendingInactiveCount = 0,
-  pendingDeleteCount = 0,
 }) => {
-  const myProfileItem = {
+  const myProfileItem: MenuItem = {
     title: "My Profile",
     icon: CiSettings,
     subItems: [
@@ -53,121 +50,106 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
       },
       {
         title: "Session Logs",
-        href: `/ModuleSales/Sales/Profile/SessionLogs${userId ? `?id=${encodeURIComponent(userId)}` : ""}`
+        href: `/ModuleSales/Sales/Profile/SessionLogs${userId ? `?id=${encodeURIComponent(userId)}` : ""}`,
       },
     ],
   };
 
+  const allItems: MenuItem[] = [myProfileItem, ...menuItems.filter(i => i.title !== "My Profile")];
+
+  const renderSubItems = (items: SubItem[]) => (
+    <div className="flex flex-col bg-gray-100 rounded-md">
+      {items.map((subItem, idx) => (
+        <Link
+          key={idx}
+          href={subItem.href}
+          className="flex items-center p-3 text-gray-800 hover:bg-orange-400 hover:text-white transition-all"
+        >
+          <FaRegCircle size={10} className="mr-2 ml-2" />
+          <span className="text-[11px]">{subItem.title}</span>
+        </Link>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="flex flex-col items-center flex-grow overflow-y-auto text-xs p-2">
-      {/* --- My Profile Section --- */}
-      <div className="w-full">
-        <button
-          onClick={() => handleToggle(myProfileItem.title)}
-          className={`flex items-center w-full p-4 hover:bg-orange-400 rounded hover:text-white transition-all duration-300 ease-in-out hover:shadow-md active:scale-95 ${collapsed ? "justify-center" : ""
-            }`}
-        >
-          <myProfileItem.icon size={20} />
-          {!collapsed && <span className="ml-2">{myProfileItem.title}</span>}
-          {!collapsed && (
-            <span className="ml-auto">
-              {openSections[myProfileItem.title] ? <RxCaretDown size={15} /> : <RxCaretLeft size={15} />}
-            </span>
-          )}
-        </button>
-
-        <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out text-gray-900 ${openSections[myProfileItem.title] ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-            }`}
-        >
-          {openSections[myProfileItem.title] && !collapsed && (
-            <div>
-              {myProfileItem.subItems.map((subItem, subIndex) => (
-                <Link
-                  key={subIndex}
-                  href={subItem.href}
-                  className="flex items-center w-full p-4 bg-gray-200 hover:bg-orange-400 hover:text-white transition-all duration-300 ease-in-out"
-                >
-                  <FaRegCircle size={10} className="mr-2 ml-2" />
-                  {subItem.title}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* --- Dashboard Button --- */}
-      <div className="w-full mt-1">
+    <div className="flex flex-col flex-grow overflow-y-auto text-xs p-2">
+      {/* DASHBOARD (Common) */}
+      <div className="w-full mb-1">
         <Link
           href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`}
-          className={`flex items-center w-full p-4 mb-2 rounded transition-all duration-300 ease-in-out 
-      hover:bg-orange-400 hover:text-white hover:shadow-md active:scale-95 bg-orange-100 text-black
-      ${collapsed ? "justify-center" : "justify-start"}`}
+          className={`flex items-center w-full p-4 rounded transition-all duration-300 
+            hover:bg-orange-400 hover:text-white hover:shadow-md active:scale-95 bg-orange-100 text-black
+            ${collapsed ? "justify-center" : "justify-start"}`}
         >
           <BsSpeedometer2 size={20} />
           {!collapsed && <span className="ml-2">Dashboard</span>}
         </Link>
       </div>
 
+      {/* MENU ITEMS */}
+      {allItems.map((item, index) => {
+        const isOpen = !!openSections[item.title];
+        const Icon = item.icon;
 
-      {/* --- Rest of the Menu Items --- */}
-      {menuItems
-        .filter((item) => item.title !== "My Profile") // Already rendered above
-        .map((item, index) => (
-          <div key={index} className="w-full">
+        return (
+          <div key={index} className="w-full relative">
+            {/* Parent Row */}
             <button
               onClick={() => handleToggle(item.title)}
-              className={`flex items-center w-full p-4 hover:bg-orange-400 rounded hover:text-white transition-all duration-300 ease-in-out hover:shadow-md active:scale-95 ${collapsed ? "justify-center" : ""
-                }`}
+              aria-expanded={isOpen}
+              className={`flex items-center w-full p-4 rounded transition-all duration-300 
+                hover:bg-orange-400 hover:text-white hover:shadow-md active:scale-95
+                ${collapsed ? "justify-center" : ""}`}
             >
-              <item.icon size={20} />
+              <Icon size={20} />
               {!collapsed && <span className="ml-2">{item.title}</span>}
               {!collapsed && (
                 <span className="ml-auto">
-                  {openSections[item.title] ? <RxCaretDown size={15} /> : <RxCaretLeft size={15} />}
+                  {isOpen ? <RxCaretDown size={15} /> : <RxCaretLeft size={15} />}
                 </span>
               )}
             </button>
 
+            {/* DESKTOP Submenu (in-flow accordion) */}
             <div
-              className={`overflow-hidden transition-all duration-300 ease-in-out text-gray-900 ${openSections[item.title] ? "max-h-200 opacity-100" : "max-h-0 opacity-0"
-                }`}
+              className={`
+                hidden md:block overflow-hidden transition-all duration-300 ease-in-out 
+                ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}
+              `}
             >
-              {item.subItems.map((subItem, subIndex) => (
-                <div key={subIndex} className="w-full">
-                  <Link
-                    href={subItem.href}
-                    className="flex flex-col mb-1 p-4 bg-gray-200 hover:bg-orange-400 hover:text-white transition-all duration-300 ease-in-out rounded"
-                  >
-                    <div className="flex items-center">
-                      <FaRegCircle size={10} className="mr-2" />
-                      <span className="text-[11px]">{subItem.title}</span>
+              {isOpen && renderSubItems(item.subItems)}
+            </div>
 
-                      {/* Badges */}
-                      {subItem.title === "CSR Inquiries" && pendingInquiryCount > 0 && (
-                        <span className="ml-2 text-[8px] bg-red-400 rounded-lg px-2 text-white">{pendingInquiryCount}</span>
-                      )}
-                      {subItem.title === "Inactive Companies" && pendingInactiveCount > 0 && (
-                        <span className="ml-2 text-[8px] bg-red-400 rounded-lg px-2 text-white">{pendingInactiveCount}</span>
-                      )}
-                      {subItem.title === "For Deletion" && pendingDeleteCount > 0 && (
-                        <span className="ml-2 text-[8px] bg-red-400 rounded-lg px-2 text-white">{pendingDeleteCount}</span>
-                      )}
-                    </div>
+            {/* MOBILE Submenu (slide-up sheet above bottom bar) */}
+            {/* Backdrop */}
+            {isOpen && (
+              <button
+                className="md:hidden fixed inset-0 bg-black/40 z-[65]"
+                onClick={() => handleToggle(item.title)}
+                aria-label="Close submenu"
+              />
+            )}
 
-                    {/* Description displayed below the title */}
-                    {subItem.description && (
-                      <p className="mt-1 text-[10px]">
-                        {subItem.description}
-                      </p>
-                    )}
-                  </Link>
+            {/* Sheet */}
+            <div
+              className={`
+                md:hidden fixed left-0 right-0 z-[70] 
+                transition-transform duration-300 ease-out
+                ${isOpen ? "translate-y-0" : "translate-y-[120%]"}
+                bottom-14
+              `}
+            >
+              <div className="mx-3 rounded-xl border bg-white dark:bg-gray-900 shadow-lg max-h-[60vh] overflow-y-auto p-2">
+                <div className="px-2 pt-2 pb-1 text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                  {item.title}
                 </div>
-              ))}
+                {renderSubItems(item.subItems)}
+              </div>
             </div>
           </div>
-        ))}
+        );
+      })}
     </div>
   );
 };
