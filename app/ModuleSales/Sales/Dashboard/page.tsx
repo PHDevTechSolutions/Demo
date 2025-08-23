@@ -256,7 +256,7 @@ const DashboardPage: React.FC = () => {
               </ul>
 
               <p className="text-xs italic text-purple-700">
-                Released on August 16, 2025
+                Released on August 20, 2025
               </p>
             </div>
 
