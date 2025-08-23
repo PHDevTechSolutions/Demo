@@ -135,27 +135,27 @@ const DashboardPage: React.FC = () => {
 
   const filteredAccounts = Array.isArray(posts)
     ? posts
-        .filter((post) => {
-          const postDate = post.date_created ? new Date(post.date_created) : null;
-          const isWithinDateRange =
-            (!startDate || (postDate && postDate >= new Date(startDate))) &&
-            (!endDate || (postDate && postDate <= new Date(endDate)));
+      .filter((post) => {
+        const postDate = post.date_created ? new Date(post.date_created) : null;
+        const isWithinDateRange =
+          (!startDate || (postDate && postDate >= new Date(startDate))) &&
+          (!endDate || (postDate && postDate <= new Date(endDate)));
 
-          const referenceID = userDetails.ReferenceID;
-          const matchesRole =
-            userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-              ? true
-              : userDetails.Role === "Territory Sales Associate"
+        const referenceID = userDetails.ReferenceID;
+        const matchesRole =
+          userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+            ? true
+            : userDetails.Role === "Territory Sales Associate"
               ? post?.referenceid === referenceID
               : userDetails.Role === "Territory Sales Manager"
-              ? post?.tsm === referenceID
-              : false;
+                ? post?.tsm === referenceID
+                : false;
 
-          const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-          return isWithinDateRange && matchesRole && matchesAgentFilter;
-        })
-        .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
+        return isWithinDateRange && matchesRole && matchesAgentFilter;
+      })
+      .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
     : [];
 
   useEffect(() => {
@@ -231,29 +231,40 @@ const DashboardPage: React.FC = () => {
 
         {/* New Version Banner */}
         {showVersionBanner && (
-          <div className="bg-purple-50 border border-purple-300 text-purple-800 px-6 py-4 rounded-xl shadow-md mb-4 relative flex items-start gap-3">
+          <div className="relative flex items-start gap-4 bg-purple-50 border border-purple-300 text-purple-800 px-6 py-4 rounded-xl shadow-md mb-4">
+            {/* Icon */}
             <div className="mt-1 text-purple-600">
               <BsInfoCircle size={22} />
             </div>
+
+            {/* Content */}
             <div className="flex-1 text-sm leading-relaxed">
-              <strong className="font-semibold text-purple-900 text-base">🎉 TaskFlow v4.4 Released!</strong>
-              <p className="mt-1">
+              <strong className="block font-semibold text-purple-900 text-base mb-1">
+                🎉 TaskFlow v4.4 Released!
+              </strong>
+              <p className="mb-2">
                 This update introduces several improvements to enhance your experience:
               </p>
-              <ul className="list-disc list-inside mt-2 space-y-1">
+
+              <ul className="list-disc list-inside space-y-1 mb-2">
+                <li>✨ Calls to SI is added.</li>
+                <li>✨ Conversion Per Client / Company Added.</li>
+                <li>✨ Working Hours From Bar Chart Converted into Pie Chart on TSM Accounts.</li>
                 <li>✨ Refined UI adjustments for the upcoming <span className="font-medium">Activity Planner</span>.</li>
                 <li>⚡ Global loading state implemented across all pages.</li>
                 <li>🏆 National Ranking is now available for <span className="font-medium">Territory Sales Associates</span>.</li>
               </ul>
-              <p className="mt-2 italic text-xs text-purple-700">
+
+              <p className="text-xs italic text-purple-700">
                 Released on August 16, 2025
               </p>
             </div>
 
-            {/* Close button */}
+            {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-purple-500 hover:text-purple-700 transition"
               onClick={handleCloseVersionBanner}
+              aria-label="Close Version Banner"
             >
               ✕
             </button>

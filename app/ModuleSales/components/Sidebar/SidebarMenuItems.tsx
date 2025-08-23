@@ -178,6 +178,10 @@ const getMenuItems = (userId: string | null = "") => [
                 href: `/ModuleSales/Sales/ConversionRates/SOToSI${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
             { 
+                title: "Calls to SI", 
+                href: `/ModuleSales/Sales/ConversionRates/CallsToSI${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
                 title: "Conversion Rate Summary", 
                 href: `/ModuleSales/Sales/ConversionRates/ConversionRateSummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },

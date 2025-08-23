@@ -196,9 +196,6 @@ const ListofUser: React.FC = () => {
                                                 <>
                                                     <UsersTable
                                                         posts={filteredAccounts}
-                                                        handleEdit={handleEdit}
-                                                        ReferenceID={userDetails.ReferenceID}
-                                                        fetchAccount={fetchAccount}
                                                     />
                                                 </>
                                             )}
