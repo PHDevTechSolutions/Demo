@@ -95,20 +95,24 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   return (
     <div className="space-y-4">
+      <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
+        <span className="mr-1">⚡</span> In Progress
+      </h3>
+
       {progress.length > 0 ? (
         progress.map((prog, idx) => (
           <div
             key={`prog-${idx}`}
-            className="rounded-lg shadow bg-white overflow-hidden"
+            className="rounded-lg shadow bg-orange-100 overflow-hidden"
           >
             {/* Card Header */}
-            <div className="flex items-center p-3 border-b">
+            <div className="flex items-center p-3">
               <img
                 src={userDetails?.profilePicture || "/default-avatar.png"}
                 alt="Profile"
                 className="w-4 h- rounded-full object-cover mr-3"
               />
-              <p className="font-semibold text-sm uppercase">{prog.companyname}</p>
+              <p className="font-semibold text-[10px] uppercase">{prog.companyname}</p>
             </div>
 
             {/* Card Body */}
@@ -130,7 +134,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             </div>
 
             {/* Card Footer */}
-            <div className="p-2 border-t text-gray-500 text-[9px]">
+            <div className="p-2 text-gray-500 text-[9px]">
               {prog.date_created
                 ? new Date(prog.date_created).toLocaleString()
                 : "N/A"}

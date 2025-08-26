@@ -58,12 +58,12 @@ const Companies: React.FC<CompaniesProps> = ({
     }, [userDetails?.ReferenceID]);
 
     return (
-        <div>
-            <h3 className="text-xs font-bold text-gray-600 mb-2">🏢 Companies</h3>
+        <div className="space-y-4 overflow-y-auto">
+            <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
+                <span className="mr-1">🏢</span> Companies
+            </h3>
 
-            {loading ? (
-                <p className="text-sm text-gray-400">Loading companies...</p>
-            ) : companies.length > 0 ? (
+            {companies.length > 0 ? (
                 companies.map((comp, idx) => {
                     const key = `comp-${idx}`;
                     const isExpanded = expandedIdx === key;
@@ -71,11 +71,11 @@ const Companies: React.FC<CompaniesProps> = ({
                     return (
                         <div
                             key={key}
-                            className="rounded-lg shadow bg-white transition text-[10px] mb-2"
+                            className="rounded-lg border bg-blue-100 shadow transition text-[10px] mb-2"
                         >
                             {/* Header row */}
                             <div
-                                className="cursor-pointer flex justify-between items-center p-3 border-b"
+                                className="cursor-pointer flex justify-between items-center p-3"
                                 onClick={() => setExpandedIdx(isExpanded ? null : key)}
                             >
                                 <p className="font-semibold uppercase">{comp.companyname}</p>
@@ -123,14 +123,14 @@ const Companies: React.FC<CompaniesProps> = ({
                                 </div>
                             )}
                             {/* Footer timestamp */}
-                            <div className="p-2 border-t text-gray-500 text-[9px]">
+                            <div className="p-2 text-gray-500 text-[9px]">
                                 {comp.typeclient}
                             </div>
                         </div>
                     );
                 })
             ) : (
-                <p className="text-sm text-gray-400">No companies found.</p>
+                <p className="text-xs text-gray-400">No companies found.</p>
             )}
         </div>
     );

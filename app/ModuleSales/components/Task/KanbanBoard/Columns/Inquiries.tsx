@@ -98,21 +98,21 @@ const Inquiries: React.FC<InquiriesProps> = ({
   };
 
   if (loading) {
-        return (
-            <div className="flex justify-center items-center py-10">
-                <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-            </div>
-        );
-    }
+    return (
+      <div className="flex justify-center items-center py-10">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h3 className="text-xs font-bold text-gray-600 mb-2">📋 Inquiries</h3>
+    <div className="space-y-4 overflow-y-auto">
+      <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
+        <span className="mr-1">📋</span> Inquiries
+      </h3>
 
-      {loading ? (
-        <p className="text-sm text-gray-400">Loading inquiries...</p>
-      ) : inquiries.length > 0 ? (
+      {inquiries.length > 0 ? (
         inquiries.map((inq, idx) => {
           const key = `inq-${idx}`;
           const isExpanded = expandedIdx === key;
@@ -120,11 +120,11 @@ const Inquiries: React.FC<InquiriesProps> = ({
           return (
             <div
               key={key}
-              className="rounded-lg shadow bg-white transition text-[10px] mb-2"
+              className="rounded-lg shadow bg-red-100 transition text-[10px] mb-2"
             >
               {/* Header row */}
               <div
-                className="cursor-pointer flex justify-between items-center p-3 border-b"
+                className="cursor-pointer flex justify-between items-center p-3"
                 onClick={() => setExpandedIdx(isExpanded ? null : key)}
               >
                 <p className="font-semibold uppercase">{inq.companyname}</p>
@@ -188,7 +188,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
               )}
 
               {/* Footer timestamp */}
-              <div className="p-2 border-t text-gray-500 text-[9px]">
+              <div className="p-2 text-gray-500 text-[9px]">
                 {inq.date_created
                   ? new Date(inq.date_created).toLocaleString()
                   : "N/A"}
