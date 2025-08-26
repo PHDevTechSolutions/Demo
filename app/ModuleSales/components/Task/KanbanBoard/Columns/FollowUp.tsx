@@ -104,7 +104,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
               <img
                 src={userDetails?.profilePicture || "/default-avatar.png"}
                 alt="Profile"
-                className="w-5 h-5 rounded-full object-cover"
+                className="w-8 h-8 rounded-full object-cover"
               />
               <p className="font-semibold text-[10px] uppercase">{act.companyname}</p>
             </div>
