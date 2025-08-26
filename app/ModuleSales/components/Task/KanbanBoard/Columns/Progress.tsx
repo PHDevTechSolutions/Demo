@@ -106,7 +106,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
               <img
                 src={userDetails?.profilePicture || "/default-avatar.png"}
                 alt="Profile"
-                className="w-4 h-4 rounded-full object-cover mr-3"
+                className="w-4 h- rounded-full object-cover mr-3"
               />
               <p className="font-semibold text-sm uppercase">{prog.companyname}</p>
             </div>
