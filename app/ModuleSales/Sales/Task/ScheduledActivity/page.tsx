@@ -6,6 +6,7 @@ import UserFetcher from "../../../components/User/UserFetcher";
 import Filters from "../../../components/Task/ScheduledActivity/Filters/Filters";
 import Main from "../../../components/Task/ScheduledActivity/Main";
 import Notes from "../../../components/Task/Notes/Note";
+import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsCalendar4Week, BsListTask, BsInfoCircle } from 'react-icons/bs';
@@ -299,23 +300,8 @@ const ListofUser: React.FC = () => {
 
                   {/* Activity Planner Tab */}
                   {activeTab === "activity" && (
-                    <div className="p-6 bg-white shadow-md rounded-lg flex flex-col items-center justify-center space-y-4">
-                      {/* Title */}
-                      <span className="text-lg font-semibold text-gray-600">
-                        Activity Planner
-                      </span>
-
-                      {/* Coming Soon Badge */}
-                      <span className="text-xs bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full animate-pulse">
-                        🚧 Coming Soon
-                      </span>
-
-                      {/* Skeleton Placeholder */}
-                      <div className="w-full max-w-md space-y-2">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
-                      </div>
+                    <div className="bg-white shadow-md rounded-lg flex">
+                        <KanbanBoard userDetails={userDetails} />
                     </div>
                   )}
 
