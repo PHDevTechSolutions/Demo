@@ -136,7 +136,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
                       e.stopPropagation();
                       handleSubmit(inq, true);
                     }}
-                    className="bg-green-500 text-white py-1 px-2 rounded text-[10px] hover:bg-green-600"
+                    className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600"
                   >
                     Add
                   </button>

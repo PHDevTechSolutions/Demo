@@ -27,7 +27,7 @@ const ListofUser: React.FC = () => {
 
   const [userDetails, setUserDetails] = useState({
     UserId: "", Firstname: "", Lastname: "", Manager: "", TSM: "",
-    Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
+    Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "", profilePicture: ""
   });
 
   const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
@@ -56,6 +56,7 @@ const ListofUser: React.FC = () => {
           Company: data.Company || "",
           TargetQuota: data.TargetQuota || "",
           ReferenceID: data.ReferenceID || "",
+          profilePicture: data.profilePicture || "",
         });
       } catch (err) {
         console.error(err);
