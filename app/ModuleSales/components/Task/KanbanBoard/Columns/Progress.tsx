@@ -52,21 +52,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         else if (Array.isArray(data?.data)) progressData = data.data;
         else if (Array.isArray(data?.progress)) progressData = data.progress;
 
-        // Filter by today's date
-        const today = new Date();
-        const filteredToday = progressData
-          .filter((p) => p.referenceid === userDetails.ReferenceID)
-          .filter((p) => {
-            const createdDate = new Date(p.date_created);
-            return (
-              createdDate.getFullYear() === today.getFullYear() &&
-              createdDate.getMonth() === today.getMonth() &&
-              createdDate.getDate() === today.getDate()
-            );
-          });
+        // Filter by current user's ReferenceID
+        const myProgress = progressData.filter(
+          (p) => p.referenceid === userDetails.ReferenceID
+        );
 
         // Sort newest first
-        const sorted = filteredToday.sort(
+        const sorted = myProgress.sort(
           (a, b) =>
             new Date(b.date_created).getTime() -
             new Date(a.date_created).getTime()
@@ -142,7 +134,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           </div>
         ))
       ) : (
-        <p className="text-sm text-gray-400">No progress found for today.</p>
+        <p className="text-sm text-gray-400">No progress found.</p>
       )}
     </div>
   );

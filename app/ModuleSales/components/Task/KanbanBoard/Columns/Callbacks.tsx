@@ -175,74 +175,51 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     );
   }
 
-  // Group by activitynumber
-  const groupedCallbacks = callbacks.reduce((acc: Record<string, Inquiry[]>, curr) => {
-    if (!acc[curr.activitynumber]) acc[curr.activitynumber] = [];
-    acc[curr.activitynumber].push(curr);
-    return acc;
-  }, {});
-
   return (
     <div className="space-y-4 overflow-y-auto">
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
         <span className="mr-1">☎️</span> Callbacks
       </h3>
 
-      {Object.keys(groupedCallbacks).length > 0 ? (
-        Object.entries(groupedCallbacks).map(([activityNum, group]) => {
-          const parent = group[0];
-          const children = group.slice(1);
-
-          return (
-            <div key={activityNum} className="rounded-lg shadow bg-stone-200 overflow-hidden">
-              {/* Parent Card */}
-              <div className="flex items-center p-3 gap-2 bg-stone-300">
-                <img
-                  src={userDetails?.profilePicture || "/default-avatar.png"}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <p className="font-semibold text-[10px] uppercase">{parent.companyname}</p>
-              </div>
-
-              <div className="p-3 space-y-1 text-[10px]">
-                <p><span className="font-semibold">Contact Person:</span> {parent.contactperson}</p>
-                <p><span className="font-semibold">Contact #:</span> {parent.contactnumber}</p>
-                <p><span className="font-semibold">Email:</span> {parent.emailaddress}</p>
-                <p><span className="font-semibold">Address:</span> {parent.address}</p>
-                <p><span className="font-semibold">Type:</span> {parent.typeclient}</p>
-                <p><span className="font-semibold">Remarks:</span> {parent.remarks || "-"}</p>
-                <p><span className="font-semibold">Status:</span> {parent.activitystatus || "-"}</p>
-              </div>
-
-              <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
-                <LuClock className="w-3 h-3" />
-                <span>{parent.callback ? parent.callback.split("T")[1]?.slice(0, 5) : "N/A"}</span>
-                <button
-                  onClick={() => openFormDrawer(parent)}
-                  className="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-[10px] px-2 py-1 rounded flex gap-1"
-                >
-                  <LuCalendarPlus size={15} /> Add
-                </button>
-              </div>
-
-              {/* Children with L-line */}
-              {children.length > 0 && (
-                <div className="border-l-2 border-gray-400 ml-4 pl-4 mt-2 space-y-2">
-                  {children.map((child, idx) => (
-                    <div key={idx} className="rounded-lg shadow bg-white p-2 text-[10px] flex justify-between">
-                      <span>{child.callback?.split("T")[0]}</span>
-                      <span>{child.typecall}</span>
-                      <span>{child.activitystatus}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {callbacks.length > 0 ? (
+        callbacks.map((inq, idx) => (
+          <div key={idx} className="rounded-lg shadow bg-stone-200 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center p-3 gap-2">
+              <img
+                src={userDetails?.profilePicture || "/default-avatar.png"}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
             </div>
-          );
-        })
+
+            {/* Body */}
+            <div className="p-3 space-y-1 text-[10px]">
+              <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>
+              <p><span className="font-semibold">Contact #:</span> {inq.contactnumber}</p>
+              <p><span className="font-semibold">Email:</span> {inq.emailaddress}</p>
+              <p><span className="font-semibold">Address:</span> {inq.address}</p>
+              <p><span className="font-semibold">Type:</span> {inq.typeclient}</p>
+              <p><span className="font-semibold">Remarks:</span> {inq.remarks || "-"}</p>
+              <p><span className="font-semibold">Status:</span> {inq.activitystatus || "-"}</p>
+            </div>
+
+            {/* Footer */}
+            <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
+              <LuClock className="w-3 h-3" />
+              <span>{inq.callback ? inq.callback.split("T")[1]?.slice(0, 5) : "N/A"}</span>
+              <button
+                onClick={() => openFormDrawer(inq)}
+                className="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-[10px] px-2 py-1 rounded flex gap-1"
+              >
+                <LuCalendarPlus size={15} /> Add
+              </button>
+            </div>
+          </div>
+        ))
       ) : (
-        <p className="text-sm text-gray-400 italic">No callbacks available.</p>
+        <p className="text-sm text-gray-400 italic">No callbacks scheduled for today.</p>
       )}
 
       {/* Slide-up form drawer */}
@@ -334,7 +311,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                   value={typecall}
                   onChange={(e) => setTypeCall(e.target.value as "Successful" | "Unsucessful")}
                   className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                >
+                >  
                   <option value="">Select Call Status</option>
                   <option value="Successful">Successful</option>
                   <option value="Unsucessful">Unsucessful</option>
