@@ -23,7 +23,7 @@ const ListofUser: React.FC = () => {
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-  const loading = loadingUser || loadingAccounts; // 🔑 combined state
+  const loading = loadingUser || loadingAccounts;
 
   const [userDetails, setUserDetails] = useState({
     UserId: "", Firstname: "", Lastname: "", Manager: "", TSM: "",
@@ -153,15 +153,7 @@ const ListofUser: React.FC = () => {
       .sort((a, b) =>
         new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
       );
-  }, [
-    posts,
-    searchTerm,
-    startDate,
-    endDate,
-    userDetails.ReferenceID,
-    userDetails.Role,
-    selectedAgent, // importante para mag-refresh kapag nagpalit ng agent
-  ]);
+  }, [posts, searchTerm, startDate, endDate, userDetails.ReferenceID, userDetails.Role, selectedAgent]);
 
   return (
     <SessionChecker>
@@ -290,20 +282,15 @@ const ListofUser: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Activity Planner Tab */}
-                  {activeTab === "activity" && (
-                    <div className="bg-white shadow-md rounded-lg flex">
-                      <KanbanBoard userDetails={userDetails} />
-                    </div>
-                  )}
-
                   {/* Notes */}
-                  {activeTab === "notes" && (
-                    <div className="bg-white shadow-md rounded-lg flex">
-                      {/* Render the actual Notes component */}
-                      <Notes userDetails={userDetails} />
-                    </div>
-                  )}
+                  <div className={`${activeTab === "notes" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                    <Notes userDetails={userDetails} />
+                  </div>
+
+                  {/* Kanban Board */}
+                  <div className={`${activeTab === "activity" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                    <KanbanBoard userDetails={userDetails} />
+                  </div>
                 </div>
 
                 {/* Toast */}

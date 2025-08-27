@@ -55,50 +55,39 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         "Documentation",
     ];
 
+    // ⏬ Fetch + cache sa localStorage
     useEffect(() => {
-        const cachedData = localStorage.getItem(`notes_${userDetails.ReferenceID}`);
-        if (cachedData) {
-            try {
-                const parsed = JSON.parse(cachedData) as Note[];
-                setNotes(parsed);
-                setLoading(false); // ✅ agad mawawala yung spinner
-            } catch {
-                localStorage.removeItem(`notes_${userDetails.ReferenceID}`);
-            }
+        const cached = localStorage.getItem(`notes_${userDetails.ReferenceID}`);
+        if (cached) {
+            setNotes(JSON.parse(cached));
         }
-    }, [userDetails.ReferenceID]);
 
-    useEffect(() => {
         const fetchNotes = async () => {
+            setLoading(true);
             try {
                 const res = await fetch(
                     `/api/ModuleSales/Task/DailyActivity/FetchProgress?referenceid=${userDetails.ReferenceID}`
                 );
                 if (!res.ok) throw new Error("Failed to fetch notes");
-
                 const data = await res.json();
                 if (data.success && data.data) {
                     setNotes(data.data);
-                    localStorage.setItem(
-                        `notes_${userDetails.ReferenceID}`,
-                        JSON.stringify(data.data)
-                    );
+                    localStorage.setItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(data.data));
                 }
-            } catch (err: any) {
+            } catch (err) {
                 toast.error("Error fetching notes");
+            } finally {
+                setLoading(false);
             }
         };
 
-        // 🔹 run fetch in background, huwag setLoading(true) kung may cache na
         fetchNotes();
     }, [userDetails.ReferenceID]);
 
-
-    const filteredNotes = notes.filter(note => {
-        if (!activityTypes.includes(note.typeactivity)) return false;
-        if (userDetails.Role === "Super Admin") return true;
-        return note.referenceid === userDetails.ReferenceID;
-    });
+    const syncToCache = (newNotes: Note[]) => {
+        setNotes(newNotes);
+        localStorage.setItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(newNotes));
+    };
 
     const generateActivityNumber = () => `ACT-${Date.now()}`;
 
@@ -118,8 +107,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         }
 
         const activityNumber = editingId
-            ? notes.find((n) => n.id === editingId)?.activitynumber ||
-            generateActivityNumber()
+            ? notes.find(n => n.id === editingId)?.activitynumber || generateActivityNumber()
             : generateActivityNumber();
 
         const payload: Note = {
@@ -137,6 +125,9 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             date_updated: new Date().toISOString(),
         };
 
+        // 🔹 Optimistic update
+        syncToCache([payload, ...notes.filter(n => n.id !== payload.id)]);
+
         try {
             const url = editingId
                 ? "/api/ModuleSales/Task/Notes/Edit"
@@ -151,23 +142,10 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
 
             if (!res.ok) throw new Error("Failed to submit activity");
 
-            const result = await res.json();
-            console.log("API response:", result);
-
-            setNotes((prev) => {
-                const filteredPrev = prev.filter((n) => n.id !== payload.id);
-                const updated = [payload, ...filteredPrev];
-                localStorage.setItem(
-                    `notes_${userDetails.ReferenceID}`,
-                    JSON.stringify(updated)
-                );
-                return updated;
-            });
+            await res.json();
 
             resetForm();
-            toast.success(
-                editingId ? "Activity updated!" : "Activity submitted successfully!"
-            );
+            toast.success(editingId ? "Activity updated!" : "Activity submitted successfully!");
         } catch (err: any) {
             toast.error(err.message || "Something went wrong!");
         }
@@ -183,35 +161,30 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     };
 
     const handleDelete = async (id: number) => {
+        // 🔹 Optimistic update
+        syncToCache(notes.filter(n => n.id !== id));
+
         try {
-            const res = await fetch(
-                "/api/ModuleSales/Task/DailyActivity/DeleteProgress",
-                {
-                    method: "DELETE",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id }),
-                }
-            );
+            const res = await fetch("/api/ModuleSales/Task/DailyActivity/DeleteProgress", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
 
             if (!res.ok) throw new Error("Failed to delete activity");
-
-            const result = await res.json();
-            console.log("Delete response:", result);
-
-            setNotes((prev) => {
-                const updated = prev.filter((n) => n.id !== id);
-                localStorage.setItem(
-                    `notes_${userDetails.ReferenceID}`,
-                    JSON.stringify(updated)
-                );
-                return updated;
-            });
+            await res.json();
 
             toast.success("Activity deleted successfully!");
         } catch (err: any) {
             toast.error(err.message || "Something went wrong while deleting!");
         }
     };
+
+    const filteredNotes = notes.filter(note => {
+        if (!activityTypes.includes(note.typeactivity)) return false;
+        if (userDetails.Role === "Super Admin") return true;
+        return note.referenceid === userDetails.ReferenceID;
+    });
 
     // Format ng relative date
     const formatRelativeDate = (dateStr: string) => {
@@ -230,14 +203,8 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     const formatForInput = (dateStr: string) => {
         if (!dateStr) return "";
         const date = new Date(dateStr);
-        // YYYY-MM-DDTHH:MM
         const pad = (n: number) => n.toString().padStart(2, "0");
-        const year = date.getFullYear();
-        const month = pad(date.getMonth() + 1);
-        const day = pad(date.getDate());
-        const hours = pad(date.getHours());
-        const minutes = pad(date.getMinutes());
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     };
 
     return (
@@ -245,12 +212,17 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             <h2 className="text-lg p-4 font-semibold text-black">Notes</h2>
             <p className="text-sm text-gray-500 px-4 mb-4">
                 This section allows you to track, manage, and update your daily activities.
-                Click on an activity from the left to view or edit details.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 border-t">
                 {/* Left Column */}
                 <div className="col-span-1">
+                    {loading ? (
+                        <div className="flex justify-center items-center py-10">
+                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                        </div>
+                    ) : (
                         <div className="flex flex-col">
                             {filteredNotes.length === 0 && !loading && (
                                 <div className="text-gray-400 text-center">No notes yet</div>
@@ -282,6 +254,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                     </div>
                                 ))}
                         </div>
+                    )}
                 </div>
 
                 {/* Right Column */}
@@ -302,54 +275,11 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                         handleSubmit={handleSubmit}
                         resetForm={resetForm}
                         handleDelete={handleDelete}
-                        dateUpdated={
-                            editingId
-                                ? notes.find(n => n.id === editingId)?.date_updated || ""
-                                : ""
-                        }
+                        dateUpdated={editingId ? notes.find(n => n.id === editingId)?.date_updated || "" : ""}
                     />
                 </div>
-
-                {/* Mobile Modal */}
-                {editingId && (
-                    <>
-                        <div
-                            className="fixed inset-0 bg-black/40 z-40 md:hidden"
-                            onClick={resetForm}
-                        ></div>
-
-                        <div className="fixed bottom-0 left-0 right-0 z-[1000] md:hidden shadow-lg bg-white transition-transform duration-300 ease-in-out">
-                            <div className="flex justify-end p-2 border-b">
-                                <button
-                                    onClick={resetForm}
-                                    className="text-gray-500 hover:text-gray-800 text-lg font-bold"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <Form
-                                editingId={editingId}
-                                activitystatus={activitystatus}
-                                typeactivity={typeactivity}
-                                remarks={remarks}
-                                startdate={startdate}
-                                enddate={enddate}
-                                activityTypes={activityTypes}
-                                setActivityStatus={setActivityStatus}
-                                setTypeActivity={setTypeActivity}
-                                setRemarks={setRemarks}
-                                setStartDate={setStartDate}
-                                setEndDate={setEndDate}
-                                handleSubmit={handleSubmit}
-                                resetForm={resetForm}
-                                handleDelete={handleDelete}
-                                dateUpdated={editingId ? notes.find((n) => n.id === editingId)?.date_updated || "" : ""}
-                            />
-                        </div>
-                    </>
-                )}
-
             </div>
+            <ToastContainer className="text-xs" autoClose={1000} />
         </div>
     );
 };
