@@ -85,8 +85,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         const activities: Inquiry[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
-          ? data.data
-          : [];
+            ? data.data
+            : [];
 
         const todayStr = new Date().toISOString().split("T")[0];
 
@@ -193,13 +193,32 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {followUps.length > 0 ? (
-        followUps.map((inq, idx) => (
-          <FollowUpCard
-            key={idx}
-            inq={inq}
-            userDetails={userDetails}
-            openFormDrawer={openFormDrawer}
-          />
+        Object.entries(
+          followUps.reduce((acc: any, inq: any) => {
+            const key = `${inq.activitynumber} - ${inq.companyname}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(inq);
+            return acc;
+          }, {})
+        ).map(([groupKey, groupInquiries]: any, groupIdx) => (
+          <div key={groupIdx} className="mb-6">
+            {/* Parent Header */}
+            <div className="font-bold text-sm text-blue-700 mb-2">
+              {groupKey}
+            </div>
+
+            {/* Child Cards */}
+            <div className="ml-4 border-l-2 border-gray-300 pl-4 space-y-4">
+              {groupInquiries.map((inq: any, idx: number) => (
+                <FollowUpCard
+                  key={idx}
+                  inq={inq}
+                  userDetails={userDetails}
+                  openFormDrawer={openFormDrawer}
+                />
+              ))}
+            </div>
+          </div>
         ))
       ) : (
         <p className="text-sm text-gray-400 italic">
@@ -207,15 +226,15 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         </p>
       )}
 
+
       {/* Slide-up form drawer */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           handleUpdate();
         }}
-        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${
-          selectedInquiry ? "translate-y-0" : "translate-y-full"
-        }`}
+        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${selectedInquiry ? "translate-y-0" : "translate-y-full"
+          }`}
       >
         {selectedInquiry && (
           <>

@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LuClock } from "react-icons/lu";
-import { LuCalendarPlus } from "react-icons/lu";
 import CallbackCard from "./Card/CallbackCard";
 
 interface Inquiry {

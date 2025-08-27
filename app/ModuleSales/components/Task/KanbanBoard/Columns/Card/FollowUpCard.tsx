@@ -3,13 +3,13 @@
 import React from "react";
 import { LuClock, LuCalendarPlus } from "react-icons/lu";
 
-interface CallbackCardProps {
+interface FolloUpCardProps {
   inq: any;
   userDetails: any;
   openFormDrawer: (inq: any) => void;
 }
 
-const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormDrawer }) => {
+const FollowUpCard: React.FC<FolloUpCardProps> = ({ inq, userDetails, openFormDrawer }) => {
   const bgColor =
     inq.activitystatus?.toLowerCase() === "done"
       ? "bg-green-200"
@@ -43,7 +43,7 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
       {/* Footer */}
       <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
         <LuClock className="w-3 h-3" />
-        <span>{inq.callback ? inq.callback.split("T")[1]?.slice(0, 5) : "N/A"}</span>
+        <span>{inq.date_created ? inq.date_created.split("T")[1]?.slice(0, 5) : "N/A"}</span>
         <button
           onClick={() => openFormDrawer(inq)}
           className="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-[10px] px-2 py-1 rounded flex gap-1"
@@ -55,4 +55,4 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
   );
 };
 
-export default CallbackCard;
+export default FollowUpCard;
