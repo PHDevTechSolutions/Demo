@@ -278,22 +278,12 @@ const ListofUser: React.FC = () => {
                         endDate={endDate}
                         setEndDate={setEndDate}
                       />
-
-                      {/* Loader or Table */}
-                      {loading ? (
-                        <div className="flex justify-center items-center py-10">
-                          <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                          <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <Main
+                      
+                      <Main
                             posts={filteredAccounts}
                             userDetails={userDetails}
                             fetchAccount={fetchAccount}
                           />
-                        </>
-                      )}
                     </div>
                   )}
 
