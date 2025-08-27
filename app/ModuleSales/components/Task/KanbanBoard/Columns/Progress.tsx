@@ -13,6 +13,7 @@ interface ProgressItem {
   typeclient: string;
   referenceid: string;
   date_created: string;
+  remarks: string;
 }
 
 interface UserDetails {
@@ -32,6 +33,28 @@ interface ProgressProps {
   refreshTrigger: number;
 }
 
+// ✅ Safe localStorage setter (auto cleanup kapag puno)
+const safeSetItem = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e: any) {
+    if (e.name === "QuotaExceededError" || e.code === 22) {
+      console.warn("⚠️ LocalStorage quota exceeded. Cleaning old keys...");
+      const keys = Object.keys(localStorage);
+      if (keys.length > 0) {
+        localStorage.removeItem(keys[0]); // delete pinakauna
+        try {
+          localStorage.setItem(key, value); // retry
+        } catch {
+          console.error("Still cannot save to localStorage after cleanup.");
+        }
+      }
+    } else {
+      console.error("LocalStorage error:", e);
+    }
+  }
+};
+
 const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +62,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
+    const cacheKey = `progress_${userDetails.ReferenceID}`;
+
     const fetchProgress = async () => {
       try {
         setLoading(true);
+
         const res = await fetch(
           `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
         );
@@ -65,6 +91,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         );
 
         setProgress(sorted);
+        safeSetItem(cacheKey, JSON.stringify(sorted)); // ✅ Save to cache
       } catch (error) {
         console.error("❌ Error fetching progress:", error);
         setProgress([]);
@@ -73,6 +100,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       }
     };
 
+    // 🔹 Step 1: Try load from cache first
+    const cached = localStorage.getItem(cacheKey);
+    if (cached && refreshTrigger === 0) {
+      try {
+        const parsed: ProgressItem[] = JSON.parse(cached);
+        setProgress(parsed);
+        setLoading(false);
+        return; // wag na mag-fetch kung may cache at walang refreshTrigger
+      } catch {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
+    // 🔹 Step 2: Fetch from API
     fetchProgress();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
@@ -104,7 +145,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
                 alt="Profile"
                 className="w-8 h-8 rounded-full object-cover mr-3"
               />
-              <p className="font-semibold text-[10px] uppercase">{prog.companyname}</p>
+              <p className="font-semibold text-[10px] uppercase">
+                {prog.companyname}
+              </p>
             </div>
 
             {/* Card Body */}
@@ -122,6 +165,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
               </p>
               <p>
                 <span className="font-semibold">Type:</span> {prog.typeclient}
+              </p>
+              <p>
+                <span className="font-semibold">Remarks:</span> {prog.remarks}
               </p>
             </div>
 

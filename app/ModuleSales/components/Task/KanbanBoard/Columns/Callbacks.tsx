@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { LuClock } from "react-icons/lu";
 import { LuCalendarPlus } from "react-icons/lu";
+import CallbackCard from "./Card/CallbackCard";
 
 interface Inquiry {
   id?: number;
@@ -46,6 +47,7 @@ interface CallbacksProps {
 const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) => {
   const [callbacks, setCallbacks] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
 
   // Form fields
@@ -124,6 +126,8 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     if (!selectedInquiry) return;
 
     try {
+      setUpdating(true); // 🔹 activate loading
+
       const isoStartDate = new Date(startdate).toISOString();
       const isoEndDate = enddate ? new Date(enddate).toISOString() : null;
 
@@ -162,9 +166,10 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     } catch (error) {
       console.error("❌ Error updating activity:", error);
       alert("An error occurred while updating the activity.");
+    } finally {
+      setUpdating(false); // 🔹 stop loading
     }
   };
-
 
   if (loading) {
     return (
@@ -183,40 +188,12 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
 
       {callbacks.length > 0 ? (
         callbacks.map((inq, idx) => (
-          <div key={idx} className="rounded-lg shadow bg-stone-200 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center p-3 gap-2">
-              <img
-                src={userDetails?.profilePicture || "/default-avatar.png"}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
-            </div>
-
-            {/* Body */}
-            <div className="p-3 space-y-1 text-[10px]">
-              <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>
-              <p><span className="font-semibold">Contact #:</span> {inq.contactnumber}</p>
-              <p><span className="font-semibold">Email:</span> {inq.emailaddress}</p>
-              <p><span className="font-semibold">Address:</span> {inq.address}</p>
-              <p><span className="font-semibold">Type:</span> {inq.typeclient}</p>
-              <p><span className="font-semibold">Remarks:</span> {inq.remarks || "-"}</p>
-              <p><span className="font-semibold">Status:</span> {inq.activitystatus || "-"}</p>
-            </div>
-
-            {/* Footer */}
-            <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
-              <LuClock className="w-3 h-3" />
-              <span>{inq.callback ? inq.callback.split("T")[1]?.slice(0, 5) : "N/A"}</span>
-              <button
-                onClick={() => openFormDrawer(inq)}
-                className="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-[10px] px-2 py-1 rounded flex gap-1"
-              >
-                <LuCalendarPlus size={15} /> Add
-              </button>
-            </div>
-          </div>
+          <CallbackCard
+            key={idx}
+            inq={inq}
+            userDetails={userDetails}
+            openFormDrawer={openFormDrawer}
+          />
         ))
       ) : (
         <p className="text-sm text-gray-400 italic">No callbacks scheduled for today.</p>
@@ -311,7 +288,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                   value={typecall}
                   onChange={(e) => setTypeCall(e.target.value as "Successful" | "Unsucessful")}
                   className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                >  
+                >
                   <option value="">Select Call Status</option>
                   <option value="Successful">Successful</option>
                   <option value="Unsucessful">Unsucessful</option>

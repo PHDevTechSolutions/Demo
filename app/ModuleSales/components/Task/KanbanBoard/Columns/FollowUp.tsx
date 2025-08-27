@@ -1,12 +1,20 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { LuClock } from "react-icons/lu"; // 🔹 icon sa footer
+import { toast } from "react-toastify";
+import FollowUpCard from "./Card/FollowUpCard";
 
 export const dynamic = "force-dynamic";
 
 interface Inquiry {
   id?: number;
+  activitynumber?: string;
+  activitystatus?: string;
+  typecall?: "Successful" | "Unsuccessful" | "";
+  callback?: string;
+  tsm?: string;
+  manager?: string;
+
   ticketreferencenumber: string;
   companyname: string;
   contactperson: string;
@@ -43,6 +51,25 @@ interface FollowUpsProps {
 const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) => {
   const [followUps, setFollowUps] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+
+  // form states
+  const [remarks, setRemarks] = useState("");
+  const [activityStatus, setActivityStatus] = useState("Ongoing");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [typeCall, setTypeCall] = useState<"Successful" | "Unsuccessful" | "">("");
+
+  // hidden field states
+  const [activityNumber, setActivityNumber] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [typeClient, setTypeClient] = useState("");
+  const [typeActivity, setTypeActivity] = useState("Follow Up");
+  const [referenceid, setReferenceid] = useState("");
+  const [tsm, setTsm] = useState("");
+  const [manager, setManager] = useState("");
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -58,8 +85,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         const activities: Inquiry[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
-            ? data.data
-            : [];
+          ? data.data
+          : [];
 
         const todayStr = new Date().toISOString().split("T")[0];
 
@@ -81,11 +108,80 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
     fetchFollowUps();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
+  const openFormDrawer = (inq: Inquiry) => {
+    setSelectedInquiry(inq);
+    setActivityNumber(inq.activitynumber || "");
+    setCompanyName(inq.companyname);
+    setContactPerson(inq.contactperson);
+    setTypeClient(inq.typeclient);
+    setRemarks(inq.remarks || "");
+    setStartDate(inq.callback?.split("T")[0] || "");
+    setEndDate("");
+    setActivityStatus(inq.activitystatus === "Done" ? "Done" : "Ongoing");
+    setTypeCall(inq.typecall === "Successful" ? "Successful" : "Unsuccessful");
+    setTypeActivity(inq.typeactivity || "Follow Up");
+    setTsm(inq.tsm || "");
+    setManager(inq.manager || "");
+    setReferenceid(inq.referenceid);
+  };
+
+  const closeFormDrawer = () => setSelectedInquiry(null);
+
+  const handleUpdate = async () => {
+    if (!selectedInquiry) return;
+
+    try {
+      setUpdating(true);
+
+      const isoStartDate = new Date(startDate).toISOString();
+      const isoEndDate = endDate ? new Date(endDate).toISOString() : null;
+
+      const payload = {
+        activitynumber: activityNumber,
+        companyname: companyName,
+        contactperson: contactPerson,
+        typeclient: typeClient,
+        remarks,
+        startdate: isoStartDate,
+        enddate: isoEndDate,
+        activitystatus: activityStatus,
+        typecall: typeCall,
+        typeactivity: typeActivity,
+        referenceid,
+        tsm,
+        manager,
+      };
+
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("✅ Activity updated successfully!");
+        closeFormDrawer();
+      } else {
+        console.error("❌ Update failed:", data);
+        toast.error("Failed to update activity. Please try again.");
+      }
+    } catch (error) {
+      console.error("❌ Error updating activity:", error);
+      toast.error("An error occurred while updating the activity.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-10">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-xs text-gray-500">Loading today's follow-ups...</span>
+        <span className="ml-2 text-xs text-gray-500">
+          Loading today's follow-ups...
+        </span>
       </div>
     );
   }
@@ -97,38 +193,123 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {followUps.length > 0 ? (
-        followUps.map((act, idx) => (
-          <div key={idx} className="rounded-lg shadow bg-yellow-100 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center p-3 gap-2">
-              <img
-                src={userDetails?.profilePicture || "/default-avatar.png"}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <p className="font-semibold text-[10px] uppercase">{act.companyname}</p>
-            </div>
-
-            {/* Body */}
-            <div className="p-3 space-y-1 text-[10px]">
-              <p><span className="font-semibold">Contact Person:</span> {act.contactperson}</p>
-              <p><span className="font-semibold">Contact #:</span> {act.contactnumber}</p>
-              <p><span className="font-semibold">Email:</span> {act.emailaddress}</p>
-              <p><span className="font-semibold">Address:</span> {act.address}</p>
-              <p><span className="font-semibold">Type:</span> {act.typeclient}</p>
-              <p><span className="font-semibold">Remarks:</span> {act.remarks || "-"}</p>
-            </div>
-
-            {/* Footer */}
-            <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
-              <LuClock className="w-3 h-3" />
-              <span>{act.date_created ? act.date_created.split("T")[1]?.slice(0, 5) : "N/A"}</span>
-            </div>
-          </div>
+        followUps.map((inq, idx) => (
+          <FollowUpCard
+            key={idx}
+            inq={inq}
+            userDetails={userDetails}
+            openFormDrawer={openFormDrawer}
+          />
         ))
       ) : (
-        <p className="text-sm text-gray-400 italic">No follow-ups scheduled for today.</p>
+        <p className="text-sm text-gray-400 italic">
+          No follow-ups scheduled for today.
+        </p>
       )}
+
+      {/* Slide-up form drawer */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleUpdate();
+        }}
+        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${
+          selectedInquiry ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        {selectedInquiry && (
+          <>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="text-lg font-semibold">Update Activity</h3>
+              <button
+                type="button"
+                onClick={closeFormDrawer}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              {/* Remarks */}
+              <div className="flex flex-col sm:col-span-2">
+                <label className="font-semibold text-xs mb-1">Remarks</label>
+                <textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  rows={3}
+                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                />
+              </div>
+
+              {/* Start Date */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-xs mb-1">Start Date</label>
+                <input
+                  type="datetime-local"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                  required
+                />
+              </div>
+
+              {/* End Date */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-xs mb-1">End Date</label>
+                <input
+                  type="datetime-local"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                />
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-xs mb-1">Status</label>
+                <select
+                  value={activityStatus}
+                  onChange={(e) => setActivityStatus(e.target.value)}
+                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                >
+                  <option value="">Select Status</option>
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Done">Done</option>
+                </select>
+              </div>
+
+              {/* Call Type */}
+              <div className="flex flex-col">
+                <label className="font-semibold text-xs mb-1">Call Status</label>
+                <select
+                  value={typeCall}
+                  onChange={(e) =>
+                    setTypeCall(e.target.value as "Successful" | "Unsuccessful" | "")
+                  }
+                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
+                >
+                  <option value="">Select Call Status</option>
+                  <option value="Successful">Successful</option>
+                  <option value="Unsuccessful">Unsuccessful</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="mt-4">
+              <button
+                type="submit"
+                disabled={updating}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs font-semibold shadow disabled:opacity-50"
+              >
+                {updating ? "Saving..." : "Save Update"}
+              </button>
+            </div>
+          </>
+        )}
+      </form>
     </div>
   );
 };

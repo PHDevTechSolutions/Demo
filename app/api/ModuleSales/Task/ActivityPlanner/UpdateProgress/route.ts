@@ -32,9 +32,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 1: Get existing record
+    // 🔹 Step 1: Get the latest record
     const existing = await Xchire_sql(
-      `SELECT * FROM progress WHERE activitynumber = $1 AND referenceid = $2 LIMIT 1;`,
+      `SELECT * FROM progress 
+       WHERE activitynumber = $1 AND referenceid = $2 
+       ORDER BY date_created DESC 
+       LIMIT 1;`,
       [activitynumber, referenceid]
     );
 
@@ -47,13 +50,15 @@ export async function POST(req: NextRequest) {
 
     const record = existing[0];
 
-    // Step 2: Update old record status to Done
+    // 🔹 Step 2: Mark old record as Done
     await Xchire_sql(
-      `UPDATE progress SET activitystatus = 'Done' WHERE activitynumber = $1 AND referenceid = $2;`,
-      [activitynumber, referenceid]
+      `UPDATE progress 
+       SET activitystatus = 'Done' 
+       WHERE id = $1;`,
+      [record.id]
     );
 
-    // Step 3: Insert new record with updated inputs
+    // 🔹 Step 3: Insert new record (carry over some fields + new inputs)
     const inserted = await Xchire_sql(
       `INSERT INTO progress
         (activitynumber, companyname, contactperson, typeclient, remarks, startdate, enddate, activitystatus, typecall, typeactivity, referenceid, tsm, manager)
@@ -68,9 +73,9 @@ export async function POST(req: NextRequest) {
         remarks,
         startdate,
         enddate,
-        activitystatus,
+        activitystatus, // new status (Assisted → Ongoing → Done)
         typecall,
-        record.typeactivity,
+        typeactivity || record.typeactivity,
         record.referenceid,
         record.tsm,
         record.manager,
