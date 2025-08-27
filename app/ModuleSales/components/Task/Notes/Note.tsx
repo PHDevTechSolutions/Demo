@@ -56,8 +56,20 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     ];
 
     useEffect(() => {
+        const cachedData = localStorage.getItem(`notes_${userDetails.ReferenceID}`);
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData) as Note[];
+                setNotes(parsed);
+                setLoading(false); // ✅ agad mawawala yung spinner
+            } catch {
+                localStorage.removeItem(`notes_${userDetails.ReferenceID}`);
+            }
+        }
+    }, [userDetails.ReferenceID]);
+
+    useEffect(() => {
         const fetchNotes = async () => {
-            setLoading(true);
             try {
                 const res = await fetch(
                     `/api/ModuleSales/Task/DailyActivity/FetchProgress?referenceid=${userDetails.ReferenceID}`
@@ -65,15 +77,28 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                 if (!res.ok) throw new Error("Failed to fetch notes");
 
                 const data = await res.json();
-                if (data.success && data.data) setNotes(data.data);
+                if (data.success && data.data) {
+                    setNotes(data.data);
+                    localStorage.setItem(
+                        `notes_${userDetails.ReferenceID}`,
+                        JSON.stringify(data.data)
+                    );
+                }
             } catch (err: any) {
                 toast.error("Error fetching notes");
-            } finally {
-                setLoading(false);
             }
         };
+
+        // 🔹 run fetch in background, huwag setLoading(true) kung may cache na
         fetchNotes();
     }, [userDetails.ReferenceID]);
+
+
+    const filteredNotes = notes.filter(note => {
+        if (!activityTypes.includes(note.typeactivity)) return false;
+        if (userDetails.Role === "Super Admin") return true;
+        return note.referenceid === userDetails.ReferenceID;
+    });
 
     const generateActivityNumber = () => `ACT-${Date.now()}`;
 
@@ -93,7 +118,8 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         }
 
         const activityNumber = editingId
-            ? notes.find(n => n.id === editingId)?.activitynumber || generateActivityNumber()
+            ? notes.find((n) => n.id === editingId)?.activitynumber ||
+            generateActivityNumber()
             : generateActivityNumber();
 
         const payload: Note = {
@@ -128,13 +154,20 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             const result = await res.json();
             console.log("API response:", result);
 
-            setNotes(prev => {
-                const filteredPrev = prev.filter(n => n.id !== payload.id);
-                return [payload, ...filteredPrev];
+            setNotes((prev) => {
+                const filteredPrev = prev.filter((n) => n.id !== payload.id);
+                const updated = [payload, ...filteredPrev];
+                localStorage.setItem(
+                    `notes_${userDetails.ReferenceID}`,
+                    JSON.stringify(updated)
+                );
+                return updated;
             });
 
             resetForm();
-            toast.success(editingId ? "Activity updated!" : "Activity submitted successfully!");
+            toast.success(
+                editingId ? "Activity updated!" : "Activity submitted successfully!"
+            );
         } catch (err: any) {
             toast.error(err.message || "Something went wrong!");
         }
@@ -149,32 +182,36 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         setEndDate(formatForInput(note.enddate));
     };
 
-
     const handleDelete = async (id: number) => {
         try {
-            const res = await fetch("/api/ModuleSales/Task/DailyActivity/DeleteProgress", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id }),
-            });
+            const res = await fetch(
+                "/api/ModuleSales/Task/DailyActivity/DeleteProgress",
+                {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id }),
+                }
+            );
 
             if (!res.ok) throw new Error("Failed to delete activity");
 
             const result = await res.json();
             console.log("Delete response:", result);
 
-            setNotes(prev => prev.filter(n => n.id !== id));
+            setNotes((prev) => {
+                const updated = prev.filter((n) => n.id !== id);
+                localStorage.setItem(
+                    `notes_${userDetails.ReferenceID}`,
+                    JSON.stringify(updated)
+                );
+                return updated;
+            });
+
             toast.success("Activity deleted successfully!");
         } catch (err: any) {
             toast.error(err.message || "Something went wrong while deleting!");
         }
     };
-
-    const filteredNotes = notes.filter(note => {
-        if (!activityTypes.includes(note.typeactivity)) return false;
-        if (userDetails.Role === "Super Admin") return true;
-        return note.referenceid === userDetails.ReferenceID;
-    });
 
     // Format ng relative date
     const formatRelativeDate = (dateStr: string) => {
@@ -214,12 +251,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 border-t">
                 {/* Left Column */}
                 <div className="col-span-1">
-                    {loading ? (
-                        <div className="flex justify-center items-center py-10">
-                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-                        </div>
-                    ) : (
                         <div className="flex flex-col">
                             {filteredNotes.length === 0 && !loading && (
                                 <div className="text-gray-400 text-center">No notes yet</div>
@@ -251,7 +282,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                     </div>
                                 ))}
                         </div>
-                    )}
                 </div>
 
                 {/* Right Column */}

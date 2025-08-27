@@ -281,28 +281,19 @@ const ListofUser: React.FC = () => {
                         setEndDate={setEndDate}
                       />
 
-                      {/* Loader or Table */}
-                      {loading ? (
-                        <div className="flex justify-center items-center py-10">
-                          <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                          <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-                        </div>
-                      ) : (
-                        <>
-                          <Main
-                            posts={filteredAccounts}
-                            userDetails={userDetails}
-                            fetchAccount={fetchAccount}
-                          />
-                        </>
-                      )}
+                      <Main
+                        posts={filteredAccounts}
+                        userDetails={userDetails}
+                        fetchAccount={fetchAccount}
+                      />
+
                     </div>
                   )}
 
                   {/* Activity Planner Tab */}
                   {activeTab === "activity" && (
                     <div className="bg-white shadow-md rounded-lg flex">
-                        <KanbanBoard userDetails={userDetails} />
+                      <KanbanBoard userDetails={userDetails} />
                     </div>
                   )}
 
