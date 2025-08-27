@@ -56,7 +56,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
   // form states
   const [remarks, setRemarks] = useState("");
-  const [activityStatus, setActivityStatus] = useState("Ongoing");
+  const [activitystatus, setActivityStatus] = useState("Ongoing");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [typeCall, setTypeCall] = useState<"Successful" | "Unsuccessful" | "">("");
@@ -144,7 +144,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         remarks,
         startdate: isoStartDate,
         enddate: isoEndDate,
-        activitystatus: activityStatus,
+        activitystatus: activitystatus,
         typecall: typeCall,
         typeactivity: typeActivity,
         referenceid,
@@ -203,7 +203,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         ).map(([groupKey, groupInquiries]: any, groupIdx) => (
           <div key={groupIdx} className="mb-6">
             {/* Parent Header */}
-            <div className="font-bold text-sm text-blue-700 mb-2">
+            <div className="font-bold text-[10px] text-orange-500 mb-2">
               {groupKey}
             </div>
 
@@ -225,7 +225,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
           No follow-ups scheduled for today.
         </p>
       )}
-
 
       {/* Slide-up form drawer */}
       <form
@@ -289,7 +288,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Status</label>
                 <select
-                  value={activityStatus}
+                  value={activitystatus}
                   onChange={(e) => setActivityStatus(e.target.value)}
                   className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                 >
