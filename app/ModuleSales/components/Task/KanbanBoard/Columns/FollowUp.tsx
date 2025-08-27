@@ -70,6 +70,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   const [referenceid, setReferenceid] = useState("");
   const [tsm, setTsm] = useState("");
   const [manager, setManager] = useState("");
+  const [localRefresh, setLocalRefresh] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -106,7 +108,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
     };
 
     fetchFollowUps();
-  }, [userDetails?.ReferenceID, refreshTrigger]);
+  }, [userDetails?.ReferenceID, refreshTrigger, localRefresh]);
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
@@ -144,7 +146,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         remarks,
         startdate: isoStartDate,
         enddate: isoEndDate,
-        activitystatus: activitystatus,
+        activitystatus: activitystatus || "Done", // ✅ default na Done kung wala
         typecall: typeCall,
         typeactivity: typeActivity,
         referenceid,
@@ -162,7 +164,18 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
       if (res.ok) {
         toast.success("✅ Activity updated successfully!");
+
+        // ✅ Update local state immediately
+        setFollowUps((prev) =>
+          prev.map((inq) =>
+            inq.activitynumber === selectedInquiry.activitynumber
+              ? { ...inq, activitystatus: activitystatus || "Done" }
+              : inq
+          )
+        );
+
         closeFormDrawer();
+        setLocalRefresh((prev) => prev + 1); // still trigger re-fetch para sync
       } else {
         console.error("❌ Update failed:", data);
         toast.error("Failed to update activity. Please try again.");
