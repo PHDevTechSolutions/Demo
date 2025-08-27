@@ -55,6 +55,35 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         "Documentation",
     ];
 
+    // ✅ Safe setItem with cleanup for notes only
+    const safeSetItem = (key: string, value: string) => {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e: any) {
+            if (e.name === "QuotaExceededError" || e.code === 22) {
+                console.warn("⚠️ LocalStorage quota exceeded. Cleaning up old notes...");
+                // Hanapin lahat ng `notes_` keys at burahin yung pinakauna
+                const noteKeys = Object.keys(localStorage).filter(k => k.startsWith("notes_"));
+                if (noteKeys.length > 0) {
+                    localStorage.removeItem(noteKeys[0]);
+                    try {
+                        localStorage.setItem(key, value); // retry
+                    } catch {
+                        console.error("Still cannot save notes after cleanup.");
+                    }
+                }
+            } else {
+                console.error("LocalStorage error:", e);
+            }
+        }
+    };
+
+    // 🔹 Wrapper for notes sync
+    const syncToCache = (newNotes: Note[]) => {
+        setNotes(newNotes);
+        safeSetItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(newNotes));
+    };
+
     // ⏬ Fetch + cache sa localStorage
     useEffect(() => {
         const cached = localStorage.getItem(`notes_${userDetails.ReferenceID}`);
@@ -72,7 +101,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                 const data = await res.json();
                 if (data.success && data.data) {
                     setNotes(data.data);
-                    localStorage.setItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(data.data));
+                    safeSetItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(data.data));
                 }
             } catch (err) {
                 toast.error("Error fetching notes");
@@ -84,11 +113,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         fetchNotes();
     }, [userDetails.ReferenceID]);
 
-    const syncToCache = (newNotes: Note[]) => {
-        setNotes(newNotes);
-        localStorage.setItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(newNotes));
-    };
-
+    // 🔹 Generate ID
     const generateActivityNumber = () => `ACT-${Date.now()}`;
 
     const resetForm = () => {
@@ -161,7 +186,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     };
 
     const handleDelete = async (id: number) => {
-        // 🔹 Optimistic update
         syncToCache(notes.filter(n => n.id !== id));
 
         try {
@@ -186,7 +210,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         return note.referenceid === userDetails.ReferenceID;
     });
 
-    // Format ng relative date
     const formatRelativeDate = (dateStr: string) => {
         const date = new Date(dateStr);
         const now = new Date();
@@ -215,7 +238,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-4 border-t">
-                {/* Left Column */}
                 <div className="col-span-1">
                     {loading ? (
                         <div className="flex justify-center items-center py-10">
@@ -247,7 +269,24 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                                     ? note.remarks.slice(0, 60) + "..."
                                                     : note.remarks}
                                             </div>
-                                            <div className="text-[11px] text-gray-400 italic px-2">
+
+                                            {/* 🔹 Activity Status Badge */}
+                                            <div className="px-2">
+                                                <span
+                                                    className={`inline-block px-2 py-1 text-[8px] font-medium rounded-full mb-2
+                                                        ${note.activitystatus === "Completed"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : note.activitystatus === "Pending"
+                                                                ? "bg-yellow-100 text-yellow-700"
+                                                                : note.activitystatus === "In Progress"
+                                                                    ? "bg-blue-100 text-blue-700"
+                                                                    : "bg-gray-200 text-gray-600"
+                                                        }`}
+                                                >
+                                                    {note.activitystatus}
+                                                </span>
+                                            </div>
+                                            <div className="text-[11px] text-gray-400 italic font-semibold px-2">
                                                 {formatRelativeDate(note.date_created)}
                                             </div>
                                         </div>
@@ -257,7 +296,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                     )}
                 </div>
 
-                {/* Right Column */}
                 <div className="col-span-3">
                     <Form
                         editingId={editingId}
