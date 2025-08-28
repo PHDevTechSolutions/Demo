@@ -9,19 +9,33 @@ export async function GET(req: Request) {
 
   try {
     const db = await connectToDatabase();
-    const collection = db.collection("activityLogs");
+    const usersCollection = db.collection("users"); // <-- dito galing user info
+    const logsCollection = db.collection("activityLogs");
 
-    // Insert a logout log for ALL users (force logout)
-    await collection.insertOne({
-      email: "SYSTEM",
+    // Kunin lahat ng users
+    const users = await usersCollection
+      .find({}, { projection: { Email: 1, Department: 1 } })
+      .toArray();
+
+    if (!users || users.length === 0) {
+      console.log("⚠️ No users found to log out");
+      return NextResponse.json({ ok: false, message: "No users found" });
+    }
+
+    // Gumawa ng bulk insert ng logout logs para sa lahat ng users
+    const logoutLogs = users.map((u) => ({
+      email: u.Email,
+      department: u.Department,
       status: "logout",
       timestamp: new Date(),
       note: "Auto logout for all users at 10:25AM PH",
-    });
+    }));
 
-    console.log("✅ Auto logout triggered at 10:25AM PH");
+    await logsCollection.insertMany(logoutLogs);
 
-    return NextResponse.json({ ok: true });
+    console.log(`✅ Auto logout triggered for ${users.length} users`);
+
+    return NextResponse.json({ ok: true, count: users.length });
   } catch (err: any) {
     console.error("❌ Cron job failed:", err);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
