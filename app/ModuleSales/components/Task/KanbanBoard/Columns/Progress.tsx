@@ -294,12 +294,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   return (
     <div className="space-y-4 relative">
-      {/* 🔹 Modal Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-70 z-[20] flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-          <h2 className="text-xs font-bold">Activity Planner Coming Soon</h2>
-        </div>
-      </div>
       {progressWithChildren.length > 0 ? (
         progressWithChildren.map((grp, idx) => (
           <div key={idx} className="relative">
