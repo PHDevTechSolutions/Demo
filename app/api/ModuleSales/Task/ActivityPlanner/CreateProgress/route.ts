@@ -8,6 +8,7 @@ if (!TASKFLOW_DB_URL) {
 
 const sql = neon(TASKFLOW_DB_URL);
 
+// --- Insert activity into progress ---
 async function insertActivity(data: any) {
   try {
     const {
@@ -20,18 +21,12 @@ async function insertActivity(data: any) {
       emailaddress,
       typeclient,
       address,
+      activitynumber,
+      source,
+      typeactivity,
+      area,
+      deliveryaddress,
     } = data;
-
-    // 🔹 Generate activitynumber
-    const firstLetterCompany = companyname.charAt(0).toUpperCase() || "X";
-    const firstLetterContact = contactperson.charAt(0).toUpperCase() || "X";
-    const lastLetterContact = contactperson.charAt(contactperson.length - 1).toUpperCase() || "X";
-    const random4 = Math.floor(1000 + Math.random() * 9000); // 4 digits
-    const random6 = Math.floor(100000 + Math.random() * 900000); // 6 digits
-    const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
-
-    // 🔹 Default activitystatus
-    const activitystatus = "On Progress";
 
     const result = await sql`
       INSERT INTO progress (
@@ -45,7 +40,10 @@ async function insertActivity(data: any) {
         typeclient,
         address,
         activitynumber,
-        activitystatus,
+        source,
+        typeactivity,
+        area,
+        deliveryaddress,
         date_created
       ) VALUES (
         ${referenceid},
@@ -58,7 +56,10 @@ async function insertActivity(data: any) {
         ${typeclient},
         ${address},
         ${activitynumber},
-        ${activitystatus},
+        ${source},
+        ${typeactivity},
+        ${area},
+        ${deliveryaddress},
         NOW()
       )
       RETURNING *;
@@ -74,11 +75,28 @@ async function insertActivity(data: any) {
   }
 }
 
+// --- Update accounts status based on companyname + referenceid ---
+async function updateAccountStatus(referenceid: string, companyname: string, status: string) {
+  try {
+    const result = await sql`
+      UPDATE accounts
+      SET status = ${status}
+      WHERE referenceid = ${referenceid} AND companyname = ${companyname}
+      RETURNING *;
+    `;
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error("❌ Error updating account status:", error);
+    return { success: false, error: error.message || "Failed to update account status." };
+  }
+}
+
+// --- API POST handler ---
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ Required fields check
+    // ✅ Required fields check for progress
     const requiredFields = [
       "referenceid",
       "manager",
@@ -89,6 +107,7 @@ export async function POST(req: Request) {
       "emailaddress",
       "typeclient",
       "address",
+      "activitynumber",
     ];
 
     for (const field of requiredFields) {
@@ -100,10 +119,23 @@ export async function POST(req: Request) {
       }
     }
 
-    const result = await insertActivity(body);
-    return NextResponse.json(result, { status: result.success ? 200 : 500 });
+    // Insert into progress
+    const insertResult = await insertActivity(body);
+    if (!insertResult.success) {
+      return NextResponse.json(insertResult, { status: 500 });
+    }
+
+    // If status exists in payload, update accounts table
+    if (body.status) {
+      const updateResult = await updateAccountStatus(body.referenceid, body.companyname, body.status);
+      if (!updateResult.success) {
+        console.warn("⚠️ Failed to update account status:", updateResult.error);
+      }
+    }
+
+    return NextResponse.json({ success: true, progress: insertResult.data });
   } catch (error: any) {
-    console.error("❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/Create:", error);
+    console.error("❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/CreateProgress:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Internal server error" },
       { status: 500 }

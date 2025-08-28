@@ -194,7 +194,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
           />
         ))
       ) : (
-        <p className="text-sm text-gray-400 italic">No callbacks scheduled for today.</p>
+        <p className="text-xs text-gray-400 italic">No callbacks scheduled for today.</p>
       )}
 
       {/* Slide-up form drawer */}

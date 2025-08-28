@@ -234,7 +234,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
           </div>
         ))
       ) : (
-        <p className="text-sm text-gray-400 italic">
+        <p className="text-xs text-gray-400 italic">
           No follow-ups scheduled for today.
         </p>
       )}

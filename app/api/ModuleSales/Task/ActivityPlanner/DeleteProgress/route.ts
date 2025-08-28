@@ -8,22 +8,22 @@ const sql = neon(dbUrl);
 
 export const dynamic = "force-dynamic";
 
-export async function DELETE(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { activitynumber, referenceid } = body;
+    const { id } = body;
 
-    if (!activitynumber || !referenceid) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: activitynumber or referenceid." },
+        { success: false, error: "Missing required field: id." },
         { status: 400 }
       );
     }
 
-    // Check if the record exists
+    // Check if record exists
     const existing = await sql`
       SELECT * FROM progress
-      WHERE activitynumber = ${activitynumber} AND referenceid = ${referenceid}
+      WHERE id = ${id}
       LIMIT 1;
     `;
 
@@ -34,20 +34,20 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Delete the record
+    // Delete record by id
     await sql`
       DELETE FROM progress
-      WHERE activitynumber = ${activitynumber} AND referenceid = ${referenceid};
+      WHERE id = ${id};
     `;
 
     return NextResponse.json(
-      { success: true, message: "Activity deleted successfully." },
+      { success: true, message: "Record deleted successfully." },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("❌ Error deleting progress:", error);
+    console.error("❌ Error deleting record:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to delete activity." },
+      { success: false, error: error.message || "Failed to delete record." },
       { status: 500 }
     );
   }
