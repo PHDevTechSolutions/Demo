@@ -9,33 +9,41 @@ export async function GET(req: Request) {
 
   try {
     const db = await connectToDatabase();
-    const usersCollection = db.collection("users"); // <-- dito galing user info
     const logsCollection = db.collection("activityLogs");
 
-    // Kunin lahat ng users
-    const users = await usersCollection
-      .find({}, { projection: { Email: 1, Department: 1 } })
+    // 🗓️ Compute today's date range (midnight → 11:59:59)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // 🔍 Hanapin lahat ng nag-login ngayong araw
+    const activeUsers = await logsCollection
+      .find({
+        status: "login",
+        timestamp: { $gte: today, $lt: tomorrow },
+      })
       .toArray();
 
-    if (!users || users.length === 0) {
-      console.log("⚠️ No users found to log out");
-      return NextResponse.json({ ok: false, message: "No users found" });
+    if (!activeUsers || activeUsers.length === 0) {
+      console.log("⚠️ No logged-in users today");
+      return NextResponse.json({ ok: false, message: "No logged-in users today" });
     }
 
-    // Gumawa ng bulk insert ng logout logs para sa lahat ng users
-    const logoutLogs = users.map((u) => ({
-      email: u.Email,
-      department: u.Department,
+    // 📝 Insert logout log para lang sa kanila
+    const logoutLogs = activeUsers.map((u) => ({
+      email: u.email,
+      department: u.department,
       status: "logout",
       timestamp: new Date(),
-      note: "Auto logout for all users at 10:25AM PH",
+      note: "Auto logout for active users today (6PM PH)",
     }));
 
     await logsCollection.insertMany(logoutLogs);
 
-    console.log(`✅ Auto logout triggered for ${users.length} users`);
+    console.log(`✅ Auto logout triggered for ${activeUsers.length} users`);
 
-    return NextResponse.json({ ok: true, count: users.length });
+    return NextResponse.json({ ok: true, count: activeUsers.length });
   } catch (err: any) {
     console.error("❌ Cron job failed:", err);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
