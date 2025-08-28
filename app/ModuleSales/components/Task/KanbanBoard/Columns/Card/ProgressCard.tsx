@@ -26,9 +26,9 @@ interface ProgressCardProps {
   progress: ProgressItem;
   profilePicture: string;
   onAddClick: () => void;
-  onDeleteClick?: (progress: ProgressItem) => void;
+  onDeleteClick?: (progress: ProgressItem) => Promise<void>;
   childrenProgress?: ProgressItem[];
-  onDeleteChildClick?: (child: ProgressItem) => void;
+  onDeleteChildClick?: (child: ProgressItem) => Promise<void>;
 }
 
 const STATUS_PERCENT: Record<string, number> = {
@@ -48,12 +48,25 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   onDeleteChildClick,
 }) => {
   const [showChildren, setShowChildren] = useState(true);
+  const [childrenLoading, setChildrenLoading] = useState(false); // 🔹 Loading per children section
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ProgressItem | null>(null);
   const [isChild, setIsChild] = useState(false);
 
-  const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
+  const computePercent = () => {
+    const allItems = [progress, ...childrenProgress];
+    const total = allItems.length;
+    if (total === 0) return 0;
+
+    const sum = allItems.reduce((acc, item) => {
+      return acc + (STATUS_PERCENT[item.activitystatus || "On Progress"] || 0);
+    }, 0);
+
+    return Math.round(sum / total);
+  };
+
+  const percent = computePercent();
 
   const handleDeleteClick = (item: ProgressItem, child = false) => {
     setDeleteTarget(item);
@@ -61,13 +74,18 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    if (deleteTarget) {
-      if (isChild && onDeleteChildClick) onDeleteChildClick(deleteTarget);
-      else if (!isChild && onDeleteClick) onDeleteClick(deleteTarget);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setChildrenLoading(true);
+
+    try {
+      if (isChild && onDeleteChildClick) await onDeleteChildClick(deleteTarget);
+      else if (!isChild && onDeleteClick) await onDeleteClick(deleteTarget);
+    } finally {
+      setChildrenLoading(false);
+      setShowDeleteModal(false);
+      setShowFinalModal(true);
     }
-    setShowDeleteModal(false);
-    setShowFinalModal(true);
   };
 
   return (
@@ -113,8 +131,13 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
       </div>
 
       {/* Children */}
-      {showChildren && childrenProgress.length > 0 && (
+      {showChildren && (
         <div className="ml-6 relative">
+          {childrenLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+            </div>
+          )}
           <div className="absolute top-0 left-3 h-full border-l-2 border-gray-400"></div>
           {childrenProgress.map((child, idx) => (
             <div key={idx} className="relative pl-4 mb-2">
@@ -159,7 +182,6 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
         )}
       </div>
 
-      {/* Step 1 Modal - Verification */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[999]">
           <div className="bg-white p-4 rounded shadow w-80 text-sm">
@@ -203,10 +225,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  // Permanent delete action already triggered in Step 1
-                  setShowFinalModal(false);
-                }}
+                onClick={() => setShowFinalModal(false)}
                 className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Delete Permanently

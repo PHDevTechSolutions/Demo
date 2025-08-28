@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import ProgressCard from "./Card/ProgressCard";
+import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -25,6 +26,7 @@ interface ProgressItem {
   status?: string;
   source?: string;
   activitystatus?: string;
+  childrenProgress?: ProgressItem[];
 }
 
 interface UserDetails {
@@ -57,15 +59,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [cardLoading, setCardLoading] = useState<Record<string, boolean>>({});
 
-  // Editable fields only
   const [formData, setFormData] = useState({
     status: "",
     source: "",
     typeactivity: "",
   });
 
-  // Hidden fields for submission
   const [hiddenFields, setHiddenFields] = useState({
     referenceid: userDetails?.ReferenceID || "",
     tsm: userDetails?.TSM || "",
@@ -106,13 +107,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setShowForm(true);
   };
 
-  // Fetch progress
+  // 🔹 Fetch full progress list initially
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
     const fetchProgress = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const res = await fetch(
           `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
         );
@@ -137,8 +138,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             (a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
           )
         );
-      } catch (error) {
-        console.error("❌ Error fetching progress:", error);
+      } catch (err) {
+        console.error("❌ Error fetching progress:", err);
         setProgress([]);
       } finally {
         setLoading(false);
@@ -152,9 +153,44 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // 🔹 Update only the specific parent card after adding a child
-  const handleAddChild = (activitynumber: string, newChild: ProgressItem) => {
-    setProgress((prev) => [...prev, newChild]);
+  // 🔹 Fetch a single card (parent + children)
+  const fetchCard = async (activitynumber: string) => {
+    setCardLoading((prev) => ({ ...prev, [activitynumber]: true }));
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails?.ReferenceID}`
+      );
+      const data = await res.json();
+
+      const progressData: ProgressItem[] = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data?.progress)
+            ? data.progress
+            : [];
+
+      const filtered = progressData.filter(
+        (p) => p.activitynumber === activitynumber
+      );
+
+      setProgress((prev) => {
+        const others = prev.filter((p) => p.activitynumber !== activitynumber);
+        return [...others, ...filtered];
+      });
+    } catch (err) {
+      console.error("❌ Error fetching card:", err);
+    } finally {
+      setCardLoading((prev) => ({ ...prev, [activitynumber]: false }));
+    }
+  };
+
+  const handleAddChild = async (activitynumber: string, newChild: ProgressItem) => {
+    // Optional: show spinner immediately
+    setCardLoading((prev) => ({ ...prev, [activitynumber]: true }));
+
+    // After adding child on backend, fetch updated card
+    await fetchCard(activitynumber);
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -180,7 +216,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       setFormData({ status: "", source: "", typeactivity: "" });
       toast.success("Activity successfully added!");
 
-      // 🔹 Update only the specific parent card
+      // 🔹 Refresh the specific card
       handleAddChild(payload.activitynumber, data);
     } catch (err: any) {
       console.error("❌ Submit error:", err);
@@ -188,47 +224,53 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // Delete parent
   const handleDeleteParent = async (item: ProgressItem) => {
+    setCardLoading((prev) => ({ ...prev, [item.activitynumber || item.id]: true }));
+
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: item.id }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete activity");
 
+      // 🔹 Refresh card list: remove parent
       setProgress((prev) => prev.filter((p) => p.id !== item.id));
       toast.success("Activity deleted successfully!");
     } catch (err: any) {
       console.error("❌ Delete error:", err);
       toast.error("Failed to delete activity: " + err.message);
+    } finally {
+      setCardLoading((prev) => ({ ...prev, [item.activitynumber || item.id]: false }));
     }
   };
 
-  // Delete child
   const handleDeleteChild = async (child: ProgressItem) => {
+    setCardLoading((prev) => ({ ...prev, [child.activitynumber || child.id]: true }));
+
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: child.id }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete log");
 
-      setProgress((prev) => prev.filter((p) => p.id !== child.id));
+      // 🔹 Refresh the parent card
+      await fetchCard(child.activitynumber!);
       toast.success("Log deleted successfully!");
     } catch (err: any) {
       console.error("❌ Delete error:", err);
       toast.error("Failed to delete log: " + err.message);
+    } finally {
+      setCardLoading((prev) => ({ ...prev, [child.activitynumber || child.id]: false }));
     }
   };
 
-  // Group by activitynumber for parent-child
+  // 🔹 Group by activitynumber for rendering
   const progressWithChildren = Object.values(
     progress.reduce((acc: Record<string, ProgressItem[]>, item) => {
       if (!item.activitynumber) return acc;
@@ -252,68 +294,44 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   return (
     <div className="space-y-4 relative">
-      <ToastContainer position="top-right" autoClose={3000} />
-
+      {/* 🔹 Modal Overlay */}
+      <div className="fixed inset-0 bg-black bg-opacity-70 z-[20] flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <h2 className="text-xs font-bold">Activity Planner Coming Soon</h2>
+        </div>
+      </div>
       {progressWithChildren.length > 0 ? (
         progressWithChildren.map((grp, idx) => (
-          <ProgressCard
-            key={idx}
-            progress={grp.parent}
-            childrenProgress={grp.children}
-            profilePicture={userDetails?.profilePicture || "/default-avatar.png"}
-            onAddClick={() => handleAddClick(grp.parent)}
-            onDeleteClick={handleDeleteParent}
-            onDeleteChildClick={handleDeleteChild}
-          />
+          <div key={idx} className="relative">
+            {cardLoading[grp.parent.activitynumber || grp.parent.id] && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+                <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+            <ProgressCard
+              progress={grp.parent}
+              childrenProgress={grp.children}
+              profilePicture={userDetails?.profilePicture || "/default-avatar.png"}
+              onAddClick={() => handleAddClick(grp.parent)}
+              onDeleteClick={handleDeleteParent}
+              onDeleteChildClick={handleDeleteChild}
+            />
+          </div>
         ))
       ) : (
         <p className="text-sm text-gray-400">No progress found.</p>
       )}
 
-      {/* Slide-up form */}
       {showForm && (
-        <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg z-50">
-          <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(formData).map(([key, value]) => (
-                <div key={key} className="flex flex-col">
-                  <label className="font-semibold">{key.replace(/([A-Z])/g, " $1")}</label>
-                  <input
-                    name={key}
-                    value={value}
-                    onChange={handleFormChange}
-                    className="border px-2 py-1 rounded text-xs"
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-3 py-1 bg-gray-300 rounded text-xs hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-              >
-                Submit
-              </button>
-            </div>
-          </form>
-        </div>
+        <ProgressForm
+          formData={formData}
+          handleFormChange={handleFormChange}
+          handleFormSubmit={handleFormSubmit}
+          onClose={() => setShowForm(false)}
+        />
       )}
-      <ToastContainer
-        position="top-right"
-        autoClose={2000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-      />
+
+      <ToastContainer />
     </div>
   );
 };
