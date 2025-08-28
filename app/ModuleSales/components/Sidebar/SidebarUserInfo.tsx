@@ -37,40 +37,36 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
 
   const router = useRouter();
 
+  // ✅ Session checker every 30s
   useEffect(() => {
-    const fetchSession = async () => {
+    const checkSession = async () => {
       try {
         const response = await fetch(
           `/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`
         );
         if (!response.ok) throw new Error("Failed to fetch session");
-        const data: SessionData[] = await response.json();
+        const logs: SessionData[] = await response.json();
 
-        const today = new Date();
-        const todaySessions = data
-          .filter((item) => item.email === userDetails.Email)
-          .filter((item) => {
-            const sessionDate = new Date(item.timestamp);
-            return (
-              sessionDate.getFullYear() === today.getFullYear() &&
-              sessionDate.getMonth() === today.getMonth() &&
-              sessionDate.getDate() === today.getDate()
-            );
-          });
+        if (logs.length > 0) {
+          const latest = logs[0]; // naka-sort na sa API
+          setSessionInfo(latest);
 
-        const firstSession = todaySessions.sort(
-          (a, b) =>
-            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        )[0];
-
-        setSessionInfo(firstSession || null);
+          if (latest.status === "logout" && !isLoggingOut) {
+            handleLogout();
+          }
+        }
       } catch (err) {
-        console.error("Error fetching session:", err);
+        console.error("Error checking session:", err);
       }
     };
 
-    fetchSession();
-  }, [userDetails.Email]);
+    // initial run
+    checkSession();
+
+    // run every 30s
+    const interval = setInterval(checkSession, 30000);
+    return () => clearInterval(interval);
+  }, [userDetails.Email, isLoggingOut]);
 
   const statusColor =
     {
