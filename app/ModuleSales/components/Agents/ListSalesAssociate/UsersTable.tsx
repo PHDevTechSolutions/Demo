@@ -29,7 +29,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails })
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await fetch(`/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`);
+        const response = await fetch(`/api/fetchsession`); // fetch all, not just by id
         if (!response.ok) throw new Error("Failed to fetch sessions");
         const data: Session[] = await response.json();
         setSessions(data);
@@ -38,51 +38,51 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails })
       }
     };
     fetchSessions();
-  }, [userDetails.Email]);
+  }, []);
+
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
-      month: "long",
-      day: "numeric",
+    return date.toLocaleString("en-US", {
       weekday: "long",
       year: "numeric",
+      month: "long",
+      day: "numeric",
       hour: "numeric",
-      minute: "numeric",
+      minute: "2-digit",
       hour12: true,
-    };
-    return date.toLocaleString("en-US", options);
+    }).replace(",", " at");
   };
 
-  const getUserLogins = (email: string) => {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
+  const getUserLogins = (email: string) => {
     const userSessions = sessions
-      .filter((s) => s.email === email)
+      .filter((s) => s.email.toLowerCase() === email.toLowerCase())
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    const todaySessions = userSessions.filter(
-      (s) =>
-        new Date(s.timestamp) >= startOfDay &&
-        new Date(s.timestamp) <= endOfDay &&
-        s.status.toLowerCase() === "login"
-    );
 
+    const loginSessions = userSessions.filter((s) => s.status.toLowerCase() === "login");
     const logoutSessions = userSessions.filter((s) => s.status.toLowerCase() === "logout");
 
     return {
-      firstLoginToday:
-        todaySessions.length > 0
-          ? { timestamp: formatDateTime(todaySessions[0].timestamp), status: todaySessions[0].status }
-          : { timestamp: "No login today", status: "N/A" },
-      lastLogoutOverall:
+      latestLogin:
+        loginSessions.length > 0
+          ? {
+            timestamp: formatDateTime(loginSessions[loginSessions.length - 1].timestamp),
+            status: loginSessions[loginSessions.length - 1].status,
+          }
+          : { timestamp: "No login yet", status: "N/A" },
+
+      latestLogout:
         logoutSessions.length > 0
-          ? { timestamp: formatDateTime(logoutSessions[logoutSessions.length - 1].timestamp), status: logoutSessions[logoutSessions.length - 1].status }
+          ? {
+            timestamp: formatDateTime(logoutSessions[logoutSessions.length - 1].timestamp),
+            status: logoutSessions[logoutSessions.length - 1].status,
+          }
           : { timestamp: "No logout yet", status: "N/A" },
     };
   };
+
 
   const statusColors: { [key: string]: string } = {
     Active: "bg-green-500",
@@ -157,15 +157,14 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails })
                     <strong>Role:</strong> {post.Role ?? "N/A"}
                   </p>
                   <p className="text-green-700">
-                    <strong>First Login Today:</strong>{" "}
-                    {userLogins.firstLoginToday.timestamp} (
-                    {userLogins.firstLoginToday.status})
+                    <strong>Latest Login:</strong>{" "}
+                    {userLogins.latestLogin.timestamp} ({userLogins.latestLogin.status})
                   </p>
                   <p className="text-red-600">
-                    <strong>Last Logout:</strong>{" "}
-                    {userLogins.lastLogoutOverall.timestamp} (
-                    {userLogins.lastLogoutOverall.status})
+                    <strong>Latest Logout:</strong>{" "}
+                    {userLogins.latestLogout.timestamp} ({userLogins.latestLogout.status})
                   </p>
+
                 </div>
 
                 {/* Footer */}
@@ -229,10 +228,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, userDetails })
                         {/* Status Badge */}
                         <span
                           className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${isLogin
-                              ? "bg-green-100 text-green-700"
-                              : isLogout
-                                ? "bg-red-100 text-red-700"
-                                : "bg-gray-100 text-gray-600"
+                            ? "bg-green-100 text-green-700"
+                            : isLogout
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-600"
                             }`}
                         >
                           {s.status}
