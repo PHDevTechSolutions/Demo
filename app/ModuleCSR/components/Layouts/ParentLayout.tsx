@@ -64,9 +64,17 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
   // Controls
   const handlePlay = () => {
     if (audioRef.current) {
-      audioRef.current.src = `/music/${songs[currentSongIndex]}`;
-      audioRef.current.play();
-      setIsPlaying(true);
+      const audio = audioRef.current;
+      audio.src = `/music/${songs[currentSongIndex]}`;
+      audio.load();
+
+      const handleCanPlay = () => {
+        audio.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {});
+      };
+
+      audio.addEventListener("canplay", handleCanPlay, { once: true });
     }
   };
 
@@ -132,40 +140,62 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
         />
 
         {/* 🎶 Music Player */}
-        {isHovered && (
+        {(isHovered || isPlaying) && (
           <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs px-3 py-2 rounded-lg shadow flex flex-col items-center gap-2 w-52">
-            <p className="text-center capitalize font-semibold truncate">
-              {songs[currentSongIndex].replace(".mp3", "").replace(/-/g, " ")}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handlePrev}
-                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
-              >
-                ⏮
-              </button>
-              {!isPlaying ? (
-                <button
-                  onClick={handlePlay}
-                  className="px-3 py-1 bg-green-500 text-white rounded"
-                >
-                  ▶
-                </button>
-              ) : (
-                <button
-                  onClick={handleStop}
-                  className="px-3 py-1 bg-red-500 text-white rounded"
-                >
-                  ⏹
-                </button>
-              )}
-              <button
-                onClick={handleNext}
-                className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
-              >
-                ⏭
-              </button>
-            </div>
+            {isHovered ? (
+              <>
+                <p className="text-center capitalize font-semibold truncate">
+                  {songs[currentSongIndex].replace(".mp3", "").replace(/-/g, " ")}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePrev}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+                  >
+                    ⏮
+                  </button>
+                  {!isPlaying ? (
+                    <button
+                      onClick={handlePlay}
+                      className="px-3 py-1 bg-green-500 text-white rounded"
+                    >
+                      ▶
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleStop}
+                      className="px-3 py-1 bg-red-500 text-white rounded"
+                    >
+                      ⏹
+                    </button>
+                  )}
+                  <button
+                    onClick={handleNext}
+                    className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+                  >
+                    ⏭
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                {!isPlaying ? (
+                  <button
+                    onClick={handlePlay}
+                    className="px-3 py-1 bg-green-500 text-white rounded"
+                  >
+                    ▶
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStop}
+                    className="px-3 py-1 bg-red-500 text-white rounded"
+                  >
+                    ⏹
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
