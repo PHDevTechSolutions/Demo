@@ -131,6 +131,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   return (
     <div className="w-full p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-[20] flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
+          <h2 className="text-lg font-bold mb-2">Activity Planner</h2>
+          <p className="text-sm text-gray-600">
+            Ongoing Progress
+          </p>
+        </div>
+      </div>
       <div className="grid grid-cols-4">
         {columns.map((col) => (
           <div key={col.id} className="flex flex-col">
