@@ -26,6 +26,9 @@ interface ProgressItem {
   status?: string;
   source?: string;
   activitystatus?: string;
+  typecall: string;
+  sonumber: string;
+  soamount: string;
   childrenProgress?: ProgressItem[];
 }
 
@@ -66,6 +69,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     source: "",
     typeactivity: "",
     remarks: "",
+    typecall: "",
+    sonumber: "",
+    soamount: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -104,6 +110,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       source: prog?.source || "",
       typeactivity: prog?.typeactivity || "",
       remarks: prog?.remarks || "",
+      typecall: prog?.typecall || "",
+      sonumber: prog?.sonumber || "",
+      soamount: prog?.soamount || "",
     });
 
     setShowForm(true);
@@ -215,7 +224,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
       setShowForm(false);
-      setFormData({ status: "", source: "", typeactivity: "" , remarks: ""});
+      setFormData({ status: "", source: "", typeactivity: "" , remarks: "", typecall: "", sonumber: "", soamount: "",});
       toast.success("Activity successfully added!");
 
       // 🔹 Refresh the specific card

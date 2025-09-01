@@ -215,40 +215,9 @@ const OutboundCallPage: React.FC = () => {
                                 </p>
 
                                 <div className="mb-4 p-4 bg-white shadow-md rounded-md text-gray-900">
-                                    <SearchFilters
-                                        searchTerm={searchTerm}
-                                        setSearchTerm={setSearchTerm}
-                                        selectedClientType={selectedClientType}
-                                        setSelectedClientType={setSelectedClientType}
-                                        postsPerPage={postsPerPage}
-                                        setPostsPerPage={setPostsPerPage}
-                                        startDate={startDate}
-                                        setStartDate={setStartDate}
-                                        endDate={endDate}
-                                        setEndDate={setEndDate}
-                                    />
                                     <button onClick={exportToExcel} className="mb-4 px-4 py-2 bg-gray-100 shadow-sm text-dark text-xs flex items-center gap-1 rounded"><CiExport size={20} /> Export to Excel</button>
-
                                     <OutboundTable posts={filteredPosts} />
-                                    <Pagination
-                                        currentPage={currentPage}
-                                        totalPages={totalPages}
-                                        setCurrentPage={setCurrentPage}
-                                    />
                                 </div>
-
-                                {showAccessModal && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 rounded-md">
-                                        <div className="bg-white p-6 rounded shadow-lg w-96">
-                                            <h2 className="text-lg font-bold text-red-600 mb-4">⚠️ Access Denied</h2>
-                                            <p className="text-sm text-gray-700 mb-4">
-                                                You do not have the necessary permissions to perform this action.
-                                                Only <strong>Super Admin</strong> or <strong>Leroux Y Xchire</strong> can access this section.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
                                 <ToastContainer />
                             </div>
                         </div>

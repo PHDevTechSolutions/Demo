@@ -8,7 +8,9 @@ interface ProgressFormProps {
     source: string;
     typeactivity: string;
     remarks: string;
-    typecall?: string; // 🔹 dagdag field for FB-Marketplace
+    typecall: string;
+    sonumber: string;
+    soamount: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -53,7 +55,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             />
           </div>
 
-          {/* Type of Activity */}
+          {/* Type of Activity (Solo Row) */}
           <div className="flex flex-col">
             <label className="font-semibold">Type of Activity</label>
             <select
@@ -91,18 +93,67 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               <label className="font-semibold">Type</label>
               <select
                 name="typecall"
-                value={formData.typecall || "Reply Message"} // default value
+                value={formData.typecall || "Reply Message"}
                 onChange={handleFormChange}
                 className="border px-3 py-2 rounded text-xs"
               >
-                <option value="Posing">Select Type</option>
+                <option value="">Select Type</option>
                 <option value="Posting">Posting</option>
                 <option value="Reply Message">Reply Message</option>
               </select>
             </div>
           )}
 
-          {/* Remarks */}
+          {/* 🔹 Conditionally show Typecall + SO Number if Sales Order Preparation */}
+          {formData.typeactivity === "Sales Order Preparation" && (
+            <>
+              <div className="flex flex-col">
+                <label className="font-semibold">SO Number</label>
+                <input
+                  type="text"
+                  name="sonumber"
+                  value={formData.sonumber || ""}
+                  onChange={handleFormChange}
+                  className="border px-3 py-2 rounded text-xs"
+                  placeholder="Enter SO Number"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="font-semibold">SO Amount</label>
+                <input
+                  type="quantity"
+                  name="soamount"
+                  value={formData.soamount || ""}
+                  onChange={handleFormChange}
+                  className="border px-3 py-2 rounded text-xs"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="font-semibold">Type</label>
+                <select
+                  name="typecall"
+                  value={formData.typecall || ""}
+                  onChange={handleFormChange}
+                  className="border px-3 py-2 rounded text-xs"
+                >
+                  <option value="">Select Type</option>
+                  <option value="Regular SO">Regular SO</option>
+                  <option value="Willing to Wait">Willing to Wait</option>
+                  <option value="SPF - Special Project">SPF - Special Project</option>
+                  <option value="Local SPF">Local SPF</option>
+                  <option value="SPF - Local">SPF - Local</option>
+                  <option value="SPF - Foreign">SPF - Foreign</option>
+                  <option value="Promo">Promo</option>
+                  <option value="FB Marketplace">FB Marketplace</option>
+                  <option value="Internal Order">Internal Order</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {/* Remarks (Full Width Row) */}
           <div className="flex flex-col col-span-2">
             <label className="font-semibold">Remarks</label>
             <textarea

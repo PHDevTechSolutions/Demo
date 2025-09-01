@@ -20,6 +20,9 @@ interface ProgressItem {
   status?: string;
   source?: string;
   activitystatus?: string;
+  typecall: string;
+  sonumber: string;
+  soamount: string;
 }
 
 interface ProgressCardProps {
