@@ -65,6 +65,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     status: "",
     source: "",
     typeactivity: "",
+    remarks: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -102,6 +103,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       status: prog?.status || "",
       source: prog?.source || "",
       typeactivity: prog?.typeactivity || "",
+      remarks: prog?.remarks || "",
     });
 
     setShowForm(true);
@@ -149,7 +151,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     fetchProgress();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -213,7 +215,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
       setShowForm(false);
-      setFormData({ status: "", source: "", typeactivity: "" });
+      setFormData({ status: "", source: "", typeactivity: "" , remarks: ""});
       toast.success("Activity successfully added!");
 
       // 🔹 Refresh the specific card
@@ -294,12 +296,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   return (
     <div className="space-y-4 relative">
-      {/* 🔹 Modal Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-70 z-[20] flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-          <h2 className="text-xs font-bold">Activity Planner Coming Soon</h2>
-        </div>
-      </div>
       {progressWithChildren.length > 0 ? (
         progressWithChildren.map((grp, idx) => (
           <div key={idx} className="relative">

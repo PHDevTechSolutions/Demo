@@ -51,7 +51,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         "Coordination of SO To Warehouse",
         "Coordination of SO to Orders",
         "Updating Reports",
-        "Email and Viber Checking",
+        "Check/Read emails",
         "Documentation",
     ];
 
