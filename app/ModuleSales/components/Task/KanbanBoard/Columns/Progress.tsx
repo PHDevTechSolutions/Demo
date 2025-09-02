@@ -285,7 +285,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-
   /** Delete parent activity */
   const handleDeleteParent = async (item: ProgressItem) => {
     setCardLoading((prev) => ({ ...prev, [item.activitynumber || item.id]: true }));

@@ -8,6 +8,7 @@ import Companies from "./Columns/Companies";
 import Progress from "./Columns/Progress";
 import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
+import Completed from "./Columns/Completed";
 
 interface Inquiry {
   id?: number;
@@ -45,6 +46,7 @@ interface UserDetails {
   TSM: string;
   Role: string;
   profilePicture?: string;
+  TargetQuota: string;
   [key: string]: any;
 }
 
@@ -173,6 +175,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
             ) : col.id === "in-progress" ? (
               <div className="space-y-4 border-r p-4">
                 <Progress
+                  userDetails={userDetails}
+                  refreshTrigger={refreshTrigger}
+                />
+              </div>
+            ) : col.id === "completed" ? (
+              <div className="space-y-4 border-r p-4">
+                <Completed
                   userDetails={userDetails}
                   refreshTrigger={refreshTrigger}
                 />
