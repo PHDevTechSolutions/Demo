@@ -15,20 +15,28 @@ interface ProgressItem {
   contactnumber: string;
   emailaddress: string;
   typeclient: string;
-  typeactivity?: string;
   referenceid: string;
   date_created: string;
+  activitynumber: string;
+  typeactivity?: string;
   remarks?: string;
   address?: string;
   area?: string;
   deliveryaddress?: string;
-  activitynumber?: string;
-  status?: string;
   source?: string;
   activitystatus?: string;
-  typecall: string;
-  sonumber: string;
-  soamount: string;
+  typecall?: string;
+  sonumber?: string;
+  soamount?: string;
+  callback?: string;
+  callstatus?: string;
+  quotationnumber?: string;
+  quotationamount?: string;
+  projectname?: string;
+  projectcategory?: string;
+  projecttype?: string;
+  startdate?: string;
+  enddate?: string;
   childrenProgress?: ProgressItem[];
 }
 
@@ -41,6 +49,7 @@ interface UserDetails {
   TSM: string;
   Role: string;
   profilePicture?: string;
+  TargetQuota: string;
   [key: string]: any;
 }
 
@@ -65,19 +74,29 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [cardLoading, setCardLoading] = useState<Record<string, boolean>>({});
 
   const [formData, setFormData] = useState({
-    status: "",
+    activitystatus: "",
     source: "",
     typeactivity: "",
     remarks: "",
     typecall: "",
     sonumber: "",
     soamount: "",
+    callback: "",
+    callstatus: "",
+    startdate: "",
+    enddate: "",
+    quotationnumber: "",
+    quotationamount: "",
+    projectname: "",
+    projectcategory: "",
+    projecttype: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
     referenceid: userDetails?.ReferenceID || "",
     tsm: userDetails?.TSM || "",
     manager: userDetails?.Manager || "",
+    targetquota: userDetails?.TargetQuota || "",
     companyname: "",
     contactnumber: "",
     emailaddress: "",
@@ -89,11 +108,34 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     address: "",
   });
 
+  /** Reset formData */
+  const resetForm = () =>
+    setFormData({
+      activitystatus: "",
+      source: "",
+      typeactivity: "",
+      remarks: "",
+      typecall: "",
+      sonumber: "",
+      soamount: "",
+      callback: "",
+      callstatus: "",
+      startdate: "",
+      enddate: "",
+      quotationnumber: "",
+      quotationamount: "",
+      projectname: "",
+      projectcategory: "",
+      projecttype: "",
+    });
+
+  /** Add button → open form */
   const handleAddClick = (prog?: ProgressItem) => {
     setHiddenFields({
       referenceid: userDetails?.ReferenceID || "",
       tsm: userDetails?.TSM || "",
       manager: userDetails?.Manager || "",
+      targetquota: userDetails?.TargetQuota || "",
       companyname: prog?.companyname || "",
       contactnumber: prog?.contactnumber || "",
       emailaddress: prog?.emailaddress || "",
@@ -106,19 +148,28 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     });
 
     setFormData({
-      status: prog?.status || "",
+      activitystatus: prog?.activitystatus || "",
       source: prog?.source || "",
       typeactivity: prog?.typeactivity || "",
       remarks: prog?.remarks || "",
       typecall: prog?.typecall || "",
       sonumber: prog?.sonumber || "",
       soamount: prog?.soamount || "",
+      callback: prog?.callback || "",
+      callstatus: prog?.callstatus || "",
+      startdate: prog?.startdate || "",
+      enddate: prog?.enddate || "",
+      quotationnumber: prog?.quotationnumber || "",
+      quotationamount: prog?.quotationamount || "",
+      projectname: prog?.projectname || "",
+      projectcategory: prog?.projectcategory || "",
+      projecttype: prog?.projecttype || "",
     });
 
     setShowForm(true);
   };
 
-  // 🔹 Fetch full progress list initially
+  /** Fetch progress data */
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
@@ -130,13 +181,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         );
         const data = await res.json();
 
-        const progressData: ProgressItem[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.data)
-            ? data.data
-            : Array.isArray(data?.progress)
-              ? data.progress
-              : [];
+        const progressData: ProgressItem[] =
+          Array.isArray(data) ? data : data?.data || data?.progress || [];
 
         const myProgress = progressData.filter(
           (p) =>
@@ -160,11 +206,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     fetchProgress();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
+  /** Handle form change */
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // 🔹 Fetch a single card (parent + children)
+  /** Handle react-select change */
+  const handleProjectCategoryChange = (selected: { value: string; label: string } | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      projectcategory: selected ? selected.value : "",
+    }));
+  };
+
+  /** Refresh one card */
   const fetchCard = async (activitynumber: string) => {
     setCardLoading((prev) => ({ ...prev, [activitynumber]: true }));
     try {
@@ -173,17 +228,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       );
       const data = await res.json();
 
-      const progressData: ProgressItem[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data?.progress)
-            ? data.progress
-            : [];
+      const progressData: ProgressItem[] =
+        Array.isArray(data) ? data : data?.data || data?.progress || [];
 
-      const filtered = progressData.filter(
-        (p) => p.activitynumber === activitynumber
-      );
+      const filtered = progressData.filter((p) => p.activitynumber === activitynumber);
 
       setProgress((prev) => {
         const others = prev.filter((p) => p.activitynumber !== activitynumber);
@@ -196,22 +244,25 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  const handleAddChild = async (activitynumber: string, newChild: ProgressItem) => {
-    // Optional: show spinner immediately
-    setCardLoading((prev) => ({ ...prev, [activitynumber]: true }));
-
-    // After adding child on backend, fetch updated card
-    await fetchCard(activitynumber);
-  };
-
+  /** Submit form */
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...hiddenFields, ...formData };
+    let payload: any = { ...hiddenFields, ...formData };
 
     if (!payload.activitynumber) {
       toast.error("Activity number is missing!");
       return;
     }
+
+    // 🔹 Sanitize numeric fields (convert "" → null, string number → number)
+    const numericFields = ["soamount", "quotationamount", "targetquota"];
+    numericFields.forEach((field) => {
+      if (payload[field] === "" || payload[field] === undefined) {
+        payload[field] = null;
+      } else {
+        payload[field] = Number(payload[field]);
+      }
+    });
 
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
@@ -224,20 +275,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
       setShowForm(false);
-      setFormData({ status: "", source: "", typeactivity: "" , remarks: "", typecall: "", sonumber: "", soamount: "",});
-      toast.success("Activity successfully added!");
+      resetForm();
 
-      // 🔹 Refresh the specific card
-      handleAddChild(payload.activitynumber, data);
+      toast.success("Activity successfully added!");
+      await fetchCard(payload.activitynumber);
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     }
   };
 
+
+  /** Delete parent activity */
   const handleDeleteParent = async (item: ProgressItem) => {
     setCardLoading((prev) => ({ ...prev, [item.activitynumber || item.id]: true }));
-
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
         method: "POST",
@@ -247,7 +298,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete activity");
 
-      // 🔹 Refresh card list: remove parent
       setProgress((prev) => prev.filter((p) => p.id !== item.id));
       toast.success("Activity deleted successfully!");
     } catch (err: any) {
@@ -258,9 +308,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
+  /** Delete child activity */
   const handleDeleteChild = async (child: ProgressItem) => {
     setCardLoading((prev) => ({ ...prev, [child.activitynumber || child.id]: true }));
-
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
         method: "POST",
@@ -270,7 +320,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete log");
 
-      // 🔹 Refresh the parent card
       await fetchCard(child.activitynumber!);
       toast.success("Log deleted successfully!");
     } catch (err: any) {
@@ -281,7 +330,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // 🔹 Group by activitynumber for rendering
+  /** Group progress by activitynumber */
   const progressWithChildren = Object.values(
     progress.reduce((acc: Record<string, ProgressItem[]>, item) => {
       if (!item.activitynumber) return acc;
@@ -324,7 +373,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           </div>
         ))
       ) : (
-        <p className="text-sm text-gray-400">No progress found.</p>
+        <p className="text-xs text-gray-400">No progress found.</p>
       )}
 
       {showForm && (
@@ -333,6 +382,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           handleFormChange={handleFormChange}
           handleFormSubmit={handleFormSubmit}
           onClose={() => setShowForm(false)}
+          handleProjectCategoryChange={handleProjectCategoryChange}
+          setFormData={setFormData} // 🔹 para sa realtime date update
         />
       )}
 

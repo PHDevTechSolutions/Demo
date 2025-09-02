@@ -1,68 +1,157 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import FBMarketPlace from "../HiddenFields/FBMarketPlace";
+import InboundCall from "../HiddenFields/InboundCall";
+import OutboundCall from "../HiddenFields/OutboundCall";
+import QuotationPreparation from "../HiddenFields/QuotationPreparation";
+import SalesOrderPreparation from "../HiddenFields/SalesOrderPreparation";
+import { MdEdit, MdOutlineClose } from "react-icons/md";
 
 interface ProgressFormProps {
   formData: {
-    status: string;
+    startdate: string;
+    enddate: string;
+    activitystatus: string;
     source: string;
     typeactivity: string;
     remarks: string;
     typecall: string;
     sonumber: string;
     soamount: string;
+    callstatus: string;
+    callback: string;
+    quotationnumber: string;
+    quotationamount: string;
+    projectname: string;
+    projectcategory: string;
+    projecttype: string;
   };
   handleFormChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  handleProjectCategoryChange: (selected: any) => void;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
+
+// 🔹 Consistent Manila timestamp formatter
+const getFormattedTimestamp = () => {
+  return new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Manila",
+  });
+};
 
 const ProgressForm: React.FC<ProgressFormProps> = ({
   formData,
   handleFormChange,
   handleFormSubmit,
   onClose,
+  handleProjectCategoryChange,
+  setFormData,
 }) => {
+  // 🔹 Set startdate once (when form opens)
+  useEffect(() => {
+    if (!formData.startdate) {
+      setFormData((prev: any) => ({
+        ...prev,
+        startdate: getFormattedTimestamp(),
+      }));
+    }
+  }, []);
+
+  // 🔹 Update enddate in realtime
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFormData((prev: any) => ({
+        ...prev,
+        enddate: getFormattedTimestamp(),
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg z-50">
+    <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
       <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
+        {/* Start Date */}
+        <input
+          type="hidden"
+          name="startdate"
+          value={formData.startdate}
+          onChange={handleFormChange}
+          readOnly
+        />
+        {/* End Date */}
+        <input
+          type="hidden"
+          name="enddate"
+          value={formData.enddate}
+          onChange={handleFormChange}
+          readOnly
+        />
+
+        {/* Action buttons */}
+        <div className="flex justify-end space-x-2 mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-3 bg-gray-300 rounded text-xs hover:bg-gray-400 flex items-center gap-1"
+          >
+            <MdOutlineClose /> Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
+          >
+            <MdEdit /> Submit
+          </button>
+        </div>
+
+        {/* Form Fields */}
         <div className="grid grid-cols-2 gap-4">
           {/* Source */}
-          <div className="flex flex-col">
-            <label className="font-semibold">Source</label>
-            <input
-              type="text"
+          <div className="flex flex-col mt-4">
+            <label className="font-semibold">
+              Source <span className="text-[8px] text-red-700">* Required Fields</span>
+            </label>
+            <select
               name="source"
               value={formData.source}
               onChange={handleFormChange}
-              className="border px-3 py-2 rounded text-xs"
-              placeholder="Enter source"
-            />
+              className="border-b px-3 py-6 rounded text-xs"
+              required
+            >
+              <option value="">Select Source</option>
+              <option value="Existing Client">Existing Client</option>
+              <option value="CSR Inquiry">CSR Inquiry</option>
+              <option value="Outbound - Follow-up">Outbound - Follow-up</option>
+              <option value="Outbound - Touchbase">Outbound - Touchbase</option>
+              <option value="Government">Government</option>
+              <option value="Philgeps- Website">Philgeps- Website</option>
+              <option value="Philgeps">Philgeps</option>
+              <option value="Distributor">Distributor</option>
+              <option value="Modern Trade">Modern Trade</option>
+              <option value="Facebook Marketplace">Facebook Marketplace</option>
+              <option value="Walk-in / Showroom">Walk-in / Showroom</option>
+            </select>
           </div>
 
-          {/* Status */}
-          <div className="flex flex-col">
-            <label className="font-semibold">Status</label>
-            <input
-              type="text"
-              name="status"
-              value={formData.status}
-              onChange={handleFormChange}
-              className="border px-3 py-2 rounded text-xs"
-              placeholder="Enter status"
-            />
-          </div>
-
-          {/* Type of Activity (Solo Row) */}
-          <div className="flex flex-col">
-            <label className="font-semibold">Type of Activity</label>
+          {/* Type of Activity */}
+          <div className="flex flex-col mt-4">
+            <label className="font-semibold">
+              Type of Activity <span className="text-[8px] text-red-700">* Required Fields</span>
+            </label>
             <select
               name="typeactivity"
               value={formData.typeactivity}
               onChange={handleFormChange}
-              className="border px-3 py-2 rounded text-xs"
+              className="border border-dashed bg-orange-100 px-3 py-6 rounded text-xs"
+              required
             >
               <option value="">Select Activity</option>
               <option value="Admin- Supplier Accreditation">Admin- Supplier Accreditation</option>
@@ -87,100 +176,88 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </select>
           </div>
 
-          {/* 🔹 Conditionally show Typecall if FB-Marketplace is selected */}
+          {/* 🔹 FB Marketplace */}
           {formData.typeactivity === "FB-Marketplace" && (
-            <div className="flex flex-col">
-              <label className="font-semibold">Type</label>
-              <select
-                name="typecall"
-                value={formData.typecall || "Reply Message"}
-                onChange={handleFormChange}
-                className="border px-3 py-2 rounded text-xs"
-              >
-                <option value="">Select Type</option>
-                <option value="Posting">Posting</option>
-                <option value="Reply Message">Reply Message</option>
-              </select>
-            </div>
+            <FBMarketPlace typecall={formData.typecall} handleFormChange={handleFormChange} />
           )}
 
-          {/* 🔹 Conditionally show Typecall + SO Number if Sales Order Preparation */}
+          {/* 🔹 Inbound Call */}
+          {formData.typeactivity === "Inbound Call" && (
+            <InboundCall typecall={formData.typecall} handleFormChange={handleFormChange} />
+          )}
+
+          {/* 🔹 Outbound Call */}
+          {formData.typeactivity === "Outbound calls" && (
+            <OutboundCall
+              typecall={formData.typecall}
+              callback={formData.callback}
+              callstatus={formData.callstatus}
+              handleFormChange={handleFormChange}
+            />
+          )}
+
+          {/* 🔹 Quotation Preparation */}
+          {formData.typeactivity === "Quotation Preparation" && (
+            <QuotationPreparation
+              typecall={formData.typecall}
+              quotationnumber={formData.quotationnumber}
+              quotationamount={formData.quotationamount}
+              projectname={formData.projectname}
+              projectcategory={formData.projectcategory}
+              projecttype={formData.projecttype}
+              handleFormChange={handleFormChange}
+              handleProjectCategoryChange={handleProjectCategoryChange}
+            />
+          )}
+
+          {/* 🔹 Sales Order Preparation */}
           {formData.typeactivity === "Sales Order Preparation" && (
-            <>
-              <div className="flex flex-col">
-                <label className="font-semibold">SO Number</label>
-                <input
-                  type="text"
-                  name="sonumber"
-                  value={formData.sonumber || ""}
-                  onChange={handleFormChange}
-                  className="border px-3 py-2 rounded text-xs"
-                  placeholder="Enter SO Number"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold">SO Amount</label>
-                <input
-                  type="quantity"
-                  name="soamount"
-                  value={formData.soamount || ""}
-                  onChange={handleFormChange}
-                  className="border px-3 py-2 rounded text-xs"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold">Type</label>
-                <select
-                  name="typecall"
-                  value={formData.typecall || ""}
-                  onChange={handleFormChange}
-                  className="border px-3 py-2 rounded text-xs"
-                >
-                  <option value="">Select Type</option>
-                  <option value="Regular SO">Regular SO</option>
-                  <option value="Willing to Wait">Willing to Wait</option>
-                  <option value="SPF - Special Project">SPF - Special Project</option>
-                  <option value="Local SPF">Local SPF</option>
-                  <option value="SPF - Local">SPF - Local</option>
-                  <option value="SPF - Foreign">SPF - Foreign</option>
-                  <option value="Promo">Promo</option>
-                  <option value="FB Marketplace">FB Marketplace</option>
-                  <option value="Internal Order">Internal Order</option>
-                </select>
-              </div>
-            </>
+            <SalesOrderPreparation
+              sonumber={formData.sonumber}
+              soamount={formData.soamount}
+              typecall={formData.typecall}
+              handleFormChange={handleFormChange}
+            />
           )}
 
-          {/* Remarks (Full Width Row) */}
+          {/* Remarks */}
           <div className="flex flex-col col-span-2">
-            <label className="font-semibold">Remarks</label>
+            <label className="font-semibold">
+              Remarks <span className="text-[8px] text-red-700">* Required Fields</span>
+            </label>
             <textarea
               name="remarks"
               value={formData.remarks}
               onChange={handleFormChange}
-              className="border px-3 py-2 rounded text-xs resize-none h-20"
+              className="border-b px-3 py-6 rounded text-xs resize-none h-20"
               placeholder="Enter remarks"
+              required
             />
           </div>
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex justify-end space-x-2 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1 bg-gray-300 rounded text-xs hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-          >
-            Submit
-          </button>
+          {/* Status */}
+          <div className="flex flex-col mt-4">
+            <label className="font-semibold">
+              Status <span className="text-[8px] text-red-700">* Required Fields</span>
+            </label>
+            <select
+              name="activitystatus"
+              value={formData.activitystatus}
+              onChange={handleFormChange}
+              className="border-b px-3 py-6 rounded text-xs"
+              required
+            >
+              <option value="">Select Status</option>
+              <option value="Assisted">Assisted ( Client Assistance - Touchbase Such As Calls )</option>
+              <option value="Paid">Paid ( Identity - Have SO# )</option>
+              <option value="Delivered">Delivered ( All Fields Completed - SI & DR )</option>
+              <option value="Collected">Collected</option>
+              <option value="Quote-Done">Quote-Done</option>
+              <option value="SO-Done">SO-Done</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Loss">Loss</option>
+            </select>
+          </div>
         </div>
       </form>
     </div>

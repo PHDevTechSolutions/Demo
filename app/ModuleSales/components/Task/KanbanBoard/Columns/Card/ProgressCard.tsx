@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaRegCircle, FaCircle } from "react-icons/fa";
 import { PieChart } from "react-minimal-pie-chart";
 
-interface ProgressItem {
+export interface ProgressItem {
   id: string;
   companyname: string;
   contactperson: string;
@@ -16,13 +16,22 @@ interface ProgressItem {
   address?: string;
   area?: string;
   deliveryaddress?: string;
-  activitynumber?: string;
-  status?: string;
+  activitynumber: string;
   source?: string;
   activitystatus?: string;
-  typecall: string;
-  sonumber: string;
-  soamount: string;
+  typecall?: string;
+  sonumber?: string;
+  soamount?: string;
+  callback?: string;
+  callstatus?: string;
+  quotationnumber?: string;
+  quotationamount?: string;
+  projectname?: string;
+  projectcategory?: string;
+  projecttype?: string;
+  startdate?: string;
+  enddate?: string;
+  childrenProgress?: ProgressItem[];
 }
 
 interface ProgressCardProps {
@@ -129,7 +138,6 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
         <p><span className="font-semibold">Contact #:</span> {progress.contactnumber}</p>
         <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
         <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
-        <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>
         <p className="text-gray-500 text-[8px]">{progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}</p>
       </div>
 
@@ -150,6 +158,8 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
                 <div className="p-2 bg-white border border-gray-200 rounded text-[9px] w-full flex flex-col">
                   <div>
                     <p><span className="font-semibold">Type:</span> {child.typeactivity}</p>
+                    <p><span className="font-semibold">Quotation Number:</span> {child.quotationnumber}</p>
+                    <p><span className="font-semibold">Quotation Amount:</span> {child.quotationamount}</p>
                     <p><span className="font-semibold">Remarks:</span> {child.remarks}</p>
                     <p className="text-gray-500 text-[8px]">{child.date_created ? new Date(child.date_created).toLocaleString() : "N/A"}</p>
                   </div>
