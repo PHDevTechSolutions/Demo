@@ -15,8 +15,6 @@ export interface CompletedItem {
   activitystatus?: string;
   activitynumber: string;
   profilepicture?: string;
-
-  // 🔹 Extra fields
   quotationnumber?: string;
   quotationamount?: string;
   soamount?: string;
@@ -47,6 +45,8 @@ interface CompletedProps {
 
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -61,17 +61,23 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         if (!res.ok) throw new Error("Failed to fetch completed activities");
 
         const result = await res.json();
-        console.log("✅ API response:", result);
-
         const list: CompletedItem[] = Array.isArray(result)
           ? result
           : result.data || result.items || [];
 
-        const doneItems = list.filter(
-          (item: CompletedItem) =>
-            item.activitystatus === "Done" &&
-            item.referenceid === userDetails.ReferenceID
-        );
+        const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
+
+        const doneItems = list
+          .filter(
+            (item: CompletedItem) =>
+              allowedStatuses.includes(item.activitystatus || "") &&
+              item.referenceid === userDetails.ReferenceID
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.date_created).getTime() -
+              new Date(a.date_created).getTime()
+          );
 
         setData(doneItems);
       } catch (err) {
@@ -110,75 +116,114 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     );
   };
 
+  const handleLoadMore = () => {
+    setVisibleCount((prev) => prev + 10);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const visibleData = data.slice(0, visibleCount);
+
   return (
     <div className="space-y-4">
-      {data.map((item) => (
-        <div
-          key={item.id}
-          className="rounded-lg shadow bg-green-100 overflow-hidden relative p-2"
-        >
-          <div className="flex items-center mb-2">
-            <img
-              src={
-                item.profilepicture ||
-                userDetails?.profilePicture ||
-                "/default-avatar.png"
-              }
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover mr-3"
-            />
-            <div className="flex flex-col">
-              <div className="flex items-center space-x-1">
-                <FaCircle className="text-green-500 w-2 h-2" />
-                <p className="font-semibold text-[10px] uppercase">
-                  {item.companyname}
-                </p>
+      {visibleData.map((item) => {
+        const isExpanded = expandedItems.has(item.id);
+
+        return (
+          <div
+            key={item.id}
+            className="rounded-lg shadow bg-green-100 overflow-hidden relative p-2"
+          >
+            <div className="flex items-center mb-2">
+              <img
+                src={
+                  item.profilepicture ||
+                  userDetails?.profilePicture ||
+                  "/default-avatar.png"
+                }
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover mr-3"
+              />
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center space-x-1">
+                  <FaCircle className="text-green-500 w-2 h-2" />
+                  <p className="font-semibold text-[10px] uppercase">
+                    {item.companyname}
+                  </p>
+                </div>
+                {item.activitynumber && (
+                  <p className="text-[8px] text-gray-600">
+                    Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
+                  </p>
+                )}
               </div>
-              {item.activitynumber && (
-                <p className="text-[8px] text-gray-600">
-                  Activity #: {item.id} | {item.activitynumber}
-                </p>
-              )}
+              <button
+                onClick={() => toggleExpand(item.id)}
+                className="text-[10px] text-blue-600 underline"
+              >
+                {isExpanded ? "Hide" : "View"}
+              </button>
             </div>
-          </div>
 
-          <div className="pl-2 mb-2 text-[10px] space-y-1">
-            {renderField("Contact Person", item.contactperson)}
-            {renderField("Contact #", item.contactnumber)}
-            {renderField("Email", item.emailaddress)}
-            {renderField("Type", item.typeclient)}
-
-            {renderField("Quotation Number", item.quotationnumber)}
-            {renderField("Quotation Amount", item.quotationamount)}
-            {renderField("SO Amount", item.soamount)}
-            {renderField("SO Number", item.sonumber)}
-            {renderField("Callback", item.callback)}
-            {renderField("Project Name", item.projectname)}
-            {renderField("Project Category", item.projectcategory)}
-            {renderField("Project Type", item.projecttype)}
-            {renderField("Type Call", item.typecall)}
-            {renderField("Type Activity", item.typeactivity)}
-            {renderField("Source", item.source)}
-            {renderField("Remarks", item.remarks)}
-            {renderField("Call Status", item.callstatus)}
-            {renderField("Start Date", item.startdate)}
-            {renderField("End Date", item.enddate)}
-            {renderField("Ticket Ref #", item.ticketreferencenumber)}
-            {renderField("Wrap Up", item.wrapup)}
-            {renderField("Inquiries", item.inquiries)}
-            {renderField("CSR Agent", item.csragent)}
-            {renderField("Payment Term", item.paymentterm)}
-            {renderField("Delivery Date", item.deliverydate)}
-
-            {renderField(
-              "Date Created",
-              item.date_created
-                ? new Date(item.date_created).toLocaleString()
-                : undefined
+            {isExpanded && (
+              <div className="pl-2 mb-2 text-[10px] space-y-1">
+                {renderField("Contact Person", item.contactperson)}
+                {renderField("Contact #", item.contactnumber)}
+                {renderField("Email", item.emailaddress)}
+                {renderField("Type", item.typeclient)}
+                {renderField("Quotation Number", item.quotationnumber)}
+                {renderField("Quotation Amount", item.quotationamount)}
+                {renderField("SO Amount", item.soamount)}
+                {renderField("SO Number", item.sonumber)}
+                {renderField("Callback", item.callback)}
+                {renderField("Project Name", item.projectname)}
+                {renderField("Project Category", item.projectcategory)}
+                {renderField("Project Type", item.projecttype)}
+                {renderField("Type Call", item.typecall)}
+                {renderField("Source", item.source)}
+                {renderField("Status", item.activitystatus)}
+                {renderField("Remarks", item.remarks)}
+                {renderField("Call Status", item.callstatus)}
+                {renderField("Start Date", item.startdate)}
+                {renderField("End Date", item.enddate)}
+                {renderField("Ticket Ref #", item.ticketreferencenumber)}
+                {renderField("Wrap Up", item.wrapup)}
+                {renderField("Inquiries", item.inquiries)}
+                {renderField("CSR Agent", item.csragent)}
+                {renderField("Payment Term", item.paymentterm)}
+                {renderField("Delivery Date", item.deliverydate)}
+                {renderField(
+                  "Date Created",
+                  item.date_created
+                    ? new Date(item.date_created).toLocaleString()
+                    : undefined
+                )}
+              </div>
             )}
           </div>
+        );
+      })}
+
+      {visibleCount < data.length && (
+        <div className="flex justify-center mt-2">
+          <button
+            onClick={handleLoadMore}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-[10px]"
+          >
+            Load More
+          </button>
         </div>
-      ))}
+      )}
     </div>
   );
 };

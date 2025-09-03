@@ -1,35 +1,28 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+// Layout
 import ParentLayout from "../../../components/Layouts/ParentLayout";
+// Session
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
+// Filter
 import Filters from "../../../components/Task/ScheduledActivity/Filters/Filters";
+// Route
 import Main from "../../../components/Task/ScheduledActivity/Main";
 import Notes from "../../../components/Task/Notes/Note";
-import AnnouncementModal from "../../../components/Task/Summary/AnnouncementModal";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
+import XendMail from "../../../components/Task/XendMail/Main";
+// Tools
+import Tools from "../../../components/Task/Tools/Sidebar";
+// Banner & Modal
+import Banner from "../../../components/Task/Banner/ComingSoon";
+import AnnouncementModal from "../../../components/Task/Summary/AnnouncementModal";
+// Toast
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BsCalendar4Week, BsListTask, BsInfoCircle } from "react-icons/bs";
-import { LuNotebookPen } from "react-icons/lu";
-
-const statusEmojis: { [key: string]: string } = {
-  Cold: "❄️",
-  Assisted: "😊",
-  "Quote-Done": "💬",
-  "SO-Done": "📝",
-  Delivered: "📦",
-  Done: "✅",
-  Paid: "💰",
-  Collected: "📥",
-  Cancelled: "❌",
-  Loss: "💔",
-};
 
 const ListofUser: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "scheduled" | "activity" | "notes"
-  >("scheduled");
+  const [activeTab, setActiveTab] = useState<string>("scheduled");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -51,6 +44,8 @@ const ListofUser: React.FC = () => {
     TargetQuota: "",
     ReferenceID: "",
     profilePicture: "",
+    ImapHost: "",
+    ImapPass: "",
   });
 
   const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>(
@@ -64,8 +59,63 @@ const ListofUser: React.FC = () => {
   const [summaryType, setSummaryType] = useState<"yesterday" | "latest">(
     "yesterday"
   );
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   const loading = loadingUser || loadingAccounts;
+
+  // ✅ Fetch summary function (ginagamit din ng button)
+  const fetchSummary = useCallback(async () => {
+    if (!userDetails?.ReferenceID) return;
+
+    try {
+      setLoadingSummary(true);
+      setIsSummaryOpen(true); // ✅ open agad modal kahit di pa tapos fetch
+
+      const res = await fetch(
+        "/api/ModuleSales/Task/DailyActivity/FetchProgress"
+      );
+      const data = await res.json();
+      const activities = data.data || [];
+
+      const userActivities = activities.filter(
+        (p: any) =>
+          p.ReferenceID === userDetails.ReferenceID ||
+          p.referenceid === userDetails.ReferenceID
+      );
+
+      if (userActivities.length === 0) return;
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const yesterdayLogs = userActivities.filter(
+        (p: any) =>
+          new Date(p.date_created) >= yesterday &&
+          new Date(p.date_created) < today
+      );
+
+      if (yesterdayLogs.length > 0) {
+        setYesterdaySummary(yesterdayLogs);
+        setSummaryType("yesterday");
+      } else {
+        const latest = [...userActivities].sort(
+          (a, b) =>
+            new Date(b.date_created).getTime() -
+            new Date(a.date_created).getTime()
+        )[0];
+        setYesterdaySummary([latest]);
+        setSummaryType("latest");
+      }
+    } catch (err) {
+      console.error("Error fetching summary:", err);
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, [userDetails]);
 
   // Fetch user details
   useEffect(() => {
@@ -90,6 +140,8 @@ const ListofUser: React.FC = () => {
           TargetQuota: data.TargetQuota || "",
           ReferenceID: data.ReferenceID || "",
           profilePicture: data.profilePicture || "",
+          ImapHost: data.ImapHost || "",
+          ImapPass: data.ImapPass || "",
         });
       } catch (err) {
         console.error(err);
@@ -201,164 +253,48 @@ const ListofUser: React.FC = () => {
     selectedAgent,
   ]);
 
-  // Fetch yesterday or latest summary
-  useEffect(() => {
-    const fetchSummary = async () => {
-      if (!userDetails?.ReferenceID) return;
-
-      try {
-        const res = await fetch(
-          "/api/ModuleSales/Task/DailyActivity/FetchProgress"
-        );
-        const data = await res.json();
-        const activities = data.data || [];
-
-        const userActivities = activities.filter(
-          (p: any) =>
-            p.ReferenceID === userDetails.ReferenceID ||
-            p.referenceid === userDetails.ReferenceID
-        );
-
-        if (userActivities.length === 0) return;
-
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const yesterdayLogs = userActivities.filter(
-          (p: any) =>
-            new Date(p.date_created) >= yesterday &&
-            new Date(p.date_created) < today
-        );
-
-        if (yesterdayLogs.length > 0) {
-          setYesterdaySummary(yesterdayLogs);
-          setSummaryType("yesterday");
-        } else {
-          const latest = [...userActivities].sort(
-            (a, b) =>
-              new Date(b.date_created).getTime() -
-              new Date(a.date_created).getTime()
-          )[0];
-          setYesterdaySummary([latest]);
-          setSummaryType("latest");
-        }
-
-        setIsSummaryOpen(true);
-      } catch (err) {
-        console.error("Error fetching summary:", err);
-      }
-    };
-
-    fetchSummary();
-  }, [userDetails]);
-
   return (
     <SessionChecker>
       <ParentLayout>
         <UserFetcher>
           {(user) => (
             <>
-              {/* Always visible banner */}
-              {showBanner && (
-                <div className="bg-blue-50 border border-blue-300 text-blue-800 px-6 py-4 rounded-xl shadow-md mb-4 relative flex items-start gap-3">
-                  <div className="mt-1 text-blue-600">
-                    <BsInfoCircle size={22} />
-                  </div>
-                  <div className="flex-1 text-sm leading-relaxed">
-                    <strong className="font-semibold text-blue-900">
-                      Coming Soon:
-                    </strong>
-                    <span> The </span>
-                    <span className="font-medium">Scheduled Task</span> module
-                    will be converted into
-                    <span className="font-medium"> Activity Planner</span>.
-                    <br />
-                    <span>
-                      This will include features such as
-                      <span className="italic">
-                        {" "}
-                        client meetings, outbound calls, follow-ups (callbacks),
-                        Personal Activities, and CSR inquiries
-                      </span>
-                      .
-                    </span>
-                    <br />
-                    <span>
-                      The new UI will feature a{" "}
-                      <a
-                        href="https://www.atlassian.com/agile/kanban/boards"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium text-blue-600 underline hover:text-blue-800 transition"
-                      >
-                        Kanban Board with Calendar
-                      </a>{" "}
-                      view for easier task management.
-                    </span>
-                  </div>
-                </div>
-              )}
-
+              <Banner show={showBanner} />
               <AnnouncementModal
                 isOpen={isSummaryOpen}
                 onClose={() => setIsSummaryOpen(false)}
                 summary={yesterdaySummary}
                 summaryType={summaryType}
-                statusEmojis={statusEmojis}
+                loadingSummary={loadingSummary} // ✅ added
               />
 
               <div className="flex gap-4">
-                {/* Sidebar */}
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-bold text-xs">Tools</h3>
-                  <button
-                    onClick={() => setActiveTab("scheduled")}
-                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "scheduled"
-                      ? "bg-orange-400 text-white"
-                      : "bg-gray-100"
-                      }`}
-                  >
-                    <BsListTask />
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("notes")}
-                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "notes"
-                      ? "bg-orange-400 text-white"
-                      : "bg-gray-100"
-                      }`}
-                  >
-                    <LuNotebookPen />
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab("activity")}
-                    className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity"
-                      ? "bg-orange-400 text-white"
-                      : "bg-gray-100"
-                      }`}
-                  >
-                    <BsCalendar4Week />
-                  </button>
-                </div>
+                <Tools activeTab={activeTab} setActiveTab={setActiveTab} />
 
                 {/* Main */}
                 <div className="text-gray-900 w-full">
                   {activeTab === "scheduled" && (
                     <div className="p-4 bg-white shadow-md rounded-lg">
-                      <h2 className="text-lg font-bold mb-2">Scheduled Task</h2>
-                      <p className="text-xs text-gray-600 mb-4">
-                        An overview of your recent and upcoming actions,
-                        including <strong>scheduled tasks</strong>,{" "}
-                        <strong>callbacks</strong>,{" "}
-                        <strong>calendar events</strong>, and{" "}
-                        <strong>inquiries</strong>—all in one place to keep you
-                        on track.
-                      </p>
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h2 className="text-lg font-bold">Scheduled Task</h2>
+                          <p className="text-xs text-gray-600">
+                            An overview of your recent and upcoming actions,
+                            including <strong>scheduled tasks</strong>,{" "}
+                            <strong>callbacks</strong>,{" "}
+                            <strong>calendar events</strong>, and{" "}
+                            <strong>inquiries</strong>.
+                          </p>
+                        </div>
+
+                        {/* ✅ Show Recent Summary button aligned to right */}
+                        <button
+                          onClick={fetchSummary}
+                          className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
+                        >
+                          Show Recent Summary
+                        </button>
+                      </div>
 
                       {/* Agent filter */}
                       {(userDetails.Role === "Territory Sales Manager" ||
@@ -397,12 +333,12 @@ const ListofUser: React.FC = () => {
                         endDate={endDate}
                         setEndDate={setEndDate}
                       />
-                      
+
                       <Main
-                            posts={filteredAccounts}
-                            userDetails={userDetails}
-                            fetchAccount={fetchAccount}
-                          />
+                        posts={filteredAccounts}
+                        userDetails={userDetails}
+                        fetchAccount={fetchAccount}
+                      />
                     </div>
                   )}
 
@@ -420,6 +356,14 @@ const ListofUser: React.FC = () => {
                       } bg-white shadow-md rounded-lg flex`}
                   >
                     <KanbanBoard userDetails={userDetails} />
+                  </div>
+
+                  {/* Xendmail */}
+                  <div
+                    className={`${activeTab === "xendmail" ? "block" : "hidden"
+                      } bg-white shadow-md rounded-lg flex`}
+                  >
+                    <XendMail userDetails={userDetails} />
                   </div>
                 </div>
 

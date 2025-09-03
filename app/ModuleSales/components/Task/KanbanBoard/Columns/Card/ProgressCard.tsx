@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import { FaRegCircle, FaCircle } from "react-icons/fa";
-import { PieChart } from "react-minimal-pie-chart";
 import { ToastContainer, toast } from "react-toastify";
+import DeleteModal from "../Modal/Delete";
+import DoughnutChart from "../Chart/Doughnut";
 
 export interface ProgressItem {
   id: string;
@@ -143,7 +144,6 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     }
   };
 
-
   return (
     <div className="rounded-lg shadow bg-orange-100 overflow-hidden relative p-2">
       {/* Header */}
@@ -169,16 +169,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 
         {filteredChildren.length > 0 && (
           <div className="flex items-center ml-auto space-x-2">
-            <PieChart
-              data={[
-                { title: "Progress", value: percent, color: "#34D399" },
-                { title: "Remaining", value: 100 - percent, color: "#E5E7EB" },
-              ]}
-              totalValue={100}
-              lineWidth={40}
-              animate
-              className="w-5 h-5"
-            />
+            <DoughnutChart percent={percent} size="w-5 h-5" />
             <button
               onClick={() => setShowChildren(!showChildren)}
               className="text-[9px] text-blue-600 underline"
@@ -304,6 +295,29 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
           Done
         </button>
       </div>
+
+      {/* Step 1: Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={showDeleteModal && !showFinalModal}
+        isChild={isChild}
+        deleteTarget={deleteTarget}
+        step={1}
+        onCancel={() => setShowDeleteModal(false)}
+        onContinue={() => {
+          setShowDeleteModal(false);
+          setShowFinalModal(true);
+        }}
+      />
+
+      {/* Step 2: Permanently Delete Modal */}
+      <DeleteModal
+        isOpen={showFinalModal}
+        isChild={isChild}
+        deleteTarget={deleteTarget}
+        step={2}
+        onCancel={() => setShowFinalModal(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };
