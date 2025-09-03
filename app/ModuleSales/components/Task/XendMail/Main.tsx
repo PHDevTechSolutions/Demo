@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import LeftColumn from "./Columns/Left";
+import RightColumn from "./Columns/Right";
 import Form from "./Form";
 import { MdEdit } from 'react-icons/md';
 
@@ -33,6 +34,11 @@ interface EmailData {
     }[];
 }
 
+interface RecipientField {
+    type: "CC" | "BCC" | "Reply-To" | "Followup-To";
+    email: string;
+}
+
 interface MainProps {
     userDetails: UserDetails;
 }
@@ -48,11 +54,15 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
     const [composeOpen, setComposeOpen] = useState(false);
     const [replyMode, setReplyMode] = useState(false);
+
+    // Fields for composing email
     const [to, setTo] = useState("");
+    const [recipients, setRecipients] = useState<RecipientField[]>([]); // multiple recipient types
     const [subject, setSubject] = useState("");
     const [body, setBody] = useState("");
+    const [attachments, setAttachments] = useState<File[]>([]);
 
-    // Auto-fetch kung may laman ang imapPass
+    // Auto-fetch emails if IMAP password exists
     useEffect(() => {
         if (imapPass) fetchEmails();
     }, [imapPass]);
@@ -65,8 +75,9 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             return;
         }
 
-        if (!userDetails.ReferenceID || !userDetails.ImapHost || !userDetails.Email)
+        if (!userDetails.ReferenceID || !userDetails.ImapHost || !userDetails.Email) {
             return toast.error("ReferenceID, ImapHost, and Email are required.");
+        }
 
         setLoading(true);
         try {
@@ -95,7 +106,6 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             });
 
             const data: any = await emailRes.json();
-
             if (!Array.isArray(data)) {
                 console.warn("Fetch returned non-array data:", data);
                 setAllEmails([]);
@@ -105,7 +115,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             }
 
             const sortedData: EmailData[] = data.sort(
-                (a: EmailData, b: EmailData) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
             );
 
             setAllEmails(sortedData);
@@ -128,79 +138,96 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
         setFetchedCount(nextCount);
     };
 
-    const sendEmail = async () => {
+    // Send email with multiple recipient types
+    const sendEmailWithAttachments = async (files: File[]) => {
         if (!to || !subject || !body) return toast.error("Please fill in all fields.");
 
         try {
+            const attachmentsData = await Promise.all(
+                files.map(file =>
+                    new Promise<{ filename: string; content: string; contentType: string }>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const base64Content = (reader.result as string).split(",")[1];
+                            resolve({ filename: file.name, content: base64Content, contentType: file.type });
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    })
+                )
+            );
+
+            // Separate recipients by type
+            const cc = recipients.filter(r => r.type === "CC").map(r => r.email).join(",");
+            const bcc = recipients.filter(r => r.type === "BCC").map(r => r.email).join(",");
+            const replyTo = recipients.filter(r => r.type === "Reply-To").map(r => r.email).join(",");
+            const followupTo = recipients.filter(r => r.type === "Followup-To").map(r => r.email).join(",");
+
             const res = await fetch("/api/ModuleSales/Task/XendMail/Send", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     from: userDetails.Email,
                     to,
+                    cc,
+                    bcc,
+                    replyTo,
+                    followupTo,
                     subject,
                     message: body,
                     smtpHost: "mail.ecoshiftcorp.com",
                     smtpPort: 465,
                     smtpPass: userDetails.ImapPass,
                     secure: true,
+                    attachments: attachmentsData,
                 }),
             });
 
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonErr) {
+                throw new Error(`Server returned invalid JSON: ${await res.text()}`);
+            }
+
             if (!res.ok) throw new Error(data.error || "Failed to send email");
 
             toast.success("Email sent successfully!");
             setComposeOpen(false);
             setReplyMode(false);
             setTo("");
+            setRecipients([]);
             setSubject("");
             setBody("");
+            setAttachments([]);
         } catch (err: any) {
             console.error("Send error:", err);
             toast.error(err.message || "Error sending email");
         }
     };
 
-    // Reply handler
     const handleReply = () => {
         if (!selectedEmail) return;
         setTo(selectedEmail.from.text);
+        setRecipients(selectedEmail.cc ? selectedEmail.cc.split(",").map(email => ({ type: "CC" as const, email })) : []);
         setSubject(`Re: ${selectedEmail.subject}`);
         setBody(`\n\n--- Original Message ---\n${selectedEmail.body}`);
         setComposeOpen(true);
         setReplyMode(true);
+        setAttachments([]);
     };
 
-    const handleDelete = async () => {
-        if (!selectedEmail) return toast.error("No email selected to delete.");
-
-        if (!confirm("Are you sure you want to delete this email?")) return;
-
-        try {
-            const res = await fetch("/api/ModuleSales/Task/XendMail/Delete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: userDetails.Email,
-                    imapPass: imapPass,
-                    messageId: selectedEmail.messageId,
-                    imapHost: userDetails.ImapHost, // optional but safer
-                    imapPort: 993,                   // optional
-                    secure: true                      // optional
-                }),
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Failed to delete email");
-
-            toast.success("Email deleted successfully!");
-            setSelectedEmail(null);
-            fetchEmails(); // refresh email list
-        } catch (err: any) {
-            console.error("Delete error:", err);
-            toast.error(err.message || "Error deleting email");
-        }
+    const handleForward = () => {
+        if (!selectedEmail) return;
+        setTo("");
+        setRecipients([]);
+        setSubject(`Fwd: ${selectedEmail.subject}`);
+        setBody(
+            `\n\n--- Forwarded Message ---\nFrom: ${selectedEmail.from.text}\nTo: ${selectedEmail.to}\nCC: ${selectedEmail.cc}\nDate: ${selectedEmail.date}\n\n${selectedEmail.body}`
+        );
+        setComposeOpen(true);
+        setReplyMode(false);
+        setAttachments([]);
     };
 
     return (
@@ -239,89 +266,34 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                         <Form
                             from={userDetails.Email}
                             to={to}
+                            recipients={recipients}
                             subject={subject}
                             body={body}
                             setTo={setTo}
+                            setRecipients={setRecipients}
                             setSubject={setSubject}
                             setBody={setBody}
-                            sendEmail={sendEmail}
+                            attachments={attachments}
+                            setAttachments={setAttachments}
+                            sendEmail={sendEmailWithAttachments}
+                            onCancel={() => {
+                                setComposeOpen(false);
+                                setReplyMode(false);
+                                setTo("");
+                                setRecipients([]);
+                                setSubject("");
+                                setBody("");
+                                setAttachments([]);
+                            }}
                         />
                     )}
 
-                    {!composeOpen && !selectedEmail && (
-                        <p className="text-gray-500">Select an email to view its content or click Compose to send a new email.</p>
-                    )}
-
                     {!composeOpen && selectedEmail && (
-                        <>
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="font-semibold mb-2">{selectedEmail.subject}</h3>
-                                <div className="flex gap-2">
-                                    <button
-                                        className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-xs"
-                                        onClick={handleReply}
-                                    >
-                                        Reply
-                                    </button>
-                                    <button
-                                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 text-xs"
-                                        onClick={handleDelete}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mb-2">
-                                From: {selectedEmail.from.text} | To: {selectedEmail.to} | CC: {selectedEmail.cc}
-                            </p>
-                            <p className="text-sm whitespace-pre-wrap">{selectedEmail.body}</p>
-
-                            {/* Attachments */}
-                            {selectedEmail.attachments.length > 0 && (
-                                <div className="mt-4">
-                                    <ul className="text-sm">
-                                        {[...selectedEmail.attachments].reverse().map((att, idx) => {
-                                            const byteCharacters = atob(att.content);
-                                            const byteNumbers = new Array(byteCharacters.length);
-                                            for (let i = 0; i < byteCharacters.length; i++) {
-                                                byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                            }
-                                            const byteArray = new Uint8Array(byteNumbers);
-                                            const blob = new Blob([byteArray], { type: att.contentType });
-                                            const url = URL.createObjectURL(blob);
-
-                                            const isImage = att.contentType.startsWith("image/");
-                                            const isPdf = att.contentType === "application/pdf";
-
-                                            return (
-                                                <li key={idx} className="mb-2">
-                                                    {isImage && (
-                                                        <img src={url} alt={att.filename} className="max-w-full max-h-60 mb-1 border" />
-                                                    )}
-                                                    {isPdf && (
-                                                        <embed src={url} type="application/pdf" className="w-full h-60 mb-1 border" />
-                                                    )}
-                                                    <div>
-                                                        <button
-                                                            className="text-blue-600 underline hover:text-blue-800 text-sm"
-                                                            onClick={() => {
-                                                                const link = document.createElement("a");
-                                                                link.href = url;
-                                                                link.download = att.filename;
-                                                                link.click();
-                                                                URL.revokeObjectURL(url);
-                                                            }}
-                                                        >
-                                                            {att.filename} (Download)
-                                                        </button>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            )}
-                        </>
+                        <RightColumn
+                            email={selectedEmail}       // <-- this must be a single EmailData object
+                            handleReply={handleReply}
+                            handleForward={handleForward}
+                        />
                     )}
                 </div>
 
