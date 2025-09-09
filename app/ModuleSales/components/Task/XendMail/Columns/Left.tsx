@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 
 interface EmailData {
+  id: number; // IMAP UID
   from: { text: string };
   to: string;
   cc: string;
