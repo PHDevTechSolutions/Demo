@@ -9,307 +9,324 @@ import Form from "./Form";
 import { MdEdit } from "react-icons/md";
 
 interface UserDetails {
-  ReferenceID: string;
-  Firstname: string;
-  Lastname: string;
-  Role: string;
-  Email: string;
-  ImapHost: string;
-  ImapPass: string;
-  [key: string]: any;
+    ReferenceID: string;
+    Firstname: string;
+    Lastname: string;
+    Role: string;
+    Email: string;
+    ImapHost: string;
+    ImapPass: string;
+    [key: string]: any;
 }
 
 interface EmailData {
-  from: { text: string };
-  to: string;
-  cc: string;
-  subject: string;
-  date: string;
-  messageId: string;
-  body: string;
-  attachments: {
-    filename: string;
-    contentType: string;
-    content: string;
-  }[];
+    from: { text: string };
+    to: string;
+    cc: string;
+    subject: string;
+    date: string;
+    messageId: string;
+    body: string;
+    attachments: {
+        filename: string;
+        contentType: string;
+        content: string;
+    }[];
 }
 
 interface RecipientField {
-  type: "CC" | "BCC" | "Reply-To" | "Followup-To";
-  email: string;
+    type: "CC" | "BCC" | "Reply-To" | "Followup-To";
+    email: string;
 }
 
 interface MainProps {
-  userDetails: UserDetails;
+    userDetails: UserDetails;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 const Main: React.FC<MainProps> = ({ userDetails }) => {
-  const [emails, setEmails] = useState<EmailData[]>([]);
-  const [allEmails, setAllEmails] = useState<EmailData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [fetchedCount, setFetchedCount] = useState(0);
-  const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
-  const [composeOpen, setComposeOpen] = useState(false);
-  const [replyMode, setReplyMode] = useState(false);
+    const [emails, setEmails] = useState<EmailData[]>([]);
+    const [allEmails, setAllEmails] = useState<EmailData[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [imapPass, setImapPass] = useState(userDetails.ImapPass || "");
+    const [fetchedCount, setFetchedCount] = useState(0);
+    const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
+    const [composeOpen, setComposeOpen] = useState(false);
+    const [replyMode, setReplyMode] = useState(false);
 
-  // Compose fields
-  const [to, setTo] = useState("");
-  const [recipients, setRecipients] = useState<RecipientField[]>([]);
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
+    // Compose fields
+    const [to, setTo] = useState("");
+    const [recipients, setRecipients] = useState<RecipientField[]>([]);
+    const [subject, setSubject] = useState("");
+    const [body, setBody] = useState("");
+    const [attachments, setAttachments] = useState<File[]>([]);
 
-  // Auto-fetch emails on mount
-  useEffect(() => {
-    if (userDetails.ImapPass) {
-      fetchEmails();
-    }
-  }, []);
+    useEffect(() => {
+        if (imapPass) fetchEmails();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [imapPass]);
 
-  const fetchEmails = async () => {
-    if (!userDetails.ImapPass) return;
-    if (!userDetails.ReferenceID || !userDetails.ImapHost || !userDetails.Email) {
-      return toast.error("ReferenceID, ImapHost, and Email are required.");
-    }
+    // Fetch emails from API
+    const fetchEmails = async () => {
+        if (!imapPass) {
+            setAllEmails([]);
+            setEmails([]);
+            setFetchedCount(0);
+            return;
+        }
 
-    setLoading(true);
-    try {
-      const updateRes = await fetch("/api/updateImap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          referenceID: userDetails.ReferenceID,
-          imapHost: userDetails.ImapHost,
-          imapPass: userDetails.ImapPass,
-        }),
-      });
+        if (!userDetails.ReferenceID || !userDetails.ImapHost || !userDetails.Email) {
+            return toast.error("ReferenceID, ImapHost, and Email are required.");
+        }
 
-      if (!updateRes.ok) throw new Error("Failed to update IMAP password");
+        setLoading(true);
+        try {
+            // Update IMAP password
+            const updateRes = await fetch("/api/updateImap", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    referenceID: userDetails.ReferenceID,
+                    imapHost: userDetails.ImapHost,
+                    imapPass,
+                }),
+            });
+            if (!updateRes.ok) throw new Error("Failed to update IMAP password");
 
-      const emailRes = await fetch("/api/ModuleSales/Task/XendMail/Fetch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: userDetails.Email,
-          imapHost: userDetails.ImapHost,
-          imapPass: userDetails.ImapPass,
-          imapPort: 993,
-          secure: true,
-        }),
-      });
+            // Fetch emails
+            const emailRes = await fetch("/api/ModuleSales/Task/XendMail/Fetch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: userDetails.Email,
+                    imapHost: userDetails.ImapHost,
+                    imapPass,
+                    imapPort: 993,
+                    secure: true,
+                }),
+            });
 
-      const data: any = await emailRes.json();
-      if (!Array.isArray(data)) {
-        console.warn("Fetch returned non-array data:", data);
-        setAllEmails([]);
-        setEmails([]);
-        setFetchedCount(0);
-        return;
-      }
+            const data: EmailData[] = await emailRes.json();
 
-      const sortedData: EmailData[] = data.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
+            if (!Array.isArray(data)) {
+                console.warn("Fetch returned non-array data:", data);
+                setAllEmails([]);
+                setEmails([]);
+                setFetchedCount(0);
+                return;
+            }
 
-      setAllEmails(sortedData);
-      setEmails(sortedData.slice(0, PAGE_SIZE));
-      setFetchedCount(Math.min(PAGE_SIZE, sortedData.length));
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Error fetching emails");
-      setAllEmails([]);
-      setEmails([]);
-      setFetchedCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+            const sortedData: EmailData[] = data.sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
 
-  const loadMore = () => {
-    const nextCount = Math.min(fetchedCount + PAGE_SIZE, allEmails.length);
-    setEmails(allEmails.slice(0, nextCount));
-    setFetchedCount(nextCount);
-  };
+            setAllEmails(sortedData);
+            setEmails(sortedData.slice(0, PAGE_SIZE));
+            setFetchedCount(Math.min(PAGE_SIZE, sortedData.length));
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || "Error fetching emails");
+            setAllEmails([]);
+            setEmails([]);
+            setFetchedCount(0);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // Send email
-  const sendEmailWithAttachments = async (files: File[]) => {
-    if (!to || !subject || !body) return toast.error("Please fill in all fields.");
-    setSending(true);
 
-    try {
-      const attachmentsData = await Promise.all(
-        files.map(file =>
-          new Promise<{ filename: string; content: string; contentType: string }>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const base64Content = (reader.result as string).split(",")[1];
-              resolve({ filename: file.name, content: base64Content, contentType: file.type });
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          })
-        )
-      );
+    const loadMore = () => {
+        const nextCount = Math.min(fetchedCount + PAGE_SIZE, allEmails.length);
+        setEmails(allEmails.slice(0, nextCount));
+        setFetchedCount(nextCount);
+    };
 
-      const cc = recipients.filter(r => r.type === "CC").map(r => r.email).join(",");
-      const bcc = recipients.filter(r => r.type === "BCC").map(r => r.email).join(",");
-      const replyTo = recipients.filter(r => r.type === "Reply-To").map(r => r.email).join(",");
-      const followupTo = recipients.filter(r => r.type === "Followup-To").map(r => r.email).join(",");
+    // Send email
+    const sendEmailWithAttachments = async (files: File[]) => {
+        if (!to || !subject || !body) return toast.error("Please fill in all fields.");
+        setSending(true);
 
-      const res = await fetch("/api/ModuleSales/Task/XendMail/Send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: userDetails.Email,
-          to,
-          cc,
-          bcc,
-          replyTo,
-          followupTo,
-          subject,
-          message: body,
-          smtpHost: "mail.ecoshiftcorp.com",
-          smtpPort: 465,
-          smtpPass: userDetails.ImapPass,
-          secure: true,
-          attachments: attachmentsData,
-        }),
-      });
+        try {
+            const attachmentsData = await Promise.all(
+                files.map(
+                    (file) =>
+                        new Promise<{ filename: string; content: string; contentType: string }>((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64Content = (reader.result as string).split(",")[1];
+                                resolve({ filename: file.name, content: base64Content, contentType: file.type });
+                            };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        })
+                )
+            );
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        throw new Error(`Server returned invalid JSON: ${await res.text()}`);
-      }
+            const cc = recipients.filter((r) => r.type === "CC").map((r) => r.email).join(",");
+            const bcc = recipients.filter((r) => r.type === "BCC").map((r) => r.email).join(",");
+            const replyTo = recipients.filter((r) => r.type === "Reply-To").map((r) => r.email).join(",");
+            const followupTo = recipients.filter((r) => r.type === "Followup-To").map((r) => r.email).join(",");
 
-      if (!res.ok) throw new Error(data.error || "Failed to send email");
+            const res = await fetch("/api/ModuleSales/Task/XendMail/Send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    from: userDetails.Email,
+                    to,
+                    cc,
+                    bcc,
+                    replyTo,
+                    followupTo,
+                    subject,
+                    message: body,
+                    smtpHost: "mail.ecoshiftcorp.com",
+                    smtpPort: 465,
+                    smtpPass: userDetails.ImapPass,
+                    secure: true,
+                    attachments: attachmentsData,
+                }),
+            });
 
-      toast.success("Email sent successfully!");
-      setComposeOpen(false);
-      setReplyMode(false);
-      setTo("");
-      setRecipients([]);
-      setSubject("");
-      setBody("");
-      setAttachments([]);
-    } catch (err: any) {
-      console.error("Send error:", err);
-      toast.error(err.message || "Error sending email");
-    } finally {
-      setSending(false);
-    }
-  };
+            const data = await res.json().catch(async () => ({ error: await res.text() }));
+            if (!res.ok) throw new Error(data.error || "Failed to send email");
 
-  const handleReply = () => {
-    if (!selectedEmail) return;
-    setSending(true);
-    setTimeout(() => {
-      setTo(selectedEmail.from.text);
-      setRecipients(selectedEmail.cc ? selectedEmail.cc.split(",").map(email => ({ type: "CC" as const, email })) : []);
-      setSubject(`Re: ${selectedEmail.subject}`);
-      setBody(`\n\n--- Original Message ---\n${selectedEmail.body}`);
-      setComposeOpen(true);
-      setReplyMode(true);
-      setAttachments([]);
-      setSending(false);
-    }, 200);
-  };
+            toast.success("Email sent successfully!");
+            resetCompose();
+        } catch (err: any) {
+            console.error("Send error:", err);
+            toast.error(err.message || "Error sending email");
+        } finally {
+            setSending(false);
+        }
+    };
 
-  const handleForward = () => {
-    if (!selectedEmail) return;
-    setSending(true);
-    setTimeout(() => {
-      setTo("");
-      setRecipients([]);
-      setSubject(`Fwd: ${selectedEmail.subject}`);
-      setBody(
-        `\n\n--- Forwarded Message ---\nFrom: ${selectedEmail.from.text}\nTo: ${selectedEmail.to}\nCC: ${selectedEmail.cc}\nDate: ${selectedEmail.date}\n\n${selectedEmail.body}`
-      );
-      setComposeOpen(true);
-      setReplyMode(false);
-      setAttachments([]);
-      setSending(false);
-    }, 200);
-  };
+    const resetCompose = () => {
+        setComposeOpen(false);
+        setReplyMode(false);
+        setTo("");
+        setRecipients([]);
+        setSubject("");
+        setBody("");
+        setAttachments([]);
+    };
 
-  return (
-    <div className="w-full bg-white relative">
-      {sending && (
-        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-50">
-          <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+    // Reply to email
+    const handleReply = () => {
+        if (!selectedEmail) return;
+        setSending(true);
+        setTimeout(() => {
+            setTo(selectedEmail.from.text);
+            setRecipients(
+                selectedEmail.cc
+                    ? selectedEmail.cc.split(",").map((email) => ({ type: "CC" as const, email }))
+                    : []
+            );
+            setSubject(`Re: ${selectedEmail.subject}`);
+            setBody(`\n\n--- Original Message ---\n${selectedEmail.body}`);
+            setComposeOpen(true);
+            setReplyMode(true);
+            setAttachments([]);
+            setSending(false);
+        }, 200);
+    };
+
+    // Forward email
+    const handleForward = () => {
+        if (!selectedEmail) return;
+        setSending(true);
+        setTimeout(() => {
+            setTo("");
+            setRecipients([]);
+            setSubject(`Fwd: ${selectedEmail.subject}`);
+            setBody(
+                `\n\n--- Forwarded Message ---\nFrom: ${selectedEmail.from.text}\nTo: ${selectedEmail.to}\nCC: ${selectedEmail.cc}\nDate: ${selectedEmail.date}\n\n${selectedEmail.body}`
+            );
+            setComposeOpen(true);
+            setReplyMode(false);
+            setAttachments([]);
+            setSending(false);
+        }, 200);
+    };
+
+    return (
+        <div className="w-full bg-white relative">
+            {sending && (
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-50">
+                    <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                </div>
+            )}
+
+            <h2 className="text-lg p-4 font-semibold text-black">Xend-Mail</h2>
+            <p className="text-sm text-gray-500 px-4 mb-4">
+                This section allows you to send, receive, and manage your emails.
+            </p>
+
+            <div className="w-full p-4 grid grid-cols-3 border-r border-t">
+                <LeftColumn
+                    emails={emails}
+                    selectedEmail={selectedEmail}
+                    setSelectedEmail={setSelectedEmail}
+                    imapPass={imapPass}
+                    setImapPass={setImapPass}
+                    fetchEmails={fetchEmails}
+                    fetchedCount={fetchedCount}
+                    allEmails={allEmails}
+                    loadMore={loadMore}
+                    loading={loading}
+                />
+
+                <div className="col-span-2 p-4 border-l max-h-[80vh] overflow-y-auto">
+                    {/* Compose Button */}
+                    <div className="flex justify-between items-center mb-2 border-b">
+                        <button
+                            className="bg-blue-800 text-white px-3 py-2 rounded hover:bg-blue-900 text-xs mb-2 flex items-center gap-1"
+                            onClick={() => { setComposeOpen(!composeOpen); setReplyMode(false); }}
+                        >
+                            <MdEdit size={20} /> Compose
+                        </button>
+                    </div>
+
+                    {composeOpen && (
+                        <Form
+                            from={userDetails.Email}
+                            to={to}
+                            recipients={recipients}
+                            subject={subject}
+                            body={body}
+                            setTo={setTo}
+                            setRecipients={setRecipients}
+                            setSubject={setSubject}
+                            setBody={setBody}
+                            attachments={attachments}
+                            setAttachments={setAttachments}
+                            sendEmail={sendEmailWithAttachments}
+                            onCancel={() => {
+                                setComposeOpen(false);
+                                setReplyMode(false);
+                                setTo("");
+                                setRecipients([]);
+                                setSubject("");
+                                setBody("");
+                                setAttachments([]);
+                            }}
+                        />
+                    )}
+
+                    {!composeOpen && selectedEmail && (
+                        <RightColumn
+                            email={selectedEmail}
+                            handleReply={handleReply}
+                            handleForward={handleForward}
+                        />
+                    )}
+                </div>
+
+                <ToastContainer className="text-xs" autoClose={1000} />
+            </div>
         </div>
-      )}
-
-      <h2 className="text-lg p-4 font-semibold text-black">Xend-Mail</h2>
-      <p className="text-sm text-gray-500 px-4 mb-4">
-        This section allows you to send, receive, and manage your emails.
-      </p>
-
-      <div className="w-full p-4 grid grid-cols-3 border-r border-t">
-        <LeftColumn
-          emails={emails}
-          selectedEmail={selectedEmail}
-          setSelectedEmail={setSelectedEmail}
-          fetchedCount={fetchedCount}
-          allEmails={allEmails}
-          loadMore={loadMore}
-          loading={loading}
-        />
-
-        <div className="col-span-2 p-4 border-l max-h-[80vh] overflow-y-auto">
-          {/* Compose Button */}
-          <div className="flex justify-between items-center mb-2 border-b">
-            <button
-              className="bg-blue-800 text-white px-3 py-2 rounded hover:bg-blue-900 text-xs mb-2 flex items-center gap-1"
-              onClick={() => { setComposeOpen(!composeOpen); setReplyMode(false); }}
-            >
-              <MdEdit size={20} /> Compose
-            </button>
-          </div>
-
-          {composeOpen && (
-            <Form
-              from={userDetails.Email}
-              to={to}
-              recipients={recipients}
-              subject={subject}
-              body={body}
-              setTo={setTo}
-              setRecipients={setRecipients}
-              setSubject={setSubject}
-              setBody={setBody}
-              attachments={attachments}
-              setAttachments={setAttachments}
-              sendEmail={sendEmailWithAttachments}
-              onCancel={() => {
-                setComposeOpen(false);
-                setReplyMode(false);
-                setTo("");
-                setRecipients([]);
-                setSubject("");
-                setBody("");
-                setAttachments([]);
-              }}
-            />
-          )}
-
-          {!composeOpen && selectedEmail && (
-            <RightColumn
-              email={selectedEmail}
-              handleReply={handleReply}
-              handleForward={handleForward}
-            />
-          )}
-        </div>
-
-        <ToastContainer className="text-xs" autoClose={1000} />
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Main;
