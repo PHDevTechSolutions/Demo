@@ -214,11 +214,11 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
               <table className="min-w-full table-auto mb-2">
                 <thead className="bg-gray-100">
                   <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                    <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700"></th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Activity Status</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Type Activity</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Date Created</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Status</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Responsible</th>
                   </tr>
                 </thead>
@@ -236,11 +236,11 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
               <table className="min-w-full table-auto">
                 <thead className="bg-gray-100">
                   <tr className="text-xs text-left whitespace-nowrap border-l-4 border-green-400">
-                    <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700"></th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Activity Status</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Type Activity</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700">Date Created</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Status</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Responsible</th>
                   </tr>
                 </thead>
