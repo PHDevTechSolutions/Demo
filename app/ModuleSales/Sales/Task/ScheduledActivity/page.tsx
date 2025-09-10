@@ -9,6 +9,7 @@ import UserFetcher from "../../../components/User/UserFetcher";
 import Filters from "../../../components/Task/ScheduledActivity/Filters/Filters";
 // Route
 import Main from "../../../components/Task/ScheduledActivity/Main";
+import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
 import XendMail from "../../../components/Task/XendMail/Main";
@@ -22,7 +23,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ListofUser: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("scheduled");
+  const [activeTab, setActiveTab] = useState<string>("activity");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -341,6 +342,14 @@ const ListofUser: React.FC = () => {
                       />
                     </div>
                   )}
+
+                  {/* Task List */}
+                  <div
+                    className={`${activeTab === "tasklist" ? "block" : "hidden"
+                      } bg-white shadow-md rounded-lg flex`}
+                  >
+                    <TaskList userDetails={userDetails} />
+                  </div>
 
                   {/* Notes */}
                   <div

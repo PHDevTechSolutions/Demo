@@ -96,7 +96,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     }, 1000);
 
     // Wait 15 seconds before redirect
-    await new Promise((resolve) => setTimeout(resolve, 15000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     try {
       await fetch("/api/log-activity", {
