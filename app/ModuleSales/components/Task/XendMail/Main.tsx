@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import LeftColumn from "./Columns/Left";
-import RightColumn from "./Columns/Right";
-import Form from "./Form";
+import dynamic from "next/dynamic";
 import { MdEdit } from "react-icons/md";
+
+// Dynamic imports for faster initial load
+const LeftColumn = dynamic(() => import("./Columns/Left"), { ssr: false });
+const RightColumn = dynamic(() => import("./Columns/Right"), { ssr: false });
+const Form = dynamic(() => import("./Form"), { ssr: false });
 
 interface UserDetails {
     ReferenceID: string;
@@ -44,9 +47,9 @@ interface MainProps {
 }
 
 const PAGE_SIZE = 5;
+const FETCH_LATEST = 20; // Fetch only latest 20 emails per request
 
 const Main: React.FC<MainProps> = ({ userDetails }) => {
-    const [emails, setEmails] = useState<EmailData[]>([]);
     const [allEmails, setAllEmails] = useState<EmailData[]>([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
@@ -55,6 +58,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
     const [composeOpen, setComposeOpen] = useState(false);
     const [replyMode, setReplyMode] = useState(false);
+    const [readEmails, setReadEmails] = useState<Set<string>>(new Set());
 
     // Compose fields
     const [to, setTo] = useState("");
@@ -63,40 +67,36 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [body, setBody] = useState("");
     const [attachments, setAttachments] = useState<File[]>([]);
 
-    useEffect(() => {
-        if (imapPass) fetchEmails();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [imapPass]);
+    const sortedEmails = useMemo(() => {
+        return [...allEmails].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+    }, [allEmails]);
 
-    // Fetch emails from API
-    const fetchEmails = async () => {
-        if (!imapPass) {
-            setAllEmails([]);
-            setEmails([]);
-            setFetchedCount(0);
-            return;
-        }
+    // Paginated emails
+    const emails = useMemo(() => sortedEmails.slice(0, fetchedCount), [sortedEmails, fetchedCount]);
 
-        if (!userDetails.ReferenceID || !userDetails.ImapHost || !userDetails.Email) {
-            return toast.error("ReferenceID, ImapHost, and Email are required.");
-        }
+    const isValidEmailData = (obj: any): obj is EmailData => {
+        return (
+            obj &&
+            typeof obj === "object" &&
+            obj.from && typeof obj.from.text === "string" &&
+            typeof obj.to === "string" &&
+            typeof obj.cc === "string" &&
+            typeof obj.subject === "string" &&
+            typeof obj.date === "string" &&
+            typeof obj.messageId === "string" &&
+            typeof obj.body === "string" &&
+            Array.isArray(obj.attachments)
+        );
+    };
 
+    const fetchLatestEmails = useCallback(async () => {
+        if (!imapPass) return;
         setLoading(true);
-        try {
-            // Update IMAP password
-            const updateRes = await fetch("/api/updateImap", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    referenceID: userDetails.ReferenceID,
-                    imapHost: userDetails.ImapHost,
-                    imapPass,
-                }),
-            });
-            if (!updateRes.ok) throw new Error("Failed to update IMAP password");
 
-            // Fetch emails
-            const emailRes = await fetch("/api/ModuleSales/Task/XendMail/Fetch", {
+        try {
+            const res = await fetch("/api/ModuleSales/Task/XendMail/Fetch", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -105,44 +105,54 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                     imapPass,
                     imapPort: 993,
                     secure: true,
+                    latest: FETCH_LATEST,
                 }),
             });
 
-            const data: EmailData[] = await emailRes.json();
+            const data = await res.json();
 
             if (!Array.isArray(data)) {
-                console.warn("Fetch returned non-array data:", data);
-                setAllEmails([]);
-                setEmails([]);
-                setFetchedCount(0);
-                return;
+                console.warn("Fetch returned non-array:", data);
+                return toast.error("Invalid email data from server");
             }
 
-            const sortedData: EmailData[] = data.sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
+            // Filter valid emails only
+            const validEmails = data.filter(isValidEmailData);
 
-            setAllEmails(sortedData);
-            setEmails(sortedData.slice(0, PAGE_SIZE));
-            setFetchedCount(Math.min(PAGE_SIZE, sortedData.length));
+            if (validEmails.length === 0) return toast.info("No new valid emails found");
+
+            // Merge new emails
+            setAllEmails((prev) => {
+                const existingIds = new Set(prev.map((e) => e.messageId));
+                const newEmails = validEmails.filter((e) => !existingIds.has(e.messageId));
+                return [...newEmails, ...prev];
+            });
+
+            setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, allEmails.length + validEmails.length));
         } catch (err: any) {
             console.error(err);
             toast.error(err.message || "Error fetching emails");
-            setAllEmails([]);
-            setEmails([]);
-            setFetchedCount(0);
         } finally {
             setLoading(false);
         }
+    }, [imapPass, userDetails, allEmails.length]);
+
+
+    // Load more emails for pagination
+    const loadMore = useCallback(() => {
+        setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, allEmails.length));
+    }, [allEmails.length]);
+
+    // Mark email as read
+    const handleSelectEmail = (email: EmailData) => {
+        setSelectedEmail(email);
+        setReadEmails((prev) => new Set(prev).add(email.messageId));
     };
 
-
-    const loadMore = () => {
-        const nextCount = Math.min(fetchedCount + PAGE_SIZE, allEmails.length);
-        setEmails(allEmails.slice(0, nextCount));
-        setFetchedCount(nextCount);
-    };
-
+    // Auto fetch on mount if password exists
+    useEffect(() => {
+        if (imapPass) fetchLatestEmails();
+    }, [imapPass, fetchLatestEmails]);
     // Send email
     const sendEmailWithAttachments = async (files: File[]) => {
         if (!to || !subject || !body) return toast.error("Please fill in all fields.");
@@ -267,14 +277,15 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 <LeftColumn
                     emails={emails}
                     selectedEmail={selectedEmail}
-                    setSelectedEmail={setSelectedEmail}
+                    setSelectedEmail={handleSelectEmail}
                     imapPass={imapPass}
                     setImapPass={setImapPass}
-                    fetchEmails={fetchEmails}
+                    fetchEmails={fetchLatestEmails}
                     fetchedCount={fetchedCount}
                     allEmails={allEmails}
                     loadMore={loadMore}
                     loading={loading}
+                    readEmails={readEmails} // pass readEmails for yellow highlight
                 />
 
                 <div className="col-span-2 p-4 border-l max-h-[80vh] overflow-y-auto">
@@ -321,6 +332,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                             handleForward={handleForward}
                         />
                     )}
+
                 </div>
 
                 <ToastContainer className="text-xs" autoClose={1000} />

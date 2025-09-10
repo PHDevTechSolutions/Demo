@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import BarChart from "./Chart/BarChart";
 import GaugeChart from "./Chart/GaugeChart";
 
 interface CallRecord {
@@ -7,6 +6,7 @@ interface CallRecord {
   activitystatus?: string;
   actualsales?: number | string;
   source?: string;
+  typeactivity?: string;
 }
 
 interface OutboundCallsProps {
@@ -50,7 +50,10 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
 
     filteredCalls.forEach((call) => {
       const source = call.source?.trim() || "Unknown";
-      if (source.toLowerCase() === "outbound - touchbase") {
+      const typeActivity = call.typeactivity?.trim().toLowerCase() || "";
+
+      // Only include calls that are "Outbound Calls" AND "Outbound - Touchbase"
+      if (source.toLowerCase() === "outbound - touchbase" && typeActivity === "outbound calls") {
         if (!sourceMap[source]) sourceMap[source] = [];
         sourceMap[source].push(call);
       }
@@ -84,15 +87,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     });
   }, [filteredCalls, workingDays]);
 
-  const barChartData = useMemo(() => {
-    return groupedBySource.map((item) => ({
-      source: item.source,
-      obTarget: item.obTarget,
-      totalOB: item.totalOB,
-      actualSales: totalActualSales,
-    }));
-  }, [groupedBySource, totalActualSales]);
-
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
@@ -113,22 +107,13 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
                     <GaugeChart value={item.achievement} label="OB Achievement" />
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                    <GaugeChart value={item.outboundToSalesConversion} label="Outbound to Sales Conversion" />
+                    <GaugeChart value={item.outboundToSalesConversion} label="Outbound to Sales Conv." />
                   </div>
                   <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                    <GaugeChart value={item.callsToQuoteConversion} label="Calls to Quote Conversion" />
+                    <GaugeChart value={item.callsToQuoteConversion} label="Calls to Quote Conv." />
                   </div>
                 </React.Fragment>
               ))}
-            </div>
-
-            {/* Bar Chart */}
-            <h2 className="text-sm font-bold mb-4">Sales & Quotation Amounts Comparison</h2>
-            <p className="text-xs text-gray-500 mb-4">
-              A side-by-side view of sales performance versus quoted amounts to track conversion and effectiveness.
-            </p>
-            <div className="mb-4 border rounded-md shadow-md">
-              <BarChart data={barChartData} />
             </div>
 
             {/* Table */}

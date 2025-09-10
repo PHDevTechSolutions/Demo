@@ -129,6 +129,7 @@ const ListofUser: React.FC = () => {
                 userRole === "Special Access" || // Kita lahat
                 userRole === "Manager" || // Kita lahat
                 userRole === "Territory Sales Manager" || // Kita lahat
+                userRole === "Territory Sales Associate" || // Kita lahat
                 post?.manager === referenceID; // Filtered by ReferenceID for other roles
 
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole;

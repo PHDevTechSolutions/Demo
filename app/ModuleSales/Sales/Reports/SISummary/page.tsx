@@ -3,16 +3,10 @@ import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
-
-// Components
-import Filters from "../../../components/Reports/PendingSO/Filters";
-import Table from "../../../components/Reports/PendingSO/Table";
-
-// Toast Notifications
+import Filters from "../../../components/Reports/SISummary/Filters";
+import Table from "../../../components/Reports/SISummary/Table";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-
-// Excel export dependencies
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
@@ -21,9 +15,11 @@ const ListofUser: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+
     const [userDetails, setUserDetails] = useState({
         UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
     });
+
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
     const [selectedAgent, setSelectedAgent] = useState("");
 
@@ -38,6 +34,7 @@ const ListofUser: React.FC = () => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
             const userId = params.get("id");
+
             if (userId) {
                 try {
                     const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
@@ -65,15 +62,27 @@ const ListofUser: React.FC = () => {
                 setLoadingUser(false);
             }
         };
+
         fetchUserData();
     }, []);
 
     const fetchAccount = async () => {
+        if (!userDetails.Role) return; // Hintayin ma-load role
         setLoadingAccounts(true);
+
         try {
-            const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
+            let url = "/api/ModuleSales/Reports/AccountManagement/FetchSales";
+
+            // Kung hindi Super Admin, magdagdag ng filter
+            if (userDetails.Role !== "Super Admin") {
+                url += `?referenceid=${encodeURIComponent(userDetails.ReferenceID)}`;
+            }
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Failed to fetch accounts");
+
             const data = await response.json();
-            setPosts(data.data);
+            setPosts(Array.isArray(data.data) ? data.data : []);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -82,9 +91,13 @@ const ListofUser: React.FC = () => {
         }
     };
 
+    // Fetch accounts kapag loaded na ang userDetails
     useEffect(() => {
-        fetchAccount();
-    }, []);
+        if (userDetails.UserId) {
+            fetchAccount();
+        }
+    }, [userDetails.UserId, userDetails.Role, userDetails.ReferenceID]);
+
 
     useEffect(() => {
         const fetchTSA = async () => {
@@ -124,10 +137,11 @@ const ListofUser: React.FC = () => {
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
             const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
-            const postDate = post.deliverydate ? new Date(post.deliverydate) : null;
+            const postDate = post.date_created ? new Date(post.date_created) : null;
             const isWithinDateRange =
                 (!startDate || (postDate && postDate >= new Date(startDate))) &&
                 (!endDate || (postDate && postDate <= new Date(endDate)));
+            const isWarmStatus = post?.activitystatus?.toLowerCase() === "delivered";
             const referenceID = userDetails.ReferenceID;
             const matchesRole =
                 userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
@@ -138,49 +152,35 @@ const ListofUser: React.FC = () => {
                             ? post?.tsm === referenceID
                             : false;
             const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
-            const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
-            const isOverdue =
-                isSoDone &&
-                postDate &&
-                (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
             return (
-                matchesSearchTerm &&
-                isWithinDateRange &&
-                isOverdue &&
-                matchesRole &&
-                matchesAgentFilter
+                matchesSearchTerm && isWithinDateRange && isWarmStatus && matchesRole && matchesAgentFilter
             );
         }).sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
 
     const exportToExcel = async () => {
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Pending SO");
+        const worksheet = workbook.addWorksheet("SI Summary");
 
         worksheet.columns = [
-            { header: "Company Name", key: "companyname", width: 25 },
-            { header: "Contact Person", key: "contactperson", width: 20 },
-            { header: "SO Number", key: "sonumber", width: 15 },
-            { header: "SO Amount", key: "soamount", width: 15 },
-            { header: "Status", key: "activitystatus", width: 15 },
-            { header: "Remarks", key: "remarks", width: 25 },
             { header: "Date Created", key: "date_created", width: 20 },
+            { header: "Company Name", key: "companyname", width: 30 },
+            { header: "Contact Person", key: "contactperson", width: 25 },
+            { header: "Quotation No.", key: "quotationnumber", width: 20 },
+            { header: "Amount", key: "quotationamount", width: 15 },
+            { header: "Status", key: "activitystatus", width: 15 },
+            { header: "Remarks", key: "remarks", width: 30 },
         ];
 
-        filteredAccounts.forEach((post) => {
+        filteredAccounts.forEach((item) => {
             worksheet.addRow({
-                companyname: post.companyname,
-                contactperson: post.contactperson,
-                sonumber: post.sonumber,
-                soamount: post.soamount,
-                activitystatus: post.activitystatus,
-                remarks: post.remarks,
-                date_created: new Date(post.date_created).toLocaleString(),
+                ...item,
+                actualsales: typeof item.actualsales === 'number' ? item.actualsales : parseFloat(item.actualsales || '0')
             });
         });
 
         const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(new Blob([buffer]), `Pending_SO_${new Date().toISOString().split("T")[0]}.xlsx`);
+        saveAs(new Blob([buffer]), "SI_Summary.xlsx");
     };
 
     return (
@@ -191,15 +191,12 @@ const ListofUser: React.FC = () => {
                         <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
                                 <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                    <div className="flex flex-col md:flex-row md:items-end md:justify-between">
-                                        <div className="mb-4 md:mb-0">
-                                            <h2 className="text-lg font-bold mb-2">Pending SO</h2>
-                                            <p className="text-xs text-gray-600 mb-4">
-                                                This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables.
-                                            </p>
-                                        </div>
-                                    </div>
+                                    <h2 className="text-lg font-bold mb-2">SI Summary</h2>
+                                    <p className="text-xs text-gray-600 mb-4">
+                                        This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
+                                    </p>
 
+                                    {/* Filter by Agent */}
                                     {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
                                         <div className="mb-4 flex items-center space-x-4">
                                             <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
@@ -236,7 +233,6 @@ const ListofUser: React.FC = () => {
                                         endDate={endDate}
                                         setEndDate={setEndDate}
                                     />
-
                                     {/* Loader or Table */}
                                     {loading ? (
                                         <div className="flex justify-center items-center py-10">
@@ -249,6 +245,7 @@ const ListofUser: React.FC = () => {
                                         </>
                                     )}
                                 </div>
+
                                 <ToastContainer className="text-xs" autoClose={1000} />
                             </div>
                         </div>

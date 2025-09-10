@@ -53,7 +53,14 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
     const data = useMemo(() => {
         const grouped: Record<string, any> = {};
 
-        filteredAccounts.forEach((account) => {
+        // ✅ Filter: CSR Inquiry + activitystatus Quote-Done or Assisted
+        const csrAccounts = filteredAccounts.filter(
+            (acc) =>
+                acc.source === "CSR Inquiry" &&
+                (acc.activitystatus === "Quote-Done" || acc.activitystatus === "Assisted")
+        );
+
+        csrAccounts.forEach((account) => {
             const dateKey = account.date_created
                 ? new Date(account.date_created).toLocaleDateString()
                 : "-";
@@ -63,7 +70,6 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
             if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
 
             const responseTimeSec = Math.max(0, Math.floor((end.getTime() - start.getTime()) / 1000));
-            const responseTime = formatInterval(account.startdate, account.enddate);
 
             const isRFQ = account.activitystatus === "Quote-Done";
             const isNonRFQ = account.activitystatus === "Assisted";
@@ -128,26 +134,21 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
 
     const buildCurvePath = (key: keyof typeof COLORS) => {
         if (!activeKeys.has(key)) return "";
-
         let d = "";
-
         for (let i = 0; i < data.length - 1; i++) {
             const x0 = xPos(i);
             const y0 = yScale(data[i][key]);
             const x1 = xPos(i + 1);
             const y1 = yScale(data[i + 1][key]);
             const cx = (x0 + x1) / 2;
-
             if (i === 0) d += `M${x0},${y0}`;
             d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;
         }
-
         return d;
     };
 
     const renderPoints = (key: keyof typeof COLORS, color: string) => {
         if (!activeKeys.has(key)) return null;
-
         return data.map((d, i) => {
             if (d[key] === 0) return null;
             const x = xPos(i);
@@ -201,6 +202,7 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
             <p className="text-xs text-gray-500 mb-4">
                 Key performance indicators of Customer Service Representatives including their productivity and efficiency.
             </p>
+
             {data.length === 0 ? (
                 <p className="text-center text-gray-500 text-xs">No CSR metrics available.</p>
             ) : (
@@ -257,9 +259,7 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
                         />
                     ))}
 
-                    {Array.from(activeKeys).map((key) =>
-                        renderPoints(key, COLORS[key])
-                    )}
+                    {Array.from(activeKeys).map((key) => renderPoints(key, COLORS[key]))}
 
                     <line
                         x1={margin.left}
@@ -300,8 +300,10 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
             </div>
 
             {tooltip.visible && (
-                <div className="fixed border rounded-lg p-2 bg-white shadow-md text-xs z-50 whitespace-nowrap pointer-events-none"
-                    style={{ top: tooltip.y - 40, left: tooltip.x + 10, }}>
+                <div
+                    className="fixed border rounded-lg p-2 bg-white shadow-md text-xs z-50 whitespace-nowrap pointer-events-none"
+                    style={{ top: tooltip.y - 40, left: tooltip.x + 10 }}
+                >
                     <strong>{tooltip.content.label}</strong>
                     <div>{tooltip.content.value}</div>
                 </div>

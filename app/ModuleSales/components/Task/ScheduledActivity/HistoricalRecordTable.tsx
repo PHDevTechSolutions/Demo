@@ -39,6 +39,31 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
     return dateB - dateA;
   });
 
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+
+    // Use UTC getters instead of local ones to prevent timezone shifting.
+    let hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    // Convert hours to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // if hour is 0, display as 12
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+    // Use toLocaleDateString with timeZone 'UTC' to format the date portion
+    const formattedDateStr = date.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    // Return combined date and time string
+    return `${formattedDateStr} ${hours}:${minutesStr} ${ampm}`;
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full table-auto">
@@ -57,6 +82,7 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
             <th className="px-6 py-4 font-semibold text-gray-700">SO-Number</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
+            <th className="px-6 py-4 font-semibold text-gray-700">Date Created</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -145,6 +171,9 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
                   onClick={() => handleShowRemarks(activity.remarks)}
                 >
                   {activity.remarks}
+                </td>
+                <td className="px-4 py-2">
+                  {activity.date_created ? formatDate(new Date(activity.date_created).getTime()) : "—"}
                 </td>
               </tr>
             ))

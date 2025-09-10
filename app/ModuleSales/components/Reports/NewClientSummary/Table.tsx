@@ -13,16 +13,17 @@ interface Post {
     remarks: string;
 }
 
-interface UsersCardProps {
+interface TableProps {
     posts: Post[];
     handleEdit: (post: any) => void;
 }
 
-const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
+const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
@@ -31,15 +32,23 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         return isNaN(d.getTime()) ? null : d;
     };
 
+    // 🔹 filter + sort
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
-        return posts.filter((post) => {
+
+        const filtered = posts.filter((post) => {
             const postDate = parseDate(post.date_created);
             return (!start || !postDate || postDate >= start) &&
                 (!end || !postDate || postDate <= end);
         });
-    }, [posts, startDate, endDate]);
+
+        return filtered.sort((a, b) => {
+            const dateA = parseDate(a.date_created)?.getTime() || 0;
+            const dateB = parseDate(b.date_created)?.getTime() || 0;
+            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+        });
+    }, [posts, startDate, endDate, sortOrder]);
 
     const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
 
@@ -48,17 +57,18 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         return filteredPosts.slice(startIdx, startIdx + itemsPerPage);
     }, [filteredPosts, currentPage, itemsPerPage]);
 
+    const totalCount = useMemo(() => filteredPosts.length, [filteredPosts]);
+
     const formatDate = (timestamp: string) => {
         const date = new Date(timestamp);
         const options: Intl.DateTimeFormatOptions = {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', hour12: true,
-            timeZone: 'Asia/Manila',
+            year: "numeric", month: "short", day: "numeric",
+            hour: "numeric", minute: "2-digit", hour12: true,
+            timeZone: "Asia/Manila",
         };
-        return date.toLocaleString('en-US', options);
+        return date.toLocaleString("en-US", options);
     };
 
-    // Add this inside the component (before return)
     const formatCurrency = (value: number | string) => {
         const number = typeof value === "string" ? parseFloat(value) || 0 : value || 0;
         return number.toLocaleString("en-PH", {
@@ -66,7 +76,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
             currency: "PHP",
         });
     };
-
 
     const goToPage = (page: number) => {
         setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -96,6 +105,13 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         }
     }, [posts]);
 
+    const totalAmount = useMemo(() => {
+        return filteredPosts.reduce((sum, post) => {
+            const amount = Number(post.quotationamount) || 0; // siguraduhin na number
+            return sum + amount;
+        }, 0);
+    }, [filteredPosts]);
+
     return (
         <div>
             {/* Filters */}
@@ -121,7 +137,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
                         <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                            <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
+                            <th
+                                className="px-6 py-4 font-semibold text-gray-700 cursor-pointer"
+                                onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+                            >
+                                Date {sortOrder === "desc" ? "▼" : "▲"}
+                            </th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
@@ -147,6 +168,13 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                             ))
                         )}
                     </tbody>
+                    <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700 text-xs">
+                        <tr>
+                            <td colSpan={4} className="px-6 py-3"></td>
+                            <td className="px-6 py-3 text-green-700">Total Amount</td>
+                            <td className="px-6 py-3">{formatCurrency(totalAmount)} | Quantity: {totalCount}</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
@@ -160,4 +188,4 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
     );
 };
 
-export default UsersTable;
+export default Table;

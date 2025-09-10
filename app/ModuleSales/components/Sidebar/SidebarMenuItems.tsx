@@ -130,6 +130,11 @@ const getMenuItems = (userId: string | null = "") => [
                 href: `/ModuleSales/Sales/Reports/PendingSO${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
             { 
+                title: "SI Summary", 
+                description: "Sales Order Overview", 
+                href: `/ModuleSales/Sales/Reports/SISummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
                 title: "CSR Inquiry Summary", 
                 description: "Customer Service Inquiries", 
                 href: `/ModuleSales/Sales/Reports/CSRSummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
@@ -180,10 +185,6 @@ const getMenuItems = (userId: string | null = "") => [
             { 
                 title: "Calls to SI", 
                 href: `/ModuleSales/Sales/ConversionRates/CallsToSI${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
-            },
-            { 
-                title: "Conversion Rate Summary", 
-                href: `/ModuleSales/Sales/ConversionRates/ConversionRateSummary${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
         ],
     },

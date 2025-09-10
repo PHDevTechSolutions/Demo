@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineReload } from "react-icons/ai";
 
 interface EmailData {
   from: { text: string };
@@ -9,7 +9,7 @@ interface EmailData {
   cc: string;
   subject: string;
   date: string;
-  messageId: string; 
+  messageId: string;
   body: string;
   attachments: {
     filename: string;
@@ -29,6 +29,7 @@ interface LeftColumnProps {
   allEmails: EmailData[];
   loadMore: () => void;
   loading: boolean;
+  readEmails: Set<string>; // ✅ Added
 }
 
 const LeftColumn: React.FC<LeftColumnProps> = ({
@@ -42,12 +43,13 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
   allEmails,
   loadMore,
   loading,
+  readEmails, // ✅ Added
 }) => {
   const [showPass, setShowPass] = useState(false);
 
   return (
     <div className="col-span-1 pr-2 overflow-y-auto max-h-[80vh]">
-      {/* IMAP Input + Fetch */}
+      {/* IMAP Input + Fetch/Refresh */}
       <div className="mb-4 sticky top-0 bg-white py-2 z-10">
         <label className="block text-xs font-semibold mb-1">Input Webmail Password</label>
         <div className="flex gap-2">
@@ -69,9 +71,16 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
           </div>
           <button
             onClick={fetchEmails}
-            className="px-3 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 text-xs"
+            className="px-3 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 text-xs flex items-center gap-1"
           >
             Fetch
+          </button>
+          <button
+            onClick={fetchEmails}
+            className="px-3 py-2 bg-gray-500 text-white rounded shadow hover:bg-gray-600 text-xs flex items-center gap-1"
+          >
+            <AiOutlineReload size={14} />
+            Refresh
           </button>
         </div>
       </div>
@@ -84,25 +93,30 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
       )}
 
       {!imapPass && !loading && (
-        <p className="text-xs text-gray-400 text-center">
-          No fetch available. Please enter IMAP password.
-        </p>
+        <p className="text-xs text-gray-400 text-center">No fetch email.</p>
       )}
 
       {/* Email cards */}
-      {emails.map((mail, idx) => (
-        <div
-          key={idx}
-          className={`p-3 border-b cursor-pointer transition-colors ${
-            selectedEmail === mail ? "bg-blue-100" : "bg-gray-50 hover:bg-gray-100"
-          }`}
-          onClick={() => setSelectedEmail(mail)}
-        >
-          <p className="text-[10px] text-gray-500">{mail.from.text}</p>
-          <p className="font-semibold text-sm truncate">{mail.subject}</p>
-          <p className="text-[10px] text-gray-400">{new Date(mail.date).toLocaleString()}</p>
-        </div>
-      ))}
+      {emails.map((mail, idx) => {
+        const isNew = !readEmails.has(mail.messageId);
+        return (
+          <div
+            key={idx}
+            className={`p-3 border-b cursor-pointer transition-colors ${
+              selectedEmail === mail
+                ? "bg-blue-100"
+                : isNew
+                ? "bg-yellow-100 hover:bg-yellow-200"
+                : "bg-gray-50 hover:bg-gray-100"
+            }`}
+            onClick={() => setSelectedEmail(mail)}
+          >
+            <p className="text-[10px] text-gray-500">{mail.from.text}</p>
+            <p className="font-semibold text-sm truncate">{mail.subject}</p>
+            <p className="text-[10px] text-gray-400">{new Date(mail.date).toLocaleString()}</p>
+          </div>
+        );
+      })}
 
       {/* Load More */}
       {fetchedCount < allEmails.length && (

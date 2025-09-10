@@ -3,7 +3,6 @@
 import React from "react";
 import { BsReply, BsArrowRight } from 'react-icons/bs';
 
-
 interface Attachment {
     filename: string;
     contentType: string;
@@ -11,13 +10,14 @@ interface Attachment {
 }
 
 interface EmailData {
-    from: { text: string };
+    from: string | { text: string }; // <-- supports both formats
     to: string;
     cc: string;
     subject: string;
     date: string;
     body: string;
-    attachments: Attachment[];
+    messageId?: string;
+    attachments?: Attachment[];
 }
 
 interface RightColumnProps {
@@ -27,6 +27,9 @@ interface RightColumnProps {
 }
 
 const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleForward }) => {
+    const fromText = typeof email.from === "string" ? email.from : email.from.text;
+    const attachments = email.attachments || [];
+
     return (
         <div className="p-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-2">
@@ -36,28 +39,28 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
                         className="bg-white text-black border px-2 py-1 rounded hover:bg-gray-50 text-xs flex items-center gap-1"
                         onClick={handleReply}
                     >
-                        <BsReply size={20} />Reply
+                        <BsReply size={20} /> Reply
                     </button>
                     <button
                         className="bg-white text-black border px-2 py-1 rounded hover:bg-gray-50 text-xs flex items-center gap-1"
                         onClick={handleForward}
                     >
-                        <BsArrowRight size={20} />Forward
+                        <BsArrowRight size={20} /> Forward
                     </button>
                 </div>
             </div>
 
             <p className="text-xs text-gray-500 mb-2">
-                From: {email.from.text} | To: {email.to} | CC: {email.cc}
+                From: {fromText} | To: {email.to} | CC: {email.cc}
             </p>
 
             <p className="text-sm whitespace-pre-wrap">{email.body}</p>
 
             {/* Attachments */}
-            {email.attachments.length > 0 && (
+            {attachments.length > 0 && (
                 <div className="mt-4">
                     <ul className="text-sm">
-                        {[...email.attachments].reverse().map((att, idx) => {
+                        {[...attachments].reverse().map((att, idx) => {
                             const byteCharacters = atob(att.content);
                             const byteNumbers = new Array(byteCharacters.length);
                             for (let i = 0; i < byteCharacters.length; i++) {

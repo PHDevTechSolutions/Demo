@@ -30,7 +30,7 @@ interface GroupedData {
   records: Post[];
 }
 
-interface UsersCardProps {
+interface TableProps {
   posts: Post[];
 }
 
@@ -38,7 +38,7 @@ const formatCurrency = (amount: number) => {
   return amount.toLocaleString("en-US", { minimumFractionDigits: 0 });
 };
 
-const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
+const Table: React.FC<TableProps> = ({ posts }) => {
   const [mainTab, setMainTab] = useState<"PerAgent" | "PerCompany">("PerAgent");
   const [groupedData, setGroupedData] = useState<{ [key: string]: GroupedData }>({});
   const [activeTab, setActiveTab] = useState<"MTD" | "YTD">("MTD");
@@ -46,8 +46,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
   const years = Array.from(new Array(10), (_, index) => new Date().getFullYear() - index);
 
@@ -55,9 +55,9 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
     const fixedDays = 26;
     const today = new Date();
     const parPercentages: { [key: number]: number } = {
-      1: 8.3,2: 16.6,3: 25.0,4: 33.3,5: 41.6,
-      6: 50.0,7: 58.3,8: 66.6,9: 75.0,10: 83.3,
-      11: 91.6,12: 100.0,
+      1: 8.3, 2: 16.6, 3: 25.0, 4: 33.3, 5: 41.6,
+      6: 50.0, 7: 58.3, 8: 66.6, 9: 75.0, 10: 83.3,
+      11: 91.6, 12: 100.0,
     };
 
     const filteredPosts = posts.filter((post) => {
@@ -169,7 +169,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
             </th>
             <th className="px-6 py-4 font-semibold text-gray-700">{activeTab === "MTD" ? "Month" : "Year"}</th>
 
-            {/* Target shown only in PerAgent */}
             {mainTab === "PerAgent" && (
               <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
             )}
@@ -218,6 +217,11 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 ? (group.preparationQuoteCount / group.OutboundCalls) * 100
                 : 0;
 
+              // 🚫 Skip kapag nasa PerCompany tab at walang Quote
+              if (mainTab === "PerCompany" && group.preparationQuoteCount === 0) {
+                return null;
+              }
+
               return (
                 <tr key={`${group.ReferenceID}-${group.date_created}-${idx}`} className="border-b whitespace-nowrap">
                   <td className="px-6 py-4 text-xs capitalize font-bold">
@@ -260,4 +264,4 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
   );
 };
 
-export default React.memo(UsersCard);
+export default React.memo(Table);

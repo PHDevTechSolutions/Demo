@@ -31,7 +31,7 @@ interface GroupedData {
   records: Post[];
 }
 
-interface UsersCardProps {
+interface TableProps {
   posts: Post[];
 }
 
@@ -39,7 +39,7 @@ const formatCurrency = (amount: number) => {
   return amount.toLocaleString("en-US", { minimumFractionDigits: 0 });
 };
 
-const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
+const Table: React.FC<TableProps> = ({ posts }) => {
   const [groupedData, setGroupedData] = useState<{ [key: string]: GroupedData }>({});
   const [activeTab, setActiveTab] = useState("Agent");
   const [periodTab, setPeriodTab] = useState("MTD");
@@ -48,8 +48,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
   ];
   const years = Array.from(new Array(10), (_, index) => new Date().getFullYear() - index);
 
@@ -202,6 +202,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 ? (group.salesorderCount / group.preparationQuoteCount) * 100
                 : 0;
 
+              if (activeTab === "Company" && group.preparationQuoteCount === 0) {
+                return null;
+              }
+
               return (
                 <tr key={group.key} className="border-b whitespace-nowrap">
                   <td className="px-6 py-4 text-xs capitalize font-bold">{group.label}</td>
@@ -228,4 +232,4 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
   );
 };
 
-export default UsersCard;
+export default Table;

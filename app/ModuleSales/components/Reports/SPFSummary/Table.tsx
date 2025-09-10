@@ -13,52 +13,66 @@ interface Post {
     remarks: string;
 }
 
-interface UsersCardProps {
+interface TableProps {
     posts: Post[];
     handleEdit: (post: any) => void;
 }
 
-const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
+const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+    // 🔹 Date parsing
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
     };
 
+    // 🔹 Filter by date range
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
         return posts.filter((post) => {
             const postDate = parseDate(post.date_created);
             return (!start || !postDate || postDate >= start) &&
-                (!end || !postDate || postDate <= end);
+                   (!end || !postDate || postDate <= end);
         });
     }, [posts, startDate, endDate]);
 
-    const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+    // 🔹 Sort by date_created
+    const sortedPosts = useMemo(() => {
+        return [...filteredPosts].sort((a, b) => {
+            const dateA = new Date(a.date_created).getTime();
+            const dateB = new Date(b.date_created).getTime();
+            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+        });
+    }, [filteredPosts, sortOrder]);
 
+    // 🔹 Pagination
+    const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
     const paginatedData = useMemo(() => {
         const startIdx = (currentPage - 1) * itemsPerPage;
-        return filteredPosts.slice(startIdx, startIdx + itemsPerPage);
-    }, [filteredPosts, currentPage, itemsPerPage]);
+        return sortedPosts.slice(startIdx, startIdx + itemsPerPage);
+    }, [sortedPosts, currentPage, itemsPerPage]);
 
+    // 🔹 Formatters
     const formatDate = (timestamp: string) => {
         const date = new Date(timestamp);
-        const options: Intl.DateTimeFormatOptions = {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', hour12: true,
-            timeZone: 'Asia/Manila',
-        };
-        return date.toLocaleString('en-US', options);
+        return date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "Asia/Manila",
+        });
     };
 
-    // Add this inside the component (before return)
     const formatCurrency = (value: number | string) => {
         const number = typeof value === "string" ? parseFloat(value) || 0 : value || 0;
         return number.toLocaleString("en-PH", {
@@ -67,11 +81,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         });
     };
 
-
+    // 🔹 Pagination handler
     const goToPage = (page: number) => {
         setCurrentPage(Math.min(Math.max(page, 1), totalPages));
     };
 
+    // 🔹 Fetch agent names
     useEffect(() => {
         const fetchAgents = async () => {
             const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
@@ -91,9 +106,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
             setAgentNames(nameMap);
         };
 
-        if (posts.length > 0) {
-            fetchAgents();
-        }
+        if (posts.length > 0) fetchAgents();
     }, [posts]);
 
     return (
@@ -121,7 +134,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
                         <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                            <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
+                            <th
+                                className="px-6 py-4 font-semibold text-gray-700 cursor-pointer select-none"
+                                onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+                            >
+                                Date {sortOrder === "desc" ? "▼" : "▲"}
+                            </th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
@@ -141,12 +159,19 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                                     <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
                                     <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
-                                    <td className="px-6 py-4 text-xs capitalize">{formatCurrency(post.quotationamount)}</td>
+                                    <td className="px-6 py-4 text-xs">{formatCurrency(post.quotationamount)}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.remarks}</td>
                                 </tr>
                             ))
                         )}
                     </tbody>
+                    <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700 text-xs">
+                        <tr>
+                            <td colSpan={6} className="px-6 py-3">
+                                Quantity: {filteredPosts.length}
+                            </td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
@@ -160,4 +185,4 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
     );
 };
 
-export default UsersTable;
+export default Table;

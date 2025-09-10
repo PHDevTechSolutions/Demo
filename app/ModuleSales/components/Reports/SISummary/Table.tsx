@@ -6,8 +6,7 @@ interface Post {
     date_created: string;
     companyname: string;
     contactperson: string;
-    sonumber: string;
-    soamount: number | string;
+    actualsales: string;
     activitystatus: string;
     remarks: string;
 }
@@ -19,7 +18,9 @@ interface TableProps {
 const Table: React.FC<TableProps> = ({ posts }) => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // ✅ toggle state
+
+    // Sorting state
+    const [dateSortOrder, setDateSortOrder] = useState<"asc" | "desc">("desc");
 
     // Date range filter state
     const [startDate, setStartDate] = useState<string>("");
@@ -27,7 +28,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
-    // Parse dates helper
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
@@ -47,14 +47,14 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         });
     }, [posts, startDate, endDate]);
 
-    // ✅ Sort by date_created with toggle
+    // Sort filtered posts by date_created
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
             const dateA = new Date(a.date_created).getTime();
             const dateB = new Date(b.date_created).getTime();
-            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+            return dateSortOrder === "desc" ? dateB - dateA : dateA - dateB;
         });
-    }, [filteredPosts, sortOrder]);
+    }, [filteredPosts, dateSortOrder]);
 
     const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
 
@@ -83,14 +83,18 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         });
     };
 
-    const totalSOAmount = useMemo(() => {
+    const totalActualSales = useMemo(() => {
         return filteredPosts.reduce((sum, post) => {
-            const amount = typeof post.soamount === "string" ? parseFloat(post.soamount) : post.soamount;
+            const amount =
+                typeof post.actualsales === "string"
+                    ? parseFloat(post.actualsales)
+                    : post.actualsales;
             return sum + (amount || 0);
         }, 0);
     }, [filteredPosts]);
 
-    const totalSOCount = useMemo(() => {
+    // Total Quotation Count
+    const totalActualSalesCount = useMemo(() => {
         return filteredPosts.length;
     }, [filteredPosts]);
 
@@ -99,7 +103,8 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         let hours = date.getUTCHours();
         const minutes = date.getUTCMinutes();
         const ampm = hours >= 12 ? "PM" : "AM";
-        hours = hours % 12 || 12;
+        hours = hours % 12;
+        hours = hours ? hours : 12;
         const minutesStr = minutes < 10 ? "0" + minutes : minutes;
         const formattedDateStr = date.toLocaleDateString("en-US", {
             timeZone: "UTC",
@@ -112,19 +117,21 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
     useEffect(() => {
         const fetchAgents = async () => {
-            const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
+            const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
             const nameMap: Record<string, string> = {};
 
-            await Promise.all(uniqueReferenceIds.map(async (id) => {
-                try {
-                    const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
-                    const data = await res.json();
-                    nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
-                } catch (error) {
-                    console.error(`Error fetching user ${id}`, error);
-                    nameMap[id] = "";
-                }
-            }));
+            await Promise.all(
+                uniqueReferenceIds.map(async (id) => {
+                    try {
+                        const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+                        const data = await res.json();
+                        nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+                    } catch (error) {
+                        console.error(`Error fetching user ${id}`, error);
+                        nameMap[id] = "";
+                    }
+                })
+            );
 
             setAgentNames(nameMap);
         };
@@ -172,7 +179,9 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                         className="border px-3 py-2 rounded text-xs"
                     >
                         {[10, 25, 50, 100].map((num) => (
-                            <option key={num} value={num}>{num}</option>
+                            <option key={num} value={num}>
+                                {num}
+                            </option>
                         ))}
                     </select>
                 </div>
@@ -186,22 +195,28 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                             <th className="px-6 py-3 font-semibold text-gray-700">Status</th>
                             <th
                                 className="px-6 py-3 font-semibold text-gray-700 cursor-pointer select-none"
-                                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                                onClick={() =>
+                                    setDateSortOrder(dateSortOrder === "desc" ? "asc" : "desc")
+                                }
                             >
-                                Date {sortOrder === "asc" ? "▲" : "▼"}
+                                Date{" "}
+                                <span className="text-[10px] text-gray-500">
+                                    {dateSortOrder === "desc" ? "▼" : "▲"}
+                                </span>
                             </th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Contact Person</th>
-                            <th className="px-6 py-3 font-semibold text-gray-700">SO No.</th>
-                            <th className="px-6 py-3 font-semibold text-gray-700">SO Amount</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Amount</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Remarks</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {paginatedData.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="text-center py-4">No records available</td>
+                                <td colSpan={7} className="text-center py-4">
+                                    No records available
+                                </td>
                             </tr>
                         ) : (
                             paginatedData.map((post) => (
@@ -209,19 +224,21 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                                     <td className="px-6 py-3">
                                         <span
                                             className={`inline-block px-2 py-1 text-[8px] font-semibold rounded-full
-                                                ${post.activitystatus.toLowerCase() === "so-done"
-                                                    ? "bg-violet-500 text-white"
+                                                ${post.activitystatus.toLowerCase() === "delivered"
+                                                    ? "bg-green-800 text-white"
                                                     : "bg-gray-200 text-gray-800"
-                                                }`}>
+                                                }`}
+                                        >
                                             {post.activitystatus}
                                         </span>
                                     </td>
                                     <td className="px-6 py-3">{formatDate(post.date_created)}</td>
-                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">
+                                        {agentNames[post.referenceid] || "N/A"}
+                                    </td>
                                     <td className="px-6 py-3 uppercase">{post.companyname}</td>
                                     <td className="px-6 py-3 capitalize">{post.contactperson}</td>
-                                    <td className="px-6 py-3 uppercase">{post.sonumber}</td>
-                                    <td className="px-6 py-3">{formatCurrency(post.soamount)}</td>
+                                    <td className="px-6 py-3">{formatCurrency(post.actualsales)}</td>
                                     <td className="px-6 py-3 capitalize">{post.remarks}</td>
                                 </tr>
                             ))
@@ -229,10 +246,10 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                     </tbody>
                     <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700">
                         <tr>
-                            <td className="px-6 py-3" colSpan={5}></td>
-                            <td className="px-6 py-3 text-green-700">Total SO Amount</td>
-                            <td className="px-6 py-3">{formatCurrency(totalSOAmount)}</td>
-                            <td className="px-6 py-3">Quantity: {totalSOCount}</td>
+                            <td className="px-6 py-3" colSpan={4}></td>
+                            <td className="px-6 py-3 text-green-700">Total Actual Sales (SI)</td>
+                            <td className="px-6 py-3">{formatCurrency(totalActualSales)}</td>
+                            <td className="px-6 py-3">Quantity: {totalActualSalesCount}</td>
                         </tr>
                     </tfoot>
                 </table>

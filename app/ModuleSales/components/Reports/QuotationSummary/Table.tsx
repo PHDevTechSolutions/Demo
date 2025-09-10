@@ -12,13 +12,16 @@ interface Post {
     remarks: string;
 }
 
-interface UsersCardProps {
+interface TableProps {
     posts: Post[];
 }
 
-const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
+const Table: React.FC<TableProps> = ({ posts }) => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+
+    // Sorting state
+    const [dateSortOrder, setDateSortOrder] = useState<"asc" | "desc">("desc");
 
     // Date range filter state
     const [startDate, setStartDate] = useState<string>("");
@@ -26,7 +29,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
 
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
-    // Parse dates helper (returns Date or null)
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
@@ -46,15 +48,14 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         });
     }, [posts, startDate, endDate]);
 
-
-    // Sort filtered posts by quotationamount descending
+    // Sort filtered posts by date_created
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
-            const aAmount = typeof a.quotationamount === "string" ? parseFloat(a.quotationamount) : a.quotationamount;
-            const bAmount = typeof b.quotationamount === "string" ? parseFloat(b.quotationamount) : b.quotationamount;
-            return (bAmount || 0) - (aAmount || 0);
+            const dateA = new Date(a.date_created).getTime();
+            const dateB = new Date(b.date_created).getTime();
+            return dateSortOrder === "desc" ? dateB - dateA : dateA - dateB;
         });
-    }, [filteredPosts]);
+    }, [filteredPosts, dateSortOrder]);
 
     const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
 
@@ -83,71 +84,70 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         });
     };
 
-    // Calculate total quotation amount from filtered posts (all, not just paginated)
     const totalQuotationAmount = useMemo(() => {
         return filteredPosts.reduce((sum, post) => {
-            const amount = typeof post.quotationamount === "string" ? parseFloat(post.quotationamount) : post.quotationamount;
+            const amount =
+                typeof post.quotationamount === "string"
+                    ? parseFloat(post.quotationamount)
+                    : post.quotationamount;
             return sum + (amount || 0);
         }, 0);
     }, [filteredPosts]);
 
+    // Total Quotation Count
+    const totalQuotationCount = useMemo(() => {
+        return filteredPosts.length;
+    }, [filteredPosts]);
+
     const formatDate = (timestamp: string) => {
         const date = new Date(timestamp);
-
-        // Use UTC getters instead of local ones to prevent timezone shifting.
         let hours = date.getUTCHours();
         const minutes = date.getUTCMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-
-        // Convert hours to 12-hour format
+        const ampm = hours >= 12 ? "PM" : "AM";
         hours = hours % 12;
-        hours = hours ? hours : 12; // if hour is 0, display as 12
-        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-
-        // Use toLocaleDateString with timeZone 'UTC' to format the date portion
-        const formattedDateStr = date.toLocaleDateString('en-US', {
-            timeZone: 'UTC',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
+        hours = hours ? hours : 12;
+        const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+        const formattedDateStr = date.toLocaleDateString("en-US", {
+            timeZone: "UTC",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
         });
-
-        // Return combined date and time string
         return `${formattedDateStr} ${hours}:${minutesStr} ${ampm}`;
     };
 
     useEffect(() => {
         const fetchAgents = async () => {
-          const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
-          const nameMap: Record<string, string> = {};
-    
-          await Promise.all(uniqueReferenceIds.map(async (id) => {
-            try {
-              const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
-              const data = await res.json();
-              nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
-            } catch (error) {
-              console.error(`Error fetching user ${id}`, error);
-              nameMap[id] = "";
-            }
-          }));
-    
-          setAgentNames(nameMap);
+            const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
+            const nameMap: Record<string, string> = {};
+
+            await Promise.all(
+                uniqueReferenceIds.map(async (id) => {
+                    try {
+                        const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+                        const data = await res.json();
+                        nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+                    } catch (error) {
+                        console.error(`Error fetching user ${id}`, error);
+                        nameMap[id] = "";
+                    }
+                })
+            );
+
+            setAgentNames(nameMap);
         };
-    
+
         if (posts.length > 0) {
-          fetchAgents();
+            fetchAgents();
         }
-      }, [posts]);
+    }, [posts]);
 
     return (
         <div>
             {/* Filters */}
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
-                    <label className="font-semibold text-xs whitespace-nowrap">
-                        Start Date:
-                    </label>
+                    <label className="font-semibold text-xs whitespace-nowrap">Start Date:</label>
                     <input
                         type="date"
                         value={startDate}
@@ -194,7 +194,17 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                     <thead className="bg-gray-100 sticky top-0 z-10">
                         <tr className="text-left border-l-4 border-orange-400">
                             <th className="px-6 py-3 font-semibold text-gray-700">Status</th>
-                            <th className="px-6 py-3 font-semibold text-gray-700">Date</th>
+                            <th
+                                className="px-6 py-3 font-semibold text-gray-700 cursor-pointer select-none"
+                                onClick={() =>
+                                    setDateSortOrder(dateSortOrder === "desc" ? "asc" : "desc")
+                                }
+                            >
+                                Date{" "}
+                                <span className="text-[10px] text-gray-500">
+                                    {dateSortOrder === "desc" ? "▼" : "▲"}
+                                </span>
+                            </th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Contact Person</th>
@@ -219,12 +229,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                                                 ${post.activitystatus.toLowerCase() === "quote-done"
                                                     ? "bg-slate-500 text-white"
                                                     : "bg-gray-200 text-gray-800"
-                                                }`}>
+                                                }`}
+                                        >
                                             {post.activitystatus}
                                         </span>
                                     </td>
                                     <td className="px-6 py-3">{formatDate(post.date_created)}</td>
-                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">
+                                        {agentNames[post.referenceid] || "N/A"}
+                                    </td>
                                     <td className="px-6 py-3 uppercase">{post.companyname}</td>
                                     <td className="px-6 py-3 capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-3">{post.quotationnumber}</td>
@@ -237,9 +250,9 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
                     <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700">
                         <tr>
                             <td className="px-6 py-3" colSpan={5}></td>
-                            <td className="px-6 py-3 text-green-700" colSpan={1}>Total Quotation Amount</td>
+                            <td className="px-6 py-3 text-green-700">Total Quotation Amount</td>
                             <td className="px-6 py-3">{formatCurrency(totalQuotationAmount)}</td>
-                            <td colSpan={2}></td>
+                            <td className="px-6 py-3">Quantity: {totalQuotationCount}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -269,4 +282,4 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     );
 };
 
-export default UsersTable;
+export default Table;

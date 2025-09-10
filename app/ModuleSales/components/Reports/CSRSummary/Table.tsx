@@ -13,52 +13,66 @@ interface Post {
     remarks: string;
 }
 
-interface UsersCardProps {
+interface TableProps {
     posts: Post[];
     handleEdit: (post: any) => void;
 }
 
-const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
+const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
+    // 🔹 Helper parse date
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
     };
 
+    // 🔹 Filter by date range
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
         return posts.filter((post) => {
             const postDate = parseDate(post.date_created);
             return (!start || !postDate || postDate >= start) &&
-                (!end || !postDate || postDate <= end);
+                   (!end || !postDate || postDate <= end);
         });
     }, [posts, startDate, endDate]);
 
-    const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+    // 🔹 Sort by date_created
+    const sortedPosts = useMemo(() => {
+        return [...filteredPosts].sort((a, b) => {
+            const dateA = new Date(a.date_created).getTime();
+            const dateB = new Date(b.date_created).getTime();
+            return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+        });
+    }, [filteredPosts, sortOrder]);
 
+    // 🔹 Pagination
+    const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
     const paginatedData = useMemo(() => {
         const startIdx = (currentPage - 1) * itemsPerPage;
-        return filteredPosts.slice(startIdx, startIdx + itemsPerPage);
-    }, [filteredPosts, currentPage, itemsPerPage]);
+        return sortedPosts.slice(startIdx, startIdx + itemsPerPage);
+    }, [sortedPosts, currentPage, itemsPerPage]);
 
+    // 🔹 Formatters
     const formatDate = (timestamp: string) => {
         const date = new Date(timestamp);
-        const options: Intl.DateTimeFormatOptions = {
-            year: 'numeric', month: 'short', day: 'numeric',
-            hour: 'numeric', minute: '2-digit', hour12: true,
-            timeZone: 'Asia/Manila',
-        };
-        return date.toLocaleString('en-US', options);
+        return date.toLocaleString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: "Asia/Manila",
+        });
     };
 
-    // Add this inside the component (before return)
     const formatCurrency = (value: number | string) => {
         const number = typeof value === "string" ? parseFloat(value) || 0 : value || 0;
         return number.toLocaleString("en-PH", {
@@ -67,11 +81,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
         });
     };
 
-
+    // 🔹 Pagination handler
     const goToPage = (page: number) => {
         setCurrentPage(Math.min(Math.max(page, 1), totalPages));
     };
 
+    // 🔹 Fetch agent names
     useEffect(() => {
         const fetchAgents = async () => {
             const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
@@ -91,10 +106,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
             setAgentNames(nameMap);
         };
 
-        if (posts.length > 0) {
-            fetchAgents();
-        }
+        if (posts.length > 0) fetchAgents();
     }, [posts]);
+
+    // 🔹 Totals
+    const totalQuotationAmount = useMemo(() => {
+        return filteredPosts.reduce((sum, p) => sum + (Number(p.quotationamount) || 0), 0);
+    }, [filteredPosts]);
+
+    const totalQuotationCount = useMemo(() => filteredPosts.length, [filteredPosts]);
 
     return (
         <div>
@@ -102,16 +122,32 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold">Start Date:</label>
-                    <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }} className="border px-3 py-2 rounded text-xs" />
+                    <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                        className="border px-3 py-2 rounded text-xs"
+                    />
                 </div>
                 <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold">End Date:</label>
-                    <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }} className="border px-3 py-2 rounded text-xs" />
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                        className="border px-3 py-2 rounded text-xs"
+                    />
                 </div>
                 <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold">Items per page:</label>
-                    <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="border px-3 py-2 rounded text-xs">
-                        {[10, 25, 50, 100].map((num) => <option key={num} value={num}>{num}</option>)}
+                    <select
+                        value={itemsPerPage}
+                        onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                        className="border px-3 py-2 rounded text-xs"
+                    >
+                        {[10, 25, 50, 100].map((num) => (
+                            <option key={num} value={num}>{num}</option>
+                        ))}
                     </select>
                 </div>
             </div>
@@ -121,8 +157,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
                         <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-                            <th className="px-6 py-4 font-semibold text-gray-700">Actions</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
+                            <th
+                                className="px-6 py-4 font-semibold text-gray-700 cursor-pointer select-none"
+                                onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+                            >
+                                Date {sortOrder === "desc" ? "▼" : "▲"}
+                            </th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
@@ -138,36 +178,47 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, handleEdit }) => {
                         ) : (
                             paginatedData.map((post) => (
                                 <tr key={post.id} className="border-b whitespace-nowrap">
-                                    <td className="px-6 py-4 text-xs">
-                                        <button
-                                            className="block px-4 py-2 text-[10px] font-bold text-black bg-blue-300 rounded-lg hover:bg-orange-300 hover:rounded-full hover:shadow-md w-full text-left flex items-center gap-1"
-                                            onClick={() => handleEdit(post)}
-                                        >
-                                            <CiEdit /> Edit
-                                        </button>
-                                    </td>
-
                                     <td className="px-6 py-4 text-xs">{formatDate(post.date_created)}</td>
                                     <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
                                     <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
-                                    <td className="px-6 py-4 text-xs capitalize">{formatCurrency(post.quotationamount)}</td>
+                                    <td className="px-6 py-4 text-xs">{formatCurrency(post.quotationamount)}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.remarks}</td>
                                 </tr>
                             ))
                         )}
                     </tbody>
+                    <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700 text-xs">
+                        <tr>
+                            <td colSpan={3}></td>
+                            <td className="px-6 py-3 text-green-700">Total Quotation Amount</td>
+                            <td className="px-6 py-3">{formatCurrency(totalQuotationAmount)}</td>
+                            <td className="px-6 py-3">Quantity: {totalQuotationCount}</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 
             {/* Pagination */}
             <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
-                <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="bg-gray-200 text-xs px-4 py-2 rounded">Previous</button>
+                <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="bg-gray-200 text-xs px-4 py-2 rounded"
+                >
+                    Previous
+                </button>
                 <span>Page {currentPage} of {totalPages || 1}</span>
-                <button onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages || totalPages === 0} className="bg-gray-200 text-xs px-4 py-2 rounded">Next</button>
+                <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="bg-gray-200 text-xs px-4 py-2 rounded"
+                >
+                    Next
+                </button>
             </div>
         </div>
     );
 };
 
-export default UsersTable;
+export default Table;
