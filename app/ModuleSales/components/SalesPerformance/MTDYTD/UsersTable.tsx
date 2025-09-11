@@ -389,7 +389,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
             })
           ) : (
             <tr>
-              <td colSpan={9} className="text-center py-4 border">
+              <td colSpan={9} className="text-center py-4 border text-xs">
                 No accounts available
               </td>
             </tr>
