@@ -7,7 +7,6 @@ interface Post {
     date_created: string;
     companyname: string;
     contactperson: string;
-    ticketreferencenumber: string;
     activitystatus: string;
     quotationamount: number;
     remarks: string;
@@ -150,7 +149,7 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                     <tbody className="divide-y divide-gray-100">
                         {paginatedData.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center py-4">No records available</td>
+                                <td colSpan={6} className="text-center py-4 text-xs">No records available</td>
                             </tr>
                         ) : (
                             paginatedData.map((post) => (

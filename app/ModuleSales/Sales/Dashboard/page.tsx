@@ -56,7 +56,7 @@ const DashboardPage: React.FC = () => {
   // Fetch all posts
   const fetchData = async () => {
     try {
-      const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
+      const response = await fetch("/api/ModuleSales/Dashboard/FetchProgress");
       const data = await response.json();
       setPosts(data.data);
     } catch (error) {

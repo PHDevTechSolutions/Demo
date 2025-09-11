@@ -8,33 +8,36 @@ if (!Xchire_databaseUrl) {
 }
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-export async function GET(req: Request) {
+/**
+ * GET /api/ModuleSales/UserManagement/CompanyAccounts
+ * Fetch all accounts from the database
+ */
+export async function GET() {
     try {
-        // Fetch only the required columns from the progress table
         const Xchire_fetch = await Xchire_sql`
             SELECT 
+                id,
                 referenceid,
-                tsm,
-                manager,
-                source,
-                typeactivity,
-                callstatus,
                 date_created,
-                typeclient,
-                companyname
+                companyname,
+                contactperson,
+                sonumber,
+                soamount,
+                activitystatus,
+                remarks
             FROM progress;
         `;
 
-        console.log("Fetched companies:", Xchire_fetch); // Debugging line
+        console.log("Xchire fetched accounts:", Xchire_fetch);
 
         return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
     } catch (Xchire_error: any) {
-        console.error("Error fetching companies:", Xchire_error);
+        console.error("Xchire error fetching accounts:", Xchire_error);
         return NextResponse.json(
-            { success: false, error: Xchire_error.message || "Failed to fetch companies." },
+            { success: false, error: Xchire_error.message || "Failed to fetch accounts." },
             { status: 500 }
         );
     }
 }
 
-export const dynamic = "force-dynamic"; // Ensure fresh data fetch
+export const dynamic = "force-dynamic"; // Always fetch the latest data

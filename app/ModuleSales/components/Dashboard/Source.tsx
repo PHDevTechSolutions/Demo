@@ -47,35 +47,6 @@ const ALLOWED_SOURCES = [
   "Walk-in / Showroom",
 ];
 
-const CustomTooltip = ({
-  visible,
-  x,
-  y,
-  source,
-  count,
-}: {
-  visible: boolean;
-  x: number;
-  y: number;
-  source: string;
-  count: number;
-}) => {
-  if (!visible) return null;
-  return (
-    <div
-      className="bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"
-      style={{
-        position: "fixed",
-        top: y - 50,
-        left: x + 20,
-      }}
-    >
-      <p className="font-semibold text-gray-800 text-xs">{source}</p>
-      <p className="text-cyan-500 font-semibold text-xs">Count: {count}</p>
-    </div>
-  );
-};
-
 const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
   // ✅ Filter accounts based on allowed sources OR Outbound Calls typeactivity
   const validAccounts = filteredAccounts.filter((post) => {
@@ -84,89 +55,71 @@ const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
       return false;
     }
 
-    // If source = "Outbound - Touchbase" -> replace with typeactivity if Outbound Calls
     if (post.source === "Outbound - Touchbase" && post.typeactivity === "Outbound calls") {
       return true;
     }
 
-    // If source is in allowed sources
-    if (ALLOWED_SOURCES.includes(post.source)) {
-      return true;
-    }
+    if (ALLOWED_SOURCES.includes(post.source)) return true;
 
     return false;
   });
 
-  // ✅ Normalize Outbound - Touchbase → Outbound Calls
-  const normalizedAccounts = validAccounts.map((post) => ({
-    ...post,
-    source: post.source === "Outbound - Touchbase" ? "Outbound - Touchbase" : post.source,
-  }));
-
-  // Group by source and count
-  const sourceCount: Record<string, number> = {};
+  // Group by source
   const sourceGroups: Record<string, Post[]> = {};
-
-  normalizedAccounts.forEach((post) => {
-    // Count
-    sourceCount[post.source] = (sourceCount[post.source] || 0) + 1;
-
-    // Group
-    if (!sourceGroups[post.source]) {
-      sourceGroups[post.source] = [];
-    }
-    sourceGroups[post.source].push(post);
+  validAccounts.forEach((post) => {
+    const key = post.source === "Outbound - Touchbase" ? "Outbound - Touchbase" : post.source;
+    if (!sourceGroups[key]) sourceGroups[key] = [];
+    sourceGroups[key].push(post);
   });
 
-  // Transform to array and assign colors
-  const data: DataItem[] = Object.entries(sourceCount).map(([source, count], i) => ({
+  // Prepare data for graph
+  const data: DataItem[] = Object.entries(sourceGroups).map(([source, posts], i) => ({
     source,
-    count,
+    count: posts.length,
     color: COLORS[i % COLORS.length],
   }));
-
-  // Max count for bar width scaling
   const maxCount = Math.max(...data.map((d) => d.count), 0);
-
-  // Total count of all sources
   const totalCount = data.reduce((acc, cur) => acc + cur.count, 0);
 
-  // Tooltip state
-  const [tooltip, setTooltip] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    source: string;
-    count: number;
-  }>({ visible: false, x: 0, y: 0, source: "", count: 0 });
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+
+  const openModal = (source: string) => {
+    setSelectedSource(source);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedSource(null);
+  };
 
   return (
     <section className="bg-white shadow-md rounded-lg overflow-hidden p-6 select-none">
-      {/* Header / Title */}
-      <h2 className="text-sm font-bold text-gray-800 mb-4">Source Breakdown</h2>
-      <p className="text-xs text-gray-500 mb-4">
-        Overview of accounts grouped by their source type for better tracking.
-      </p>
+      {/* Header */}
+      <div className="mb-4">
+        <h2 className="text-sm font-bold text-gray-800">Source Breakdown</h2>
+        <p className="text-xs text-gray-500 mt-1">
+          Overview of accounts grouped by their source type for better tracking.
+        </p>
+        <p className="text-xs text-green-700 mt-1 italic">
+          Click a bar to view companies per source
+        </p>
+      </div>
 
-      {/* Row 1: Graph + Legend */}
+      {/* Graph + Legend */}
       <div className="flex gap-6 mb-6">
         {/* Graph */}
         <div className="flex-1 relative max-h-[400px]">
-          {/* Bars */}
           <div className="flex flex-col gap-2 overflow-auto max-h-[400px]">
             {data.map(({ source, count, color }) => {
               const widthPercent = maxCount ? (count / maxCount) * 100 : 0;
               return (
-                <div key={source} className="flex items-center" style={{ cursor: "pointer" }}>
+                <div key={source} className="flex items-center justify-between cursor-pointer" onClick={() => openModal(source)}>
                   <div
-                    style={{
-                      flexGrow: 1,
-                      height: 30,
-                      backgroundColor: "#E5E7EB",
-                      borderRadius: 6,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
+                    className="flex-1 h-8 rounded overflow-hidden relative"
+                    style={{ backgroundColor: "#E5E7EB" }}
                   >
                     <div
                       style={{
@@ -176,32 +129,12 @@ const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
                         transition: "width 0.5s ease",
                       }}
                     />
-                    {widthPercent > 15 && (
-                      <span
-                        style={{
-                          position: "absolute",
-                          left: 8,
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          color: "white",
-                          fontWeight: 600,
-                          fontSize: 12,
-                        }}
-                      >
-                        {count}
-                      </span>
-                    )}
                   </div>
-                  {widthPercent <= 15 && (
-                    <div style={{ marginLeft: 8, minWidth: 24, color: "#374151", fontWeight: 600, fontSize: 12 }}>
-                      {count}
-                    </div>
-                  )}
+                  <span className="ml-2 text-xs font-semibold">{count}</span>
                 </div>
               );
             })}
           </div>
-          <CustomTooltip {...tooltip} />
         </div>
 
         {/* Legend */}
@@ -213,46 +146,38 @@ const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
               <span>{source}</span>
             </div>
           ))}
-
           <div className="mt-4 pt-4 border-t border-gray-300 text-gray-900 font-bold text-sm">
             Total Count: {totalCount}
           </div>
         </div>
       </div>
 
-      {/* Row 2: Detailed Companies */}
-      <div>
-        <h3 className="text-xs font-bold text-gray-700 mb-2">Companies by Source</h3>
-        {Object.entries(sourceGroups).map(([source, posts]) => (
-          <div key={source} className="mb-3">
-            <h4 className="text-xs font-semibold text-gray-800 mb-1">
-              {source} ({posts.length})
-            </h4>
-            <ul className="list-disc list-inside text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
-              {posts.map((item, idx) => {
-                const formattedDate = item.date_created
-                  ? new Date(item.date_created).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                  : "No Date";
-
-                return (
-                  <li key={idx}>
-                    <span className="font-semibold text-gray-700">{item.companyname}</span>{" "}
-                    <span className="text-gray-400 italic">| {formattedDate}</span>
-                  </li>
-                );
-              })}
+      {/* Modal */}
+      {showModal && selectedSource && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 w-11/12 max-w-lg max-h-[80vh] overflow-y-auto">
+            <h3 className="text-sm font-bold text-gray-800 mb-4">
+              Companies for {selectedSource} ({sourceGroups[selectedSource].length})
+            </h3>
+            <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
+              {sourceGroups[selectedSource].map((item, idx) => (
+                <li key={idx}>
+                  <span className="font-semibold">{item.companyname}</span>{" "}
+                  <span className="text-gray-400 italic">
+                    | {item.date_created ? new Date(item.date_created).toLocaleDateString() : "No Date"}
+                  </span>
+                </li>
+              ))}
             </ul>
+            <button
+              onClick={closeModal}
+              className="mt-4 bg-blue-600 text-white text-xs px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              Close
+            </button>
           </div>
-        ))}
-
-        {validAccounts.length === 0 && (
-          <p className="text-center text-gray-400 text-xs">No data available</p>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -93,7 +93,7 @@ const ListofUser: React.FC = () => {
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
-            const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
+            const response = await fetch("/api/ModuleSales/Reports/FetchFBMarketplace");
             const data = await response.json();
             setPosts(data.data);
         } catch (error) {

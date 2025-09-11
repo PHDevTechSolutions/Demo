@@ -88,7 +88,7 @@ const ListofUser: React.FC = () => {
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
-            const response = await fetch("/api/ModuleSales/Agents/SalesAssociateActivity/FetchActivity");
+            const response = await fetch("/api/ModuleSales/ConversionRate/FetchQuoteSO");
             const data = await response.json();
             setPosts(data.data);
         } catch (error) {
@@ -148,7 +148,7 @@ const ListofUser: React.FC = () => {
                     AgentLastname: agent ? agent.Lastname : "Unknown",
                 };
             })
-            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()) // Sorting by date_created
+            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
 
     // Handle editing a post

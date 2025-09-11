@@ -6,10 +6,11 @@ import {
   FiPhone,
   FiCheckCircle,
   FiXCircle,
-  FiAlertTriangle,
-  FiEye,
-  FiDownload,
   FiMinusCircle,
+  FiEye,
+  FiEyeOff,
+  FiChevronDown,
+  FiChevronUp,
 } from "react-icons/fi";
 
 interface Post {
@@ -36,20 +37,25 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
   const [touchbaseCalls, setTouchbaseCalls] = useState<Post[]>([]);
   const [totalCompanies, setTotalCompanies] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [showTable, setShowTable] = useState(false);
+  const [showTotal, setShowTotal] = useState(false);
+  const [totalLoaded, setTotalLoaded] = useState(false);
+
+  const [openSuccessful, setOpenSuccessful] = useState(true);
+  const [openUnsuccessful, setOpenUnsuccessful] = useState(true);
+  const [openNoStatus, setOpenNoStatus] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setTotalLoaded(false); // reset while loading
 
+        // Fetch Calls
         let calls: Post[] = [];
         if (filteredAccounts && filteredAccounts.length > 0) {
           calls = filteredAccounts;
         } else {
-          const res = await fetch(
-            "/api/ModuleSales/Task/DailyActivity/FetchProgress"
-          );
+          const res = await fetch("/api/ModuleSales/Dashboard/FetchCard");
           if (!res.ok) throw new Error("Failed to fetch progress");
           const json = await res.json();
           calls = Array.isArray(json) ? json : json.data || [];
@@ -62,9 +68,8 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
         );
         setTouchbaseCalls(outboundTouchbaseCalls);
 
-        const companyRes = await fetch(
-          "/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount"
-        );
+        // Fetch Companies
+        const companyRes = await fetch("/api/ModuleSales/Dashboard/FetchDatabase");
         if (!companyRes.ok) throw new Error("Failed to fetch companies");
         const companyJson = await companyRes.json();
         let companiesArray: Post[] = Array.isArray(companyJson)
@@ -81,9 +86,13 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
           );
         }
 
+        // ✅ Always set totalCompanies, default to 0
         setTotalCompanies(companiesArray.length || 0);
+        setTotalLoaded(true);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setTotalCompanies(0);
+        setTotalLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -114,132 +123,189 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
       (item.callstatus !== "Successful" && item.callstatus !== "Unsuccessful")
   );
 
-  const successfulCount = successfulCompanies.length;
-  const unsuccessfulCount = unsuccessfulCompanies.length;
-  const noStatusCount = noStatusCompanies.length;
-  const totalTouchbaseCalls =
-    successfulCount + unsuccessfulCount + noStatusCount;
+  // ✅ Just adjust the counts calculation
+  const successfulCount = filteredTouchbaseCalls.length > 0
+    ? filteredTouchbaseCalls.filter(item => item.callstatus === "Successful").length
+    : 0;
+
+  const unsuccessfulCount = filteredTouchbaseCalls.length > 0
+    ? filteredTouchbaseCalls.filter(item => item.callstatus === "Unsuccessful").length
+    : 0;
+
+  const noStatusCount = filteredTouchbaseCalls.length > 0
+    ? filteredTouchbaseCalls.filter(item => !item.callstatus || (item.callstatus !== "Successful" && item.callstatus !== "Unsuccessful")).length
+    : 0;
+
+  const totalTouchbaseCalls = filteredTouchbaseCalls.length > 0
+    ? successfulCount + unsuccessfulCount + noStatusCount
+    : 0;
+
 
   if (userDetails?.Role === "Territory Sales Manager") return null;
 
+  // Determine the header label
+let headerLabel = "Outbound Call - Touchbase";
+if (filteredTouchbaseCalls.length === 0) {
+  headerLabel = "Outbound Call - Touchbase (All data over time, no record for today)";
+}
+
+
   return (
     <section className="bg-white shadow-md rounded-lg p-6 select-none">
-      {loading ? (
-        <p className="text-gray-500 text-xs">Loading...</p>
-      ) : (
-        <>
-          <h2 className="text-sm font-bold text-gray-800 mb-4">
-            Outbound Call - Touchbase (MTD)
-          </h2>
+      <h2 className="text-sm font-bold text-gray-800 mb-4">
+  {headerLabel}
+</h2>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <div className="bg-yellow-100 rounded-lg p-4 shadow flex items-center gap-3">
-              <FiPhone className="text-yellow-600 text-3xl" />
-              <div>
-                <p className="text-xs text-yellow-700 font-semibold">
-                  Total Calls
-                </p>
-                <p className="text-2xl font-bold text-yellow-800">
-                  {totalTouchbaseCalls}
-                </p>
-              </div>
-            </div>
-            <div className="bg-green-100 rounded-lg p-4 shadow flex items-center gap-3">
-              <FiCheckCircle className="text-green-600 text-3xl" />
-              <div>
-                <p className="text-xs text-green-700 font-semibold">
-                  Successful
-                </p>
-                <p className="text-2xl font-bold text-green-800">
-                  {successfulCount}
-                </p>
-              </div>
-            </div>
-            <div className="bg-red-100 rounded-lg p-4 shadow flex items-center gap-3">
-              <FiXCircle className="text-red-600 text-3xl" />
-              <div>
-                <p className="text-xs text-red-700 font-semibold">
-                  Unsuccessful
-                </p>
-                <p className="text-2xl font-bold text-red-800">
-                  {unsuccessfulCount}
-                </p>
-              </div>
-            </div>
-            <div className="bg-gray-100 rounded-lg p-4 shadow flex items-center gap-3">
-              <FiMinusCircle className="text-gray-600 text-3xl" />
-              <div>
-                <p className="text-xs text-gray-700 font-semibold">No Status</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {noStatusCount}
-                </p>
-              </div>
-            </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-4 gap-4 mb-4">
+        <div className="bg-yellow-100 rounded-lg p-4 shadow flex items-center gap-3">
+          <FiPhone className="text-yellow-600 text-3xl" />
+          <div>
+            <p className="text-xs text-yellow-700 font-semibold">
+              Total Calls
+            </p>
+            <p className="text-2xl font-bold text-yellow-800">
+              {totalTouchbaseCalls}
+            </p>
           </div>
+        </div>
+        <div className="bg-green-100 rounded-lg p-4 shadow flex items-center gap-3">
+          <FiCheckCircle className="text-green-600 text-3xl" />
+          <div>
+            <p className="text-xs text-green-700 font-semibold">
+              Successful
+            </p>
+            <p className="text-2xl font-bold text-green-800">
+              {successfulCount}
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-100 rounded-lg p-4 shadow flex items-center gap-3">
+          <FiXCircle className="text-red-600 text-3xl" />
+          <div>
+            <p className="text-xs text-red-700 font-semibold">
+              Unsuccessful
+            </p>
+            <p className="text-2xl font-bold text-red-800">
+              {unsuccessfulCount}
+            </p>
+          </div>
+        </div>
+        <div className="bg-gray-100 rounded-lg p-4 shadow flex items-center gap-3">
+          <FiMinusCircle className="text-gray-600 text-3xl" />
+          <div>
+            <p className="text-xs text-gray-700 font-semibold">No Status</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {noStatusCount}
+            </p>
+          </div>
+        </div>
+      </div>
 
-          {/* ✅ Successful Companies */}
-          {successfulCompanies.length > 0 && (
-            <div className="bg-green-50 rounded-lg p-4 mb-4 border">
-              <h3 className="text-xs font-bold text-green-700 mb-2 flex items-center gap-2">
+      <div className="space-y-4">
+        {/* Collapsible Sections */}
+        {successfulCompanies.length > 0 && (
+          <div className="bg-green-50 rounded-lg p-4 border">
+            <div
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => setOpenSuccessful(!openSuccessful)}
+            >
+              <div className="flex items-center gap-2">
                 <FiCheckCircle className="text-green-600" />
-                Successful Companies
-              </h3>
-              <ul className="list-disc list-inside text-xs text-green-800 max-h-32 overflow-y-auto">
+                <h3 className="text-xs font-bold text-green-700">
+                  Successful Companies ({successfulCompanies.length})
+                </h3>
+              </div>
+              {openSuccessful ? <FiChevronUp /> : <FiChevronDown />}
+            </div>
+            {openSuccessful && (
+              <ul className="list-disc list-inside text-xs text-green-800 max-h-32 overflow-y-auto mt-2">
                 {successfulCompanies.map((item, idx) => (
                   <li key={idx}>{item.companyname}</li>
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* ✅ Unsuccessful Companies */}
-          {unsuccessfulCompanies.length > 0 && (
-            <div className="bg-red-50 rounded-lg p-4 mb-4 border">
-              <h3 className="text-xs font-bold text-red-700 mb-2 flex items-center gap-2">
+        {unsuccessfulCompanies.length > 0 && (
+          <div className="bg-red-50 rounded-lg p-4 border">
+            <div
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => setOpenUnsuccessful(!openUnsuccessful)}
+            >
+              <div className="flex items-center gap-2">
                 <FiXCircle className="text-red-600" />
-                Unsuccessful Companies
-              </h3>
-              <ul className="list-disc list-inside text-xs text-red-800 max-h-32 overflow-y-auto">
+                <h3 className="text-xs font-bold text-red-700">
+                  Unsuccessful Companies ({unsuccessfulCompanies.length})
+                </h3>
+              </div>
+              {openUnsuccessful ? <FiChevronUp /> : <FiChevronDown />}
+            </div>
+            {openUnsuccessful && (
+              <ul className="list-disc list-inside text-xs text-red-800 max-h-32 overflow-y-auto mt-2">
                 {unsuccessfulCompanies.map((item, idx) => (
                   <li key={idx}>{item.companyname}</li>
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* ✅ Companies without Status */}
-          {noStatusCompanies.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 border">
-              <h3 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-2">
+        {noStatusCompanies.length > 0 && (
+          <div className="bg-gray-50 rounded-lg p-4 border">
+            <div
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => setOpenNoStatus(!openNoStatus)}
+            >
+              <div className="flex items-center gap-2">
                 <FiMinusCircle className="text-gray-600" />
-                Companies with No Status
-              </h3>
-              <ul className="list-disc list-inside text-xs text-gray-600 max-h-32 overflow-y-auto">
+                <h3 className="text-xs font-bold text-gray-700">
+                  Companies with No Status ({noStatusCompanies.length})
+                </h3>
+              </div>
+              {openNoStatus ? <FiChevronUp /> : <FiChevronDown />}
+            </div>
+            {openNoStatus && (
+              <ul className="list-disc list-inside text-xs text-gray-600 max-h-32 overflow-y-auto mt-2">
                 {noStatusCompanies.map((item, idx) => (
                   <li key={idx}>{item.companyname}</li>
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
+        )}
+      </div>
 
-          {/* Total Companies */}
-          <h2 className="text-sm font-bold text-gray-800 mt-6 mb-2">
-            Companies
-          </h2>
-          <div className="bg-blue-100 rounded-lg p-4 shadow flex items-center gap-3">
-            <FiDatabase className="text-blue-600 text-3xl" />
-            <div>
-              <p className="text-xs text-blue-700 font-semibold">
-                Total Companies
-              </p>
-              <p className="text-2xl font-bold text-blue-800">
-                {totalCompanies}
-              </p>
+      {/* Total Companies */}
+      <h2 className="text-sm font-bold text-gray-800 mt-6 mb-2">
+        Companies
+      </h2>
+      <div className="bg-blue-100 rounded-lg p-4 shadow flex items-center justify-between overflow-hidden relative">
+        <div className="flex items-center gap-3">
+          <FiDatabase className="text-blue-600 text-3xl" />
+          <div>
+            <p className="text-xs text-blue-700 font-semibold">
+              Total Companies
+            </p>
+            <div
+              className={`text-2xl font-bold text-blue-800 transition-all duration-700 ease-out ${totalLoaded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
+                }`}
+            >
+              {showTotal && totalLoaded ? totalCompanies : "***"}
             </div>
           </div>
-        </>
-      )}
+        </div>
+        <button
+          className="p-2 rounded-full hover:bg-blue-200 transition flex items-center gap-1"
+          onClick={() => setShowTotal(!showTotal)}
+          title={showTotal ? "Hide Total" : "Show Total"}
+        >
+          <span className="text-xs underline text-blue-600">Show</span>
+          {showTotal ? <FiEyeOff className="text-blue-600 text-xl" /> : <FiEye className="text-blue-600 text-xl" />}
+        </button>
+      </div>
     </section>
   );
 };

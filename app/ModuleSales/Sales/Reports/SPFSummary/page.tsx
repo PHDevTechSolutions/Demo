@@ -96,7 +96,7 @@ const ListofUser: React.FC = () => {
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
-            const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
+            const response = await fetch("/api/ModuleSales/Reports/FetchSPF");
             const data = await response.json();
             console.log("Fetched data:", data);
             setPosts(data.data);

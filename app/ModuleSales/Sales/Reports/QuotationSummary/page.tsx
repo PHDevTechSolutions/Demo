@@ -71,7 +71,7 @@ const ListofUser: React.FC = () => {
         setLoadingAccounts(true);
 
         try {
-            let url = "/api/ModuleSales/Reports/AccountManagement/FetchSales";
+            let url = "/api/ModuleSales/Reports/FetchQuotation";
 
             // Kung hindi Super Admin, magdagdag ng filter
             if (userDetails.Role !== "Super Admin") {
