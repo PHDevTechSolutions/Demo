@@ -1,3 +1,4 @@
+"use client";
 import React, { useMemo, useState } from "react";
 import GaugeQChart from "./Chart/GaugeQChart";
 
@@ -7,6 +8,8 @@ interface QuotationProps {
 
 const Quotation: React.FC<QuotationProps> = ({ records }) => {
   const [showCharts, setShowCharts] = useState(false);
+  const [showComputation, setShowComputation] = useState(false);
+
   // Filter Quote-Done records
   const quoteDoneRecords = useMemo(() => {
     return records.filter(
@@ -105,15 +108,24 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-sm font-bold mb-4">Quotations</h2>
-          <button
-            onClick={() => setShowCharts((prev) => !prev)}
-            className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
-          >
-            {showCharts ? "Hide Chart" : "Show Chart"}
-          </button>
+        <div className="flex justify-between items-center mb-4 gap-2">
+          <h2 className="text-sm font-bold">Quotations</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowCharts((prev) => !prev)}
+              className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
+            >
+              {showCharts ? "Hide Chart" : "Show Chart"}
+            </button>
+            <button
+              onClick={() => setShowComputation((prev) => !prev)}
+              className="px-3 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600"
+            >
+              {showComputation ? "Hide Computation" : "View Computation"}
+            </button>
+          </div>
         </div>
+
         <p className="text-xs text-gray-500 mb-4">
           A record of all customer quotations, including those pending approval, approved, or disapproved.
         </p>
@@ -135,11 +147,52 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
           </div>
         )}
 
+        {/* Computation Details */}
+        {showComputation && (
+          <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
+            <h3 className="font-bold mb-2">Computation Details</h3>
+            <ul className="list-disc ml-5 space-y-1">
+              <li>
+                Total Quotations (Quote-Done) = Count of records with status = Quote-Done →{" "}
+                <b>{totalQuoteCount}</b>
+              </li>
+              <li>
+                Total Quotation Amount = Sum of Quotation Amounts (Quote-Done) →{" "}
+                <b>
+                  ₱{totalQuoteAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </b>
+              </li>
+              <li>
+                Total SO Quantity = Count of records with status = SO-Done →{" "}
+                <b>{quoteToSOCount}</b>
+              </li>
+              <li>
+                Total SO Amount = Sum of SO Amounts (SO-Done) →{" "}
+                <b>
+                  ₱{quoteToSOAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </b>
+              </li>
+              <li>
+                Total Actual Sales = Sum of Actual Sales (Delivered) →{" "}
+                <b>
+                  ₱{totalPaidActualSales.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </b>
+              </li>
+              <li>
+                Quotation to SI Conversion = (Total Actual Sales ÷ Total Quotation Amount) × 100 →{" "}
+                <b>{quoteToSIPercent.toFixed(2)}%</b>
+              </li>
+            </ul>
+          </div>
+        )}
+
+
+        {/* Default Table */}
         {aggregatedData.length === 0 ? (
           <p className="text-gray-500 text-xs">No quotations with status "Quote-Done".</p>
         ) : (
           <div className="overflow-auto border rounded">
-            {!showCharts && (
+            {!showCharts && !showComputation && (
               <table className="w-full text-xs table-auto">
                 <thead className="bg-gray-100">
                   <tr className="text-left">

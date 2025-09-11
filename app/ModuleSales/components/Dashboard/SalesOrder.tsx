@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+"use client";
+import React, { useMemo, useState } from "react";
 
 interface RecordType {
   activitystatus?: string;
@@ -12,6 +13,8 @@ interface SalesOrderProps {
 }
 
 const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
+  const [showComputation, setShowComputation] = useState(false);
+
   // SO-Done summary
   const soDoneSummary = useMemo(() => {
     const soDoneRecords = records.filter(
@@ -49,15 +52,58 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
-        <h2 className="text-sm font-bold mb-4">Sales Orders Summary</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-sm font-bold">Sales Orders Summary</h2>
+          <button
+            onClick={() => setShowComputation((prev) => !prev)}
+            className="px-3 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600"
+          >
+            {showComputation ? "Hide Computation" : "View Computation"}
+          </button>
+        </div>
+
         <p className="text-xs text-gray-500 mb-4">
           Overview of all sales orders, showing completed and delivered transactions.
         </p>
+
+        {/* Computation Details */}
+        {showComputation && (
+          <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
+            <h3 className="font-bold mb-2">Computation Details</h3>
+            <ul className="list-disc ml-5 space-y-1">
+              <li>
+                Total SO Count = Count of records with status = SO-Done →{" "}
+                <b>{soDoneSummary.totalCount}</b>
+              </li>
+              <li>
+                Total SO Amount = Sum of SO Amounts (SO-Done) →{" "}
+                <b>
+                  ₱{soDoneSummary.totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </b>
+              </li>
+              <li>
+                Total Delivered Count = Count of records with status = Delivered →{" "}
+                <b>{soToSICount}</b>
+              </li>
+              <li>
+                Total Delivered Sales = Sum of Actual Sales (Delivered) →{" "}
+                <b>
+                  ₱{soToSIAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                </b>
+              </li>
+              <li>
+                SO to SI Conversion = (Total Delivered Sales ÷ Total SO Amount) × 100 →{" "}
+                <b>{soToSIPercent.toFixed(2)}%</b>
+              </li>
+            </ul>
+          </div>
+        )}
 
         {soDoneSummary.totalCount === 0 ? (
           <p className="text-gray-500 text-xs">No Sales Orders with status "SO-Done".</p>
         ) : (
           <div className="mb-6 border rounded-md overflow-auto">
+            {!showComputation && (
             <table className="w-full text-xs table-auto">
               <thead className="bg-gray-100">
                 <tr className="text-left">
@@ -82,6 +128,7 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
                 </tr>
               </tbody>
             </table>
+            )}
           </div>
         )}
       </div>
