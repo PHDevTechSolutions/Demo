@@ -107,7 +107,7 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
             <table className="w-full text-xs table-auto">
               <thead className="bg-gray-100">
                 <tr className="text-left">
-                  <th className="px-4 py-2">Total Count</th>
+                  <th className="px-4 py-2">Total SO</th>
                   <th className="px-4 py-2">SO Amount</th>
                   <th className="px-4 py-2">SO to SI Conversion (QTY)</th>
                   <th className="px-4 py-2">SO to SI Conversion (Peso Value)</th>

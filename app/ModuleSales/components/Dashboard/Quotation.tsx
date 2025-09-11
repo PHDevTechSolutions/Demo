@@ -61,6 +61,8 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
   // Calculations
   const quoteToSOCount = soStats.quantity; // QTY
   const quoteToSOAmount = soStats.totalSOAmount; // Peso Value
+  const quoteToSOPercent =
+    totalQuoteCount > 0 ? (quoteToSOCount / totalQuoteCount) * 100 : 0; // NEW %
   const quoteToSIPercent =
     totalQuoteAmount > 0 ? (totalPaidActualSales / totalQuoteAmount) * 100 : 0;
 
@@ -80,7 +82,7 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
           handlingMs = end.getTime() - start.getTime();
         }
-      } catch { }
+      } catch {}
 
       totalCount += 1;
       totalAmount += amount;
@@ -127,22 +129,43 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
         </div>
 
         <p className="text-xs text-gray-500 mb-4">
-          A record of all customer quotations, including those pending approval, approved, or disapproved.
+          A record of all customer quotations, including those pending approval,
+          approved, or disapproved.
         </p>
 
         {/* Gauges */}
         {showCharts && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div className="p-2 flex flex-col items-center border-r">
-              <GaugeQChart value={quoteToSOCount} label="Quote to SO Conversion (QTY)" color="#3B82F6" />
+              <GaugeQChart
+                value={quoteToSOCount}
+                label="Quote to SO Conversion (QTY)"
+                color="#3B82F6"
+              />
             </div>
 
             <div className="p-2 flex flex-col items-center border-r">
-              <GaugeQChart value={quoteToSOAmount} label="Quote to SO Conversion (Peso Value)" color="#10B981" />
+              <GaugeQChart
+                value={quoteToSOAmount}
+                label="Quote to SO Conversion (Peso Value)"
+                color="#10B981"
+              />
+            </div>
+
+            <div className="p-2 flex flex-col items-center border-r">
+              <GaugeQChart
+                value={quoteToSOPercent}
+                label="Quote to SO Conversion (%)"
+                color="#6366F1"
+              />
             </div>
 
             <div className="p-2 flex flex-col items-center">
-              <GaugeQChart value={quoteToSIPercent} label="Quotation to SI Conversion (%)" color="#F59E0B" />
+              <GaugeQChart
+                value={quoteToSIPercent}
+                label="Quotation to SI Conversion (%)"
+                color="#F59E0B"
+              />
             </div>
           </div>
         )}
@@ -153,55 +176,69 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
             <h3 className="font-bold mb-2">Computation Details</h3>
             <ul className="list-disc ml-5 space-y-1">
               <li>
-                Total Quotations (Quote-Done) = Count of records with status = Quote-Done →{" "}
-                <b>{totalQuoteCount}</b>
+                Total Quotations (Quote-Done) = <b>{totalQuoteCount}</b>
               </li>
               <li>
-                Total Quotation Amount = Sum of Quotation Amounts (Quote-Done) →{" "}
+                Total Quotation Amount ={" "}
                 <b>
-                  ₱{totalQuoteAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                  ₱
+                  {totalQuoteAmount.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
                 </b>
               </li>
               <li>
-                Total SO Quantity = Count of records with status = SO-Done →{" "}
-                <b>{quoteToSOCount}</b>
+                Total SO Quantity = <b>{quoteToSOCount}</b>
               </li>
               <li>
-                Total SO Amount = Sum of SO Amounts (SO-Done) →{" "}
+                Total SO Amount ={" "}
                 <b>
-                  ₱{quoteToSOAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                  ₱
+                  {quoteToSOAmount.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
                 </b>
               </li>
               <li>
-                Total Actual Sales = Sum of Actual Sales (Delivered) →{" "}
+                Quote to SO Conversion (%) = (SO Count ÷ Quote Count) × 100 ={" "}
+                <b>{quoteToSOPercent.toFixed(2)}%</b>
+              </li>
+              <li>
+                Total Actual Sales (Delivered) ={" "}
                 <b>
-                  ₱{totalPaidActualSales.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                  ₱
+                  {totalPaidActualSales.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                  })}
                 </b>
               </li>
               <li>
-                Quotation to SI Conversion = (Total Actual Sales ÷ Total Quotation Amount) × 100 →{" "}
+                Quotation to SI Conversion (%) = (Total Actual Sales ÷ Total
+                Quotation Amount) × 100 ={" "}
                 <b>{quoteToSIPercent.toFixed(2)}%</b>
               </li>
             </ul>
           </div>
         )}
 
-
         {/* Default Table */}
         {aggregatedData.length === 0 ? (
-          <p className="text-gray-500 text-xs">No quotations with status "Quote-Done".</p>
+          <p className="text-gray-500 text-xs">
+            No quotations with status "Quote-Done".
+          </p>
         ) : (
           <div className="overflow-auto border rounded">
             {!showCharts && !showComputation && (
               <table className="w-full text-xs table-auto">
                 <thead className="bg-gray-100">
                   <tr className="text-left">
-                    <th className="px-4 py-2">Total Count</th>
+                    <th className="px-4 py-2">Total Quote</th>
                     <th className="px-4 py-2">Total Amount</th>
                     <th className="px-4 py-2">Handling Time</th>
-                    <th className="px-4 py-2">Quote to SO Conversion (QTY)</th>
+                    <th className="px-4 py-2">Quote to SO (QTY)</th>
                     <th className="px-4 py-2">Quote to SO Conversion (Peso Value)</th>
-                    <th className="px-4 py-2">Quotation to SI Conversion</th>
+                    <th className="px-4 py-2">Quote to SO Conversion (%)</th>
+                    <th className="px-4 py-2">Quotation to SI Conversion (%)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -210,14 +247,25 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="px-4 py-2">{totalCount}</td>
                         <td className="px-4 py-2">
-                          ₱{totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                          ₱
+                          {totalAmount.toLocaleString("en-PH", {
+                            minimumFractionDigits: 2,
+                          })}
                         </td>
                         <td className="px-4 py-2">{handlingTimeFormatted}</td>
                         <td className="px-4 py-2">{quoteToSOCount}</td>
                         <td className="px-4 py-2">
-                          ₱{quoteToSOAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                          ₱
+                          {quoteToSOAmount.toLocaleString("en-PH", {
+                            minimumFractionDigits: 2,
+                          })}
                         </td>
-                        <td className="px-4 py-2">{quoteToSIPercent.toFixed(2)}%</td>
+                        <td className="px-4 py-2">
+                          {quoteToSOPercent.toFixed(2)}%
+                        </td>
+                        <td className="px-4 py-2">
+                          {quoteToSIPercent.toFixed(2)}%
+                        </td>
                       </tr>
                     )
                   )}
