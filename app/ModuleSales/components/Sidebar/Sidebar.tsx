@@ -74,8 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     const allowed: Record<string, string[]> = {
       "Admin": menuItems.map(m => m.title),
       "Super Admin": menuItems.map(m => m.title),
-      "Manager": ["Session Logs","Sales Performance","Conversion Rates","National","My Team","Client Activity Board","Help Center","Xend Mail","Global Employees","My Profile","What is Taskflow?"],
-      "Special Access": ["Customer Database","Activities","Sales Performance","Conversion Rates","National","My Team","Client Activity Board","Help Center","Xend Mail","Global Employees","My Profile","What is Taskflow?"],
+      "Manager": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
+      "Special Access": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
       "Territory Sales Manager": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
       "Territory Sales Associate": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","Work Management","Reports","Help Center","What is Taskflow?"]
     };

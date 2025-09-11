@@ -181,6 +181,8 @@ const NewClientAccounts: React.FC = () => {
                             ? post?.referenceid === referenceID
                             : userDetails.Role === "Territory Sales Manager"
                                 ? post?.tsm === referenceID
+                            : userDetails.Role === "Manager"
+                                ? post?.manager === referenceID    
                                 : false;
 
                 const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;

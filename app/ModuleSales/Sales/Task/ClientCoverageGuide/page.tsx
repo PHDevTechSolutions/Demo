@@ -122,6 +122,7 @@ const ListofUser: React.FC = () => {
                     "Special Access",
                     "Territory Sales Associate",
                     "Territory Sales Manager",
+                    "Manager",
                 ];
 
                 const matchesRole = allowedRoles.includes(userDetails.Role);
