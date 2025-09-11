@@ -22,7 +22,7 @@ const ListofUser: React.FC = () => {
     const [tsm, setTsm] = useState("");
 
     const [userDetails, setUserDetails] = useState({
-        UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Manager: "", TSM: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
+        UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Manager: "", TSM: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "", profilePicture: "",
     });
 
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
@@ -59,6 +59,7 @@ const ListofUser: React.FC = () => {
                         Company: data.Company || "",
                         TargetQuota: data.TargetQuota || "",
                         ReferenceID: data.ReferenceID || "",
+                        profilePicture: data.profilePicture || "",
                     });
                     setReferenceID(data.ReferenceID || "");
                     setManager(data.Manager || "");
@@ -222,7 +223,7 @@ const ListofUser: React.FC = () => {
                                         </div>
                                     ) : (
                                         <>
-                                            <Table posts={filteredAccounts} />
+                                            <Table posts={filteredAccounts} userDetails={userDetails}/>
                                         </>
                                     )}
                                 </div>

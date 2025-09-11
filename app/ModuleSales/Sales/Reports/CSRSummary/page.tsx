@@ -152,7 +152,10 @@ const ListofUser: React.FC = () => {
                 const isWithinDateRange =
                     (!startDate || (postDate && postDate >= new Date(startDate))) &&
                     (!endDate || (postDate && postDate <= new Date(endDate)));
-                const isFromCSRInquiries = post?.typeclient?.toLowerCase() === "csr inquiries";
+                const isFromCSRInquiries =
+                    post?.typeclient?.toLowerCase() === "csr inquiries" ||
+                    post?.typeclient?.toLowerCase() === "csr client";
+
                 const referenceID = userDetails.ReferenceID;
                 const matchesRole =
                     userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"

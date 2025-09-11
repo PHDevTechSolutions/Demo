@@ -142,10 +142,10 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                             >
                                 Date {sortOrder === "desc" ? "▼" : "▲"}
                             </th>
-                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Amount</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
                         </tr>
                     </thead>
@@ -158,10 +158,10 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                             paginatedData.map((post) => (
                                 <tr key={post.id} className="border-b whitespace-nowrap">
                                     <td className="px-6 py-4 text-xs">{formatDate(post.date_created)}</td>
-                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
-                                    <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
-                                    <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{formatCurrency(post.quotationamount)}</td>
+                                    <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
+                                    <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.remarks}</td>
                                 </tr>
                             ))
@@ -169,9 +169,9 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                     </tbody>
                     <tfoot className="bg-gray-200 sticky bottom-0 z-10 font-bold text-gray-700 text-xs">
                         <tr>
-                            <td colSpan={4} className="px-6 py-3"></td>
                             <td className="px-6 py-3 text-green-700">Total Amount</td>
                             <td className="px-6 py-3">{formatCurrency(totalAmount)} | Quantity: {totalCount}</td>
+                            <td colSpan={4} className="px-6 py-3"></td>
                         </tr>
                     </tfoot>
                 </table>

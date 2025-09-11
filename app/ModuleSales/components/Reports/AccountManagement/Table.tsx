@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo, useEffect } from "react";
 import Pagination from "./Pagination";
 import Export from "./Export";
@@ -12,11 +14,23 @@ interface Post {
   targetquota: number;
 }
 
-interface UsersCardProps {
-  posts: Post[];
+interface UserDetails {
+  ReferenceID: string;
+  Firstname: string;
+  Lastname: string;
+  Manager: string;
+  TSM: string;
+  Role: string;
+  profilePicture?: string;
+  [key: string]: any;
 }
 
-const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
+interface UsersCardProps {
+  posts: Post[];
+  userDetails: UserDetails;
+}
+
+const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
   const [filterTypeClient, setFilterTypeClient] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
@@ -32,19 +46,21 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
 
   useEffect(() => {
     const fetchAgents = async () => {
-      const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
+      const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
       const nameMap: Record<string, string> = {};
 
-      await Promise.all(uniqueReferenceIds.map(async (id) => {
-        try {
-          const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
-          const data = await res.json();
-          nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
-        } catch (error) {
-          console.error(`Error fetching user ${id}`, error);
-          nameMap[id] = "";
-        }
-      }));
+      await Promise.all(
+        uniqueReferenceIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+            const data = await res.json();
+            nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+          } catch (error) {
+            console.error(`Error fetching user ${id}`, error);
+            nameMap[id] = "";
+          }
+        })
+      );
 
       setAgentNames(nameMap);
     };
@@ -64,9 +80,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     {}
   );
 
-  const formatSales = (
-    value: number | string | null | undefined
-  ) => {
+  const formatSales = (value: number | string | null | undefined) => {
     const parsed =
       typeof value === "string"
         ? parseFloat(value)
@@ -89,24 +103,22 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     const start = parseDate(startDate);
     const end = parseDate(endDate);
 
-    const filteredGroups = Object.entries(groupedData).filter(
-      ([_, entries]) => {
-        const filteredEntries = entries.filter((post) => {
-          const matchesTypeClient =
-            filterTypeClient === "All" ||
-            post.typeclient.toUpperCase() === filterTypeClient.toUpperCase();
+    const filteredGroups = Object.entries(groupedData).filter(([_, entries]) => {
+      const filteredEntries = entries.filter((post) => {
+        const matchesTypeClient =
+          filterTypeClient === "All" ||
+          post.typeclient.toUpperCase() === filterTypeClient.toUpperCase();
 
-          const postDate = parseDate(post.date_created);
-          const matchesDateRange =
-            (!start || !postDate || postDate >= start) &&
-            (!end || !postDate || postDate <= end);
+        const postDate = parseDate(post.date_created);
+        const matchesDateRange =
+          (!start || !postDate || postDate >= start) &&
+          (!end || !postDate || postDate <= end);
 
-          return matchesTypeClient && matchesDateRange;
-        });
+        return matchesTypeClient && matchesDateRange;
+      });
 
-        return filteredEntries.length > 0;
-      }
-    );
+      return filteredEntries.length > 0;
+    });
 
     const mapped = filteredGroups.map(([companyName, entries]) => {
       const filteredEntries = entries.filter((post) => {
@@ -130,8 +142,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         return sum + (isNaN(value) ? 0 : value);
       }, 0);
 
+      // Compute averageSales
       const averageSales =
         filteredEntries.length > 0 ? totalSales / filteredEntries.length : 0;
+
+      const latestDate = filteredEntries
+        .map((p) => parseDate(p.date_created))
+        .filter((d): d is Date => d !== null)
+        .sort((a, b) => b.getTime() - a.getTime())[0];
+
       const targetQuota = filteredEntries[0]?.targetquota || 0;
       const typeClients = Array.from(
         new Set(filteredEntries.map((e) => e.typeclient.toUpperCase()))
@@ -139,10 +158,21 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       const referenceid = filteredEntries[0]?.referenceid || "";
       const agentName = agentNames[referenceid] || "";
 
-      return { companyName, totalSales, averageSales, typeClients, targetQuota, agentName };
+      return {
+        companyName,
+        totalSales,
+        averageSales, // <-- ADD THIS
+        typeClients,
+        targetQuota,
+        agentName,
+        latestDate: latestDate ? latestDate.toISOString().split("T")[0] : "",
+      };
     });
 
-    mapped.sort((a, b) => b.averageSales - a.averageSales);
+
+    // Sort by totalSales (pinakamataas muna)
+    mapped.sort((a, b) => b.totalSales - a.totalSales);
+
     return mapped;
   }, [groupedData, filterTypeClient, startDate, endDate, agentNames]);
 
@@ -151,15 +181,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     const start = (currentPage - 1) * itemsPerPage;
     return filteredAndSortedData.slice(start, start + itemsPerPage);
   }, [filteredAndSortedData, currentPage, itemsPerPage]);
-
-  const totalAchievement = filteredAndSortedData.reduce((sum, item) => {
-    const target = Number(String(item.targetQuota).replace(/,/g, ""));
-    if (item.totalSales > 0 && !isNaN(target) && target > 0) {
-      const percent = (item.totalSales / target) * 100;
-      return sum + percent;
-    }
-    return sum;
-  }, 0);
 
   const grandTotal = filteredAndSortedData.reduce(
     (sum, item) => sum + item.totalSales,
@@ -172,9 +193,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(e.target.value));
     setCurrentPage(1);
   };
@@ -185,13 +204,21 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
       <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <label htmlFor="typeClientFilter" className="font-semibold text-xs whitespace-nowrap">Filter by Type of Client:</label>
-            <select id="typeClientFilter" value={filterTypeClient}
+            <label
+              htmlFor="typeClientFilter"
+              className="font-semibold text-xs whitespace-nowrap"
+            >
+              Filter by Type of Client:
+            </label>
+            <select
+              id="typeClientFilter"
+              value={filterTypeClient}
               onChange={(e) => {
                 setFilterTypeClient(e.target.value);
                 setCurrentPage(1);
               }}
-              className="border px-3 py-2 rounded text-xs">
+              className="border px-3 py-2 rounded text-xs"
+            >
               {uniqueTypeClients.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -201,8 +228,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="font-semibold text-xs whitespace-nowrap">Start Date:</label>
-            <input type="date" value={startDate}
+            <label className="font-semibold text-xs whitespace-nowrap">
+              Start Date:
+            </label>
+            <input
+              type="date"
+              value={startDate}
               onChange={(e) => {
                 setStartDate(e.target.value);
                 setCurrentPage(1);
@@ -212,8 +243,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="font-semibold text-xs whitespace-nowrap">End Date:</label>
-            <input type="date" value={endDate}
+            <label className="font-semibold text-xs whitespace-nowrap">
+              End Date:
+            </label>
+            <input
+              type="date"
+              value={endDate}
               onChange={(e) => {
                 setEndDate(e.target.value);
                 setCurrentPage(1);
@@ -224,9 +259,12 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
         </div>
 
         <div className="flex-shrink-0 flex items-center gap-2">
-          <select id="itemsPerPage" value={itemsPerPage}
+          <select
+            id="itemsPerPage"
+            value={itemsPerPage}
             onChange={handleItemsPerPageChange}
-            className="border px-3 py-2 rounded text-xs">
+            className="border px-3 py-2 rounded text-xs"
+          >
             {[10, 25, 50, 100, 500, 1000].map((num) => (
               <option key={num} value={num}>
                 {num}
@@ -246,7 +284,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
               <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Type of Client</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales (SI)</th>
-              <th className="px-6 py-4 font-semibold text-gray-700">Achievement</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -258,25 +296,29 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts }) => {
               </tr>
             ) : (
               paginatedData.map(
-                ({ companyName, totalSales, typeClients, averageSales, targetQuota, agentName }) => {
-                  const target = Number(String(targetQuota).replace(/,/g, ""));
-                  const isValidTarget = !isNaN(target) && target > 0;
-                  const achievement = isValidTarget
-                    ? (totalSales / target) * 100
-                    : 0;
-                  const isSuccess = achievement >= 100;
-
+                ({
+                  companyName,
+                  totalSales,
+                  typeClients,
+                  agentName,
+                  latestDate,
+                }) => {
                   return (
                     <tr key={companyName} className="bg-white hover:bg-gray-50">
-                      <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentName}</td>
+                      <td className="px-6 py-4 text-xs capitalize text-orange-700">
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={userDetails.profilePicture || "/taskflow.png"}
+                            alt={agentName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <span>{agentName}</span>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-xs uppercase">{companyName}</td>
                       <td className="px-6 py-4 text-xs">{typeClients}</td>
                       <td className="px-6 py-4 text-xs">{formatSales(totalSales)}</td>
-                      <td className={`px-6 py-4 text-xs font-semibold ${isSuccess ? "text-green-600" : "text-red-600"}`}>
-                        {isValidTarget
-                          ? `${achievement.toFixed(2)}%`
-                          : "0.00%"}
-                      </td>
+                      <td className="px-6 py-4 text-xs">{latestDate}</td>
                     </tr>
                   );
                 }

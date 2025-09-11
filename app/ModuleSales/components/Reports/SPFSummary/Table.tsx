@@ -139,10 +139,10 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                             >
                                 Date {sortOrder === "desc" ? "▼" : "▲"}
                             </th>
-                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
-                            <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Amount</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
+                            <th className="px-6 py-4 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
                         </tr>
                     </thead>
@@ -155,10 +155,10 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                             paginatedData.map((post) => (
                                 <tr key={post.id} className="border-b whitespace-nowrap">
                                     <td className="px-6 py-4 text-xs">{formatDate(post.date_created)}</td>
-                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
-                                    <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
-                                    <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs">{formatCurrency(post.quotationamount)}</td>
+                                    <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
+                                    <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.remarks}</td>
                                 </tr>
                             ))
