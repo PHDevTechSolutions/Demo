@@ -34,7 +34,7 @@ async function insertActivity(data: any) {
     const activitystatus = "On Progress";
 
     const result = await sql`
-      INSERT INTO progress (
+      INSERT INTO activity (
         referenceid,
         manager,
         tsm,

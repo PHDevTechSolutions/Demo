@@ -11,9 +11,8 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 export async function GET() {
     try {
         const Xchire_fetch = await Xchire_sql`SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, referenceid,
-             date_created, activitynumber, typeactivity, remarks, address, area, deliveryaddress,
-             source, activitystatus, typecall, sonumber, soamount, callback, callstatus, quotationnumber,
-             quotationamount, projectname, projectcategory, projecttype, startdate, enddate FROM progress;`;
+             date_created, activitynumber, address, area, deliveryaddress,
+             source, activitystatus FROM activity;`;
 
         console.log("Fetched accounts:", Xchire_fetch); // Debugging line
 

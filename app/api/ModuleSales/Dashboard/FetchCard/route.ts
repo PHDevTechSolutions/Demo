@@ -17,6 +17,8 @@ export async function GET() {
                 source,
                 callstatus,
                 referenceid,
+                tsm,
+                manager,
                 startdate,
                 enddate,
                 date_created,

@@ -18,6 +18,8 @@ export async function GET() {
       SELECT 
         id,
         referenceid,
+        tsm,
+        manager,
         companyname,
         typeclient,
         actualsales,
