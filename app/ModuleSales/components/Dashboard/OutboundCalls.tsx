@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+"use client";
+import React, { useMemo, useState } from "react";
 import GaugeChart from "./Chart/GaugeChart";
 
 interface CallRecord {
@@ -15,6 +16,8 @@ interface OutboundCallsProps {
 }
 
 const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange }) => {
+  const [showCharts, setShowCharts] = useState(false);
+
   const getWorkingDaysCount = (start: string, end: string) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -30,14 +33,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     return getWorkingDaysCount(dateRange.start, dateRange.end);
   }, [dateRange]);
 
-  const totalValidQuotations = useMemo(() => {
-    const invalid = ["n/a", "none", "na", "n.a", "n.a.", "", null, undefined];
-    return filteredCalls.reduce((count, call) => {
-      const value = (call.quotationnumber || "").toString().trim().toLowerCase();
-      return invalid.includes(value) ? count : count + 1;
-    }, 0);
-  }, [filteredCalls]);
-
   const totalActualSales = useMemo(() => {
     return filteredCalls.reduce((sum, call) => {
       const value = Number(call.actualsales);
@@ -52,7 +47,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
       const source = call.source?.trim() || "Unknown";
       const typeActivity = call.typeactivity?.trim().toLowerCase() || "";
 
-      // Only include calls that are "Outbound Calls" AND "Outbound - Touchbase"
       if (source.toLowerCase() === "outbound - touchbase" && typeActivity === "outbound calls") {
         if (!sourceMap[source]) sourceMap[source] = [];
         sourceMap[source].push(call);
@@ -90,7 +84,16 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
-        <h2 className="text-sm font-bold mb-4">Outbound Calls (Touch-Based Only)</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-sm font-bold">Outbound Calls (Touch-Based Only)</h2>
+          <button
+            onClick={() => setShowCharts((prev) => !prev)}
+            className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
+          >
+            {showCharts ? "Hide Chart" : "Show Chart"}
+          </button>
+        </div>
+
         <p className="text-xs text-gray-500 mb-4">
           Call activities focused on touch-based outbound interactions with clients.
         </p>
@@ -99,22 +102,24 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
           <p className="text-gray-500 text-xs">No calls found in selected date range.</p>
         ) : (
           <>
-            {/* Gauge Charts */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-              {groupedBySource.map((item, index) => (
-                <React.Fragment key={`gauge-${index}`}>
-                  <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                    <GaugeChart value={item.achievement} label="OB Achievement" />
-                  </div>
-                  <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                    <GaugeChart value={item.outboundToSalesConversion} label="Outbound to Sales Conv." />
-                  </div>
-                  <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                    <GaugeChart value={item.callsToQuoteConversion} label="Calls to Quote Conv." />
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
+            {/* Gauge Charts - toggle */}
+            {showCharts && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {groupedBySource.map((item, index) => (
+                  <React.Fragment key={`gauge-${index}`}>
+                    <div className="p-2 flex flex-col items-center border-r">
+                      <GaugeChart value={item.achievement} label="OB Achievement" />
+                    </div>
+                    <div className="p-2 flex flex-col items-center border-r">
+                      <GaugeChart value={item.outboundToSalesConversion} label="Outbound to Sales Conv." />
+                    </div>
+                    <div className="p-2 flex flex-col items-center">
+                      <GaugeChart value={item.callsToQuoteConversion} label="Calls to Quote Conv." />
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
 
             {/* Table */}
             <div className="border rounded mb-4 overflow-x-auto">

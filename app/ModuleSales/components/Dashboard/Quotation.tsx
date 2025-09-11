@@ -1,5 +1,4 @@
-import React, { useMemo } from "react";
-import Histogram from "./Chart/Histogram";
+import React, { useMemo, useState } from "react";
 import GaugeQChart from "./Chart/GaugeQChart";
 
 interface QuotationProps {
@@ -7,6 +6,7 @@ interface QuotationProps {
 }
 
 const Quotation: React.FC<QuotationProps> = ({ records }) => {
+  const [showCharts, setShowCharts] = useState(false);
   // Filter Quote-Done records
   const quoteDoneRecords = useMemo(() => {
     return records.filter(
@@ -77,7 +77,7 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
         if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
           handlingMs = end.getTime() - start.getTime();
         }
-      } catch {}
+      } catch { }
 
       totalCount += 1;
       totalAmount += amount;
@@ -105,25 +105,35 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
-        <h2 className="text-sm font-bold mb-4">Quotations</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-sm font-bold mb-4">Quotations</h2>
+          <button
+            onClick={() => setShowCharts((prev) => !prev)}
+            className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
+          >
+            {showCharts ? "Hide Chart" : "Show Chart"}
+          </button>
+        </div>
         <p className="text-xs text-gray-500 mb-4">
           A record of all customer quotations, including those pending approval, approved, or disapproved.
         </p>
 
         {/* Gauges */}
+        {showCharts && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
+          <div className="p-2 flex flex-col items-center border-r">
             <GaugeQChart value={quoteToSOCount} label="Quote to SO Conversion (QTY)" color="#3B82F6" />
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
+          <div className="p-2 flex flex-col items-center border-r">
             <GaugeQChart value={quoteToSOAmount} label="Quote to SO Conversion (Peso Value)" color="#10B981" />
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
+          <div className="p-2 flex flex-col items-center">
             <GaugeQChart value={quoteToSIPercent} label="Quotation to SI Conversion (%)" color="#F59E0B" />
           </div>
         </div>
+        )}
 
         {/* Table */}
         {aggregatedData.length === 0 ? (

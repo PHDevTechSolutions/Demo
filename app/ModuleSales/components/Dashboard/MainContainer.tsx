@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
+import CompaniesCard from "./Companies";
 import Card from "./Card";
 import Source from "./Source";
 import CSRMetrics from "./CSRMetrics";
@@ -249,6 +250,12 @@ const MainContainer: React.FC<MainContainerProps> = ({
         </div>
       </div>
 
+
+      {/* Right Column (Companies Card on top) */}
+      <div className="space-y-4">
+        <CompaniesCard filteredAccounts={filteredByAgent} userDetails={userDetails} />
+      </div>
+      
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <Card filteredAccounts={filteredByAgent} userDetails={userDetails} />
