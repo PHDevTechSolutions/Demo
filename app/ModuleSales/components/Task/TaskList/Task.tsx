@@ -18,6 +18,8 @@ interface Note {
   enddate: string;
   date_created: string;
   date_updated?: string;
+  quotationnumber: string;
+  sonumber: string;
 }
 
 interface UserDetails {
@@ -129,7 +131,7 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
 
   const renderTaskRow = (task: Note) => (
     <tr key={task.id} className="hover:bg-gray-50 border-b whitespace-nowrap">
-      <td className="px-6 py-4 text-xs capitalize">{task.remarks}</td>
+      <td className="px-6 py-4 text-xs capitalize whitespace-normal break-words max-w-xs">{task.remarks}</td>
       <td className="px-6 py-4 text-xs uppercase">{task.companyname}</td>
       <td className="px-6 py-4 text-xs">
         <span
@@ -139,6 +141,8 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
         </span>
       </td>
       <td className="px-6 py-4 text-xs">{task.typeactivity}</td>
+      <td className="px-6 py-4 text-xs">{task.quotationnumber}</td>
+      <td className="px-6 py-4 text-xs">{task.sonumber}</td>
       <td className="px-6 py-4 text-xs">{new Date(task.date_created).toLocaleString()}</td>
       <td className="px-6 py-4 text-xs">
         <div className="flex items-center gap-2">
@@ -212,12 +216,14 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Tasks</h3>
               <table className="min-w-full table-auto mb-2">
-                <thead className="bg-gray-100">
-                  <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
+                <thead className="">
+                  <tr className="text-xs text-left whitespace-nowrap border-b">
                     <th className="px-6 py-4 font-semibold text-gray-700"></th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Status</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Quotation Number</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">SO Number</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Responsible</th>
                   </tr>
@@ -234,12 +240,14 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-1">Completed Tasks</h3>
               <table className="min-w-full table-auto">
-                <thead className="bg-gray-100">
-                  <tr className="text-xs text-left whitespace-nowrap border-l-4 border-green-400">
+                <thead className="">
+                  <tr className="text-xs text-left whitespace-nowrap border-b">
                     <th className="px-6 py-4 font-semibold text-gray-700"></th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Status</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">Quotation Number</th>
+                    <th className="px-6 py-4 font-semibold text-gray-700">SO Number</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
                     <th className="px-6 py-4 font-semibold text-gray-700">Responsible</th>
                   </tr>

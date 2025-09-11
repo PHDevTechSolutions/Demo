@@ -80,7 +80,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
+          `/api/ModuleSales/Task/ActivityPlanner/FetchFollowUp?referenceid=${userDetails.ReferenceID}`
         );
         const data = await res.json();
 

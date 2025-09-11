@@ -95,7 +95,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             setLoading(true);
             try {
                 const res = await fetch(
-                    `/api/ModuleSales/Task/DailyActivity/FetchProgress?referenceid=${userDetails.ReferenceID}`
+                    `/api/ModuleSales/Task/Notes/Fetch?referenceid=${userDetails.ReferenceID}`
                 );
                 if (!res.ok) throw new Error("Failed to fetch notes");
                 const data = await res.json();
