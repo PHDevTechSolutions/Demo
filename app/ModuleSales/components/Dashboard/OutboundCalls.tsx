@@ -155,8 +155,8 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
                       <li>Achievement = (Total OB ÷ OB Target) × 100 = <b>{item.achievement.toFixed(2)}%</b></li>
                       <li>Total Quote (All Sources) = <b>{totalQuotations}</b></li>
                       <li>Total SI (All Sources) = <b>{totalDelivered}</b></li>
-                      <li>Calls to Quote Conversion = (Total Quotations ÷ Total OB) × 100 = <b>{item.callsToQuoteConversion.toFixed(2)}%</b></li>
-                      <li>Outbound to Sales Conversion = (Total Delivered ÷ Total OB) × 100 = <b>{item.outboundToSalesConversion.toFixed(2)}%</b></li>
+                      <li>Calls to Quote Conversion (%) = (Total Quotations ÷ Total OB) × 100 = <b>{item.callsToQuoteConversion.toFixed(2)}%</b></li>
+                      <li>Outbound to Sales Conversion (%) = (Total Delivered ÷ Total OB) × 100 = <b>{item.outboundToSalesConversion.toFixed(2)}%</b></li>
                     </ul>
                   </div>
                 ))}

@@ -92,7 +92,7 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
                 </b>
               </li>
               <li>
-                SO to SI Conversion = (Total Delivered Sales ÷ Total SO Amount) × 100 →{" "}
+                SO to SI Conversion (%) = (Total Delivered Sales ÷ Total SO Amount) × 100 →{" "}
                 <b>{soToSIPercent.toFixed(2)}%</b>
               </li>
             </ul>

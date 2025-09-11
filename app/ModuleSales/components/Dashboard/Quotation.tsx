@@ -135,23 +135,7 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
 
         {/* Gauges */}
         {showCharts && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <div className="p-2 flex flex-col items-center border-r">
-              <GaugeQChart
-                value={quoteToSOCount}
-                label="Quote to SO Conversion (QTY)"
-                color="#3B82F6"
-              />
-            </div>
-
-            <div className="p-2 flex flex-col items-center border-r">
-              <GaugeQChart
-                value={quoteToSOAmount}
-                label="Quote to SO Conversion (Peso Value)"
-                color="#10B981"
-              />
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
             <div className="p-2 flex flex-col items-center border-r">
               <GaugeQChart
                 value={quoteToSOPercent}
