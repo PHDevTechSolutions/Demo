@@ -112,11 +112,11 @@ const Companies: React.FC<CompaniesProps> = ({
           return (
             <div
               key={key}
-              className="rounded-lg border bg-blue-100 shadow transition text-[10px] mb-2"
+              className="rounded-lg border bg-blue-100 shadow transition text-[10px] mb-2 px-2 py-2"
             >
               {/* Header row */}
               <div
-                className="cursor-pointer flex justify-between items-center p-3"
+                className="cursor-pointer flex justify-between items-center p-1"
                 onClick={() => setExpandedIdx(isExpanded ? null : key)}
               >
                 <p className="font-semibold uppercase">{comp.companyname}</p>
@@ -150,7 +150,7 @@ const Companies: React.FC<CompaniesProps> = ({
 
               {/* Expanded details */}
               {isExpanded && (
-                <div className="p-3 space-y-1">
+                <div className="p-1 space-y-1">
                   <p>
                     <span className="font-semibold">Contact Person:</span> {comp.contactperson}
                   </p>
@@ -170,7 +170,7 @@ const Companies: React.FC<CompaniesProps> = ({
               )}
 
               {/* Footer */}
-              <div className="p-2 text-gray-500 text-[9px]">{comp.typeclient}</div>
+              <div className="p-1 text-gray-500 text-[9px]">{comp.typeclient}</div>
             </div>
           );
         })

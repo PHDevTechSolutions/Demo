@@ -19,16 +19,6 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
 
   return (
     <div className={`rounded-lg shadow overflow-hidden ${bgColor}`}>
-      {/* Header */}
-      <div className="flex items-center p-3 gap-2">
-        <img
-          src={userDetails?.profilePicture || "/default-avatar.png"}
-          alt="Profile"
-          className="w-8 h-8 rounded-full object-cover"
-        />
-        <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
-      </div>
-
       {/* Body */}
       <div className="p-3 space-y-1 text-[10px]">
         <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>

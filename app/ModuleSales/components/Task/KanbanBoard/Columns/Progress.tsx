@@ -364,7 +364,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             <ProgressCard
               progress={grp.parent}
               childrenProgress={grp.children}
-              profilePicture={userDetails?.profilePicture || "/default-avatar.png"}
+              profilePicture={userDetails?.profilePicture || "/taskflow.png"}
               onAddClick={() => handleAddClick(grp.parent)}
               onDeleteClick={handleDeleteParent}
               onDeleteChildClick={handleDeleteChild}

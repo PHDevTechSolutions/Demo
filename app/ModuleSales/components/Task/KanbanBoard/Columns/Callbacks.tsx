@@ -47,6 +47,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Form fields
   const [activitynumber, setActivityNumber] = useState("");
@@ -99,6 +100,10 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
 
     fetchCallbacks();
   }, [userDetails?.ReferenceID, refreshTrigger]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   // Open slide-up form with pre-filled data
   const openFormDrawer = (inq: Inquiry) => {
@@ -185,16 +190,49 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {callbacks.length > 0 ? (
-        callbacks.map((inq, idx) => (
-          <CallbackCard
-            key={idx}
-            inq={inq}
-            userDetails={userDetails}
-            openFormDrawer={openFormDrawer}
-          />
-        ))
+        callbacks.map((inq, idx) => {
+          const isExpanded = expandedId === inq.activitynumber;
+          return (
+            <div
+              key={inq.activitynumber}
+              className="border rounded-lg shadow-sm bg-stone-200"
+            >
+              <button
+                onClick={() => toggleExpand(inq.activitynumber)}
+                className="w-full flex justify-between items-center px-4 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-t-lg"
+              >
+                {/* Header */}
+                <div className="flex items-center gap-2">
+                  <img
+                    src={userDetails?.profilePicture || "/taskflow.png"}
+                    alt="Profile"
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                  <span className="text-[11px] font-semibold">
+                    {inq.companyname} —{" "}
+                    <span className="text-gray-500">{inq.contactperson}</span>
+                  </span>
+                </div>
+                <span className="ml-2 text-gray-400 text-[10px]">
+                  {isExpanded ? "▲" : "▼"}
+                </span>
+              </button>
+
+              {isExpanded && (
+                <CallbackCard
+                  key={idx}
+                  inq={inq}
+                  userDetails={userDetails}
+                  openFormDrawer={openFormDrawer}
+                />
+              )}
+            </div>
+          );
+        })
       ) : (
-        <p className="text-xs text-gray-400 italic">No callbacks scheduled for today.</p>
+        <p className="text-xs text-gray-400 italic">
+          No callbacks scheduled for today.
+        </p>
       )}
 
       {/* Slide-up form drawer */}
