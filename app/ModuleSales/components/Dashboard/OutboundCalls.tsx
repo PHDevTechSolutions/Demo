@@ -40,6 +40,28 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
+  // ✅ Hiwalay: Bilangin lahat ng valid quotations (regardless of OB filter)
+  const totalQuotations = useMemo(() => {
+    return filteredCalls.reduce((count, call) => {
+      const value = (call.quotationnumber || "").toString().trim().toLowerCase();
+      if (!["n/a", "none", "na", "n.a", "n.a.", "", null, undefined].includes(value)) {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+  }, [filteredCalls]);
+
+  // ✅ Hiwalay: Bilangin lahat ng delivered calls (regardless of OB filter)
+  const totalDelivered = useMemo(() => {
+    return filteredCalls.reduce((count, call) => {
+      if ((call.activitystatus || "").toLowerCase() === "delivered") {
+        return count + 1;
+      }
+      return count;
+    }, 0);
+  }, [filteredCalls]);
+
+
   const groupedBySource = useMemo(() => {
     const sourceMap: Record<string, CallRecord[]> = {};
 
@@ -47,6 +69,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
       const source = call.source?.trim() || "Unknown";
       const typeActivity = call.typeactivity?.trim().toLowerCase() || "";
 
+      // ✅ Filter lang applicable sa OB target, totalOB, actual sales
       if (source.toLowerCase() === "outbound - touchbase" && typeActivity === "outbound calls") {
         if (!sourceMap[source]) sourceMap[source] = [];
         sourceMap[source].push(call);
@@ -54,32 +77,28 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     });
 
     return Object.entries(sourceMap).map(([source, calls]) => {
-      const count = calls.length;
-      const totalOB = count * workingDays;
-      const achievement = totalOB > 0 ? (count / totalOB) * 100 : 0;
-
-      const validQuotations = calls.filter((call) => {
-        const value = (call.quotationnumber || "").toString().trim().toLowerCase();
-        return !["n/a", "none", "na", "n.a", "n.a.", "", null, undefined].includes(value);
-      }).length;
+      const totalOB = calls.length; // ✅ actual outbound calls
+      const obTarget = 35 * workingDays;
+      const achievement = obTarget > 0 ? (totalOB / obTarget) * 100 : 0;
 
       const delivered = calls.filter(
         (call) => (call.activitystatus || "").toLowerCase() === "delivered"
       ).length;
 
-      const callsToQuote = validQuotations > 0 ? (count / validQuotations) * 100 : 0;
-      const outboundToSales = count > 0 ? (delivered / count) * 100 : 0;
+      // ✅ Calls to Quote Conversion = (all valid quotations ÷ OB) × 100
+      const callsToQuote = totalOB > 0 ? (totalQuotations / totalOB) * 100 : 0;
+      const outboundToSales = totalOB > 0 ? (totalDelivered / totalOB) * 100 : 0;
 
       return {
         source,
-        obTarget: count,
+        obTarget,
         totalOB,
         achievement,
         callsToQuoteConversion: callsToQuote,
         outboundToSalesConversion: outboundToSales,
       };
     });
-  }, [filteredCalls, workingDays]);
+  }, [filteredCalls, workingDays, totalQuotations]);
 
   return (
     <div className="space-y-8">
@@ -121,35 +140,45 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
               </div>
             )}
 
-            {/* Table */}
-            <div className="border rounded mb-4 overflow-x-auto">
-              <table className="w-full text-xs table-auto">
-                <thead className="bg-gray-100">
-                  <tr className="text-left">
-                    <th className="px-4 py-2">OB Target</th>
-                    <th className="px-4 py-2">Total OB</th>
-                    <th className="px-4 py-2">OB Achievement</th>
-                    <th className="px-4 py-2">Calls to Quote Conversion</th>
-                    <th className="px-4 py-2">Outbound to Sales Conversion</th>
-                    <th className="px-4 py-2">Actual Sales</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {groupedBySource.map((item, index) => (
-                    <tr key={`${item.source}-${index}`} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">{item.obTarget}</td>
-                      <td className="px-4 py-2">{item.totalOB}</td>
-                      <td className="px-4 py-2">{item.achievement.toFixed(2)}%</td>
-                      <td className="px-4 py-2">{item.callsToQuoteConversion.toFixed(2)}%</td>
-                      <td className="px-4 py-2">{item.outboundToSalesConversion.toFixed(2)}%</td>
-                      <td className="px-4 py-2 font-bold">
-                        ₱{totalActualSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </td>
+            {!showCharts && (
+              <div className="border rounded mb-4 overflow-x-auto">
+                <table className="w-full text-xs table-auto">
+                  <thead className="bg-gray-100">
+                    <tr className="text-left">
+                      <th className="px-4 py-2">OB Target</th>
+                      <th className="px-4 py-2">Total OB</th>
+                      <th className="px-4 py-2">OB Achievement</th>
+                      <th className="px-4 py-2">Calls to Quote Conversion</th>
+                      <th className="px-4 py-2">Outbound to Sales Conversion</th>
+                      <th className="px-4 py-2">Actual Sales</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {groupedBySource.map((item, index) => (
+                      <tr key={`${item.source}-${index}`} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">{item.obTarget}</td>
+                        <td className="px-4 py-2">{item.totalOB}</td>
+                        <td className="px-4 py-2">{item.achievement.toFixed(2)}%</td>
+                        <td className="px-4 py-2">{item.callsToQuoteConversion.toFixed(2)}%</td>
+                        <td className="px-4 py-2">{item.outboundToSalesConversion.toFixed(2)}%</td>
+                        <td className="px-4 py-2 font-bold">
+                          ₱{totalActualSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    ))}
+                    {/* ✅ Overall total quotations row */}
+                    <tr className="bg-gray-50 font-bold">
+                      <td className="px-4 py-2 text-right" colSpan={3}>
+                        Total Valid Quotations:
+                      </td>
+                      <td className="px-4 py-2">{totalQuotations}</td>
+                      <td className="px-4 py-2" colSpan={2}></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
           </>
         )}
       </div>
