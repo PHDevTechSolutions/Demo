@@ -43,8 +43,10 @@ const ActiveAccounts: React.FC = () => {
         Company: "",
     });
 
-    const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
-    const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
+    const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
+    const [tsmOptions, setTSMOptions] = useState<{ value: string; label: string }[]>([]);
+    const [selectedAgent, setSelectedAgent] = useState(""); // TSA filter
+    const [selectedTSM, setSelectedTSM] = useState(""); // TSM filter
 
     // Loading states
     const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ const ActiveAccounts: React.FC = () => {
     const [status, setstatus] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [isMaximized, setIsMaximized] = useState(false);
+
     // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
@@ -100,18 +103,20 @@ const ActiveAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
+    // Fetch all accounts
     const fetchAccount = async () => {
-        setLoadingAccounts(true); // ✅ hiwalay na loading
+        setLoadingAccounts(true);
         try {
-            const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
+            const response = await fetch(
+                "/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount"
+            );
             const data = await response.json();
             setPosts(data.data || []);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
         } finally {
-            setLoadingAccounts(false); // ✅ dito lang i-off
+            setLoadingAccounts(false);
         }
     };
 
@@ -119,6 +124,7 @@ const ActiveAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
+    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -126,16 +132,13 @@ const ActiveAccounts: React.FC = () => {
 
                 if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
                     url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-                } else if (userDetails.Role === "Super Admin") {
-                    // Get all TS Associates for Super Admin
+                } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
                     url = `/api/fetchtsadata?Role=Territory Sales Associate`;
                 } else {
-                    // Other roles don't fetch TS Associates
                     return;
                 }
 
                 const response = await fetch(url);
-
                 if (!response.ok) throw new Error("Failed to fetch agents");
 
                 const data = await response.json();
@@ -154,11 +157,37 @@ const ActiveAccounts: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
+    // Fetch TSM options (for Manager)
+    useEffect(() => {
+        const fetchTSM = async () => {
+            try {
+                if (userDetails.Role !== "Manager") return;
+
+                const url = `/api/fetchtsadata?Role=Territory Sales Manager`;
+                const response = await fetch(url);
+
+                if (!response.ok) throw new Error("Failed to fetch TSMs");
+
+                const data = await response.json();
+
+                const options = data.map((user: any) => ({
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
+                }));
+
+                setTSMOptions(options);
+            } catch (error) {
+                console.error("Error fetching TSMs:", error);
+            }
+        };
+
+        fetchTSM();
+    }, [userDetails.Role]);
+
+    // Filter accounts
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
-                // Only allow Top 50, Next 30, Balance 20
                 const validClientTypes = ["Top 50", "Next 30", "Balance 20", "TSA Client", "CSR Client"];
                 const isValidTypeClient = validClientTypes.includes(post?.typeclient);
 
@@ -167,7 +196,6 @@ const ActiveAccounts: React.FC = () => {
                     post?.typeclient?.toLowerCase().includes(searchTerm.toLowerCase());
 
                 const postDate = post?.date_created ? new Date(post.date_created) : null;
-
                 const isWithinDateRange =
                     (!startDate || (postDate && postDate >= new Date(startDate))) &&
                     (!endDate || (postDate && postDate <= new Date(endDate + "T23:59:59")));
@@ -190,31 +218,37 @@ const ActiveAccounts: React.FC = () => {
                             ? post?.referenceid === referenceID
                             : userDetails.Role === "Territory Sales Manager"
                                 ? post?.tsm === referenceID
-                            : userDetails.Role === "Manager"
-                                ? post?.manager === referenceID    
-                                : false;
+                                : userDetails.Role === "Manager"
+                                    ? post?.manager === referenceID
+                                    : false;
 
                 const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+                const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
 
                 const isActiveOrUsed = post?.status === "Active" || post?.status === "Used";
 
                 return (
-                    isValidTypeClient && // ✅ Only allow Top 50, Next 30, Balance 20
+                    isValidTypeClient &&
                     matchesSearchTerm &&
                     isWithinDateRange &&
                     matchesClientType &&
                     matchesStatus &&
                     matchesRole &&
                     isActiveOrUsed &&
-                    matchesAgentFilter
+                    matchesAgentFilter &&
+                    matchesTSMFilter
                 );
             })
             .sort((a, b) => {
                 const companyNameA = a.companyname?.toLowerCase() || "";
                 const companyNameB = b.companyname?.toLowerCase() || "";
 
-                const numFirstA = companyNameA.match(/^\d+/) ? parseInt(companyNameA.match(/^\d+/)[0], 10) : Infinity;
-                const numFirstB = companyNameB.match(/^\d+/) ? parseInt(companyNameB.match(/^\d+/)[0], 10) : Infinity;
+                const numFirstA = companyNameA.match(/^\d+/)
+                    ? parseInt(companyNameA.match(/^\d+/)[0], 10)
+                    : Infinity;
+                const numFirstB = companyNameB.match(/^\d+/)
+                    ? parseInt(companyNameB.match(/^\d+/)[0], 10)
+                    : Infinity;
 
                 if (numFirstA !== numFirstB) {
                     return numFirstA - numFirstB;
@@ -258,7 +292,7 @@ const ActiveAccounts: React.FC = () => {
                                     )}
 
                                     <div
-                                        className={`fixed bottom-0 left-0 w-full h-[80%] shadow-lg z-[9999] transform transition-transform duration-500 ease-in-out overflow-y-auto bg-white ${(showForm || showImportForm) ? "translate-y-0" : "translate-y-full"
+                                        className={`fixed bottom-0 left-0 w-full h-[80%] shadow-lg z-[9999] transform transition-transform duration-500 ease-in-out overflow-y-auto bg-white ${showForm || showImportForm ? "translate-y-0" : "translate-y-full"
                                             }`}
                                     >
                                         {showForm ? (
@@ -303,33 +337,68 @@ const ActiveAccounts: React.FC = () => {
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
                                         <h2 className="text-lg font-bold mb-2">List of Accounts - Active</h2>
                                         <p className="text-xs text-gray-600 mb-4">
-                                            The <strong>Active Company Accounts</strong> section displays all currently active accounts.
-                                            Users can filter and explore accounts by client type, date range, and other criteria,
-                                            making it easier to manage and analyze up-to-date company data.
+                                            The <strong>Active Company Accounts</strong> section displays all currently
+                                            active accounts. Users can filter and explore accounts by client type, date
+                                            range, and other criteria, making it easier to manage and analyze up-to-date
+                                            company data.
                                         </p>
 
-                                        {/* Filter by Agent */}
-                                        {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
-                                            <div className="mb-4 flex items-center space-x-4">
-                                                <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                                    Filter by Agent
-                                                </label>
-                                                <select
-                                                    className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                                                    value={selectedAgent}
-                                                    onChange={(e) => setSelectedAgent(e.target.value)}
-                                                >
-                                                    <option value="">All Agents</option>
-                                                    {tsaOptions.map((agent) => (
-                                                        <option key={agent.value} value={agent.value}>
-                                                            {agent.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
-                                            </div>
+                                        {/* Filters Grid */}
+                                        {(userDetails.Role === "Territory Sales Manager" ||
+                                            userDetails.Role === "Super Admin" ||
+                                            userDetails.Role === "Manager") && (
+                                                <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                                    {/* Filter by Agent (TSA) */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            Filter by Agent (TSA)
+                                                        </label>
+                                                        <select
+                                                            className="w-full border rounded px-3 py-2 text-xs capitalize"
+                                                            value={selectedAgent}
+                                                            onChange={(e) => setSelectedAgent(e.target.value)}
+                                                        >
+                                                            <option value="">All Agents</option>
+                                                            {tsaOptions.map((agent) => (
+                                                                <option key={agent.value} value={agent.value}>
+                                                                    {agent.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
 
-                                        )}
+                                                    {/* Filter by TSM (only for Manager role) */}
+                                                    {userDetails.Role === "Manager" && (
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                Filter by TSM
+                                                            </label>
+                                                            <select
+                                                                className="w-full border rounded px-3 py-2 text-xs capitalize"
+                                                                value={selectedTSM}
+                                                                onChange={(e) => setSelectedTSM(e.target.value)}
+                                                            >
+                                                                <option value="">All TSMs</option>
+                                                                {tsmOptions.map((tsm) => (
+                                                                    <option key={tsm.value} value={tsm.value}>
+                                                                        {tsm.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Total Companies */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
+                                                            Total
+                                                        </label>
+                                                        <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm text-center">
+                                                            Total Companies: <span className="font-bold">{filteredAccounts.length}</span>
+                                                        </h1>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                         <SearchFilters
                                             searchTerm={searchTerm}
@@ -345,6 +414,7 @@ const ActiveAccounts: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
+
                                         {/* Loader or Table */}
                                         {loading ? (
                                             <div className="flex justify-center items-center py-10">
@@ -369,7 +439,9 @@ const ActiveAccounts: React.FC = () => {
                                         )}
 
                                         <div className="text-xs mt-2">
-                                            Showing {indexOfFirstPost + 1} to {Math.min(indexOfLastPost, filteredAccounts.length)} of {filteredAccounts.length} entries
+                                            Showing {indexOfFirstPost + 1} to{" "}
+                                            {Math.min(indexOfLastPost, filteredAccounts.length)} of{" "}
+                                            {filteredAccounts.length} entries
                                         </div>
                                     </div>
                                 </div>

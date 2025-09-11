@@ -35,7 +35,9 @@ const NewClientAccounts: React.FC = () => {
     });
 
     const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
-    const [selectedAgent, setSelectedAgent] = useState(""); // agent filter
+    const [tsmOptions, setTSMOptions] = useState<{ value: string, label: string }[]>([]);
+    const [selectedAgent, setSelectedAgent] = useState("");
+    const [selectedTSM, setSelectedTSM] = useState("");
 
     const [referenceid, setReferenceID] = useState("");
     const [manager, setManager] = useState("");
@@ -49,40 +51,43 @@ const NewClientAccounts: React.FC = () => {
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
     const loading = loadingUser || loadingAccounts; // 🔑 combined state
-    // Fetch user data based on query parameters (user ID)
+    // Fetch user data
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
             const userId = params.get("id");
 
-            if (userId) {
-                try {
-                    const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
-                    if (!response.ok) throw new Error("Failed to fetch user data");
-                    const data = await response.json();
-                    setUserDetails({
-                        UserId: data._id,
-                        ReferenceID: data.ReferenceID || "",
-                        Manager: data.Manager || "",
-                        TSM: data.TSM || "",
-                        Firstname: data.Firstname || "",
-                        Lastname: data.Lastname || "",
-                        Email: data.Email || "",
-                        Role: data.Role || "",
-                        Department: data.Department || "",
-                        Company: data.Company || "",
-                    });
-                    setReferenceID(data.ReferenceID || "");
-                    setManager(data.Manager || "");
-                    setTsm(data.TSM || "");
-                } catch (err: unknown) {
-                    console.error("Error fetching user data:", err);
-                    setError("Failed to load user data. Please try again later.");
-                } finally {
-                    setLoadingUser(false); // ✅ dito lang i-off
-                }
-            } else {
+            if (!userId) {
                 setError("User ID is missing.");
+                setLoadingUser(false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
+                if (!response.ok) throw new Error("Failed to fetch user data");
+                const data = await response.json();
+
+                setUserDetails({
+                    UserId: data._id,
+                    ReferenceID: data.ReferenceID || "",
+                    Manager: data.Manager || "",
+                    TSM: data.TSM || "",
+                    Firstname: data.Firstname || "",
+                    Lastname: data.Lastname || "",
+                    Email: data.Email || "",
+                    Role: data.Role || "",
+                    Department: data.Department || "",
+                    Company: data.Company || "",
+                });
+
+                setReferenceID(data.ReferenceID || "");
+                setManager(data.Manager || "");
+                setTsm(data.TSM || "");
+            } catch (err) {
+                console.error("Error fetching user data:", err);
+                setError("Failed to load user data. Please try again later.");
+            } finally {
                 setLoadingUser(false);
             }
         };
@@ -90,18 +95,18 @@ const NewClientAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
+    // Fetch accounts
     const fetchAccount = async () => {
-        setLoadingAccounts(true); // ✅ hiwalay na loading
+        setLoadingAccounts(true);
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
             const data = await response.json();
             setPosts(data.data || []);
-        } catch (error) {
+        } catch (err) {
             toast.error("Error fetching users.");
-            console.error("Error Fetching", error);
+            console.error(err);
         } finally {
-            setLoadingAccounts(false); // ✅ dito lang i-off
+            setLoadingAccounts(false);
         }
     };
 
@@ -109,6 +114,7 @@ const NewClientAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
+    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -116,16 +122,13 @@ const NewClientAccounts: React.FC = () => {
 
                 if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
                     url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-                } else if (userDetails.Role === "Super Admin") {
-                    // Get all TS Associates for Super Admin
+                } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
                     url = `/api/fetchtsadata?Role=Territory Sales Associate`;
                 } else {
-                    // Other roles don't fetch TS Associates
                     return;
                 }
 
                 const response = await fetch(url);
-
                 if (!response.ok) throw new Error("Failed to fetch agents");
 
                 const data = await response.json();
@@ -143,6 +146,27 @@ const NewClientAccounts: React.FC = () => {
 
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
+
+    // Fetch TSM options (for Manager)
+    useEffect(() => {
+        const fetchTSM = async () => {
+            if (userDetails.Role !== "Manager") return;
+            try {
+                const response = await fetch(`/api/fetchtsadata?Role=Territory Sales Manager`);
+                if (!response.ok) throw new Error("Failed to fetch TSMs");
+
+                const data = await response.json();
+                setTSMOptions(data.map((user: any) => ({
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
+                })));
+            } catch (err) {
+                console.error("Error fetching TSM:", err);
+            }
+        };
+
+        fetchTSM();
+    }, [userDetails.Role]);
 
     // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
@@ -171,18 +195,18 @@ const NewClientAccounts: React.FC = () => {
                 const referenceID = userDetails.ReferenceID;
 
                 const matchesRole =
-                    userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                    ["Super Admin", "Special Access"].includes(userDetails.Role)
                         ? true
                         : userDetails.Role === "Territory Sales Associate"
                             ? post?.referenceid === referenceID
                             : userDetails.Role === "Territory Sales Manager"
                                 ? post?.tsm === referenceID
-                            : userDetails.Role === "Manager"
-                                ? post?.manager === referenceID    
-                                : false;
+                                : userDetails.Role === "Manager"
+                                    ? post?.manager === referenceID
+                                    : false;
 
                 const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
-
+                const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
                 const isActiveOrUsed = post?.status === "Non-Buying";
 
                 return (
@@ -192,7 +216,8 @@ const NewClientAccounts: React.FC = () => {
                     matchesStatus &&
                     matchesRole &&
                     isActiveOrUsed &&
-                    matchesAgentFilter
+                    matchesAgentFilter &&
+                    matchesTSMFilter
                 );
             })
             .sort((a, b) => {
@@ -291,28 +316,62 @@ const NewClientAccounts: React.FC = () => {
                                             strategies to encourage potential conversions in the future.
                                         </p>
 
-                                        {/* Filter by Agent */}
-                                        {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
-                                            <div className="mb-4 flex items-center space-x-4">
-                                                <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                                    Filter by Agent
-                                                </label>
-                                                <select
-                                                    className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                                                    value={selectedAgent}
-                                                    onChange={(e) => setSelectedAgent(e.target.value)}
-                                                >
-                                                    <option value="">All Agents</option>
-                                                    {tsaOptions.map((agent) => (
-                                                        <option key={agent.value} value={agent.value}>
-                                                            {agent.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
-                                            </div>
+                                        {/* Filters Grid */}
+                                        {(userDetails.Role === "Territory Sales Manager" ||
+                                            userDetails.Role === "Super Admin" ||
+                                            userDetails.Role === "Manager") && (
+                                                <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                                    {/* Filter by Agent (TSA) */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                            Filter by Agent (TSA)
+                                                        </label>
+                                                        <select
+                                                            className="w-full border rounded px-3 py-2 text-xs capitalize"
+                                                            value={selectedAgent}
+                                                            onChange={(e) => setSelectedAgent(e.target.value)}
+                                                        >
+                                                            <option value="">All Agents</option>
+                                                            {tsaOptions.map((agent) => (
+                                                                <option key={agent.value} value={agent.value}>
+                                                                    {agent.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
 
-                                        )}
+                                                    {/* Filter by TSM (only for Manager role) */}
+                                                    {userDetails.Role === "Manager" && (
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                                                                Filter by TSM
+                                                            </label>
+                                                            <select
+                                                                className="w-full border rounded px-3 py-2 text-xs capitalize"
+                                                                value={selectedTSM}
+                                                                onChange={(e) => setSelectedTSM(e.target.value)}
+                                                            >
+                                                                <option value="">All TSMs</option>
+                                                                {tsmOptions.map((tsm) => (
+                                                                    <option key={tsm.value} value={tsm.value}>
+                                                                        {tsm.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Total Companies */}
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
+                                                            Total
+                                                        </label>
+                                                        <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm text-center">
+                                                            Total Companies: <span className="font-bold">{filteredAccounts.length}</span>
+                                                        </h1>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                         <SearchFilters
                                             searchTerm={searchTerm}

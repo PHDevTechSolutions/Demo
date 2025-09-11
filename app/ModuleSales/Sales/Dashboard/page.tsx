@@ -30,7 +30,7 @@ const DashboardPage: React.FC = () => {
 
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
   const [showVersionBanner, setShowVersionBanner] = useState(true);
-
+  
   // Load Welcome Banner state from localStorage
   useEffect(() => {
     if (localStorage.getItem("hideWelcomeBanner") === "true") {
@@ -77,7 +77,7 @@ const DashboardPage: React.FC = () => {
 
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Super Admin") {
+        } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
         } else {
           return;
@@ -109,7 +109,7 @@ const DashboardPage: React.FC = () => {
 
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Super Admin") {
+        } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
           url = `/api/fetchtsadata?Role=Territory Sales Manager`;
         } else {
           return;
@@ -149,6 +149,8 @@ const DashboardPage: React.FC = () => {
               ? post?.referenceid === referenceID
               : userDetails.Role === "Territory Sales Manager"
                 ? post?.tsm === referenceID
+              : userDetails.Role === "Manager"
+                ? post?.manager === referenceID  
                 : false;
 
         const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;

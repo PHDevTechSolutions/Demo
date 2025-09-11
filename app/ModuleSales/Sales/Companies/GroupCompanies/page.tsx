@@ -14,8 +14,10 @@ const GroupAccounts: React.FC = () => {
   const [selectedClientType, setSelectedClientType] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
+  const [tsaOptions, setTSAOptions] = useState<{ value: string, label: string }[]>([]);
+  const [tsmOptions, setTSMOptions] = useState<{ value: string, label: string }[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedTSM, setSelectedTSM] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 10;
 
@@ -27,6 +29,8 @@ const GroupAccounts: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
+
+
 
   const loading = loadingUser || loadingAccounts; // 🔑 combined state
 
@@ -100,6 +104,7 @@ const GroupAccounts: React.FC = () => {
   }, [userDetails.Role, userDetails.ReferenceID]);
 
 
+  // Fetch TSA options
   useEffect(() => {
     const fetchTSA = async () => {
       try {
@@ -107,16 +112,13 @@ const GroupAccounts: React.FC = () => {
 
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Super Admin") {
-          // Get all TS Associates for Super Admin
+        } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
         } else {
-          // Other roles don't fetch TS Associates
           return;
         }
 
         const response = await fetch(url);
-
         if (!response.ok) throw new Error("Failed to fetch agents");
 
         const data = await response.json();
@@ -134,6 +136,27 @@ const GroupAccounts: React.FC = () => {
 
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
+
+  // Fetch TSM options (for Manager)
+  useEffect(() => {
+    const fetchTSM = async () => {
+      if (userDetails.Role !== "Manager") return;
+      try {
+        const response = await fetch(`/api/fetchtsadata?Role=Territory Sales Manager`);
+        if (!response.ok) throw new Error("Failed to fetch TSMs");
+
+        const data = await response.json();
+        setTSMOptions(data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        })));
+      } catch (err) {
+        console.error("Error fetching TSM:", err);
+      }
+    };
+
+    fetchTSM();
+  }, [userDetails.Role]);
 
   // Reset page on filter change
   useEffect(() => {
@@ -157,13 +180,14 @@ const GroupAccounts: React.FC = () => {
             ? post?.referenceid === referenceID
             : userDetails.Role === "Territory Sales Manager"
               ? post?.tsm === referenceID
-            : userDetails.Role === "Manager"
-              ? post?.manager === referenceID  
-              : false;
+              : userDetails.Role === "Manager"
+                ? post?.manager === referenceID
+                : false;
 
       const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+      const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
 
-      return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesAgentFilter;
+      return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesAgentFilter && matchesTSMFilter;
     })
     : [];
 
@@ -188,28 +212,62 @@ const GroupAccounts: React.FC = () => {
                     strengthen partnerships, and manage business relationships more efficiently.
                   </p>
 
-                  {/* Agent Filter */}
-                  {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin") && (
-                    <div className="mb-4 flex items-center space-x-4">
-                      <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                        Filter by Agent
-                      </label>
-                      <select
-                        className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                        value={selectedAgent}
-                        onChange={(e) => setSelectedAgent(e.target.value)}
-                      >
-                        <option value="">All Agents</option>
-                        {tsaOptions.map((agent) => (
-                          <option key={agent.value} value={agent.value}>
-                            {agent.label}
-                          </option>
-                        ))}
-                      </select>
-                      <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">Total Companies: <span className="font-bold">{filteredAccounts.length}</span></h1>
-                    </div>
+                  {/* Filters Grid */}
+                  {(userDetails.Role === "Territory Sales Manager" ||
+                    userDetails.Role === "Super Admin" ||
+                    userDetails.Role === "Manager") && (
+                      <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        {/* Filter by Agent (TSA) */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Filter by Agent (TSA)
+                          </label>
+                          <select
+                            className="w-full border rounded px-3 py-2 text-xs capitalize"
+                            value={selectedAgent}
+                            onChange={(e) => setSelectedAgent(e.target.value)}
+                          >
+                            <option value="">All Agents</option>
+                            {tsaOptions.map((agent) => (
+                              <option key={agent.value} value={agent.value}>
+                                {agent.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                  )}
+                        {/* Filter by TSM (only for Manager role) */}
+                        {userDetails.Role === "Manager" && (
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Filter by TSM
+                            </label>
+                            <select
+                              className="w-full border rounded px-3 py-2 text-xs capitalize"
+                              value={selectedTSM}
+                              onChange={(e) => setSelectedTSM(e.target.value)}
+                            >
+                              <option value="">All TSMs</option>
+                              {tsmOptions.map((tsm) => (
+                                <option key={tsm.value} value={tsm.value}>
+                                  {tsm.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* Total Companies */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
+                            Total
+                          </label>
+                          <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm text-center">
+                            Total Companies: <span className="font-bold">{filteredAccounts.length}</span>
+                          </h1>
+                        </div>
+                      </div>
+                    )}
 
                   <Filters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 

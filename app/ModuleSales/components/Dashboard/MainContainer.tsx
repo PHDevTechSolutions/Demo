@@ -76,13 +76,12 @@ const MainContainer: React.FC<MainContainerProps> = ({
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch { }
+        } catch {}
       }
     }
     return presets.today();
   });
 
-  // New: selectedTSM state
   const [selectedTSM, setSelectedTSM] = useState("");
 
   useEffect(() => {
@@ -103,6 +102,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
     }
   };
 
+  // Filter by date
   const filteredByDate = useMemo(() => {
     if (!dateRange.start && !dateRange.end) return filteredAccounts;
 
@@ -115,44 +115,31 @@ const MainContainer: React.FC<MainContainerProps> = ({
       const startDate = acc.startdate ? new Date(acc.startdate) : null;
       const endDate = acc.enddate ? new Date(acc.enddate) : null;
       if (!startDate || !endDate) return false;
-      return (
-        (!endFilter || startDate < endFilter) &&
-        (!startFilter || endDate >= startFilter)
-      );
+      return (!endFilter || startDate < endFilter) && (!startFilter || endDate >= startFilter);
     });
   }, [filteredAccounts, dateRange]);
 
-  const canFilterByAgent = userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Super Admin";
-
-  // New: canFilterByTSM, show TSM filter only if role is Super Admin
-  const canFilterByTSM = userDetails.Role === "Super Admin";
+  // Manager can see all filters
+  const canFilterByTSM = ["Super Admin", "Manager"].includes(userDetails.Role);
+  const canFilterByAgent = ["Super Admin", "Manager", "Territory Sales Manager"].includes(userDetails.Role);
 
   const filteredByTSM = useMemo(() => {
-    if (!canFilterByTSM) return filteredByDate;
-    if (!selectedTSM) return filteredByDate;
-    // Filter accounts that belong to the selected TSM
+    if (!canFilterByTSM || !selectedTSM) return filteredByDate;
     return filteredByDate.filter((acc) => acc.tsm === selectedTSM);
   }, [filteredByDate, selectedTSM, canFilterByTSM]);
 
   const filteredByAgent = useMemo(() => {
-    // If user can't filter by agent, return filteredByTSM (already filtered by date & TSM)
     if (!canFilterByAgent) return filteredByTSM;
-
-    // Super Admin sees all regardless of selectedAgent (but filtered by TSM if selected)
-    if (userDetails.Role === "Super Admin") return filteredByTSM;
-
-    // Territory Sales Manager filters by selectedAgent if selected
     if (!selectedAgent) return filteredByTSM;
 
     return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
-  }, [filteredByTSM, selectedAgent, userDetails.Role, canFilterByAgent]);
+  }, [filteredByTSM, selectedAgent, canFilterByAgent]);
 
   return (
     <div className="mx-auto p-4">
-      {/* Filter by TSM (Super Admin only) */}
       {/* Filters Row */}
       <div className="mb-4 flex flex-wrap gap-4 items-end">
-        {/* Filter by TSM (Super Admin only) */}
+        {/* Filter by TSM */}
         {canFilterByTSM && (
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -173,7 +160,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
           </div>
         )}
 
-        {/* Filter by Agent (if Territory Sales Manager or Super Admin) */}
+        {/* Filter by Agent */}
         {canFilterByAgent && (
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -250,13 +237,10 @@ const MainContainer: React.FC<MainContainerProps> = ({
         </div>
       </div>
 
-
-      {/* Right Column (Companies Card on top) */}
       <div className="space-y-4">
         <CompaniesCard filteredAccounts={filteredByAgent} userDetails={userDetails} />
       </div>
-      
-      {/* Metrics */}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <Card filteredAccounts={filteredByAgent} userDetails={userDetails} />
         <Source filteredAccounts={filteredByAgent} />
