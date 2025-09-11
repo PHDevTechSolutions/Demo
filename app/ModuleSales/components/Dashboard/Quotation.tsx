@@ -120,56 +120,57 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
 
         {/* Gauges */}
         {showCharts && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <div className="p-2 flex flex-col items-center border-r">
-            <GaugeQChart value={quoteToSOCount} label="Quote to SO Conversion (QTY)" color="#3B82F6" />
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="p-2 flex flex-col items-center border-r">
+              <GaugeQChart value={quoteToSOCount} label="Quote to SO Conversion (QTY)" color="#3B82F6" />
+            </div>
 
-          <div className="p-2 flex flex-col items-center border-r">
-            <GaugeQChart value={quoteToSOAmount} label="Quote to SO Conversion (Peso Value)" color="#10B981" />
-          </div>
+            <div className="p-2 flex flex-col items-center border-r">
+              <GaugeQChart value={quoteToSOAmount} label="Quote to SO Conversion (Peso Value)" color="#10B981" />
+            </div>
 
-          <div className="p-2 flex flex-col items-center">
-            <GaugeQChart value={quoteToSIPercent} label="Quotation to SI Conversion (%)" color="#F59E0B" />
+            <div className="p-2 flex flex-col items-center">
+              <GaugeQChart value={quoteToSIPercent} label="Quotation to SI Conversion (%)" color="#F59E0B" />
+            </div>
           </div>
-        </div>
         )}
 
-        {/* Table */}
         {aggregatedData.length === 0 ? (
           <p className="text-gray-500 text-xs">No quotations with status "Quote-Done".</p>
         ) : (
           <div className="overflow-auto border rounded">
-            <table className="w-full text-xs table-auto">
-              <thead className="bg-gray-100">
-                <tr className="text-left">
-                  <th className="px-4 py-2">Total Count</th>
-                  <th className="px-4 py-2">Total Amount</th>
-                  <th className="px-4 py-2">Handling Time</th>
-                  <th className="px-4 py-2">Quote to SO Conversion (QTY)</th>
-                  <th className="px-4 py-2">Quote to SO Conversion (Peso Value)</th>
-                  <th className="px-4 py-2">Quotation to SI Conversion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {aggregatedData.map(
-                  ({ totalCount, totalAmount, handlingTimeFormatted }, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">{totalCount}</td>
-                      <td className="px-4 py-2">
-                        ₱{totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-2">{handlingTimeFormatted}</td>
-                      <td className="px-4 py-2">{quoteToSOCount}</td>
-                      <td className="px-4 py-2">
-                        ₱{quoteToSOAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-2">{quoteToSIPercent.toFixed(2)}%</td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+            {!showCharts && (
+              <table className="w-full text-xs table-auto">
+                <thead className="bg-gray-100">
+                  <tr className="text-left">
+                    <th className="px-4 py-2">Total Count</th>
+                    <th className="px-4 py-2">Total Amount</th>
+                    <th className="px-4 py-2">Handling Time</th>
+                    <th className="px-4 py-2">Quote to SO Conversion (QTY)</th>
+                    <th className="px-4 py-2">Quote to SO Conversion (Peso Value)</th>
+                    <th className="px-4 py-2">Quotation to SI Conversion</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {aggregatedData.map(
+                    ({ totalCount, totalAmount, handlingTimeFormatted }, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">{totalCount}</td>
+                        <td className="px-4 py-2">
+                          ₱{totalAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-4 py-2">{handlingTimeFormatted}</td>
+                        <td className="px-4 py-2">{quoteToSOCount}</td>
+                        <td className="px-4 py-2">
+                          ₱{quoteToSOAmount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-4 py-2">{quoteToSIPercent.toFixed(2)}%</td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
       </div>

@@ -17,6 +17,7 @@ interface OutboundCallsProps {
 
 const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange }) => {
   const [showCharts, setShowCharts] = useState(false);
+  const [showComputation, setShowComputation] = useState(false);
 
   const getWorkingDaysCount = (start: string, end: string) => {
     const startDate = new Date(start);
@@ -40,7 +41,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
-  // ✅ Hiwalay: Bilangin lahat ng valid quotations (regardless of OB filter)
+  // ✅ Hiwalay: lahat ng valid quotations
   const totalQuotations = useMemo(() => {
     return filteredCalls.reduce((count, call) => {
       const value = (call.quotationnumber || "").toString().trim().toLowerCase();
@@ -51,7 +52,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
-  // ✅ Hiwalay: Bilangin lahat ng delivered calls (regardless of OB filter)
+  // ✅ Hiwalay: lahat ng delivered
   const totalDelivered = useMemo(() => {
     return filteredCalls.reduce((count, call) => {
       if ((call.activitystatus || "").toLowerCase() === "delivered") {
@@ -61,7 +62,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
-
   const groupedBySource = useMemo(() => {
     const sourceMap: Record<string, CallRecord[]> = {};
 
@@ -69,7 +69,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
       const source = call.source?.trim() || "Unknown";
       const typeActivity = call.typeactivity?.trim().toLowerCase() || "";
 
-      // ✅ Filter lang applicable sa OB target, totalOB, actual sales
       if (source.toLowerCase() === "outbound - touchbase" && typeActivity === "outbound calls") {
         if (!sourceMap[source]) sourceMap[source] = [];
         sourceMap[source].push(call);
@@ -77,15 +76,10 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     });
 
     return Object.entries(sourceMap).map(([source, calls]) => {
-      const totalOB = calls.length; // ✅ actual outbound calls
+      const totalOB = calls.length;
       const obTarget = 35 * workingDays;
       const achievement = obTarget > 0 ? (totalOB / obTarget) * 100 : 0;
 
-      const delivered = calls.filter(
-        (call) => (call.activitystatus || "").toLowerCase() === "delivered"
-      ).length;
-
-      // ✅ Calls to Quote Conversion = (all valid quotations ÷ OB) × 100
       const callsToQuote = totalOB > 0 ? (totalQuotations / totalOB) * 100 : 0;
       const outboundToSales = totalOB > 0 ? (totalDelivered / totalOB) * 100 : 0;
 
@@ -98,19 +92,27 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
         outboundToSalesConversion: outboundToSales,
       };
     });
-  }, [filteredCalls, workingDays, totalQuotations]);
+  }, [filteredCalls, workingDays, totalQuotations, totalDelivered]);
 
   return (
     <div className="space-y-8">
       <div className="bg-white shadow-md rounded-lg p-4 font-sans text-black">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-sm font-bold">Outbound Calls (Touch-Based Only)</h2>
-          <button
-            onClick={() => setShowCharts((prev) => !prev)}
-            className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
-          >
-            {showCharts ? "Hide Chart" : "Show Chart"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowCharts((prev) => !prev)}
+              className="px-3 py-1 text-xs rounded bg-orange-500 text-white hover:bg-orange-600"
+            >
+              {showCharts ? "Hide Chart" : "Show Chart"}
+            </button>
+            <button
+              onClick={() => setShowComputation((prev) => !prev)}
+              className="px-3 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600"
+            >
+              {showComputation ? "Hide Computation" : "View Computation"}
+            </button>
+          </div>
         </div>
 
         <p className="text-xs text-gray-500 mb-4">
@@ -121,7 +123,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
           <p className="text-gray-500 text-xs">No calls found in selected date range.</p>
         ) : (
           <>
-            {/* Gauge Charts - toggle */}
+            {/* Gauge Charts */}
             {showCharts && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 {groupedBySource.map((item, index) => (
@@ -140,7 +142,29 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
               </div>
             )}
 
-            {!showCharts && (
+            {/* Computation Details */}
+            {showComputation && (
+              <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
+                <h3 className="font-bold mb-2">Computation Details</h3>
+                {groupedBySource.map((item, index) => (
+                  <div key={`comp-${index}`} className="mb-3">
+                    <p className="font-semibold">Source: {item.source}</p>
+                    <ul className="list-disc ml-5">
+                      <li>OB Target = 35 × WorkingDays ({workingDays}) = <b>{item.obTarget}</b></li>
+                      <li>Total OB = <b>{item.totalOB}</b></li>
+                      <li>Achievement = (Total OB ÷ OB Target) × 100 = <b>{item.achievement.toFixed(2)}%</b></li>
+                      <li>Total Quote (All Sources) = <b>{totalQuotations}</b></li>
+                      <li>Total SI (All Sources) = <b>{totalDelivered}</b></li>
+                      <li>Calls to Quote Conversion = (Total Quotations ÷ Total OB) × 100 = <b>{item.callsToQuoteConversion.toFixed(2)}%</b></li>
+                      <li>Outbound to Sales Conversion = (Total Delivered ÷ Total OB) × 100 = <b>{item.outboundToSalesConversion.toFixed(2)}%</b></li>
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Table */}
+            {!showCharts && !showComputation && (
               <div className="border rounded mb-4 overflow-x-auto">
                 <table className="w-full text-xs table-auto">
                   <thead className="bg-gray-100">
@@ -166,19 +190,10 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
                         </td>
                       </tr>
                     ))}
-                    {/* ✅ Overall total quotations row */}
-                    <tr className="bg-gray-50 font-bold">
-                      <td className="px-4 py-2 text-right" colSpan={3}>
-                        Total Valid Quotations:
-                      </td>
-                      <td className="px-4 py-2">{totalQuotations}</td>
-                      <td className="px-4 py-2" colSpan={2}></td>
-                    </tr>
                   </tbody>
                 </table>
               </div>
             )}
-
           </>
         )}
       </div>
