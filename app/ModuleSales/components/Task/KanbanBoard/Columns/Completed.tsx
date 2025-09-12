@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import { VariableSizeList as List, ListChildComponentProps } from "react-window";
 import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 export interface CompletedItem {
@@ -45,9 +45,9 @@ interface CompletedProps {
   refreshTrigger?: number;
 }
 
-const POLL_INTERVAL = 5000; // 5 seconds
-const ITEM_HEIGHT_COLLAPSED = 50;
-const ITEM_HEIGHT_EXPANDED = 300;
+const POLL_INTERVAL = 5000;
+const ITEM_HEIGHT_COLLAPSED = 70;
+const ITEM_HEIGHT_EXPANDED = 350; // include extra space for spacing
 
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
@@ -55,6 +55,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   const [loading, setLoading] = useState(false);
 
   const lastFetchedIds = useRef<Set<string>>(new Set());
+  const listRef = useRef<List>(null);
 
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
@@ -96,7 +97,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     }
   }, [userDetails?.ReferenceID]);
 
-  // Polling for new data
   useEffect(() => {
     fetchCompleted();
     const interval = setInterval(fetchCompleted, POLL_INTERVAL);
@@ -108,6 +108,8 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
       const newSet = new Set(prev);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
+      // tell react-window to recalc heights
+      if (listRef.current) listRef.current.resetAfterIndex(0);
       return newSet;
     });
   };
@@ -115,22 +117,28 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   const renderField = (label: string, value?: string | null) => {
     if (!value) return null;
     return (
-      <p>
+      <p className="mb-1">
         <span className="font-semibold">{label}:</span> {value}
       </p>
     );
   };
 
+  const getItemSize = (index: number) => {
+    const item = data[index];
+    return expandedItems.has(item.id) ? ITEM_HEIGHT_EXPANDED : ITEM_HEIGHT_COLLAPSED;
+  };
+
   const Row = ({ index, style }: ListChildComponentProps) => {
     const item = data[index];
     const isExpanded = expandedItems.has(item.id);
-    const rowHeight = isExpanded ? ITEM_HEIGHT_EXPANDED : ITEM_HEIGHT_COLLAPSED;
 
     return (
-      <div className="space-y-4">
+      <div
+        style={{ ...style, left: style.left, right: style.right, top: style.top }}
+        className="p-3 mb-2"
+      >
         <div
-          style={{ ...style, height: rowHeight, overflow: "hidden" }}
-          className="rounded-lg shadow bg-green-100 overflow-hidden relative p-2 cursor-pointer mb-2"
+          className="rounded-lg shadow bg-green-100 p-2 cursor-pointer"
           onClick={() => toggleExpand(item.id)}
         >
           <div className="flex items-center mb-2">
@@ -156,7 +164,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
           </div>
 
           {isExpanded && (
-            <div className="pl-2 mb-2 text-[10px] space-y-1">
+            <div className="pl-2 text-[10px] space-y-1">
               {renderField("Contact Person", item.contactperson)}
               {renderField("Contact #", item.contactnumber)}
               {renderField("Email", item.emailaddress)}
@@ -206,9 +214,10 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
   return (
     <List
+      ref={listRef}
       height={600}
       itemCount={data.length}
-      itemSize={ITEM_HEIGHT_COLLAPSED}
+      itemSize={getItemSize}
       width="100%"
     >
       {Row}
