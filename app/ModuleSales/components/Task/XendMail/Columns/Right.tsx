@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BsReply, BsArrowRight } from 'react-icons/bs';
+import { BsReply, BsArrowRight, BsX } from 'react-icons/bs';
 
 interface Attachment {
     filename: string;
@@ -24,9 +24,10 @@ interface RightColumnProps {
     email: EmailData;
     handleReply: () => void;
     handleForward: () => void;
+    onCancel: () => void;
 }
 
-const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleForward }) => {
+const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleForward, onCancel, }) => {
     const fromText = typeof email.from === "string" ? email.from : email.from.text;
     const attachments = email.attachments || [];
 
@@ -46,6 +47,12 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
                         onClick={handleForward}
                     >
                         <BsArrowRight size={20} /> Forward
+                    </button>
+                    <button
+                        className="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 text-xs flex items-center gap-1"
+                        onClick={onCancel}
+                    >
+                        <BsX size={16} /> Cancel
                     </button>
                 </div>
             </div>

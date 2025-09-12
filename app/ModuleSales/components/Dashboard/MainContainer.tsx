@@ -76,7 +76,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch {}
+        } catch { }
       }
     }
     return presets.today();
@@ -123,17 +123,43 @@ const MainContainer: React.FC<MainContainerProps> = ({
   const canFilterByTSM = ["Super Admin", "Manager"].includes(userDetails.Role);
   const canFilterByAgent = ["Super Admin", "Manager", "Territory Sales Manager"].includes(userDetails.Role);
 
+  // Filter by TSM
   const filteredByTSM = useMemo(() => {
     if (!canFilterByTSM || !selectedTSM) return filteredByDate;
     return filteredByDate.filter((acc) => acc.tsm === selectedTSM);
   }, [filteredByDate, selectedTSM, canFilterByTSM]);
 
+  // Filter by Agent
   const filteredByAgent = useMemo(() => {
     if (!canFilterByAgent) return filteredByTSM;
-    if (!selectedAgent) return filteredByTSM;
 
-    return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
-  }, [filteredByTSM, selectedAgent, canFilterByAgent]);
+    // If a Manager selected a TSM, show all TSAs under that TSM automatically
+    if (userDetails.Role === "Manager" && selectedTSM) {
+      return filteredByTSM; // filteredByTSM already contains only accounts under selected TSM
+    }
+
+    // If Agent selected, filter by selectedAgent
+    if (selectedAgent) {
+      return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
+    }
+
+    // Default: no agent filter applied
+    return filteredByTSM;
+  }, [filteredByTSM, selectedAgent, userDetails.Role, selectedTSM, canFilterByAgent]);
+
+  // Compute TSAs to show in the dropdown
+  const filteredTSAOptions = useMemo(() => {
+    // If user is Manager and has selected a TSM, show only TSAs under that TSM
+    if (userDetails.Role === "Manager" && selectedTSM) {
+      return tsaOptions.filter((agent) =>
+        filteredAccounts.some(
+          (acc) => acc.tsm === selectedTSM && acc.referenceid === agent.value
+        )
+      );
+    }
+    // Otherwise, show all TSAs
+    return tsaOptions;
+  }, [tsaOptions, userDetails.Role, selectedTSM, filteredAccounts]);
 
   return (
     <div className="mx-auto p-4">
@@ -172,7 +198,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
               onChange={(e) => setSelectedAgent(e.target.value)}
             >
               <option value="">All Agents</option>
-              {tsaOptions.map((agent) => (
+              {filteredTSAOptions.map((agent) => (
                 <option key={agent.value} value={agent.value}>
                   {agent.label}
                 </option>
@@ -180,6 +206,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
             </select>
           </div>
         )}
+
       </div>
 
       {/* Date Range Filters */}

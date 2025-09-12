@@ -23,7 +23,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ListofUser: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("activity");
+  const [activeTab, setActiveTab] = useState<string>("scheduled");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");

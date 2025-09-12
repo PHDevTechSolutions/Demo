@@ -73,7 +73,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     fetchData();
   }, [filteredAccounts, userDetails]);
 
-  if (userDetails?.Role === "Territory Sales Manager") return null;
+  if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") return null;
 
   return (
   <section className="bg-white select-none">

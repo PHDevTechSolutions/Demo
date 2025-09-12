@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
 import { MdEdit } from "react-icons/md";
 
-// Dynamic imports for faster initial load
+// Dynamic imports
 const LeftColumn = dynamic(() => import("./Columns/Left"), { ssr: false });
 const RightColumn = dynamic(() => import("./Columns/Right"), { ssr: false });
 const Form = dynamic(() => import("./Form"), { ssr: false });
@@ -47,13 +47,12 @@ interface MainProps {
 }
 
 const PAGE_SIZE = 5;
-const FETCH_LATEST = 20; // Fetch only latest 20 emails per request
 
 const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [allEmails, setAllEmails] = useState<EmailData[]>([]);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
-    const [imapPass, setImapPass] = useState(userDetails.ImapPass || "");
+    const [imapPass] = useState(userDetails.ImapPass || "");
     const [fetchedCount, setFetchedCount] = useState(0);
     const [selectedEmail, setSelectedEmail] = useState<EmailData | null>(null);
     const [composeOpen, setComposeOpen] = useState(false);
@@ -67,31 +66,47 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [body, setBody] = useState("");
     const [attachments, setAttachments] = useState<File[]>([]);
 
+    // Sort emails
     const sortedEmails = useMemo(() => {
         return [...allEmails].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
     }, [allEmails]);
 
-    // Paginated emails
-    const emails = useMemo(() => sortedEmails.slice(0, fetchedCount), [sortedEmails, fetchedCount]);
+    // Paginate
+    const emails = useMemo(
+        () => sortedEmails.slice(0, fetchedCount),
+        [sortedEmails, fetchedCount]
+    );
 
-    const isValidEmailData = (obj: any): obj is EmailData => {
-        return (
-            obj &&
-            typeof obj === "object" &&
-            obj.from && typeof obj.from.text === "string" &&
-            typeof obj.to === "string" &&
-            typeof obj.cc === "string" &&
-            typeof obj.subject === "string" &&
-            typeof obj.date === "string" &&
-            typeof obj.messageId === "string" &&
-            typeof obj.body === "string" &&
-            Array.isArray(obj.attachments)
-        );
-    };
+    const saveEmailsToDB = useCallback(async (emails: EmailData[]) => {
+        if (!emails.length) return;
 
-    const fetchLatestEmails = useCallback(async () => {
+        try {
+            const res = await fetch("/api/ModuleSales/Task/XendMail/Save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    referenceId: userDetails.ReferenceID,
+                    emails,
+                }),
+            });
+
+            const data = await res.json().catch(async () => ({
+                error: await res.text(),
+            }));
+
+            if (!res.ok) throw new Error(data.error || "Failed to save emails");
+
+            console.log("✅ Emails saved to DB:", data);
+        } catch (err: any) {
+            console.error("Save to DB error:", err);
+            toast.error("Error saving emails to database");
+        }
+    }, [userDetails.ReferenceID]);
+
+    // Fetch emails
+    const fetchEmails = useCallback(async () => {
         if (!imapPass) return;
         setLoading(true);
 
@@ -102,10 +117,9 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 body: JSON.stringify({
                     email: userDetails.Email,
                     imapHost: userDetails.ImapHost,
-                    imapPass,
+                    imapPass: userDetails.ImapPass,
                     imapPort: 993,
                     secure: true,
-                    latest: FETCH_LATEST,
                 }),
             });
 
@@ -116,57 +130,76 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 return toast.error("Invalid email data from server");
             }
 
-            // Filter valid emails only
-            const validEmails = data.filter(isValidEmailData);
+            setAllEmails(data);
+            setFetchedCount(Math.min(PAGE_SIZE, data.length));
 
-            if (validEmails.length === 0) return toast.info("No new valid emails found");
+            // Save to cache
+            localStorage.setItem("cachedEmails", JSON.stringify(data));
 
-            // Merge new emails
-            setAllEmails((prev) => {
-                const existingIds = new Set(prev.map((e) => e.messageId));
-                const newEmails = validEmails.filter((e) => !existingIds.has(e.messageId));
-                return [...newEmails, ...prev];
-            });
-
-            setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, allEmails.length + validEmails.length));
+            // Save to DB (no duplicates handled server-side)
+            saveEmailsToDB(data);
         } catch (err: any) {
             console.error(err);
             toast.error(err.message || "Error fetching emails");
         } finally {
             setLoading(false);
         }
-    }, [imapPass, userDetails, allEmails.length]);
+    }, [imapPass, userDetails, saveEmailsToDB]);
 
+    // Auto-refresh on mount
+    useEffect(() => {
+        // Load cache first
+        const cached = localStorage.getItem("cachedEmails");
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed)) {
+                    setAllEmails(parsed);
+                    setFetchedCount(Math.min(PAGE_SIZE, parsed.length));
+                }
+            } catch (e) {
+                console.warn("Invalid cache data");
+            }
+        }
 
-    // Load more emails for pagination
+        // Fetch latest emails after mount
+        fetchEmails();
+    }, [fetchEmails]);
+
+    // Load more emails
     const loadMore = useCallback(() => {
         setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, allEmails.length));
     }, [allEmails.length]);
 
-    // Mark email as read
+    // Select email
     const handleSelectEmail = (email: EmailData) => {
         setSelectedEmail(email);
         setReadEmails((prev) => new Set(prev).add(email.messageId));
     };
 
-    // Auto fetch on mount if password exists
-    useEffect(() => {
-        if (imapPass) fetchLatestEmails();
-    }, [imapPass, fetchLatestEmails]);
     // Send email
     const sendEmailWithAttachments = async (files: File[]) => {
-        if (!to || !subject || !body) return toast.error("Please fill in all fields.");
+        if (!to || !subject || !body)
+            return toast.error("Please fill in all fields.");
         setSending(true);
 
         try {
             const attachmentsData = await Promise.all(
                 files.map(
                     (file) =>
-                        new Promise<{ filename: string; content: string; contentType: string }>((resolve, reject) => {
+                        new Promise<{
+                            filename: string;
+                            content: string;
+                            contentType: string;
+                        }>((resolve, reject) => {
                             const reader = new FileReader();
                             reader.onload = () => {
                                 const base64Content = (reader.result as string).split(",")[1];
-                                resolve({ filename: file.name, content: base64Content, contentType: file.type });
+                                resolve({
+                                    filename: file.name,
+                                    content: base64Content,
+                                    contentType: file.type,
+                                });
                             };
                             reader.onerror = reject;
                             reader.readAsDataURL(file);
@@ -174,10 +207,22 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 )
             );
 
-            const cc = recipients.filter((r) => r.type === "CC").map((r) => r.email).join(",");
-            const bcc = recipients.filter((r) => r.type === "BCC").map((r) => r.email).join(",");
-            const replyTo = recipients.filter((r) => r.type === "Reply-To").map((r) => r.email).join(",");
-            const followupTo = recipients.filter((r) => r.type === "Followup-To").map((r) => r.email).join(",");
+            const cc = recipients
+                .filter((r) => r.type === "CC")
+                .map((r) => r.email)
+                .join(",");
+            const bcc = recipients
+                .filter((r) => r.type === "BCC")
+                .map((r) => r.email)
+                .join(",");
+            const replyTo = recipients
+                .filter((r) => r.type === "Reply-To")
+                .map((r) => r.email)
+                .join(",");
+            const followupTo = recipients
+                .filter((r) => r.type === "Followup-To")
+                .map((r) => r.email)
+                .join(",");
 
             const res = await fetch("/api/ModuleSales/Task/XendMail/Send", {
                 method: "POST",
@@ -199,11 +244,16 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 }),
             });
 
-            const data = await res.json().catch(async () => ({ error: await res.text() }));
+            const data = await res.json().catch(async () => ({
+                error: await res.text(),
+            }));
             if (!res.ok) throw new Error(data.error || "Failed to send email");
 
             toast.success("Email sent successfully!");
             resetCompose();
+
+            // Refresh after sending
+            fetchEmails();
         } catch (err: any) {
             console.error("Send error:", err);
             toast.error(err.message || "Error sending email");
@@ -222,7 +272,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
         setAttachments([]);
     };
 
-    // Reply to email
+    // Reply
     const handleReply = () => {
         if (!selectedEmail) return;
         setSending(true);
@@ -230,7 +280,9 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             setTo(selectedEmail.from.text);
             setRecipients(
                 selectedEmail.cc
-                    ? selectedEmail.cc.split(",").map((email) => ({ type: "CC" as const, email }))
+                    ? selectedEmail.cc
+                        .split(",")
+                        .map((email) => ({ type: "CC" as const, email }))
                     : []
             );
             setSubject(`Re: ${selectedEmail.subject}`);
@@ -242,7 +294,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
         }, 200);
     };
 
-    // Forward email
+    // Forward
     const handleForward = () => {
         if (!selectedEmail) return;
         setSending(true);
@@ -278,14 +330,12 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                     emails={emails}
                     selectedEmail={selectedEmail}
                     setSelectedEmail={handleSelectEmail}
-                    imapPass={imapPass}
-                    setImapPass={setImapPass}
-                    fetchEmails={fetchLatestEmails}
+                    fetchEmails={fetchEmails}
                     fetchedCount={fetchedCount}
                     allEmails={allEmails}
                     loadMore={loadMore}
                     loading={loading}
-                    readEmails={readEmails} // pass readEmails for yellow highlight
+                    readEmails={readEmails}
                 />
 
                 <div className="col-span-2 p-4 border-l max-h-[80vh] overflow-y-auto">
@@ -293,7 +343,10 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                     <div className="flex justify-between items-center mb-2 border-b">
                         <button
                             className="bg-blue-800 text-white px-3 py-2 rounded hover:bg-blue-900 text-xs mb-2 flex items-center gap-1"
-                            onClick={() => { setComposeOpen(!composeOpen); setReplyMode(false); }}
+                            onClick={() => {
+                                setComposeOpen(!composeOpen);
+                                setReplyMode(false);
+                            }}
                         >
                             <MdEdit size={20} /> Compose
                         </button>
@@ -313,15 +366,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                             attachments={attachments}
                             setAttachments={setAttachments}
                             sendEmail={sendEmailWithAttachments}
-                            onCancel={() => {
-                                setComposeOpen(false);
-                                setReplyMode(false);
-                                setTo("");
-                                setRecipients([]);
-                                setSubject("");
-                                setBody("");
-                                setAttachments([]);
-                            }}
+                            onCancel={resetCompose}
                         />
                     )}
 
@@ -330,9 +375,9 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                             email={selectedEmail}
                             handleReply={handleReply}
                             handleForward={handleForward}
+                            onCancel={() => setSelectedEmail(null)}
                         />
                     )}
-
                 </div>
 
                 <ToastContainer className="text-xs" autoClose={1000} />

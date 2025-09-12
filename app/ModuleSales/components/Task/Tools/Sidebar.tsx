@@ -17,16 +17,6 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab }) => {
       <h3 className="font-bold text-xs">Tools</h3>
 
       <button
-        onClick={() => setActiveTab("activity")}
-        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity"
-            ? "bg-orange-400 text-white"
-            : "bg-gray-100"
-          }`}
-      >
-        <BsCalendar4Week />
-      </button>
-
-      <button
         onClick={() => setActiveTab("scheduled")}
         className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "scheduled"
             ? "bg-orange-400 text-white"
@@ -34,6 +24,16 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab }) => {
           }`}
       >
         <BsListTask />
+      </button>
+
+      <button
+        onClick={() => setActiveTab("activity")}
+        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "activity"
+            ? "bg-orange-400 text-white"
+            : "bg-gray-100"
+          }`}
+      >
+        <BsCalendar4Week />
       </button>
 
       <button
