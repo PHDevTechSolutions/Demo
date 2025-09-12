@@ -87,9 +87,8 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
 
     const emails =
         activeTab === "inbox"
-            ? sortedInbox.slice(0, fetchedCount)
-            : sortedSent.slice(0, fetchedCount);
-
+            ? sortedInbox.slice(0, fetchedCount) // inbox → may pagination
+            : sortedSent; // sent → lahat agad ipakita
 
     const saveEmailsToDB = useCallback(
         async (emails: EmailData[]) => {
@@ -129,7 +128,6 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                 }
             } catch (err: any) {
                 console.error("Save to DB error:", err);
-                toast.error("Error saving emails to database");
             }
         },
         [userDetails.ReferenceID]
@@ -177,14 +175,17 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const fetchSentEmails = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(
-                `/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`
-            );
-            const data = await res.json();
-            if (!Array.isArray(data)) return;
+            const res = await fetch(`/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`)
 
-            setSentEmails(data);
-            setFetchedCount(Math.min(PAGE_SIZE, data.length)); // ✅ reset slice
+            const data = await res.json();
+
+            if (!Array.isArray(data)) {
+                console.warn("GetSent returned non-array:", data);
+                return;
+            }
+
+            setSentEmails(data); // ✅ save lahat ng sent emails
+            // ❌ wag na mag-setFetchedCount dito para hindi ma-limit
         } catch (err) {
             console.error("Fetch sent error:", err);
         } finally {
@@ -382,7 +383,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                         fetchEmails={fetchEmails}
                         fetchSentEmails={fetchSentEmails}
                         fetchedCount={fetchedCount}
-                        allEmails={activeTab === "inbox" ? sortedInbox : sortedSent} // ✅ gumamit ng buong sorted array
+                        allEmails={activeTab === "inbox" ? sortedInbox : sortedSent}
                         loadMore={loadMore}
                         loading={loading}
                         readEmails={readEmails}

@@ -15,12 +15,14 @@ export async function GET(req: NextRequest) {
     const referenceId = searchParams.get("referenceId");
 
     if (!referenceId) {
+      // ❌ kung walang referenceId → bawal
       return NextResponse.json(
         { error: "referenceId is required" },
         { status: 400 }
       );
     }
 
+    // ✅ filtered by referenceId lamang
     const rows = await sql`
       SELECT 
         referenceid,
@@ -38,21 +40,31 @@ export async function GET(req: NextRequest) {
       ORDER BY email_date DESC
     `;
 
-    // Map to same EmailData structure
-    const emails = rows.map((row: any) => ({
-      from: { text: row.sender },
-      to: row.recipient_to,
-      cc: row.recipient_cc,
-      subject: row.subject,
-      date: row.email_date ? new Date(row.email_date).toISOString() : null,
-      messageId: row.messageid,
-      body: row.body,
-      attachments: row.attachments ? JSON.parse(row.attachments) : [],
-    }));
+    console.log("📨 GetSent rows:", rows.length);
+
+    const emails = rows.map((row: any) => {
+      let attachments = [];
+      try {
+        attachments = row.attachments ? JSON.parse(row.attachments) : [];
+      } catch (err) {
+        console.warn("⚠️ Invalid attachments JSON:", row.attachments);
+      }
+
+      return {
+        from: { text: row.sender },
+        to: row.recipient_to,
+        cc: row.recipient_cc,
+        subject: row.subject,
+        date: row.email_date ? new Date(row.email_date).toISOString() : null,
+        messageId: row.messageid,
+        body: row.body,
+        attachments,
+      };
+    });
 
     return NextResponse.json(emails, { status: 200 });
   } catch (err: any) {
-    console.error("GetSent API error:", err);
+    console.error("❌ GetSent API error:", err);
     return NextResponse.json(
       { error: "Server error: " + err.message },
       { status: 500 }
