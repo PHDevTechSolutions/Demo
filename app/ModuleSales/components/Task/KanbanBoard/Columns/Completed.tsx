@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { FaCircle } from "react-icons/fa";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 export interface CompletedItem {
   id: string;
@@ -12,6 +13,7 @@ export interface CompletedItem {
   typeclient: string;
   referenceid: string;
   date_created: string;
+  date_updated?: string;
   activitystatus?: string;
   activitynumber: string;
   profilepicture?: string;
@@ -43,69 +45,72 @@ interface CompletedProps {
   refreshTrigger?: number;
 }
 
+const POLL_INTERVAL = 5000; // 5 seconds
+const ITEM_HEIGHT_COLLAPSED = 50;
+const ITEM_HEIGHT_EXPANDED = 300;
+
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
-  const [visibleCount, setVisibleCount] = useState(10);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const lastFetchedIds = useRef<Set<string>>(new Set());
+
+  const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch completed activities");
 
-    const fetchCompleted = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
+      const result = await res.json();
+      const list: CompletedItem[] = Array.isArray(result)
+        ? result
+        : result.data || result.items || [];
+
+      const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
+
+      const doneItems = list
+        .filter(
+          (item: CompletedItem) =>
+            allowedStatuses.includes(item.activitystatus || "") &&
+            item.referenceid === userDetails.ReferenceID &&
+            !lastFetchedIds.current.has(item.id)
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.date_created).getTime() -
+            new Date(a.date_created).getTime()
         );
-        if (!res.ok) throw new Error("Failed to fetch completed activities");
 
-        const result = await res.json();
-        const list: CompletedItem[] = Array.isArray(result)
-          ? result
-          : result.data || result.items || [];
-
-        const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
-
-        const doneItems = list
-          .filter(
-            (item: CompletedItem) =>
-              allowedStatuses.includes(item.activitystatus || "") &&
-              item.referenceid === userDetails.ReferenceID
-          )
-          .sort(
-            (a, b) =>
-              new Date(b.date_created).getTime() -
-              new Date(a.date_created).getTime()
-          );
-
-        setData(doneItems);
-      } catch (err) {
-        console.error("❌ Error fetching completed:", err);
-      } finally {
-        setLoading(false);
+      if (doneItems.length > 0) {
+        doneItems.forEach(item => lastFetchedIds.current.add(item.id));
+        setData(prev => [...doneItems, ...prev]);
       }
-    };
+    } catch (err) {
+      console.error("❌ Error fetching completed:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userDetails?.ReferenceID]);
 
+  // Polling for new data
+  useEffect(() => {
     fetchCompleted();
-  }, [userDetails, refreshTrigger]);
+    const interval = setInterval(fetchCompleted, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchCompleted, refreshTrigger]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-      </div>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="text-center text-gray-400 italic">
-        No completed tasks yet
-      </div>
-    );
-  }
+  const toggleExpand = (id: string) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
 
   const renderField = (label: string, value?: string | null) => {
     if (!value) return null;
@@ -116,115 +121,98 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     );
   };
 
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => prev + 10);
+  const Row = ({ index, style }: ListChildComponentProps) => {
+    const item = data[index];
+    const isExpanded = expandedItems.has(item.id);
+    const rowHeight = isExpanded ? ITEM_HEIGHT_EXPANDED : ITEM_HEIGHT_COLLAPSED;
+
+    return (
+      <div className="space-y-4">
+        <div
+          style={{ ...style, height: rowHeight, overflow: "hidden" }}
+          className="rounded-lg shadow bg-green-100 overflow-hidden relative p-2 cursor-pointer mb-2"
+          onClick={() => toggleExpand(item.id)}
+        >
+          <div className="flex items-center mb-2">
+            <img
+              src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
+              alt="Profile"
+              className="w-8 h-8 rounded-full object-cover mr-3"
+            />
+            <div className="flex flex-col flex-1">
+              <div className="flex items-center space-x-1">
+                <FaCircle className="text-green-500 w-2 h-2" />
+                <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
+              </div>
+              {item.activitynumber && (
+                <p className="text-[8px] text-gray-600">
+                  Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+            </div>
+          </div>
+
+          {isExpanded && (
+            <div className="pl-2 mb-2 text-[10px] space-y-1">
+              {renderField("Contact Person", item.contactperson)}
+              {renderField("Contact #", item.contactnumber)}
+              {renderField("Email", item.emailaddress)}
+              {renderField("Type", item.typeclient)}
+              {renderField("Quotation Number", item.quotationnumber)}
+              {renderField("Quotation Amount", item.quotationamount)}
+              {renderField("SO Amount", item.soamount)}
+              {renderField("SO Number", item.sonumber)}
+              {renderField("Callback", item.callback)}
+              {renderField("Project Name", item.projectname)}
+              {renderField("Project Category", item.projectcategory)}
+              {renderField("Project Type", item.projecttype)}
+              {renderField("Type Call", item.typecall)}
+              {renderField("Source", item.source)}
+              {renderField("Status", item.activitystatus)}
+              {renderField("Remarks", item.remarks)}
+              {renderField("Call Status", item.callstatus)}
+              {renderField("Start Date", item.startdate)}
+              {renderField("End Date", item.enddate)}
+              {renderField("Ticket Ref #", item.ticketreferencenumber)}
+              {renderField("Wrap Up", item.wrapup)}
+              {renderField("Inquiries", item.inquiries)}
+              {renderField("CSR Agent", item.csragent)}
+              {renderField("Payment Term", item.paymentterm)}
+              {renderField("Delivery Date", item.deliverydate)}
+              {renderField(
+                "Date Created",
+                item.date_created ? new Date(item.date_created).toLocaleString() : undefined
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedItems((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
+  if (loading && data.length === 0)
+    return (
+      <div className="flex justify-center items-center py-10">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+      </div>
+    );
 
-  const visibleData = data.slice(0, visibleCount);
+  if (data.length === 0)
+    return <div className="text-center text-gray-400 italic">No completed tasks yet</div>;
 
   return (
-    <div className="space-y-4">
-      {visibleData.map((item) => {
-        const isExpanded = expandedItems.has(item.id);
-
-        return (
-          <div
-            key={item.id}
-            className="rounded-lg shadow bg-green-100 overflow-hidden relative p-2"
-          >
-            <div className="flex items-center mb-2">
-              <img
-                src={
-                  item.profilepicture ||
-                  userDetails?.profilePicture ||
-                  "/taskflow.png"
-                }
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover mr-3"
-              />
-              <div className="flex flex-col flex-1">
-                <div className="flex items-center space-x-1">
-                  <FaCircle className="text-green-500 w-2 h-2" />
-                  <p className="font-semibold text-[10px] uppercase">
-                    {item.companyname}
-                  </p>
-                </div>
-                {item.activitynumber && (
-                  <p className="text-[8px] text-gray-600">
-                    Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={() => toggleExpand(item.id)}
-                className="text-[10px] text-blue-600 underline"
-              >
-                {isExpanded ? "Hide" : "View"}
-              </button>
-            </div>
-
-            {isExpanded && (
-              <div className="pl-2 mb-2 text-[10px] space-y-1">
-                {renderField("Contact Person", item.contactperson)}
-                {renderField("Contact #", item.contactnumber)}
-                {renderField("Email", item.emailaddress)}
-                {renderField("Type", item.typeclient)}
-                {renderField("Quotation Number", item.quotationnumber)}
-                {renderField("Quotation Amount", item.quotationamount)}
-                {renderField("SO Amount", item.soamount)}
-                {renderField("SO Number", item.sonumber)}
-                {renderField("Callback", item.callback)}
-                {renderField("Project Name", item.projectname)}
-                {renderField("Project Category", item.projectcategory)}
-                {renderField("Project Type", item.projecttype)}
-                {renderField("Type Call", item.typecall)}
-                {renderField("Source", item.source)}
-                {renderField("Status", item.activitystatus)}
-                {renderField("Remarks", item.remarks)}
-                {renderField("Call Status", item.callstatus)}
-                {renderField("Start Date", item.startdate)}
-                {renderField("End Date", item.enddate)}
-                {renderField("Ticket Ref #", item.ticketreferencenumber)}
-                {renderField("Wrap Up", item.wrapup)}
-                {renderField("Inquiries", item.inquiries)}
-                {renderField("CSR Agent", item.csragent)}
-                {renderField("Payment Term", item.paymentterm)}
-                {renderField("Delivery Date", item.deliverydate)}
-                {renderField(
-                  "Date Created",
-                  item.date_created
-                    ? new Date(item.date_created).toLocaleString()
-                    : undefined
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {visibleCount < data.length && (
-        <div className="flex justify-center mt-2">
-          <button
-            onClick={handleLoadMore}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-[10px]"
-          >
-            Load More
-          </button>
-        </div>
-      )}
-    </div>
+    <List
+      height={600}
+      itemCount={data.length}
+      itemSize={ITEM_HEIGHT_COLLAPSED}
+      width="100%"
+    >
+      {Row}
+    </List>
   );
 };
 

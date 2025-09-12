@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaCircle } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 
@@ -16,6 +15,7 @@ export interface ProgressItem {
   typeactivity?: string;
   referenceid: string;
   date_created: string;
+  date_updated: string;
   remarks?: string;
   address?: string;
   area?: string;
@@ -42,7 +42,6 @@ interface ProgressCardProps {
   profilePicture: string;
   onAddClick: () => void;
   onDeleteClick?: (progress: ProgressItem) => Promise<void>;
-  onUpdateStatus?: (progress: ProgressItem, status: string) => Promise<void>;
 }
 
 const STATUS_PERCENT: Record<string, number> = {
@@ -54,27 +53,35 @@ const STATUS_PERCENT: Record<string, number> = {
   Done: 100,
 };
 
+const STATUS_BG: Record<string, string> = {
+  Assisted: "bg-blue-300",
+  Paid: "bg-green-500",
+  Delivered: "bg-cyan-500",
+  Collected: "bg-indigo-500",
+  "Quote-Done": "bg-gray-200",
+  "SO-Done": "bg-purple-200",
+  Cancelled: "bg-red-500",
+  Loss: "bg-red-800",
+};
+
 const ProgressCard: React.FC<ProgressCardProps> = ({
   progress,
   profilePicture,
   onAddClick,
   onDeleteClick,
-  onUpdateStatus,
 }) => {
   if (progress.activitystatus === "Done") return null;
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // collapse/expand state
 
-  const computePercent = () => {
-    return STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
-  };
+  const computePercent = () =>
+    STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
 
   const percent = computePercent();
 
-  const handleDeleteClick = () => {
-    setShowDeleteModal(true);
-  };
+  const handleDeleteClick = () => setShowDeleteModal(true);
 
   const confirmDelete = async () => {
     if (!onDeleteClick) return;
@@ -87,41 +94,21 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     }
   };
 
-  const handleDone = async () => {
-    try {
-      const response = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/UpdateProgressDone",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: progress.id }),
-        }
-      );
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Failed to update");
-
-      toast.success("Marked as Done!", { autoClose: 2000 });
-
-      if (onUpdateStatus) {
-        onUpdateStatus(progress, "Done");
-      }
-    } catch (err) {
-      toast.error("Failed to update progress", { autoClose: 2000 });
-      console.error(err);
-    }
-  };
+  const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";
 
   return (
-    <div className="rounded-lg shadow bg-orange-100 overflow-hidden relative p-2">
+    <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
       {/* Header */}
-      <div className="flex items-center mb-2">
+      <div
+        className="flex items-center mb-2 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <img
           src={profilePicture}
           alt="Profile"
           className="w-8 h-8 rounded-full object-cover mr-3"
         />
-        <div className="flex flex-col">
+        <div className="flex flex-col flex-grow">
           <div className="flex items-center space-x-1">
             <FaCircle className="text-orange-500 w-2 h-2" />
             <p className="font-semibold text-[10px] uppercase">
@@ -135,59 +122,66 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
           )}
         </div>
 
-        <div className="flex items-center ml-auto space-x-2">
+        <div className="flex items-center space-x-2">
           <DoughnutChart percent={percent} size="w-5 h-5" />
+          {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
         </div>
       </div>
 
-      {/* Parent details */}
-      <div className="pl-2 mb-2 text-[10px]">
-        <p>
-          <span className="font-semibold">Contact Person:</span>{" "}
-          {progress.contactperson}
-        </p>
-        <p>
-          <span className="font-semibold">Contact #:</span>{" "}
-          {progress.contactnumber}
-        </p>
-        <p>
-          <span className="font-semibold">Email:</span> {progress.emailaddress}
-        </p>
-        <p>
-          <span className="font-semibold">Type:</span> {progress.typeclient}
-        </p>
-        <p className="text-gray-500 text-[8px]">
-          {progress.date_created
-            ? new Date(progress.date_created).toLocaleString()
-            : "N/A"}
-        </p>
-      </div>
+      {/* Collapsible Content */}
+      {isExpanded && (
+        <>
+          <div className="pl-2 mb-2 text-[10px]">
+            <p>
+              <span className="font-semibold">Contact Person:</span>{" "}
+              {progress.contactperson}
+            </p>
+            <p>
+              <span className="font-semibold">Contact #:</span>{" "}
+              {progress.contactnumber}
+            </p>
+            <p>
+              <span className="font-semibold">Email:</span> {progress.emailaddress}
+            </p>
+            <p>
+              <span className="font-semibold">Type:</span> {progress.typeclient}
+            </p>
+            <p>
+              <span className="font-semibold">Status:</span> {progress.activitystatus}
+            </p>
+            <p className="text-gray-500 text-[8px]">
+              {progress.date_created
+                ? new Date(progress.date_created).toLocaleString()
+                : "N/A"}
+            </p>
+            {progress.remarks && (
+              <p>
+                <span className="font-semibold">Remarks:</span> {progress.remarks}
+              </p>
+            )}
+          </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end mt-2 space-x-1">
-        <button
-          onClick={onAddClick}
-          className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600"
-        >
-          Add
-        </button>
-        {onDeleteClick && (
-          <button
-            onClick={handleDeleteClick}
-            className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600"
-          >
-            Delete
-          </button>
-        )}
-        <button
-          onClick={handleDone}
-          className="px-2 py-1 bg-green-500 text-white text-[10px] rounded hover:bg-green-600"
-        >
-          Done
-        </button>
-      </div>
+          {/* Action Buttons */}
+          <div className="flex justify-end mt-2 space-x-1">
+            <button
+              onClick={onAddClick}
+              className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600"
+            >
+              Add
+            </button>
+            {onDeleteClick && (
+              <button
+                onClick={handleDeleteClick}
+                className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </>
+      )}
 
-      {/* Step 1: Delete Confirmation Modal */}
+      {/* Delete Modals */}
       <DeleteModal
         isOpen={showDeleteModal && !showFinalModal}
         isChild={false}
@@ -199,8 +193,6 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
           setShowFinalModal(true);
         }}
       />
-
-      {/* Step 2: Permanently Delete Modal */}
       <DeleteModal
         isOpen={showFinalModal}
         isChild={false}

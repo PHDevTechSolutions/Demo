@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 interface Company {
   id?: number;
@@ -144,7 +145,7 @@ const Companies: React.FC<CompaniesProps> = ({
                     Cancel
                   </button>
 
-                  <span className="text-gray-400">{isExpanded ? "▲" : "▼"}</span>
+                  <span>{isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}</span>
                 </div>
               </div>
 

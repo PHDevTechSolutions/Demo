@@ -17,6 +17,7 @@ interface ProgressItem {
   typeclient: string;
   referenceid: string;
   date_created: string;
+  date_updated: string;
   activitynumber: string;
   typeactivity?: string;
   remarks?: string;
@@ -168,42 +169,43 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setShowForm(true);
   };
 
-  /** Fetch progress data (single fetch) */
-  useEffect(() => {
+  /** Fetch progress data */
+  /** Fetch progress data */
+  const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
+      );
+      const data = await res.json();
+      const progressData: ProgressItem[] =
+        Array.isArray(data) ? data : data?.data || data?.progress || [];
 
-    const fetchProgress = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
-        );
-        const data = await res.json();
+      const myProgress = progressData.filter(
+        (p) =>
+          p.referenceid === userDetails.ReferenceID &&
+          !EXCLUDED_ACTIVITIES.includes(p.typeactivity || "")
+      );
 
-        const progressData: ProgressItem[] =
-          Array.isArray(data) ? data : data?.data || data?.progress || [];
+      // 🔹 Sort by date_updated first (latest first), fallback to date_created
+      setProgress(
+        myProgress.sort((a, b) => {
+          const dateA = a.date_updated ? new Date(a.date_updated) : new Date(a.date_created);
+          const dateB = b.date_updated ? new Date(b.date_updated) : new Date(b.date_created);
+          return dateB.getTime() - dateA.getTime();
+        })
+      );
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+      setProgress([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const myProgress = progressData.filter(
-          (p) =>
-            p.referenceid === userDetails.ReferenceID &&
-            !EXCLUDED_ACTIVITIES.includes(p.typeactivity || "")
-        );
 
-        setProgress(
-          myProgress.sort(
-            (a, b) =>
-              new Date(b.date_created).getTime() -
-              new Date(a.date_created).getTime()
-          )
-        );
-      } catch (err) {
-        console.error("❌ Error fetching progress:", err);
-        setProgress([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchProgress();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
@@ -229,21 +231,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   /** Submit form */
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let payload: any = { ...hiddenFields, ...formData };
+    const payload: any = { ...hiddenFields, ...formData };
 
     if (!payload.activitynumber) {
       toast.error("Activity number is missing!");
       return;
     }
 
-    // 🔹 Sanitize numeric fields
+    // Sanitize numeric fields
     const numericFields = ["soamount", "quotationamount", "targetquota"];
     numericFields.forEach((field) => {
-      if (payload[field] === "" || payload[field] === undefined) {
-        payload[field] = null;
-      } else {
-        payload[field] = Number(payload[field]);
-      }
+      payload[field] = payload[field] === "" || payload[field] === undefined ? null : Number(payload[field]);
     });
 
     try {
@@ -261,13 +259,25 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
       setShowForm(false);
       resetForm();
+      toast.success("Activity successfully added/updated!");
 
-      toast.success("Activity successfully added!");
-
-      // refresh list
-      setProgress((prev) =>
-        prev.map((p) => (p.id === data.id ? { ...p, ...data } : p))
-      );
+      // 🔹 Refresh only the specific card
+      if (data?.id) {
+        const updatedItemRes = await fetch(
+          `/api/ModuleSales/Task/ActivityPlanner/FetchSingle?activityid=${data.id}`
+        );
+        const updatedItem = await updatedItemRes.json();
+        if (updatedItemRes.ok && updatedItem) {
+          setProgress((prev) =>
+            prev.map((p) => (p.id === data.id ? updatedItem : p))
+          );
+        } else {
+          // fallback: refetch entire progress
+          fetchProgress();
+        }
+      } else {
+        fetchProgress();
+      }
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);

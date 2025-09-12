@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Table from "./Table/Table";
@@ -34,66 +34,115 @@ interface UserDetails {
 }
 
 interface TaskProps {
-  posts?: Note[];
   userDetails: UserDetails;
 }
 
 const PAGE_SIZE = 5;
 
-const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
+const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const [tasks, setTasks] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-
   const [activeLimit, setActiveLimit] = useState(PAGE_SIZE);
   const [completedLimit, setCompletedLimit] = useState(PAGE_SIZE);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
-        );
-        if (!res.ok) throw new Error("Failed to fetch tasks");
+  const lastTaskCount = useRef(0);
+  const pollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-        const data = await res.json();
-        const fetchedTasks: Note[] = Array.isArray(data.data) ? data.data : [];
+  const fetchTasks = async () => {
+    if (!userDetails?.ReferenceID) return;
 
-        // Filter tasks only by user's referenceid
-        const userTasks = fetchedTasks
-          .filter(task => task.referenceid === userDetails.ReferenceID)
-          .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch tasks");
 
+      const data = await res.json();
+      const fetchedTasks: Note[] = Array.isArray(data.data) ? data.data : [];
+
+      const userTasks = fetchedTasks
+        .filter(task => task.referenceid === userDetails.ReferenceID)
+        .sort((a, b) => {
+          const dateA = a.date_updated ? new Date(a.date_updated) : new Date(a.date_created);
+          const dateB = b.date_updated ? new Date(b.date_updated) : new Date(b.date_created);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+      // Update only if there is new data
+      if (userTasks.length !== lastTaskCount.current) {
         setTasks(userTasks);
-      } catch (error: any) {
-        toast.error(error.message || "Something went wrong");
-      } finally {
-        setLoading(false);
+        lastTaskCount.current = userTasks.length;
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong while fetching tasks");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startPolling = (interval: number = 5000) => {
+    if (pollTimeout.current) clearTimeout(pollTimeout.current);
+
+    const poll = async () => {
+      // Only poll if page is visible
+      if (document.visibilityState === "visible") {
+        await fetchTasks();
+      }
+
+      // Adjust next interval: increase slightly if no new tasks
+      const nextInterval = lastTaskCount.current === tasks.length ? Math.min(interval * 1.5, 30000) : 5000;
+      pollTimeout.current = setTimeout(poll, nextInterval);
+    };
+
+    pollTimeout.current = setTimeout(poll, interval);
+  };
+
+  useEffect(() => {
+    fetchTasks(); // Initial fetch
+    startPolling();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchTasks(); // Fetch immediately when tab becomes active
       }
     };
 
-    fetchTasks();
-  }, [userDetails.ReferenceID]);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    return () => {
+      if (pollTimeout.current) clearTimeout(pollTimeout.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [userDetails?.ReferenceID]);
+
+  // Filtering logic
   const filteredTasks = tasks.filter(task => {
     const term = searchTerm.toLowerCase();
-    const searchMatch = Object.values(task).some(val => val && val.toString().toLowerCase().includes(term));
-    const statusMatch = statusFilter ? (task.activitystatus || "").toLowerCase() === statusFilter.toLowerCase() : true;
+    const searchMatch = Object.values(task).some(
+      val => val && val.toString().toLowerCase().includes(term)
+    );
+    const statusMatch = statusFilter
+      ? (task.activitystatus || "").toLowerCase() === statusFilter.toLowerCase()
+      : true;
     const fromMatch = dateFrom ? new Date(task.date_created) >= new Date(dateFrom) : true;
     const toMatch = dateTo ? new Date(task.date_created) <= new Date(dateTo) : true;
     return searchMatch && statusMatch && fromMatch && toMatch;
   });
 
   const activeTasks = filteredTasks.filter(
-    task => !["so-done", "quote-done", "delivered"].includes((task.activitystatus || "").toLowerCase())
+    task =>
+      !["so-done", "quote-done", "delivered"].includes(
+        (task.activitystatus || "").toLowerCase()
+      )
   );
-  const completedTasks = filteredTasks.filter(
-    task => ["so-done", "quote-done", "delivered", "done", "completed"].includes((task.activitystatus || "").toLowerCase())
+  const completedTasks = filteredTasks.filter(task =>
+    ["so-done", "quote-done", "delivered", "done", "completed"].includes(
+      (task.activitystatus || "").toLowerCase()
+    )
   );
 
   return (
@@ -144,10 +193,22 @@ const TaskList: React.FC<TaskProps> = ({ posts = [], userDetails }) => {
       ) : (
         <div className="overflow-x-auto">
           {activeTasks.length > 0 && (
-            <Table title="Active Tasks" tasks={activeTasks} userDetails={userDetails} limit={activeLimit} setLimit={setActiveLimit} />
+            <Table
+              title="Active Tasks"
+              tasks={activeTasks}
+              userDetails={userDetails}
+              limit={activeLimit}
+              setLimit={setActiveLimit}
+            />
           )}
           {completedTasks.length > 0 && (
-            <Table title="Completed Tasks" tasks={completedTasks} userDetails={userDetails} limit={completedLimit} setLimit={setCompletedLimit} />
+            <Table
+              title="Completed Tasks"
+              tasks={completedTasks}
+              userDetails={userDetails}
+              limit={completedLimit}
+              setLimit={setCompletedLimit}
+            />
           )}
         </div>
       )}
