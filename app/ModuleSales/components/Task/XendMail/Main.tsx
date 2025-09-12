@@ -96,7 +96,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
           secure: true,
         }),
       });
-
+      //
       const data = await res.json();
 
       if (!Array.isArray(data)) {
