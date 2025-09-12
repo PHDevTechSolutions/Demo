@@ -133,15 +133,13 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     const isExpanded = expandedItems.has(item.id);
 
     return (
-      <div
-        style={{ ...style, left: style.left, right: style.right, top: style.top }}
-        className="p-3 mb-2"
-      >
+      <div style={{ ...style, padding: 0 }}>
         <div
-          className="rounded-lg shadow bg-green-100 p-2 cursor-pointer"
+          className="rounded-lg shadow bg-green-100 cursor-pointer m-1 p-2"
           onClick={() => toggleExpand(item.id)}
         >
-          <div className="flex items-center mb-2">
+          {/* Header */}
+          <div className="flex items-center">
             <img
               src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
               alt="Profile"
@@ -163,8 +161,9 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             </div>
           </div>
 
+          {/* Expanded Content */}
           {isExpanded && (
-            <div className="pl-2 text-[10px] space-y-1">
+            <div className="pl-2 mt-2 text-[10px] space-y-1">
               {renderField("Contact Person", item.contactperson)}
               {renderField("Contact #", item.contactnumber)}
               {renderField("Email", item.emailaddress)}
