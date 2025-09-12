@@ -137,7 +137,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     return (
       <div style={{ ...style, top: style.top }} className="p-0">
         <div
-          className="rounded-lg shadow bg-green-100 cursor-pointer m-1 p-2"
+          className="rounded-lg shadow bg-green-100 cursor-pointer m-1 p-4"
           onClick={() => toggleExpand(item.id)}
         >
           {/* Header */}
