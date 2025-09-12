@@ -34,7 +34,8 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
     return (
         <div className="p-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold mb-2">{email.subject}</h3>
+                <h3 className="font-semibold mb-2">{email.subject}<br />
+                <span className="text-[10px] text-green-800">{email.messageId}</span></h3>
                 <div className="flex gap-2">
                     <button
                         className="bg-white text-black border px-2 py-1 rounded hover:bg-gray-50 text-xs flex items-center gap-1"

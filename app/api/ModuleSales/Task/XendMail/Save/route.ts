@@ -20,9 +20,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ Filter out invalid emails (walang messageId = skip)
+    // ✅ Only keep emails with messageId
     const validEmails = emails.filter((e: any) => e.messageId);
-
     if (validEmails.length === 0) {
       return NextResponse.json(
         { success: false, error: "No valid emails to insert" },
@@ -30,10 +29,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("🟡 Valid emails to insert:", validEmails.length);
-    console.log("🟡 First email sample:", validEmails[0]);
+    console.log(`🟡 Preparing to insert ${validEmails.length} emails`);
 
-    // Build bulk insert query
     const values: any[] = [];
     const placeholders: string[] = [];
 
@@ -49,7 +46,7 @@ export async function POST(req: NextRequest) {
         attachments,
       } = email;
 
-      // 🔧 Ensure valid timestamp string
+      // 🟢 make sure date is valid
       let formattedDate: string | null = null;
       try {
         formattedDate = date ? new Date(date).toISOString() : null;
@@ -59,7 +56,7 @@ export async function POST(req: NextRequest) {
 
       const baseIndex = idx * 9;
       placeholders.push(
-        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')`
+        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}::jsonb, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')`
       );
 
       values.push(
@@ -71,12 +68,9 @@ export async function POST(req: NextRequest) {
         formattedDate,
         messageId,
         body || "",
-        attachments || [] // ✅ insert JSON directly (Postgres will handle JSONB)
+        JSON.stringify(attachments || []) // ✅ stringify for JSONB
       );
     });
-
-    console.log("🟡 SQL placeholders:", placeholders.length);
-    console.log("🟡 Values length:", values.length);
 
     const query = `
       INSERT INTO xendmail_emails
@@ -88,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     const result = await sql(query, values);
 
-    console.log("🟢 Insert result count:", result.length);
+    console.log(`🟢 Inserted ${result.length} rows into DB`);
 
     return NextResponse.json(
       { success: true, insertedCount: result.length, inserted: result },

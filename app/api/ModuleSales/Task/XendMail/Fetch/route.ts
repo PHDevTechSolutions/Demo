@@ -8,6 +8,7 @@ type EmailData = {
   cc: string;
   subject: string;
   date: string;
+  messageId: string;   // ✅ add this
   body: string;
   attachments: {
     filename: string;
@@ -75,7 +76,10 @@ export async function POST(req: NextRequest) {
                 to: toText,
                 cc: ccText,
                 subject: message.envelope.subject || "No Subject",
-                date: message.envelope.date ? new Date(message.envelope.date).toISOString() : new Date().toISOString(),
+                date: message.envelope.date
+                  ? new Date(message.envelope.date).toISOString()
+                  : new Date().toISOString(),
+                messageId: parsed.messageId || message.envelope.messageId || "", // ✅ grab from parser or envelope
                 body: parsed.text || parsed.html || "(No content)",
                 attachments: (parsed.attachments || []).map(att => ({
                   filename: att.filename || "attachment",
@@ -83,6 +87,7 @@ export async function POST(req: NextRequest) {
                   content: att.content.toString("base64"),
                 })),
               } as EmailData;
+
             })
           )
         ).filter(Boolean) as EmailData[];

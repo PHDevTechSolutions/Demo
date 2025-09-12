@@ -176,29 +176,49 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
 
     // Send email
     const sendEmailWithAttachments = async (files: File[]) => {
-        if (!to || !subject || !body) return toast.error("Please fill in all fields.");
+        if (!to || !subject || !body) {
+            return toast.error("Please fill in all fields.");
+        }
         setSending(true);
 
         try {
             const attachmentsData = await Promise.all(
                 files.map(
                     (file) =>
-                        new Promise<{ filename: string; content: string; contentType: string }>((resolve, reject) => {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                                const base64Content = (reader.result as string).split(",")[1];
-                                resolve({ filename: file.name, content: base64Content, contentType: file.type });
-                            };
-                            reader.onerror = reject;
-                            reader.readAsDataURL(file);
-                        })
+                        new Promise<{ filename: string; content: string; contentType: string }>(
+                            (resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    const base64Content = (reader.result as string).split(",")[1];
+                                    resolve({
+                                        filename: file.name,
+                                        content: base64Content,
+                                        contentType: file.type,
+                                    });
+                                };
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                            }
+                        )
                 )
             );
 
-            const cc = recipients.filter((r) => r.type === "CC").map((r) => r.email).join(",");
-            const bcc = recipients.filter((r) => r.type === "BCC").map((r) => r.email).join(",");
-            const replyTo = recipients.filter((r) => r.type === "Reply-To").map((r) => r.email).join(",");
-            const followupTo = recipients.filter((r) => r.type === "Followup-To").map((r) => r.email).join(",");
+            const cc = recipients
+                .filter((r) => r.type === "CC")
+                .map((r) => r.email)
+                .join(",");
+            const bcc = recipients
+                .filter((r) => r.type === "BCC")
+                .map((r) => r.email)
+                .join(",");
+            const replyTo = recipients
+                .filter((r) => r.type === "Reply-To")
+                .map((r) => r.email)
+                .join(",");
+            const followupTo = recipients
+                .filter((r) => r.type === "Followup-To")
+                .map((r) => r.email)
+                .join(",");
 
             const res = await fetch("/api/ModuleSales/Task/XendMail/Send", {
                 method: "POST",
@@ -224,6 +244,30 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             if (!res.ok) throw new Error(data.error || "Failed to send email");
 
             toast.success("Email sent successfully!");
+
+            // ✅ Save sent email
+            const sentEmail: EmailData = {
+                from: { text: userDetails.Email },
+                to,
+                cc,
+                subject,
+                date: new Date().toISOString(),
+                messageId: data.messageId || crypto.randomUUID(),
+                body,
+                attachments: attachmentsData,
+            };
+
+            await saveEmailsToDB([sentEmail]);
+
+            await fetch("/api/ModuleSales/Task/XendMail/SaveSent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    referenceId: userDetails.ReferenceID,
+                    emails: [sentEmail],
+                }),
+            }).catch((err) => console.error("SaveSent error:", err));
+
             resetCompose();
         } catch (err: any) {
             console.error("Send error:", err);
