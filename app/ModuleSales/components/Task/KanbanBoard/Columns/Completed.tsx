@@ -47,7 +47,7 @@ interface CompletedProps {
 
 const POLL_INTERVAL = 5000;
 const ITEM_HEIGHT_COLLAPSED = 70;
-const ITEM_HEIGHT_EXPANDED = 350; // include extra space for spacing
+const ITEM_HEIGHT_EXPANDED = 350;
 
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
@@ -57,6 +57,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   const lastFetchedIds = useRef<Set<string>>(new Set());
   const listRef = useRef<List>(null);
 
+  // Fetch completed tasks
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
@@ -103,15 +104,16 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     return () => clearInterval(interval);
   }, [fetchCompleted, refreshTrigger]);
 
+  // Toggle expand/collapse
   const toggleExpand = (id: string) => {
     setExpandedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
-      // tell react-window to recalc heights
-      if (listRef.current) listRef.current.resetAfterIndex(0);
-      return newSet;
+      return newSet; // ✅ pure
     });
+    // trigger list height recalculation safely
+    if (listRef.current) listRef.current.resetAfterIndex(0);
   };
 
   const renderField = (label: string, value?: string | null) => {
@@ -133,7 +135,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     const isExpanded = expandedItems.has(item.id);
 
     return (
-      <div style={{ ...style, padding: 0 }}>
+      <div style={{ ...style, top: style.top }} className="p-0">
         <div
           className="rounded-lg shadow bg-green-100 cursor-pointer m-1 p-2"
           onClick={() => toggleExpand(item.id)}
@@ -163,7 +165,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
           {/* Expanded Content */}
           {isExpanded && (
-            <div className="pl-2 mt-2 text-[10px] space-y-1">
+            <div className="pl-2 mt-1 text-[10px] space-y-1">
               {renderField("Contact Person", item.contactperson)}
               {renderField("Contact #", item.contactnumber)}
               {renderField("Email", item.emailaddress)}
@@ -209,7 +211,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     );
 
   if (data.length === 0)
-    return <div className="text-center text-gray-400 italic">No completed tasks yet</div>;
+    return <div className="text-center text-gray-400 italic text-xs">No completed tasks yet</div>;
 
   return (
     <List
