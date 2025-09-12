@@ -1,17 +1,17 @@
+// file: app/api/ModuleSales/Task/XendMail/Save/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const databaseUrl = process.env.TASKFLOW_DB_URL;
-if (!databaseUrl) {
+const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
+if (!TASKFLOW_DB_URL) {
   throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
 }
 
-const sql = neon(databaseUrl);
+const sql = neon(TASKFLOW_DB_URL);
 
 export async function POST(req: NextRequest) {
   try {
-    const data = await req.json();
-    const { emails, referenceId } = data;
+    const { emails, referenceId } = await req.json();
 
     if (!Array.isArray(emails) || emails.length === 0) {
       return NextResponse.json(
@@ -20,10 +20,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Insert each email with deduplication
-    const inserted: any[] = [];
+    // ✅ Filter out invalid emails (walang messageId = skip)
+    const validEmails = emails.filter((e: any) => e.messageId);
 
-    for (const email of emails) {
+    if (validEmails.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "No valid emails to insert" },
+        { status: 400 }
+      );
+    }
+
+    console.log("🟡 Valid emails to insert:", validEmails.length);
+    console.log("🟡 First email sample:", validEmails[0]);
+
+    // Build bulk insert query
+    const values: any[] = [];
+    const placeholders: string[] = [];
+
+    validEmails.forEach((email: any, idx: number) => {
       const {
         from,
         to,
@@ -35,45 +49,53 @@ export async function POST(req: NextRequest) {
         attachments,
       } = email;
 
-      if (!messageId) continue; // Skip invalid emails
+      // 🔧 Ensure valid timestamp string
+      let formattedDate: string | null = null;
+      try {
+        formattedDate = date ? new Date(date).toISOString() : null;
+      } catch {
+        formattedDate = null;
+      }
 
-      const query = `
-        INSERT INTO xendmail_emails
-          (referenceid, sender, recipient_to, recipient_cc, subject, email_date, messageid, body, attachments, date_created)
-        VALUES
-          ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
-        ON CONFLICT (messageid) DO NOTHING
-        RETURNING *;
-      `;
+      const baseIndex = idx * 9;
+      placeholders.push(
+        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')`
+      );
 
-      const values = [
+      values.push(
         referenceId,
-        from?.text || "",
+        typeof from === "string" ? from : from?.text || "",
         to || "",
         cc || "",
         subject || "",
-        date || null,
+        formattedDate,
         messageId,
         body || "",
-        JSON.stringify(attachments || []),
-      ];
+        attachments || [] // ✅ insert JSON directly (Postgres will handle JSONB)
+      );
+    });
 
-      try {
-        const result = await sql(query, values);
-        if (result.length > 0) {
-          inserted.push(result[0]);
-        }
-      } catch (err: any) {
-        console.error("Error inserting email:", err);
-      }
-    }
+    console.log("🟡 SQL placeholders:", placeholders.length);
+    console.log("🟡 Values length:", values.length);
+
+    const query = `
+      INSERT INTO xendmail_emails
+        (referenceid, sender, recipient_to, recipient_cc, subject, email_date, messageid, body, attachments, date_created)
+      VALUES ${placeholders.join(", ")}
+      ON CONFLICT (messageid) DO NOTHING
+      RETURNING *;
+    `;
+
+    const result = await sql(query, values);
+
+    console.log("🟢 Insert result count:", result.length);
 
     return NextResponse.json(
-      { success: true, insertedCount: inserted.length, inserted },
+      { success: true, insertedCount: result.length, inserted: result },
       { status: 201 }
     );
   } catch (error: any) {
-    console.error("Error saving emails:", error);
+    console.error("❌ Error saving emails:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Failed to save emails" },
       { status: 500 }

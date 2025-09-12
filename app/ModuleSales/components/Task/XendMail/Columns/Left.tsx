@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineReload } from "react-icons/ai";
+import { AiOutlineReload } from "react-icons/ai";
 
 interface EmailData {
   from: { text: string };
@@ -41,19 +41,12 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
   loading,
   readEmails, // ✅ Added
 }) => {
-  const [showPass, setShowPass] = useState(false);
 
   return (
     <div className="col-span-1 pr-2 overflow-y-auto max-h-[80vh]">
       {/* IMAP Input + Fetch/Refresh */}
       <div className="mb-4 sticky top-0 bg-white py-2 z-10">
         <div className="flex gap-2">
-          <button
-            onClick={fetchEmails}
-            className="px-3 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 text-xs flex items-center gap-1"
-          >
-            Fetch
-          </button>
           <button
             onClick={fetchEmails}
             className="px-3 py-2 bg-gray-500 text-white rounded shadow hover:bg-gray-600 text-xs flex items-center gap-1"
