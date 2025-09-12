@@ -50,6 +50,9 @@ const PAGE_SIZE = 10;
 
 const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [allEmails, setAllEmails] = useState<EmailData[]>([]);
+    const [sentEmails, setSentEmails] = useState<EmailData[]>([]);
+    const [activeTab, setActiveTab] = useState<"inbox" | "sent">("inbox");
+
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [imapPass, setImapPass] = useState(userDetails.ImapPass || "");
@@ -66,14 +69,27 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const [body, setBody] = useState("");
     const [attachments, setAttachments] = useState<File[]>([]);
 
-    const sortedEmails = useMemo(() => {
-        return [...allEmails].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-    }, [allEmails]);
+    // sort emails
+    const sortedInbox = useMemo(
+        () =>
+            [...allEmails].sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            ),
+        [allEmails]
+    );
+    const sortedSent = useMemo(
+        () =>
+            [...sentEmails].sort(
+                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            ),
+        [sentEmails]
+    );
 
-    // Paginated emails
-    const emails = useMemo(() => sortedEmails.slice(0, fetchedCount), [sortedEmails, fetchedCount]);
+    const emails =
+        activeTab === "inbox"
+            ? sortedInbox.slice(0, fetchedCount)
+            : sortedSent.slice(0, fetchedCount);
+
 
     const saveEmailsToDB = useCallback(
         async (emails: EmailData[]) => {
@@ -158,17 +174,37 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
         }
     }, [imapPass, userDetails, saveEmailsToDB]);
 
-    // Auto fetch on mount
+    const fetchSentEmails = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`
+            );
+            const data = await res.json();
+            if (!Array.isArray(data)) return;
+
+            setSentEmails(data);
+            setFetchedCount(Math.min(PAGE_SIZE, data.length)); // ✅ reset slice
+        } catch (err) {
+            console.error("Fetch sent error:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [userDetails.ReferenceID]);
+
     useEffect(() => {
         fetchEmails();
-    }, [fetchEmails]);
+        fetchSentEmails();
+    }, [fetchEmails, fetchSentEmails]);
 
     // Load more emails for pagination
     const loadMore = useCallback(() => {
-        setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, allEmails.length));
-    }, [allEmails.length]);
+        const targetLength =
+            activeTab === "inbox" ? sortedInbox.length : sortedSent.length;
+        setFetchedCount((prev) => Math.min(prev + PAGE_SIZE, targetLength));
+    }, [activeTab, sortedInbox.length, sortedSent.length]);
 
-    // Mark email as read
+    // 📌 Select email
     const handleSelectEmail = (email: EmailData) => {
         setSelectedEmail(email);
         setReadEmails((prev) => new Set(prev).add(email.messageId));
@@ -271,7 +307,6 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             resetCompose();
         } catch (err: any) {
             console.error("Send error:", err);
-            toast.error(err.message || "Error sending email");
         } finally {
             setSending(false);
         }
@@ -339,24 +374,32 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             </p>
 
             <div className="w-full p-4 grid grid-cols-3 border-r border-t">
-                <LeftColumn
-                    emails={emails}
-                    selectedEmail={selectedEmail}
-                    setSelectedEmail={handleSelectEmail}
-                    fetchEmails={fetchEmails}
-                    fetchedCount={fetchedCount}
-                    allEmails={allEmails}
-                    loadMore={loadMore}
-                    loading={loading}
-                    readEmails={readEmails}
-                />
+                <div className="flex flex-col">
+                    <LeftColumn
+                        emails={emails} // ✅ laging gumamit ng computed emails (may slice)
+                        selectedEmail={selectedEmail}
+                        setSelectedEmail={handleSelectEmail}
+                        fetchEmails={fetchEmails}
+                        fetchSentEmails={fetchSentEmails}
+                        fetchedCount={fetchedCount}
+                        allEmails={activeTab === "inbox" ? sortedInbox : sortedSent} // ✅ gumamit ng buong sorted array
+                        loadMore={loadMore}
+                        loading={loading}
+                        readEmails={readEmails}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                    />
+
+                </div>
 
                 <div className="col-span-2 p-4 border-l max-h-[80vh] overflow-y-auto">
-                    {/* Compose Button */}
                     <div className="flex justify-between items-center mb-2 border-b">
                         <button
                             className="bg-blue-800 text-white px-3 py-2 rounded hover:bg-blue-900 text-xs mb-2 flex items-center gap-1"
-                            onClick={() => { setComposeOpen(!composeOpen); setReplyMode(false); }}
+                            onClick={() => {
+                                setComposeOpen(!composeOpen);
+                                setReplyMode(false);
+                            }}
                         >
                             <MdEdit size={20} /> Compose
                         </button>
@@ -396,7 +439,6 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                             onCancel={() => setSelectedEmail(null)}
                         />
                     )}
-
                 </div>
 
                 <ToastContainer className="text-xs" autoClose={1000} />
