@@ -170,7 +170,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
               onClick={onAddClick}
               className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600"
             >
-              Add
+              Update
             </button>
             {onDeleteClick && (
               <button

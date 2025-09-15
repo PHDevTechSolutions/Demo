@@ -98,23 +98,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           readOnly
         />
 
-        {/* Action buttons */}
-        <div className="flex justify-end space-x-2 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-3 bg-gray-300 rounded text-xs hover:bg-gray-400 flex items-center gap-1"
-          >
-            <MdOutlineClose /> Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
-          >
-            <MdEdit /> Submit
-          </button>
-        </div>
-
         {/* Form Fields */}
         <div className="grid grid-cols-2 gap-4">
           {/* Source */}
@@ -259,7 +242,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
               <div className="flex flex-col">
                 <label className="font-semibold">
-                 Delivery Date <span className="text-[8px] text-red-700">* Required Fields</span>
+                  Delivery Date <span className="text-[8px] text-red-700">* Required Fields</span>
                 </label>
                 <input
                   type="date"
@@ -326,6 +309,23 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
                 </>
               )}
             </select>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex justify-end space-x-2 mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-3 bg-gray-300 rounded text-xs hover:bg-gray-400 flex items-center gap-1"
+            >
+              <MdOutlineClose /> Back
+            </button>
+            <button
+              type="submit"
+              className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
+            >
+              <MdEdit /> Save
+            </button>
           </div>
         </div>
       </form>
