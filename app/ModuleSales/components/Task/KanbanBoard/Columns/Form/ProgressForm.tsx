@@ -310,23 +310,23 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               )}
             </select>
           </div>
+        </div>
 
-          {/* Action buttons */}
-          <div className="flex justify-end space-x-2 mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-3 bg-gray-300 rounded text-xs hover:bg-gray-400 flex items-center gap-1"
-            >
-              <MdOutlineClose /> Back
-            </button>
-            <button
-              type="submit"
-              className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
-            >
-              <MdEdit /> Save
-            </button>
-          </div>
+        {/* Action buttons */}
+        <div className="flex justify-end space-x-2 mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-3 bg-gray-300 rounded text-xs hover:bg-gray-400 flex items-center gap-1"
+          >
+            <MdOutlineClose /> Back
+          </button>
+          <button
+            type="submit"
+            className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
+          >
+            <MdEdit /> Save
+          </button>
         </div>
       </form>
     </div>
