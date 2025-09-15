@@ -247,7 +247,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                     ) : (
                         <div className="flex flex-col">
                             {filteredNotes.length === 0 && !loading && (
-                                <div className="text-gray-400 text-center">No notes yet</div>
+                                <div className="text-gray-400 text-center text-xs">No notes yet</div>
                             )}
 
                             {filteredNotes
