@@ -6,10 +6,9 @@ import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
 import { MdEdit } from "react-icons/md";
 
-// Dynamic imports for faster initial load
-const LeftColumn = dynamic(() => import("./Columns/Left"), { ssr: false });
-const RightColumn = dynamic(() => import("./Columns/Right"), { ssr: false });
-const Form = dynamic(() => import("./Form"), { ssr: false });
+import LeftColumn from "./Columns/Left";
+import RightColumn from "./Columns/Right";
+import Form from "./Form";
 
 interface UserDetails {
     ReferenceID: string;

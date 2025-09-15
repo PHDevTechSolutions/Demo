@@ -35,6 +35,9 @@ export interface ProgressItem {
   projecttype?: string;
   startdate?: string;
   enddate?: string;
+  paymentterm: string;
+  actualsales: string;
+  deliverydate: string;
 }
 
 interface ProgressCardProps {

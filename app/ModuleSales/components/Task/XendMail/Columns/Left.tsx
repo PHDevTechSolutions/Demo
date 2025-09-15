@@ -18,7 +18,7 @@ interface EmailData {
   }[];
 }
 
-interface LeftColumnProps {
+interface LeftProps {
   emails: EmailData[];
   selectedEmail: EmailData | null;
   setSelectedEmail: (email: EmailData) => void;
@@ -33,7 +33,7 @@ interface LeftColumnProps {
   setActiveTab: (tab: "inbox" | "sent") => void;
 }
 
-const LeftColumn: React.FC<LeftColumnProps> = ({
+const Left: React.FC<LeftProps> = ({
   emails,
   selectedEmail,
   setSelectedEmail,
@@ -149,4 +149,4 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
   );
 };
 
-export default LeftColumn;
+export default Left;

@@ -38,6 +38,9 @@ interface ProgressItem {
   projecttype?: string;
   startdate?: string;
   enddate?: string;
+  paymentterm: string;
+  actualsales: string;
+  deliverydate: string;
 }
 
 interface UserDetails {
@@ -90,6 +93,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     projectname: "",
     projectcategory: "",
     projecttype: "",
+    paymentterm: "",
+    actualsales: "",
+    deliverydate: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -127,6 +133,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       projectname: "",
       projectcategory: "",
       projecttype: "",
+      paymentterm: "",
+      actualsales: "",
+      deliverydate: "",
     });
 
   /** Add button → open form */
@@ -164,12 +173,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       projectname: prog?.projectname || "",
       projectcategory: prog?.projectcategory || "",
       projecttype: prog?.projecttype || "",
+      paymentterm: prog?.paymentterm || "",
+      actualsales: prog?.actualsales || "",
+      deliverydate: prog?.deliverydate || "",
     });
 
     setShowForm(true);
   };
 
-  /** Fetch progress data */
   /** Fetch progress data */
   const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
@@ -239,7 +250,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
 
     // Sanitize numeric fields
-    const numericFields = ["soamount", "quotationamount", "targetquota"];
+    const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
       payload[field] = payload[field] === "" || payload[field] === undefined ? null : Number(payload[field]);
     });

@@ -26,6 +26,9 @@ interface ProgressFormProps {
     projectname: string;
     projectcategory: string;
     projecttype: string;
+    paymentterm: string;
+    actualsales: string;
+    deliverydate: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<
@@ -151,7 +154,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               value={formData.typeactivity}
               onChange={handleFormChange}
               className="border border-dashed bg-orange-100 px-3 py-6 rounded text-xs"
-              required
             >
               <option value="">Select Activity</option>
               <option value="Admin- Supplier Accreditation">Admin- Supplier Accreditation</option>
@@ -221,9 +223,59 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           )}
 
           {/* Remarks */}
+          {formData.activitystatus === "Delivered" && (
+            <>
+              <div className="flex flex-col">
+                <label className="font-semibold">
+                  Payment Terms <span className="text-[8px] text-red-700">* Required Fields</span>
+                </label>
+                <select
+                  name="paymentterm"
+                  value={formData.paymentterm}
+                  onChange={handleFormChange}
+                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
+                >
+                  <option value="COD">COD</option>
+                  <option value="Check">Check</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Deposit">Bank Deposit</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Terms">Terms</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="font-semibold">
+                  SI (Actual Sales) <span className="text-[8px] text-red-700">* Required Fields</span>
+                </label>
+                <input
+                  type="number"
+                  name="actualsales"
+                  value={formData.actualsales}
+                  onChange={handleFormChange}
+                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="font-semibold">
+                 Delivery Date <span className="text-[8px] text-red-700">* Required Fields</span>
+                </label>
+                <input
+                  type="date"
+                  name="deliverydate"
+                  value={formData.deliverydate}
+                  onChange={handleFormChange}
+                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Remarks */}
           <div className="flex flex-col col-span-2">
             <label className="font-semibold">
-              Remarks <span className="text-[8px] text-red-700">* Required Fields</span>
+              Remarks<span className="text-[8px] text-red-700">* Required Fields</span>
             </label>
             <textarea
               name="remarks"
@@ -248,14 +300,31 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               required
             >
               <option value="">Select Status</option>
-              <option value="Assisted">Assisted ( Client Assistance - Touchbase Such As Calls )</option>
-              <option value="Paid">Paid ( Identity - Have SO# )</option>
-              <option value="Delivered">Delivered ( All Fields Completed - SI & DR )</option>
-              <option value="Collected">Collected</option>
-              <option value="Quote-Done">Quote-Done</option>
-              <option value="SO-Done">SO-Done</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Loss">Loss</option>
+
+              {formData.typeactivity === "Quotation Preparation" ? (
+                <>
+                  <option value="Quote-Done">Quote-Done</option>
+                </>
+              ) : formData.typeactivity === "Sales Order Preparation" ? (
+                <>
+                  <option value="SO-Done">SO-Done</option>
+                </>
+              ) : (
+                <>
+                  <option value="Assisted">
+                    Assisted ( Client Assistance - Touchbase Such As Calls )
+                  </option>
+                  <option value="Paid">
+                    Paid ( Identity - Have SO# )
+                  </option>
+                  <option value="Delivered">
+                    Delivered ( All Fields Completed - SI & DR )
+                  </option>
+                  <option value="Collected">Collected</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Loss">Loss</option>
+                </>
+              )}
             </select>
           </div>
         </div>
