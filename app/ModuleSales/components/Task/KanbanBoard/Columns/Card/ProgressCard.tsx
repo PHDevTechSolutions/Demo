@@ -73,7 +73,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   onAddClick,
   onDeleteClick,
 }) => {
-  if (progress.activitystatus === "Done") return null;
+  if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);

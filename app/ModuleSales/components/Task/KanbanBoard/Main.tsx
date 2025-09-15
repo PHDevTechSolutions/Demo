@@ -65,7 +65,7 @@ const columns: Column[] = [
   { id: "in-progress", title: "In Progress" },
   { id: "completed", title: "Completed" },
 ];
-
+ 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);

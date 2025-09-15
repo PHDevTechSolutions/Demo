@@ -20,6 +20,33 @@ interface CompaniesProps {
   userDetails: { ReferenceID?: string } | null;
 }
 
+const DAILY_QUOTA = 35;
+
+// 🔹 Check kung due na ang company based on typeclient cycle
+const isCompanyDue = (comp: Company): boolean => {
+  const lastAddedRaw = comp.id ? localStorage.getItem(`lastAdded_${comp.id}`) : null;
+  if (!lastAddedRaw) return true;
+
+  const lastAdded = new Date(lastAddedRaw);
+  const today = new Date();
+  const diffDays = Math.floor((+today - +lastAdded) / (1000 * 60 * 60 * 24));
+
+  if (comp.typeclient === "Top 50") {
+    return diffDays >= 10;
+  } else if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") {
+    return diffDays >= 30;
+  } else {
+    return true; // TSA or others → no restriction
+  }
+};
+
+// 🔹 Helper: get yesterday’s date string
+const getYesterdayKey = () => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split("T")[0];
+};
+
 const Companies: React.FC<CompaniesProps> = ({
   expandedIdx,
   setExpandedIdx,
@@ -28,23 +55,60 @@ const Companies: React.FC<CompaniesProps> = ({
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
 
+  // 🔹 Fetch from DB fallback
+  const fetchFromDB = async () => {
+    try {
+      if (!userDetails?.ReferenceID) return;
+
+      const res = await fetch(
+        `/api/ModuleSales/Companies/CompanyAccounts/GetProgress?userId=${userDetails.ReferenceID}`
+      );
+      const data = await res.json();
+
+      if (data && data.companies) {
+        setCompanies(data.companies);
+        setRemainingQuota(data.quota);
+
+        // Restore localStorage for next reload
+        const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+        const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+
+        localStorage.setItem(todayKey, JSON.stringify(data.companies));
+        localStorage.setItem(quotaKey, data.quota.toString());
+      }
+    } catch (err) {
+      console.error("❌ Failed to fetch from DB:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Main fetch on load
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
     const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+    const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+    const yesterdayKey = `quota_${userDetails.ReferenceID}_${getYesterdayKey()}`;
 
     const fetchCompanies = async () => {
       try {
         setLoading(true);
 
-        // 🔹 Check if we already have data for today
+        // 1️⃣ Check localStorage first
         const stored = localStorage.getItem(todayKey);
-        if (stored) {
+        const storedQuota = localStorage.getItem(quotaKey);
+
+        if (stored && storedQuota) {
           setCompanies(JSON.parse(stored));
+          setRemainingQuota(parseInt(storedQuota, 10));
+          setLoading(false);
           return;
         }
 
+        // 2️⃣ Fetch fresh companies list
         const res = await fetch(
           `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
         );
@@ -55,31 +119,49 @@ const Companies: React.FC<CompaniesProps> = ({
         else if (Array.isArray(data?.data)) companiesData = data.data;
         else if (Array.isArray(data?.companies)) companiesData = data.companies;
 
-        // 🔹 Split by typeclient
-        const top50 = companiesData.filter(c => c.typeclient === "Top 50");
-        const next30 = companiesData.filter(c => c.typeclient === "Next 30");
-        const balance20 = companiesData.filter(c => c.typeclient === "Balance 20");
-        const tsa = companiesData.filter(c => c.typeclient === "TSA Client");
+        if (!companiesData.length) {
+          // fallback → DB
+          return fetchFromDB();
+        }
 
-        // 🔹 Randomize each type and take quota
+        // 3️⃣ Filter eligible companies by cycle rules
+        const eligibleCompanies = companiesData.filter(isCompanyDue);
+
+        // Split by typeclient
+        const top50 = eligibleCompanies.filter(c => c.typeclient === "Top 50");
+        const next30 = eligibleCompanies.filter(c => c.typeclient === "Next 30");
+        const balance20 = eligibleCompanies.filter(c => c.typeclient === "Balance 20");
+        const tsa = eligibleCompanies.filter(c => c.typeclient === "TSA Client");
+
         const pickRandom = (arr: Company[], count: number) => {
           const shuffled = [...arr].sort(() => 0.5 - Math.random());
           return shuffled.slice(0, count);
         };
+
+        // 4️⃣ Start with quota = DAILY + carry-over
+        let todayQuota = DAILY_QUOTA;
+        const leftover = localStorage.getItem(yesterdayKey);
+        if (leftover) {
+          todayQuota += parseInt(leftover, 10);
+        }
 
         const finalCompanies = [
           ...pickRandom(top50, 10),
           ...pickRandom(next30, 15),
           ...pickRandom(balance20, 5),
           ...pickRandom(tsa, 5),
-        ];
+        ].slice(0, todayQuota);
 
-        // 🔹 Save to localStorage
+        // 5️⃣ Save to localStorage
         localStorage.setItem(todayKey, JSON.stringify(finalCompanies));
+        localStorage.setItem(quotaKey, todayQuota.toString());
+
         setCompanies(finalCompanies);
+        setRemainingQuota(todayQuota);
       } catch (error) {
         console.error("Error fetching companies:", error);
-        setCompanies([]);
+        // fallback → DB
+        fetchFromDB();
       } finally {
         setLoading(false);
       }
@@ -88,19 +170,40 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  // 🔹 Remove company from list + update localStorage
+  // 🔹 Remove company + update quota
   const removeCompany = (comp: Company) => {
     if (!userDetails?.ReferenceID) return;
     const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+    const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+
     const updated = companies.filter(c => c.id !== comp.id);
     setCompanies(updated);
+
+    const newQuota = remainingQuota - 1;
+    setRemainingQuota(newQuota);
+
     localStorage.setItem(todayKey, JSON.stringify(updated));
+    localStorage.setItem(quotaKey, newQuota.toString());
+  };
+
+  // 🔹 Handle Add action (save lastAdded date)
+  const handleAddCompany = (comp: Company) => {
+    handleSubmit(comp, false);
+    removeCompany(comp);
+    if (comp.id) {
+      localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+    }
   };
 
   return (
     <div className="space-y-4 overflow-y-auto">
-      <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="mr-1">🏢</span> Companies
+      <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
+        <span className="flex items-center">
+          <span className="mr-1">🏢</span> Companies
+        </span>
+        <span className="text-[10px] text-gray-500">
+          Remaining quota: {remainingQuota}/{DAILY_QUOTA}
+        </span>
       </h3>
 
       {loading ? (
@@ -122,13 +225,11 @@ const Companies: React.FC<CompaniesProps> = ({
               >
                 <p className="font-semibold uppercase">{comp.companyname}</p>
 
-                {/* Actions: Add + Cancel + Collapse */}
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSubmit(comp, false);
-                      removeCompany(comp); // 🔹 Remove after Add
+                      handleAddCompany(comp);
                     }}
                     className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600"
                   >
@@ -138,7 +239,7 @@ const Companies: React.FC<CompaniesProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeCompany(comp); // 🔹 Remove on Cancel
+                      removeCompany(comp);
                     }}
                     className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600"
                   >
