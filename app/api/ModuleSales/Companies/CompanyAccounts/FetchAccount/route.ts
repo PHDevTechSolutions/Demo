@@ -8,10 +8,6 @@ if (!Xchire_databaseUrl) {
 }
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-/**
- * GET /api/ModuleSales/Companies/CompanyAccounts/ByReference
- * Fetch accounts by reference ID from query parameters
- */
 export async function GET(req: Request) {
   try {
     const Xchire_url = new URL(req.url);

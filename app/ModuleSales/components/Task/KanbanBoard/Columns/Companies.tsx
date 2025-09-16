@@ -57,34 +57,6 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
 
-  // 🔹 Fetch from DB fallback
-  const fetchFromDB = async () => {
-    try {
-      if (!userDetails?.ReferenceID) return;
-
-      const res = await fetch(
-        `/api/ModuleSales/Companies/CompanyAccounts/GetProgress?userId=${userDetails.ReferenceID}`
-      );
-      const data = await res.json();
-
-      if (data && data.companies) {
-        setCompanies(data.companies);
-        setRemainingQuota(data.quota);
-
-        // Restore localStorage for next reload
-        const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
-        const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
-
-        localStorage.setItem(todayKey, JSON.stringify(data.companies));
-        localStorage.setItem(quotaKey, data.quota.toString());
-      }
-    } catch (err) {
-      console.error("❌ Failed to fetch from DB:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 🔹 Main fetch on load
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -120,8 +92,9 @@ const Companies: React.FC<CompaniesProps> = ({
         else if (Array.isArray(data?.companies)) companiesData = data.companies;
 
         if (!companiesData.length) {
-          // fallback → DB
-          return fetchFromDB();
+          setCompanies([]);
+          setRemainingQuota(DAILY_QUOTA);
+          return;
         }
 
         // 3️⃣ Filter eligible companies by cycle rules
@@ -160,8 +133,8 @@ const Companies: React.FC<CompaniesProps> = ({
         setRemainingQuota(todayQuota);
       } catch (error) {
         console.error("Error fetching companies:", error);
-        // fallback → DB
-        fetchFromDB();
+        setCompanies([]);
+        setRemainingQuota(DAILY_QUOTA);
       } finally {
         setLoading(false);
       }
