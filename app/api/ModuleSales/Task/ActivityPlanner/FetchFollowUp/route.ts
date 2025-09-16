@@ -31,7 +31,6 @@ export async function GET() {
         typeclient,
         remarks,
         referenceid,
-        status,
         date_created,
         typeactivity
       FROM progress;
