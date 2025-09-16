@@ -31,13 +31,9 @@ const isCompanyDue = (comp: Company): boolean => {
   const today = new Date();
   const diffDays = Math.floor((+today - +lastAdded) / (1000 * 60 * 60 * 24));
 
-  if (comp.typeclient === "Top 50") {
-    return diffDays >= 10;
-  } else if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") {
-    return diffDays >= 30;
-  } else {
-    return true; // TSA or others → no restriction
-  }
+  if (comp.typeclient === "Top 50") return diffDays >= 10;
+  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") return diffDays >= 30;
+  return true;
 };
 
 // 🔹 Helper: get yesterday’s date string
@@ -56,6 +52,29 @@ const Companies: React.FC<CompaniesProps> = ({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
+
+  // Save company (single)
+  const saveCompanyToSupabase = async (comp: Company) => {
+    if (!userDetails?.ReferenceID) return;
+    try {
+      const res = await fetch("/api/ModuleSales/Companies/SaveCompany", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referenceId: userDetails.ReferenceID,
+          company: comp, // single company
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save company");
+
+      console.log("✅ Company saved to Supabase:", comp.companyname);
+    } catch (err: any) {
+      console.error("❌ Failed to save company to Supabase:", err.message);
+    }
+  };
+
 
   // 🔹 Main fetch on load
   useEffect(() => {
@@ -114,9 +133,7 @@ const Companies: React.FC<CompaniesProps> = ({
         // 4️⃣ Start with quota = DAILY + carry-over
         let todayQuota = DAILY_QUOTA;
         const leftover = localStorage.getItem(yesterdayKey);
-        if (leftover) {
-          todayQuota += parseInt(leftover, 10);
-        }
+        if (leftover) todayQuota += parseInt(leftover, 10);
 
         const finalCompanies = [
           ...pickRandom(top50, 10),
@@ -159,13 +176,14 @@ const Companies: React.FC<CompaniesProps> = ({
     localStorage.setItem(quotaKey, newQuota.toString());
   };
 
-  // 🔹 Handle Add action (save lastAdded date)
+  // 🔹 Handle Add action (save lastAdded date + sync to Supabase)
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
     removeCompany(comp);
-    if (comp.id) {
-      localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
-    }
+    if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+
+    // 🔹 Save to Supabase
+    saveCompanyToSupabase(comp);
   };
 
   return (
