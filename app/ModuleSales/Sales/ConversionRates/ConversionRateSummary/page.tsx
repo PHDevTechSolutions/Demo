@@ -4,8 +4,6 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
-// Components
-import AddPostForm from "../../../components/ClientActivityBoard/ListofCompanies/AddUserForm";
 import SearchFilters from "../../../components/ConversionRates/CallsToQuote/SearchFilters";
 import UsersTable from "../../../components/ConversionRates/ConversionRateSummary/UsersTable";
 
@@ -165,48 +163,33 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
-                                {showForm ? (
-                                    <AddPostForm
-                                        onCancel={() => {
-                                            setShowForm(false);
-                                            setEditUser(null);
-                                        }}
-                                        refreshPosts={fetchAccount}  // Pass the refreshPosts callback
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}  // Ensure id is passed correctly
-                                        editUser={editUser}
+                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                                    <h2 className="text-lg font-bold mb-2">Sales Performance Summary</h2>
+                                    <p className="text-xs text-gray-600 mb-2">
+                                        A summary of each agent’s Month-to-Date (MTD) and Year-to-Date (YTD) sales performance, tracking progress, conversions, and overall sales efficiency.
+                                    </p>
+
+                                    <SearchFilters
+                                        searchTerm={searchTerm}
+                                        setSearchTerm={setSearchTerm}
                                     />
-                                ) : (
-                                    <>
-                                        <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                            <h2 className="text-lg font-bold mb-2">Sales Performance Summary</h2>
-                                            <p className="text-xs text-gray-600 mb-2">
-                                                A summary of each agent’s Month-to-Date (MTD) and Year-to-Date (YTD) sales performance, tracking progress, conversions, and overall sales efficiency.
-                                            </p>
-
-                                            <SearchFilters
-                                                searchTerm={searchTerm}
-                                                setSearchTerm={setSearchTerm}
-                                            />
-                                            {/* Loader or Table */}
-                                            {loading ? (
-                                                <div className="flex justify-center items-center py-10">
-                                                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                                                    <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <UsersTable
-                                                        posts={filteredAccounts}
-                                                        handleEdit={handleEdit}
-                                                        ReferenceID={userDetails.ReferenceID}
-                                                        fetchAccount={fetchAccount}
-                                                    />
-                                                </>
-                                            )}
+                                    {/* Loader or Table */}
+                                    {loading ? (
+                                        <div className="flex justify-center items-center py-10">
+                                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
                                         </div>
-                                    </>
-                                )}
-
+                                    ) : (
+                                        <>
+                                            <UsersTable
+                                                posts={filteredAccounts}
+                                                handleEdit={handleEdit}
+                                                ReferenceID={userDetails.ReferenceID}
+                                                fetchAccount={fetchAccount}
+                                            />
+                                        </>
+                                    )}
+                                </div>
                                 <ToastContainer className="text-xs" autoClose={1000} />
                             </div>
                         </div>

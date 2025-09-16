@@ -11,7 +11,9 @@ interface Note {
   remarks: string;
   date_created: string;
   quotationnumber: string;
+  quotationamount: string;
   sonumber: string;
+  soamount: string;
 }
 
 interface UserDetails {
@@ -41,8 +43,20 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       </td>
       <td className="px-6 py-6 text-xs uppercase">{task.companyname}</td>
       <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
-      <td className="px-6 py-6 text-xs">{task.quotationnumber}</td>
-      <td className="px-6 py-6 text-xs">{task.sonumber}</td>
+      <td className="px-6 py-6 text-xs">
+        <div className="flex flex-col">
+          <span>{task.quotationnumber}</span>
+          <span className="text-gray-500 text-[11px]">₱{task.quotationamount}</span>
+        </div>
+      </td>
+
+      <td className="px-6 py-6 text-xs">
+        <div className="flex flex-col">
+          <span>{task.sonumber}</span>
+          <span className="text-gray-500 text-[11px]">₱{task.soamount}</span>
+        </div>
+      </td>
+
       <td className="px-6 py-6 text-xs">{new Date(task.date_created).toLocaleString()}</td>
       <td className="px-6 py-6 text-xs">
         <div className="flex items-center gap-2">
@@ -66,9 +80,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         onClick={toggleCollapse}
       >
         <FiChevronRight
-          className={`transition-transform duration-200 ${
-            collapsed ? "rotate-0" : "rotate-90"
-          }`}
+          className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-90"
+            }`}
         />
         <span>{title}</span>
         <span className="bg-gray-200 px-2 py-0.5 text-[10px] rounded-full">

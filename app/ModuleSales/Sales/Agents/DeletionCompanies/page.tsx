@@ -6,7 +6,7 @@ import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
 import AddPostForm from "../../../components/Companies/CompanyAccounts/Form";
-import UsersTable from "../../../components/Agents/DeletionCompanies/UsersTable";
+import Table from "../../../components/Agents/DeletionCompanies/Table";
 import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagination";
 
 // Toast Notifications
@@ -190,7 +190,7 @@ const ListofUser: React.FC = () => {
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <UsersTable
+                                                    <Table
                                                         posts={currentPosts}
                                                         handleEdit={handleEdit}
                                                         referenceid={referenceid}

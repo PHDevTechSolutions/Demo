@@ -194,9 +194,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           </div>
         ))}
       </div>
-
-      {/* Toast container */}
-      <ToastContainer />
     </div>
   );
 };

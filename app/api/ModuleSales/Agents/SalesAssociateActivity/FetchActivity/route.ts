@@ -16,15 +16,39 @@ const Xchire_sql = neon(Xchire_databaseUrl);
  */
 export async function GET() {
   try {
-    const Xchire_fetch = await Xchire_sql`SELECT * FROM progress;`;
+    const Xchire_fetch = await Xchire_sql`
+      SELECT 
+        companyname,
+        contactperson,
+        contactnumber,
+        emailaddress,
+        address,
+        typeclient,
+        activitystatus,
+        typeactivity,
+        typecall,
+        actualsales,
+        soamount,
+        quotationamount,
+        sonumber,
+        quotationnumber,
+        callstatus,
+        startdate,
+        enddate,
+        callback,
+        referenceid,
+        tsm,
+        manager
+      FROM progress;
+    `;
 
-    console.log("Fetched accounts:", Xchire_fetch); // Debugging line
+    console.log("Fetched progress:", Xchire_fetch); // Debugging line
 
     return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
   } catch (Xchire_error: any) {
-    console.error("Error fetching accounts:", Xchire_error);
+    console.error("Error fetching progress:", Xchire_error);
     return NextResponse.json(
-      { success: false, error: Xchire_error.message || "Failed to fetch accounts." },
+      { success: false, error: Xchire_error.message || "Failed to fetch progress." },
       { status: 500 }
     );
   }

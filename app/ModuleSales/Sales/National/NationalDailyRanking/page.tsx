@@ -5,9 +5,8 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/ClientActivityBoard/ListofCompanies/AddUserForm";
 import SearchFilters from "../../../components/National/DailyCallRanking/SearchFilters";
-import UsersTable from "../../../components/National/DailyCallRanking/UsersTable";
+import Table from "../../../components/National/DailyCallRanking/Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
@@ -152,53 +151,38 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
-                                {showForm ? (
-                                    <AddPostForm
-                                        onCancel={() => {
-                                            setShowForm(false);
-                                            setEditUser(null);
-                                        }}
-                                        refreshPosts={fetchAccount}
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}
-                                        editUser={editUser}
+                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                                    <h2 className="text-lg font-bold mb-2">National Daily Ranking's</h2>
+                                    <p className="text-xs text-gray-600 mb-4">
+                                        The National Daily Ranking is a leaderboard that tracks the performance of
+                                        <strong> Territory Sales Associates (TSA)</strong> across the Philippines on a daily basis.
+                                        Rankings are determined based on the number of <strong>outbound calls, inbound calls,</strong> and
+                                        <strong> successful call outcomes</strong>. This ranking covers key regions such as
+                                        <strong> Metro Manila, Cebu, Davao,</strong> and <strong>Cagayan de Oro</strong>, highlighting
+                                        the TSAs with the highest call volumes and the most successful engagements with clients.
+                                    </p>
+                                    <SearchFilters
+                                        searchTerm={searchTerm}
+                                        setSearchTerm={setSearchTerm}
+                                        startDate={startDate}
+                                        setStartDate={setStartDate}
+                                        endDate={endDate}
+                                        setEndDate={setEndDate}
                                     />
-                                ) : (
-                                    <>
-                                        <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                            <h2 className="text-lg font-bold mb-2">National Daily Ranking's</h2>
-                                            <p className="text-xs text-gray-600 mb-4">
-                                                The National Daily Ranking is a leaderboard that tracks the performance of
-                                                <strong> Territory Sales Associates (TSA)</strong> across the Philippines on a daily basis.
-                                                Rankings are determined based on the number of <strong>outbound calls, inbound calls,</strong> and
-                                                <strong> successful call outcomes</strong>. This ranking covers key regions such as
-                                                <strong> Metro Manila, Cebu, Davao,</strong> and <strong>Cagayan de Oro</strong>, highlighting
-                                                the TSAs with the highest call volumes and the most successful engagements with clients.
-                                            </p>
-                                            <SearchFilters
-                                                searchTerm={searchTerm}
-                                                setSearchTerm={setSearchTerm}
-                                                startDate={startDate}
-                                                setStartDate={setStartDate}
-                                                endDate={endDate}
-                                                setEndDate={setEndDate}
-                                            />
-                                            {/* Loader or Table */}
-                                            {loading ? (
-                                                <div className="flex justify-center items-center py-10">
-                                                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                                                    <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <UsersTable
-                                                        posts={filteredAccounts}
-                                                    />
-                                                </>
-                                            )}
+                                    {/* Loader or Table */}
+                                    {loading ? (
+                                        <div className="flex justify-center items-center py-10">
+                                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
                                         </div>
-                                    </>
-                                )}
-
+                                    ) : (
+                                        <>
+                                            <Table
+                                                posts={filteredAccounts}
+                                            />
+                                        </>
+                                    )}
+                                </div>
                                 <ToastContainer className="text-xs" autoClose={1000} />
                             </div>
                         </div>

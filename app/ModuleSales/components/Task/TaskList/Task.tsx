@@ -21,6 +21,8 @@ interface Note {
   date_updated?: string;
   quotationnumber: string;
   sonumber: string;
+  quotationamount: string;
+  soamount: string;
 }
 
 interface UserDetails {

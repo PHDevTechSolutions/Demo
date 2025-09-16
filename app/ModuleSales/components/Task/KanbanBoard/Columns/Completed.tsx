@@ -65,7 +65,10 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
       );
-      if (!res.ok) throw new Error("Failed to fetch completed activities");
+      if (!res.ok) {
+        console.error("❌ Failed to fetch completed activities:", res.statusText);
+        return; // ❌ wag nang mag-toast
+      }
 
       const result = await res.json();
       const list: CompletedItem[] = Array.isArray(result)
@@ -91,12 +94,15 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         doneItems.forEach(item => lastFetchedIds.current.add(item.id));
         setData(prev => [...doneItems, ...prev]);
       }
+      // ✅ kapag wala, walang error, tahimik lang
     } catch (err) {
       console.error("❌ Error fetching completed:", err);
+      // ❌ no toast, just log
     } finally {
       setLoading(false);
     }
   }, [userDetails?.ReferenceID]);
+
 
   useEffect(() => {
     fetchCompleted();

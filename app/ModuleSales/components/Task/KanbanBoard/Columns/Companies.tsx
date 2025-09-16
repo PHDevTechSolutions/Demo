@@ -201,9 +201,6 @@ const Companies: React.FC<CompaniesProps> = ({
         <span className="flex items-center">
           <span className="mr-1">🏢</span> Companies
         </span>
-        <span className="text-[10px] text-gray-500">
-          Remaining quota: {remainingQuota}/{DAILY_QUOTA}
-        </span>
       </h3>
 
       {loading ? (

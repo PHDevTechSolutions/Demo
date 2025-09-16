@@ -5,7 +5,6 @@ import SessionChecker from "../../components/Session/SessionChecker";
 import UserFetcher from "../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../components/Boards/Notes/AddUserForm";
 import UsersCard from "../../components/Notification/UsersTable"; // Assuming this is the component handling the Kanban-style cards
 
 // Toast Notifications
@@ -134,31 +133,13 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="container mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
-                                {showForm ? (
-                                    <AddPostForm
-                                        onCancel={() => {
-                                            setShowForm(false);
-                                            setEditUser(null);
-                                        }}
-                                        refreshPosts={fetchAccount}
-                                        userDetails={{
-                                            id: editUser ? editUser.id : userDetails.UserId,
-                                            referenceid: editUser ? editUser.referenceid : userDetails.ReferenceID,
-                                        }}
-                                        editUser={editUser}
+                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                                    <h2 className="text-lg font-bold mb-2">Notifications</h2>
+                                    <UsersCard
+                                        posts={filteredAccounts}
+                                        userDetails={userDetails}
                                     />
-                                ) : (
-                                    <>
-                                        <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                            <h2 className="text-lg font-bold mb-2">Notifications</h2>
-                                            <UsersCard
-                                                posts={filteredAccounts}
-                                                userDetails={userDetails}
-                                            />
-                                        </div>
-                                    </>
-                                )}
-
+                                </div>
                                 <ToastContainer className="text-xs" />
                             </div>
                         </div>
