@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import dynamic from "next/dynamic";
 import { MdEdit } from "react-icons/md";
 
 import LeftColumn from "./Columns/Left";
@@ -97,7 +96,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             }
 
             try {
-                const res = await fetch("/api/ModuleSales/Task/XendMail/Save", {
+                const res = await fetch("/api/ModuleSales/Task/XendMail/Saved", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

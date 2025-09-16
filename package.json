@@ -21,6 +21,7 @@
     "@react-three/drei": "^10.0.4",
     "@react-three/fiber": "^9.1.0",
     "@stackframe/stack": "^2.7.18",
+    "@supabase/supabase-js": "^2.57.4",
     "@types/mongodb": "^4.0.6",
     "@upstash/redis": "^1.35.3",
     "@vercel/analytics": "^1.5.0",
