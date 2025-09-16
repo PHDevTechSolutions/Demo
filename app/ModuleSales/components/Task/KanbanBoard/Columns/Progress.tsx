@@ -199,14 +199,21 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           !EXCLUDED_ACTIVITIES.includes(p.typeactivity || "")
       );
 
-      // 🔹 Sort by date_updated first (latest first), fallback to date_created
+      // 🔹 Sort by latest of date_updated or date_created
       setProgress(
         myProgress.sort((a, b) => {
-          const dateA = a.date_updated ? new Date(a.date_updated) : new Date(a.date_created);
-          const dateB = b.date_updated ? new Date(b.date_updated) : new Date(b.date_created);
-          return dateB.getTime() - dateA.getTime();
+          const dateA_updated = a.date_updated ? new Date(a.date_updated).getTime() : 0;
+          const dateA_created = a.date_created ? new Date(a.date_created).getTime() : 0;
+          const dateA = Math.max(dateA_updated, dateA_created);
+
+          const dateB_updated = b.date_updated ? new Date(b.date_updated).getTime() : 0;
+          const dateB_created = b.date_created ? new Date(b.date_created).getTime() : 0;
+          const dateB = Math.max(dateB_updated, dateB_created);
+
+          return dateB - dateA; // 🔹 latest first
         })
       );
+
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
       setProgress([]);

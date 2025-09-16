@@ -18,8 +18,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [userId, setUserId] = useState<string | null>(null);
   const [userDetails, setUserDetails] = useState({
-    Firstname: "Leroux",
-    Lastname: "Xchire",
+    Firstname: "Task",
+    Lastname: "Flow",
     Email: "taskflow@ecoshiftcorp.com",
     Department: "ecoshiftcorp.com",
     Location: "Philippines",
