@@ -247,6 +247,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   };
 
   /** Submit form */
+  /** Submit form */
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: any = { ...hiddenFields, ...formData };
@@ -259,7 +260,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     // Sanitize numeric fields
     const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
-      payload[field] = payload[field] === "" || payload[field] === undefined ? null : Number(payload[field]);
+      payload[field] =
+        payload[field] === "" || payload[field] === undefined
+          ? null
+          : Number(payload[field]);
     });
 
     try {
@@ -279,28 +283,25 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       resetForm();
       toast.success("Activity successfully added/updated!");
 
-      // 🔹 Refresh only the specific card
+      // 🔹 Update only the card that was modified
       if (data?.id) {
-        const updatedItemRes = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchSingle?activityid=${data.id}`
-        );
-        const updatedItem = await updatedItemRes.json();
-        if (updatedItemRes.ok && updatedItem) {
-          setProgress((prev) =>
-            prev.map((p) => (p.id === data.id ? updatedItem : p))
-          );
-        } else {
-          // fallback: refetch entire progress
-          fetchProgress();
-        }
-      } else {
-        fetchProgress();
+        setProgress((prev) => {
+          const exists = prev.some((p) => p.id === data.id);
+          if (exists) {
+            // update existing card
+            return prev.map((p) => (p.id === data.id ? data : p));
+          } else {
+            // if it's a new activity → add on top
+            return [data, ...prev];
+          }
+        });
       }
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     }
   };
+
 
   /** Delete activity */
   const handleDelete = async (item: ProgressItem) => {
