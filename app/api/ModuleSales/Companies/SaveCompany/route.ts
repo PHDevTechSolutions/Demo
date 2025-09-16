@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase
+// ✅ Use server-only service role key
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_URL!,                  // server env variable
+  process.env.SUPABASE_SERVICE_ROLE_KEY!      // server-only key
 );
 
 export async function POST(req: NextRequest) {
@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing referenceId or company" }, { status: 400 });
     }
 
-    // 🔹 Use an array for multiple rows (even if single row) and onConflict as string
     const { data, error } = await supabase
       .from("companies")
       .upsert(
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
             status: company.status || "pending",
           },
         ],
-        { onConflict: "reference_id" } // single string, not array
+        { onConflict: "reference_id,company_name" } // prevent duplicate companies per user
       )
       .select();
 
