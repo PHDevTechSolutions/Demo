@@ -5,7 +5,6 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/ClientActivityBoard/ListofCompanies/AddUserForm";
 import SearchFilters from "../../../components/National/DailyCallRanking/SearchFilters";
 import UsersTable from "../../../components/Agents/DailyCallRanking/UsersTable";
 
@@ -145,41 +144,26 @@ const ListofUser: React.FC = () => {
                     {(user) => (
                         <div className="container mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
-                                {showForm ? (
-                                    <AddPostForm
-                                        onCancel={() => {
-                                            setShowForm(false);
-                                            setEditUser(null);
-                                        }}
-                                        refreshPosts={fetchAccount}  // Pass the refreshPosts callback
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}  // Ensure id is passed correctly
-                                        editUser={editUser}
+                                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                                    <h2 className="text-lg font-bold mb-2">Team Daily Ranking</h2>
+                                    <p className="text-xs text-gray-600 mb-4">
+                                        The **Team Daily Ranking** tracks the performance of our <strong>Territory Sales Associates (TSA)</strong> within our team on a daily basis.
+                                        Rankings are based on the number of <strong>outbound calls, inbound calls,</strong> and <strong>successful call outcomes</strong>.
+                                        This leaderboard helps identify top-performing TSAs within the team, recognizing those who achieve the highest call volumes
+                                        and the most successful client engagements.
+                                    </p>
+                                    <SearchFilters
+                                        searchTerm={searchTerm}
+                                        setSearchTerm={setSearchTerm}
+                                        startDate={startDate}
+                                        setStartDate={setStartDate}
+                                        endDate={endDate}
+                                        setEndDate={setEndDate}
                                     />
-                                ) : (
-                                    <>
-                                        <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
-                                            <h2 className="text-lg font-bold mb-2">Team Daily Ranking</h2>
-                                            <p className="text-xs text-gray-600 mb-4">
-                                                The **Team Daily Ranking** tracks the performance of our <strong>Territory Sales Associates (TSA)</strong> within our team on a daily basis.
-                                                Rankings are based on the number of <strong>outbound calls, inbound calls,</strong> and <strong>successful call outcomes</strong>.
-                                                This leaderboard helps identify top-performing TSAs within the team, recognizing those who achieve the highest call volumes
-                                                and the most successful client engagements.
-                                            </p>
-                                            <SearchFilters
-                                                searchTerm={searchTerm}
-                                                setSearchTerm={setSearchTerm}
-                                                startDate={startDate}
-                                                setStartDate={setStartDate}
-                                                endDate={endDate}
-                                                setEndDate={setEndDate}
-                                            />
-                                            <UsersTable
-                                                posts={filteredAccounts}
-                                            />
-                                        </div>
-                                    </>
-                                )}
-
+                                    <UsersTable
+                                        posts={filteredAccounts}
+                                    />
+                                </div>
                                 <ToastContainer className="text-xs" autoClose={1000} />
                             </div>
                         </div>
