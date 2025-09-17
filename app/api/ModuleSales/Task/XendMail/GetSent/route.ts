@@ -1,4 +1,3 @@
-// file: app/api/ModuleSales/Task/XendMail/GetSent/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
@@ -9,20 +8,31 @@ if (!TASKFLOW_DB_URL) {
 
 const sql = neon(TASKFLOW_DB_URL);
 
+/** Type-safe interface for email */
+interface Email {
+  from: { text: string };
+  to: string | null;
+  cc: string | null;
+  subject: string | null;
+  date: string | null;
+  messageId: string | null;
+  body: string | null;
+  attachments: any[];
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const referenceId = searchParams.get("referenceId");
 
     if (!referenceId) {
-      // ❌ kung walang referenceId → bawal
       return NextResponse.json(
         { error: "referenceId is required" },
         { status: 400 }
       );
     }
 
-    // ✅ filtered by referenceId lamang
+    // Fetch emails filtered by referenceId
     const rows = await sql`
       SELECT 
         referenceid,
@@ -42,32 +52,42 @@ export async function GET(req: NextRequest) {
 
     console.log("📨 GetSent rows:", rows.length);
 
-    const emails = rows.map((row: any) => {
-      let attachments = [];
-      try {
-        attachments = row.attachments ? JSON.parse(row.attachments) : [];
-      } catch (err) {
-        console.warn("⚠️ Invalid attachments JSON:", row.attachments);
+    const emails: Email[] = rows.map((row: any) => {
+      let attachments: any[] = [];
+
+      if (row.attachments) {
+        try {
+          const parsed = JSON.parse(row.attachments);
+          attachments = Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+          console.warn(
+            "⚠️ Malformed attachments JSON, defaulting to empty array:",
+            row.attachments
+          );
+          attachments = [];
+        }
       }
 
       return {
-        from: { text: row.sender },
-        to: row.recipient_to,
-        cc: row.recipient_cc,
-        subject: row.subject,
+        from: { text: row.sender || "" },
+        to: row.recipient_to || null,
+        cc: row.recipient_cc || null,
+        subject: row.subject || null,
         date: row.email_date ? new Date(row.email_date).toISOString() : null,
-        messageId: row.messageid,
-        body: row.body,
+        messageId: row.messageid || null,
+        body: row.body || null,
         attachments,
       };
     });
 
-    return NextResponse.json(emails, { status: 200 });
+    return NextResponse.json({ success: true, data: emails }, { status: 200 });
   } catch (err: any) {
     console.error("❌ GetSent API error:", err);
     return NextResponse.json(
-      { error: "Server error: " + err.message },
+      { success: false, error: "Server error: " + err.message },
       { status: 500 }
     );
   }
 }
+
+export const dynamic = "force-dynamic";

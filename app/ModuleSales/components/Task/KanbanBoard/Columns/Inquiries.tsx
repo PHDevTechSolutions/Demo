@@ -34,36 +34,53 @@ const Inquiries: React.FC<InquiriesProps> = ({
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Modal states
+  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const [timeSinceCreated, setTimeSinceCreated] = useState<string>("");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchInquiries = async () => {
-    if (!userDetails?.ReferenceID) return;
+  /** Robust fetch function */
+  const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
+    if (!referenceId) return []; // ❌ Avoid fetch if no ReferenceID
 
     try {
-      setLoading(true);
       const res = await fetch(
-        `/api/ModuleSales/Task/CSRInquiries/FetchInquiries?referenceid=${userDetails.ReferenceID}`
+        `/api/ModuleSales/Task/CSRInquiries/FetchInquiries?referenceid=${referenceId}`
       );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Fetch error:", errorData.error || res.statusText);
+        return [];
+      }
+
       const data = await res.json();
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.data)) return data.data;
+      if (Array.isArray(data?.inquiries)) return data.inquiries;
+      return [];
+    } catch (err) {
+      console.error("Unexpected fetch error:", err);
+      return [];
+    }
+  };
 
-      let inquiriesData: Inquiry[] = [];
-      if (Array.isArray(data)) inquiriesData = data;
-      else if (Array.isArray(data?.data)) inquiriesData = data.data;
-      else if (Array.isArray(data?.inquiries)) inquiriesData = data.inquiries;
+  /** Load inquiries on mount / refresh */
+  useEffect(() => {
+    const loadInquiries = async () => {
+      setLoading(true);
+      const inquiriesData = await fetchInquiries(userDetails?.ReferenceID);
 
-      // 🔹 Filter inquiries strictly for this user only
+      // Filter strictly for this user
       const myInquiries = inquiriesData.filter(
-        (inq) => inq.referenceid === userDetails.ReferenceID
+        (inq) => inq.referenceid === userDetails?.ReferenceID
       );
 
       setInquiries(myInquiries);
 
-      // 🔹 Hanapin kung may inquiry ngayong araw at hindi endorsed
+      // Show today's unendorsed inquiry in modal
       const today = new Date().toISOString().split("T")[0];
       const todayInquiry = myInquiries.find(
         (inq) =>
@@ -78,20 +95,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
         setActiveInquiry(null);
         setShowModal(false);
       }
-    } catch (error) {
-      console.error("Error fetching inquiries:", error);
-      setInquiries([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // 🔹 Refetch inquiries when refreshTrigger changes
-  useEffect(() => {
-    fetchInquiries();
+      setLoading(false);
+    };
+
+    loadInquiries();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-  // 🔹 Handle modal close → re-show after 5 mins if still not endorsed
+  /** Handle modal close */
   const handleCloseModal = () => {
     setShowModal(false);
 
@@ -104,7 +115,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
     }
   };
 
-  // 🔹 Track elapsed time since inquiry creation
+  /** Track elapsed time since creation */
   useEffect(() => {
     if (!activeInquiry?.date_created) return;
 
@@ -122,7 +133,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
     return () => clearInterval(interval);
   }, [activeInquiry?.date_created]);
 
-  // 🔹 Cancel inquiry action
+  /** Cancel inquiry */
   const handleCancel = async (inq: Inquiry) => {
     if (!userDetails?.ReferenceID) return;
 
@@ -140,14 +151,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
       if (!res.ok) throw new Error("Failed to cancel inquiry");
 
       alert("Inquiry successfully cancelled as Wrong Tagging");
-      fetchInquiries(); // refresh list
+      fetchInquiries(userDetails.ReferenceID); // refresh list
     } catch (error) {
       console.error("❌ Error cancelling inquiry:", error);
       alert("Failed to cancel inquiry");
     }
   };
 
-  // 🔹 Modal UI
+  /** Modal UI */
   const InquiryModal = () => {
     if (!activeInquiry) return null;
     return (
