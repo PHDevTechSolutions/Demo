@@ -256,7 +256,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   };
 
   /** Submit form */
-  /** Submit form */
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: any = { ...hiddenFields, ...formData };
@@ -275,6 +274,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           : Number(payload[field]);
     });
 
+    // 🔹 Start per-card loading if editing existing card
+    if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
+
     try {
       const res = await fetch(
         "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
@@ -292,15 +294,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       resetForm();
       toast.success("Activity successfully added/updated!");
 
-      // 🔹 Update only the card that was modified
+      // Update only the modified card
       if (data?.id) {
         setProgress((prev) => {
           const exists = prev.some((p) => p.id === data.id);
           if (exists) {
-            // update existing card
             return prev.map((p) => (p.id === data.id ? data : p));
           } else {
-            // if it's a new activity → add on top
             return [data, ...prev];
           }
         });
@@ -308,9 +308,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
+    } finally {
+      if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
   };
-
 
   /** Delete activity */
   const handleDelete = async (item: ProgressItem) => {
