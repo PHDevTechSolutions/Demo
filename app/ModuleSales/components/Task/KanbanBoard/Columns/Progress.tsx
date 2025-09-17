@@ -61,11 +61,31 @@ interface ProgressProps {
   refreshTrigger: number;
 }
 
+interface CardLoadingState {
+  [id: string]: boolean;
+}
+
+type CardLoadingAction =
+  | { type: "SET_LOADING"; id: string; value: boolean };
+
+const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) => {
+  switch (action.type) {
+    case "SET_LOADING":
+      return { ...state, [action.id]: action.value };
+    default:
+      return state;
+  }
+};
+
 const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [cardLoading, setCardLoading] = useState<Record<string, boolean>>({});
+  const [cardLoading, dispatchCardLoading] = React.useReducer(
+    cardLoadingReducer,
+    {}
+  );
+
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -294,16 +314,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   /** Delete activity */
   const handleDelete = async (item: ProgressItem) => {
-    setCardLoading((prev) => ({ ...prev, [item.id]: true }));
+    dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
     try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/DeleteProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: item.id }),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete activity");
 
@@ -313,9 +330,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       console.error("❌ Delete error:", err);
       toast.error("Failed to delete activity: " + err.message);
     } finally {
-      setCardLoading((prev) => ({ ...prev, [item.id]: false }));
+      dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: false });
     }
   };
+
 
   if (loading) {
     return (
@@ -347,6 +365,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       ) : (
         <p className="text-xs text-gray-400">No progress found.</p>
       )}
+
 
       {showForm && (
         <ProgressForm
