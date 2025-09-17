@@ -34,7 +34,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal states
   const [showModal, setShowModal] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const [timeSinceCreated, setTimeSinceCreated] = useState<string>("");
@@ -43,7 +42,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   /** Robust fetch function */
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
-    if (!referenceId) return []; // ❌ Avoid fetch if no ReferenceID
+    if (!referenceId) return []; // Prevent 400 error
 
     try {
       const res = await fetch(
@@ -51,8 +50,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
       );
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Fetch error:", errorData.error || res.statusText);
+        console.warn("Fetch failed:", res.status, await res.text());
         return [];
       }
 
@@ -69,9 +67,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   /** Load inquiries on mount / refresh */
   useEffect(() => {
+    if (!userDetails?.ReferenceID) return; // ⚠️ Prevent fetch if no ReferenceID
+
     const loadInquiries = async () => {
       setLoading(true);
-      const inquiriesData = await fetchInquiries(userDetails?.ReferenceID);
+
+      const inquiriesData = await fetchInquiries(userDetails.ReferenceID);
 
       // Filter strictly for this user
       const myInquiries = inquiriesData.filter(
@@ -151,7 +152,10 @@ const Inquiries: React.FC<InquiriesProps> = ({
       if (!res.ok) throw new Error("Failed to cancel inquiry");
 
       alert("Inquiry successfully cancelled as Wrong Tagging");
-      fetchInquiries(userDetails.ReferenceID); // refresh list
+      const refreshed = await fetchInquiries(userDetails.ReferenceID);
+      setInquiries(
+        refreshed.filter((i) => i.referenceid === userDetails.ReferenceID)
+      );
     } catch (error) {
       console.error("❌ Error cancelling inquiry:", error);
       alert("Failed to cancel inquiry");
