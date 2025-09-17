@@ -61,15 +61,6 @@ interface ProgressProps {
   refreshTrigger: number;
 }
 
-const EXCLUDED_ACTIVITIES = [
-  "Assisting Other Agent Clients",
-  "Coordination of SO To Warehouse",
-  "Coordination of SO to Orders",
-  "Updating Reports",
-  "Email and Viber Checking",
-  "Documentation",
-];
-
 const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -194,9 +185,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         Array.isArray(data) ? data : data?.data || data?.progress || [];
 
       const myProgress = progressData.filter(
-        (p) =>
-          p.referenceid === userDetails.ReferenceID &&
-          !EXCLUDED_ACTIVITIES.includes(p.typeactivity || "")
+        (p) => p.referenceid === userDetails.ReferenceID
       );
 
       // 🔹 Sort by latest of date_updated or date_created

@@ -96,7 +96,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             }
 
             try {
-                const res = await fetch("/api/ModuleSales/Task/XendMail/Saved", {
+                const res = await fetch("/api/ModuleSales/Task/XendMail/Save", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

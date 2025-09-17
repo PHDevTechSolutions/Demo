@@ -1,13 +1,11 @@
 // file: app/api/ModuleSales/Task/XendMail/Save/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { neon } from "@neondatabase/serverless";
+import { createClient } from "@supabase/supabase-js";
 
-const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
-if (!TASKFLOW_DB_URL) {
-  throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
-}
-
-const sql = neon(TASKFLOW_DB_URL);
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // ✅ service role para makapag-upsert
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,22 +29,9 @@ export async function POST(req: NextRequest) {
 
     console.log(`🟡 Preparing to insert ${validEmails.length} emails`);
 
-    const values: any[] = [];
-    const placeholders: string[] = [];
-
-    validEmails.forEach((email: any, idx: number) => {
-      const {
-        from,
-        to,
-        cc,
-        subject,
-        date,
-        messageId,
-        body,
-        attachments,
-      } = email;
-
-      // 🟢 make sure date is valid
+    // 🔹 Transform to match table schema
+    const rows = validEmails.map((email: any) => {
+      const { from, to, cc, subject, date, messageId, body, attachments } = email;
       let formattedDate: string | null = null;
       try {
         formattedDate = date ? new Date(date).toISOString() : null;
@@ -54,38 +39,31 @@ export async function POST(req: NextRequest) {
         formattedDate = null;
       }
 
-      const baseIndex = idx * 9;
-      placeholders.push(
-        `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6}, $${baseIndex + 7}, $${baseIndex + 8}, $${baseIndex + 9}::jsonb, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')`
-      );
-
-      values.push(
-        referenceId,
-        typeof from === "string" ? from : from?.text || "",
-        to || "",
-        cc || "",
-        subject || "",
-        formattedDate,
-        messageId,
-        body || "",
-        JSON.stringify(attachments || []) // ✅ stringify for JSONB
-      );
+      return {
+        referenceid: referenceId,
+        sender: typeof from === "string" ? from : from?.text || "",
+        recipient_to: to || "",
+        recipient_cc: cc || "",
+        subject: subject || "",
+        email_date: formattedDate,
+        messageid: messageId,
+        body: body || "",
+        attachments: attachments || [],
+      };
     });
 
-    const query = `
-      INSERT INTO xendmail_emails
-        (referenceid, sender, recipient_to, recipient_cc, subject, email_date, messageid, body, attachments, date_created)
-      VALUES ${placeholders.join(", ")}
-      ON CONFLICT (messageid) DO NOTHING
-      RETURNING *;
-    `;
+    // 🔹 Insert with upsert (avoid duplicates by messageid)
+    const { data, error } = await supabase
+      .from("xendmail_emails")
+      .upsert(rows, { onConflict: "messageid" })
+      .select();
 
-    const result = await sql(query, values);
+    if (error) throw error;
 
-    console.log(`🟢 Inserted ${result.length} rows into DB`);
+    console.log(`🟢 Inserted ${data.length} rows into Supabase`);
 
     return NextResponse.json(
-      { success: true, insertedCount: result.length, inserted: result },
+      { success: true, insertedCount: data.length, inserted: data },
       { status: 201 }
     );
   } catch (error: any) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, memo } from "react";
 import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
@@ -67,26 +67,23 @@ const STATUS_BG: Record<string, string> = {
   Loss: "bg-red-800",
 };
 
-const ProgressCard: React.FC<ProgressCardProps> = ({
+const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   progress,
   profilePicture,
   onAddClick,
   onDeleteClick,
 }) => {
-  if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false); // collapse/expand state
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const computePercent = () =>
-    STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
+  if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
 
-  const percent = computePercent();
+  const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
+  const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";
 
-  const handleDeleteClick = () => setShowDeleteModal(true);
-
-  const confirmDelete = async () => {
+  const handleDeleteClick = useCallback(() => setShowDeleteModal(true), []);
+  const confirmDelete = useCallback(async () => {
     if (!onDeleteClick) return;
     try {
       await onDeleteClick(progress);
@@ -95,16 +92,14 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     } catch (err) {
       console.error("Delete failed:", err);
     }
-  };
-
-  const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";
+  }, [onDeleteClick, progress]);
 
   return (
     <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
       {/* Header */}
       <div
         className="flex items-center mb-2 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => setIsExpanded((prev) => !prev)}
       >
         <img
           src={profilePicture}
@@ -124,47 +119,25 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
             </p>
           )}
         </div>
-
         <div className="flex items-center space-x-2">
-          <DoughnutChart percent={percent} size="w-5 h-5" />
+          {isExpanded && <DoughnutChart percent={percent} size="w-5 h-5" />}
           {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
         </div>
       </div>
 
       {/* Collapsible Content */}
       {isExpanded && (
-        <>
-          <div className="pl-2 mb-2 text-[10px]">
-            <p>
-              <span className="font-semibold">Contact Person:</span>{" "}
-              {progress.contactperson}
-            </p>
-            <p>
-              <span className="font-semibold">Contact #:</span>{" "}
-              {progress.contactnumber}
-            </p>
-            <p>
-              <span className="font-semibold">Email:</span> {progress.emailaddress}
-            </p>
-            <p>
-              <span className="font-semibold">Type:</span> {progress.typeclient}
-            </p>
-            <p>
-              <span className="font-semibold">Status:</span> {progress.activitystatus}
-            </p>
-            <p className="text-gray-500 text-[8px]">
-              {progress.date_created
-                ? new Date(progress.date_created).toLocaleString()
-                : "N/A"}
-            </p>
-            {progress.remarks && (
-              <p>
-                <span className="font-semibold">Remarks:</span> {progress.remarks}
-              </p>
-            )}
-          </div>
+        <div className="pl-2 mb-2 text-[10px]">
+          <p><span className="font-semibold">Contact Person:</span> {progress.contactperson}</p>
+          <p><span className="font-semibold">Contact #:</span> {progress.contactnumber}</p>
+          <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
+          <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
+          <p><span className="font-semibold">Status:</span> {progress.activitystatus}</p>
+          <p className="text-gray-500 text-[8px]">
+            {progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}
+          </p>
+          {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
-          {/* Action Buttons */}
           <div className="flex justify-end mt-2 space-x-1">
             <button
               onClick={onAddClick}
@@ -181,7 +154,7 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
               </button>
             )}
           </div>
-        </>
+        </div>
       )}
 
       {/* Delete Modals */}
@@ -207,5 +180,8 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
     </div>
   );
 };
+
+// Memoized for faster rendering
+const ProgressCard = memo(ProgressCardComponent, (prev, next) => prev.progress.id === next.progress.id);
 
 export default ProgressCard;
