@@ -53,62 +53,40 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
 
-  // Save company (single)
-  const saveCompanyToSupabase = async (comp: Company) => {
-    if (!userDetails?.ReferenceID) return;
-    try {
-      const res = await fetch("/api/ModuleSales/Companies/SaveCompany", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          referenceId: userDetails.ReferenceID,
-          company: comp, // single company
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save company");
-
-      console.log("✅ Company saved to Supabase:", comp.companyname);
-    } catch (err: any) {
-      console.error("❌ Failed to save company to Supabase:", err.message);
-    }
-  };
-
-
   // 🔹 Main fetch on load
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
-    const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
-    const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
+    const todayDate = new Date().toISOString().split("T")[0];
     const yesterdayKey = `quota_${userDetails.ReferenceID}_${getYesterdayKey()}`;
 
     const fetchCompanies = async () => {
       try {
         setLoading(true);
 
-        // 1️⃣ Check localStorage first
-        const stored = localStorage.getItem(todayKey);
-        const storedQuota = localStorage.getItem(quotaKey);
+        // 1️⃣ Try Supabase DailyQuota
+        const res = await fetch(
+          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayDate}`
+        );
+        const dbData = await res.json();
 
-        if (stored && storedQuota) {
-          setCompanies(JSON.parse(stored));
-          setRemainingQuota(parseInt(storedQuota, 10));
+        if (dbData?.companies && dbData?.remaining_quota != null) {
+          setCompanies(dbData.companies);
+          setRemainingQuota(dbData.remaining_quota);
           setLoading(false);
           return;
         }
 
-        // 2️⃣ Fetch fresh companies list
-        const res = await fetch(
+        // 2️⃣ Fallback: Fetch from CompanyAccounts (main source)
+        const accountsRes = await fetch(
           `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
         );
-        const data = await res.json();
+        const accounts = await accountsRes.json();
 
         let companiesData: Company[] = [];
-        if (Array.isArray(data)) companiesData = data;
-        else if (Array.isArray(data?.data)) companiesData = data.data;
-        else if (Array.isArray(data?.companies)) companiesData = data.companies;
+        if (Array.isArray(accounts)) companiesData = accounts;
+        else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
+        else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
 
         if (!companiesData.length) {
           setCompanies([]);
@@ -116,10 +94,9 @@ const Companies: React.FC<CompaniesProps> = ({
           return;
         }
 
-        // 3️⃣ Filter eligible companies by cycle rules
+        // 3️⃣ Apply quota logic
         const eligibleCompanies = companiesData.filter(isCompanyDue);
 
-        // Split by typeclient
         const top50 = eligibleCompanies.filter(c => c.typeclient === "Top 50");
         const next30 = eligibleCompanies.filter(c => c.typeclient === "Next 30");
         const balance20 = eligibleCompanies.filter(c => c.typeclient === "Balance 20");
@@ -130,7 +107,6 @@ const Companies: React.FC<CompaniesProps> = ({
           return shuffled.slice(0, count);
         };
 
-        // 4️⃣ Start with quota = DAILY + carry-over
         let todayQuota = DAILY_QUOTA;
         const leftover = localStorage.getItem(yesterdayKey);
         if (leftover) todayQuota += parseInt(leftover, 10);
@@ -142,9 +118,17 @@ const Companies: React.FC<CompaniesProps> = ({
           ...pickRandom(tsa, 5),
         ].slice(0, todayQuota);
 
-        // 5️⃣ Save to localStorage
-        localStorage.setItem(todayKey, JSON.stringify(finalCompanies));
-        localStorage.setItem(quotaKey, todayQuota.toString());
+        // 4️⃣ Save to Supabase DailyQuota
+        await fetch("/api/ModuleSales/Companies/DailyQuota", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            referenceid: userDetails.ReferenceID,
+            date: todayDate,
+            companies: finalCompanies,
+            remaining_quota: todayQuota,
+          }),
+        });
 
         setCompanies(finalCompanies);
         setRemainingQuota(todayQuota);
@@ -160,30 +144,34 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  // 🔹 Remove company + update quota
-  const removeCompany = (comp: Company) => {
+  // 🔹 Remove company + update Supabase DailyQuota
+  const removeCompany = async (comp: Company) => {
     if (!userDetails?.ReferenceID) return;
-    const todayKey = `companies_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
-    const quotaKey = `quota_${userDetails.ReferenceID}_${new Date().toISOString().split("T")[0]}`;
 
     const updated = companies.filter(c => c.id !== comp.id);
-    setCompanies(updated);
-
     const newQuota = remainingQuota - 1;
+
+    setCompanies(updated);
     setRemainingQuota(newQuota);
 
-    localStorage.setItem(todayKey, JSON.stringify(updated));
-    localStorage.setItem(quotaKey, newQuota.toString());
+    const todayDate = new Date().toISOString().split("T")[0];
+    await fetch("/api/ModuleSales/Companies/DailyQuota", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        referenceid: userDetails.ReferenceID,
+        date: todayDate,
+        companies: updated,
+        remaining_quota: newQuota,
+      }),
+    });
   };
 
-  // 🔹 Handle Add action (save lastAdded date + sync to Supabase)
+  // 🔹 Handle Add action
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
     removeCompany(comp);
     if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
-
-    // 🔹 Save to Supabase
-    saveCompanyToSupabase(comp);
   };
 
   return (
@@ -206,7 +194,6 @@ const Companies: React.FC<CompaniesProps> = ({
               key={key}
               className="rounded-lg border bg-blue-100 shadow transition text-[10px] mb-2 px-2 py-2"
             >
-              {/* Header row */}
               <div
                 className="cursor-pointer flex justify-between items-center p-1"
                 onClick={() => setExpandedIdx(isExpanded ? null : key)}
@@ -238,28 +225,16 @@ const Companies: React.FC<CompaniesProps> = ({
                 </div>
               </div>
 
-              {/* Expanded details */}
               {isExpanded && (
                 <div className="p-1 space-y-1">
-                  <p>
-                    <span className="font-semibold">Contact Person:</span> {comp.contactperson}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Contact #:</span> {comp.contactnumber}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Email:</span> {comp.emailaddress}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Type:</span> {comp.typeclient}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Address:</span> {comp.address || "N/A"}
-                  </p>
+                  <p><span className="font-semibold">Contact Person:</span> {comp.contactperson}</p>
+                  <p><span className="font-semibold">Contact #:</span> {comp.contactnumber}</p>
+                  <p><span className="font-semibold">Email:</span> {comp.emailaddress}</p>
+                  <p><span className="font-semibold">Type:</span> {comp.typeclient}</p>
+                  <p><span className="font-semibold">Address:</span> {comp.address || "N/A"}</p>
                 </div>
               )}
 
-              {/* Footer */}
               <div className="p-1 text-gray-500 text-[9px]">{comp.typeclient}</div>
             </div>
           );

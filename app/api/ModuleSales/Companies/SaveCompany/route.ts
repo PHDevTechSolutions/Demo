@@ -1,62 +1,52 @@
-// app/api/ModuleSales/Companies/SaveCompany/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// ✅ Server-only client using service role key
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_URL!,                // ✅ server env
+  process.env.SUPABASE_SERVICE_ROLE_KEY!    // ✅ service role key (secure, not exposed)
 );
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { referenceId, company } = body;
+    const { referenceId, companies } = body;
 
-    if (!referenceId || !company) {
-      return NextResponse.json({ error: "Missing referenceId or company" }, { status: 400 });
+    if (!referenceId || !Array.isArray(companies)) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    // 🔹 Build row for insert/upsert
-    const insertRow = {
-      reference_id: referenceId,
-      company_name: company.companyname,
-      contact_person: company.contactperson,
-      contact_number: company.contactnumber,
-      email_address: company.emailaddress,
-      type_client: company.typeclient,
-      address: company.address || null,
-      last_added: new Date().toISOString(),
-      status: company.status || "pending",
-    };
+    // 🔹 Format data
+    const formatted = companies.map((c: any) => ({
+      referenceid: referenceId,
+      companyname: c.companyname?.trim(),
+      contactperson: c.contactperson,
+      contactnumber: c.contactnumber,
+      emailaddress: c.emailaddress,
+      typeclient: c.typeclient,
+      address: c.address || null,
+      created_at: new Date().toISOString(),
+    }));
 
-    // 🔹 Try upsert first (prevents duplicates)
-    const { data: upsertData, error: upsertError } = await supabase
+    // 🔹 Deduplicate by (referenceid + companyname)
+    const unique = new Map<string, any>();
+    for (const c of formatted) {
+      const key = `${c.referenceid}-${c.companyname.toLowerCase()}`;
+      if (!unique.has(key)) unique.set(key, c);
+    }
+    const uniqueFormatted = Array.from(unique.values());
+
+    // ✅ Upsert para hindi maduplicate
+    const { data, error } = await supabase
       .from("companies")
-      .upsert([insertRow], { onConflict: "reference_id,company_name" })
-      .select();
+      .upsert(uniqueFormatted, {
+        onConflict: "referenceid,companyname", // 🔑 composite key (must match constraint)
+      });
 
-    console.log("Upsert data:", upsertData);
-    console.log("Upsert error:", upsertError);
+    if (error) throw error;
 
-    if (upsertError) {
-      // 🔹 If upsert fails (maybe RLS), try insert as fallback
-      const { data: insertData, error: insertError } = await supabase
-        .from("companies")
-        .insert([insertRow])
-        .select();
-
-      console.log("Insert data:", insertData);
-      console.log("Insert error:", insertError);
-
-      if (insertError) throw insertError;
-
-      return NextResponse.json({ success: true, data: insertData });
-    }
-
-    return NextResponse.json({ success: true, data: upsertData });
+    return NextResponse.json({ success: true, data });
   } catch (err: any) {
-    console.error("Error saving company:", err);
-    return NextResponse.json({ error: err.message || "Internal Server Error" }, { status: 500 });
+    console.error("❌ SaveCompany API error:", err.message);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
