@@ -141,9 +141,9 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     const isExpanded = expandedItems.has(item.id);
 
     return (
-      <div style={{ ...style, top: style.top }} className="p-2">
+      <div style={style} className="space-x-4">
         <div
-          className="rounded-lg shadow bg-green-100 cursor-pointer"
+          className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
           onClick={() => toggleExpand(item.id)}
         >
           {/* Header */}
@@ -171,7 +171,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
           {/* Expanded Content */}
           {isExpanded && (
-            <div className="pl-2 mt-1 text-[10px] space-y-1">
+            <div className="pl-2 mt-2 text-[10px] space-y-1 max-h-72 overflow-y-auto pr-2">
               {renderField("Contact Person", item.contactperson)}
               {renderField("Contact #", item.contactnumber)}
               {renderField("Email", item.emailaddress)}
