@@ -1,40 +1,44 @@
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 export interface Database {
   public: {
     Tables: {
       companies: {
         Row: {
+          id: number;
           reference_id: string;
-          company_id?: number;
-          companyname: string;
-          contactperson?: string | null;
-          contactnumber?: string | null;
-          emailaddress?: string | null;
-          typeclient?: string | null;
-          address?: string | null;
-          last_added: string;
-        };
-        Insert: {
-          reference_id: string;
-          company_id?: number;
-          companyname: string;
-          contactperson?: string | null;
-          contactnumber?: string | null;
-          emailaddress?: string | null;
-          typeclient?: string | null;
-          address?: string | null;
-          last_added?: string;
-        };
-        Update: Partial<{
-          reference_id: string;
-          company_id: number;
-          companyname: string;
-          contactperson: string | null;
-          contactnumber: string | null;
-          emailaddress: string | null;
-          typeclient: string | null;
+          company_name: string;
+          contact_person: string;
+          contact_number: string;
+          email_address: string;
+          type_client: string;
           address: string | null;
           last_added: string;
-        }>;
+          status: string;
+        };
+        Insert: {
+          id?: number;
+          reference_id: string;
+          company_name: string;
+          contact_person: string;
+          contact_number: string;
+          email_address: string;
+          type_client: string;
+          address?: string | null;
+          last_added?: string;
+          status?: string;
+        };
+        Update: {
+          reference_id?: string;
+          company_name?: string;
+          contact_person?: string;
+          contact_number?: string;
+          email_address?: string;
+          type_client?: string;
+          address?: string | null;
+          last_added?: string;
+          status?: string;
+        };
       };
     };
     Views: {};
