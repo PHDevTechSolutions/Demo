@@ -141,9 +141,9 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     const isExpanded = expandedItems.has(item.id);
 
     return (
-      <div style={{ ...style, top: style.top }} className="p-0">
+      <div style={{ ...style, top: style.top }} className="p-2">
         <div
-          className="rounded-lg shadow bg-green-100 cursor-pointer m-1 p-4"
+          className="rounded-lg shadow bg-green-100 cursor-pointer"
           onClick={() => toggleExpand(item.id)}
         >
           {/* Header */}
