@@ -42,7 +42,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   /** Robust fetch function */
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
-    if (!referenceId) return []; // Prevent 400 error
+    if (!referenceId) return [];
 
     try {
       const res = await fetch(
@@ -67,7 +67,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   /** Load inquiries on mount / refresh */
   useEffect(() => {
-    if (!userDetails?.ReferenceID) return; // ⚠️ Prevent fetch if no ReferenceID
+    if (!userDetails?.ReferenceID) return;
 
     const loadInquiries = async () => {
       setLoading(true);
@@ -81,13 +81,24 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
       setInquiries(myInquiries);
 
-      // Show today's unendorsed inquiry in modal
-      const today = new Date().toISOString().split("T")[0];
-      const todayInquiry = myInquiries.find(
-        (inq) =>
-          inq.date_created?.startsWith(today) &&
-          inq.status?.toLowerCase() !== "endorsed"
+      // ✅ Show today's unendorsed inquiry in PH timezone
+      const todayPH = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
       );
+
+      const todayInquiry = myInquiries.find((inq) => {
+        if (!inq.date_created) return false;
+        const inquiryPH = new Date(
+          new Date(inq.date_created).toLocaleString("en-US", { timeZone: "Asia/Manila" })
+        );
+
+        return (
+          inquiryPH.getFullYear() === todayPH.getFullYear() &&
+          inquiryPH.getMonth() === todayPH.getMonth() &&
+          inquiryPH.getDate() === todayPH.getDate() &&
+          inq.status?.toLowerCase() !== "endorsed"
+        );
+      });
 
       if (todayInquiry) {
         setActiveInquiry(todayInquiry);
@@ -117,13 +128,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
   };
 
   /** Track elapsed time since creation */
+  /** Track elapsed time since creation */
   useEffect(() => {
-    if (!activeInquiry?.date_created) return;
+    if (!activeInquiry?.date_created) return; // ⚠️ Guard against undefined
 
+    const createdDate = new Date(activeInquiry.date_created); // safe now
     const interval = setInterval(() => {
-      const created = new Date(activeInquiry.date_created!);
       const now = new Date();
-      const diffMs = now.getTime() - created.getTime();
+      const diffMs = now.getTime() - createdDate.getTime();
 
       const diffMins = Math.floor(diffMs / (1000 * 60));
       const diffSecs = Math.floor((diffMs / 1000) % 60);
@@ -133,6 +145,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
     return () => clearInterval(interval);
   }, [activeInquiry?.date_created]);
+
 
   /** Cancel inquiry */
   const handleCancel = async (inq: Inquiry) => {
@@ -152,6 +165,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
       if (!res.ok) throw new Error("Failed to cancel inquiry");
 
       alert("Inquiry successfully cancelled as Wrong Tagging");
+
       const refreshed = await fetchInquiries(userDetails.ReferenceID);
       setInquiries(
         refreshed.filter((i) => i.referenceid === userDetails.ReferenceID)
@@ -170,20 +184,16 @@ const Inquiries: React.FC<InquiriesProps> = ({
         <div className="bg-white rounded-lg shadow-lg p-6 w-96">
           <h2 className="text-lg font-bold mb-2">📩 New Inquiry</h2>
           <p className="text-sm mb-1">
-            <span className="font-semibold">Company:</span>{" "}
-            {activeInquiry.companyname}
+            <span className="font-semibold">Company:</span> {activeInquiry.companyname}
           </p>
           <p className="text-sm mb-1">
-            <span className="font-semibold">Contact:</span>{" "}
-            {activeInquiry.contactperson} ({activeInquiry.contactnumber})
+            <span className="font-semibold">Contact:</span> {activeInquiry.contactperson} ({activeInquiry.contactnumber})
           </p>
           <p className="text-sm mb-1">
-            <span className="font-semibold">Email:</span>{" "}
-            {activeInquiry.emailaddress}
+            <span className="font-semibold">Email:</span> {activeInquiry.emailaddress}
           </p>
           <p className="text-sm mb-1">
-            <span className="font-semibold">Inquiry:</span>{" "}
-            {activeInquiry.inquiries}
+            <span className="font-semibold">Inquiry:</span> {activeInquiry.inquiries}
           </p>
           <p className="text-xs text-gray-500 mt-2">
             ⏱ Elapsed since created: {timeSinceCreated}
@@ -226,11 +236,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
             const isExpanded = expandedIdx === key;
 
             return (
-              <div
-                key={key}
-                className="rounded-lg shadow bg-red-100 transition text-[10px] mb-2"
-              >
-                {/* Header row */}
+              <div key={key} className="rounded-lg shadow bg-red-100 transition text-[10px] mb-2">
                 <div
                   className="cursor-pointer flex justify-between items-center p-3"
                   onClick={() => setExpandedIdx(isExpanded ? null : key)}
@@ -239,66 +245,35 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSubmit(inq, true);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); handleSubmit(inq, true); }}
                       className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600"
                     >
                       Add
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCancel(inq);
-                      }}
+                      onClick={(e) => { e.stopPropagation(); handleCancel(inq); }}
                       className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600"
                     >
                       Cancel
                     </button>
-                    <span className="text-gray-400">
-                      {isExpanded ? "▲" : "▼"}
-                    </span>
+                    <span className="text-gray-400">{isExpanded ? "▲" : "▼"}</span>
                   </div>
                 </div>
 
                 {isExpanded && (
                   <div className="p-3 space-y-1">
-                    <p>
-                      <span className="font-semibold">Contact Person:</span>{" "}
-                      {inq.contactperson}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Contact #:</span>{" "}
-                      {inq.contactnumber}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Email:</span>{" "}
-                      {inq.emailaddress}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Inquiry:</span>{" "}
-                      {inq.inquiries}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Wrap-up:</span>{" "}
-                      {inq.wrapup || "N/A"}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Address:</span>{" "}
-                      {inq.address || "N/A"}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Status:</span>{" "}
-                      {inq.status}
-                    </p>
+                    <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>
+                    <p><span className="font-semibold">Contact #:</span> {inq.contactnumber}</p>
+                    <p><span className="font-semibold">Email:</span> {inq.emailaddress}</p>
+                    <p><span className="font-semibold">Inquiry:</span> {inq.inquiries}</p>
+                    <p><span className="font-semibold">Wrap-up:</span> {inq.wrapup || "N/A"}</p>
+                    <p><span className="font-semibold">Address:</span> {inq.address || "N/A"}</p>
+                    <p><span className="font-semibold">Status:</span> {inq.status}</p>
                   </div>
                 )}
 
                 <div className="p-2 text-gray-500 text-[9px]">
-                  {inq.date_created
-                    ? new Date(inq.date_created).toLocaleString()
-                    : "N/A"}
+                  {inq.date_created ? new Date(inq.date_created).toLocaleString() : "N/A"}
                 </div>
               </div>
             );
