@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
-import { VariableSizeList as List, ListChildComponentProps } from "react-window";
+import React, { useEffect, useState, useCallback } from "react";
 import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 export interface CompletedItem {
@@ -46,18 +45,16 @@ interface CompletedProps {
 }
 
 const POLL_INTERVAL = 5000;
-const ITEM_HEIGHT_COLLAPSED = 70;
-const ITEM_HEIGHT_EXPANDED = 350;
+const ITEMS_PER_PAGE = 10;
 
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-  const lastFetchedIds = useRef<Set<string>>(new Set());
-  const listRef = useRef<List>(null);
+  const lastFetchedIds = React.useRef<Set<string>>(new Set());
 
-  // Fetch completed tasks
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
@@ -65,10 +62,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
       );
-      if (!res.ok) {
-        console.error("❌ Failed to fetch completed activities:", res.statusText);
-        return; // ❌ wag nang mag-toast
-      }
+      if (!res.ok) return;
 
       const result = await res.json();
       const list: CompletedItem[] = Array.isArray(result)
@@ -76,33 +70,28 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         : result.data || result.items || [];
 
       const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
-
       const doneItems = list
         .filter(
-          (item: CompletedItem) =>
+          (item) =>
             allowedStatuses.includes(item.activitystatus || "") &&
             item.referenceid === userDetails.ReferenceID &&
             !lastFetchedIds.current.has(item.id)
         )
         .sort(
           (a, b) =>
-            new Date(b.date_created).getTime() -
-            new Date(a.date_created).getTime()
+            new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
         );
 
       if (doneItems.length > 0) {
-        doneItems.forEach(item => lastFetchedIds.current.add(item.id));
-        setData(prev => [...doneItems, ...prev]);
+        doneItems.forEach((item) => lastFetchedIds.current.add(item.id));
+        setData((prev) => [...doneItems, ...prev]);
       }
-      // ✅ kapag wala, walang error, tahimik lang
     } catch (err) {
-      console.error("❌ Error fetching completed:", err);
-      // ❌ no toast, just log
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, [userDetails?.ReferenceID]);
-
 
   useEffect(() => {
     fetchCompleted();
@@ -110,16 +99,12 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     return () => clearInterval(interval);
   }, [fetchCompleted, refreshTrigger]);
 
-  // Toggle expand/collapse
   const toggleExpand = (id: string) => {
-    setExpandedItems(prev => {
+    setExpandedItems((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet; // ✅ pure
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      return newSet;
     });
-    // trigger list height recalculation safely
-    if (listRef.current) listRef.current.resetAfterIndex(0);
   };
 
   const renderField = (label: string, value?: string | null) => {
@@ -128,83 +113,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
       <p className="mb-1">
         <span className="font-semibold">{label}:</span> {value}
       </p>
-    );
-  };
-
-  const getItemSize = (index: number) => {
-    const item = data[index];
-    return expandedItems.has(item.id) ? ITEM_HEIGHT_EXPANDED : ITEM_HEIGHT_COLLAPSED;
-  };
-
-  const Row = ({ index, style }: ListChildComponentProps) => {
-    const item = data[index];
-    const isExpanded = expandedItems.has(item.id);
-
-    return (
-      <div style={style} className="space-x-4">
-        <div
-          className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
-          onClick={() => toggleExpand(item.id)}
-        >
-          {/* Header */}
-          <div className="flex items-center">
-            <img
-              src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
-              alt="Profile"
-              className="w-8 h-8 rounded-full object-cover mr-3"
-            />
-            <div className="flex flex-col flex-1">
-              <div className="flex items-center space-x-1">
-                <FaCircle className="text-green-500 w-2 h-2" />
-                <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
-              </div>
-              {item.activitynumber && (
-                <p className="text-[8px] text-gray-600">
-                  Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
-            </div>
-          </div>
-
-          {/* Expanded Content */}
-          {isExpanded && (
-            <div className="pl-2 mt-2 text-[10px] space-y-1 max-h-72 overflow-y-auto pr-2">
-              {renderField("Contact Person", item.contactperson)}
-              {renderField("Contact #", item.contactnumber)}
-              {renderField("Email", item.emailaddress)}
-              {renderField("Type", item.typeclient)}
-              {renderField("Quotation Number", item.quotationnumber)}
-              {renderField("Quotation Amount", item.quotationamount)}
-              {renderField("SO Amount", item.soamount)}
-              {renderField("SO Number", item.sonumber)}
-              {renderField("Callback", item.callback)}
-              {renderField("Project Name", item.projectname)}
-              {renderField("Project Category", item.projectcategory)}
-              {renderField("Project Type", item.projecttype)}
-              {renderField("Type Call", item.typecall)}
-              {renderField("Source", item.source)}
-              {renderField("Status", item.activitystatus)}
-              {renderField("Remarks", item.remarks)}
-              {renderField("Call Status", item.callstatus)}
-              {renderField("Start Date", item.startdate)}
-              {renderField("End Date", item.enddate)}
-              {renderField("Ticket Ref #", item.ticketreferencenumber)}
-              {renderField("Wrap Up", item.wrapup)}
-              {renderField("Inquiries", item.inquiries)}
-              {renderField("CSR Agent", item.csragent)}
-              {renderField("Payment Term", item.paymentterm)}
-              {renderField("Delivery Date", item.deliverydate)}
-              {renderField(
-                "Date Created",
-                item.date_created ? new Date(item.date_created).toLocaleString() : undefined
-              )}
-            </div>
-          )}
-        </div>
-      </div>
     );
   };
 
@@ -220,15 +128,88 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     return <div className="text-center text-gray-400 italic text-xs">No completed tasks yet</div>;
 
   return (
-    <List
-      ref={listRef}
-      height={600}
-      itemCount={data.length}
-      itemSize={getItemSize}
-      width="100%"
-    >
-      {Row}
-    </List>
+    <div className="space-y-4">
+      {data.slice(0, visibleCount).map((item) => {
+        const isExpanded = expandedItems.has(item.id);
+        return (
+          <div
+            key={item.id}
+            className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
+            onClick={() => toggleExpand(item.id)}
+          >
+            {/* Header */}
+            <div className="flex items-center">
+              <img
+                src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
+                alt="Profile"
+                className="w-8 rounded-full object-cover mr-3"
+              />
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center space-x-1">
+                  <FaCircle className="text-green-500 w-2 h-2" />
+                  <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
+                </div>
+                {item.activitynumber && (
+                  <p className="text-[8px] text-gray-600">
+                    Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+              </div>
+            </div>
+
+            {/* Expanded Content */}
+            {isExpanded && (
+              <div className="pl-2 mt-2 text-[10px] space-y-1">
+                {renderField("Contact Person", item.contactperson)}
+                {renderField("Contact #", item.contactnumber)}
+                {renderField("Email", item.emailaddress)}
+                {renderField("Type", item.typeclient)}
+                {renderField("Quotation Number", item.quotationnumber)}
+                {renderField("Quotation Amount", item.quotationamount)}
+                {renderField("SO Amount", item.soamount)}
+                {renderField("SO Number", item.sonumber)}
+                {renderField("Callback", item.callback)}
+                {renderField("Project Name", item.projectname)}
+                {renderField("Project Category", item.projectcategory)}
+                {renderField("Project Type", item.projecttype)}
+                {renderField("Type Call", item.typecall)}
+                {renderField("Source", item.source)}
+                {renderField("Status", item.activitystatus)}
+                {renderField("Remarks", item.remarks)}
+                {renderField("Call Status", item.callstatus)}
+                {renderField("Start Date", item.startdate)}
+                {renderField("End Date", item.enddate)}
+                {renderField("Ticket Ref #", item.ticketreferencenumber)}
+                {renderField("Wrap Up", item.wrapup)}
+                {renderField("Inquiries", item.inquiries)}
+                {renderField("CSR Agent", item.csragent)}
+                {renderField("Payment Term", item.paymentterm)}
+                {renderField("Delivery Date", item.deliverydate)}
+                {renderField(
+                  "Date Created",
+                  item.date_created ? new Date(item.date_created).toLocaleString() : undefined
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* View More Button */}
+      {visibleCount < data.length && (
+        <div className="flex justify-center mt-2">
+          <button
+            className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+          >
+            View More
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

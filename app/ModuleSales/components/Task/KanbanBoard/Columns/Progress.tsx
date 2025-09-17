@@ -77,6 +77,8 @@ const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) 
   }
 };
 
+const ITEMS_PER_PAGE = 10;
+
 const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +87,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     cardLoadingReducer,
     {}
   );
-
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -208,21 +210,21 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         (p) => p.referenceid === userDetails.ReferenceID
       );
 
-      // 🔹 Sort by latest of date_updated or date_created
       setProgress(
         myProgress.sort((a, b) => {
-          const dateA_updated = a.date_updated ? new Date(a.date_updated).getTime() : 0;
-          const dateA_created = a.date_created ? new Date(a.date_created).getTime() : 0;
-          const dateA = Math.max(dateA_updated, dateA_created);
-
-          const dateB_updated = b.date_updated ? new Date(b.date_updated).getTime() : 0;
-          const dateB_created = b.date_created ? new Date(b.date_created).getTime() : 0;
-          const dateB = Math.max(dateB_updated, dateB_created);
-
-          return dateB - dateA; // 🔹 latest first
+          const dateA = Math.max(
+            a.date_updated ? new Date(a.date_updated).getTime() : 0,
+            a.date_created ? new Date(a.date_created).getTime() : 0
+          );
+          const dateB = Math.max(
+            b.date_updated ? new Date(b.date_updated).getTime() : 0,
+            b.date_created ? new Date(b.date_created).getTime() : 0
+          );
+          return dateB - dateA;
         })
       );
 
+      setVisibleCount(ITEMS_PER_PAGE); // Reset visible count on refresh
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
       setProgress([]);
@@ -230,7 +232,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchProgress();
@@ -348,7 +349,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   return (
     <div className="space-y-4 relative">
       {progress.length > 0 ? (
-        progress.map((item) => (
+        progress.slice(0, visibleCount).map((item) => (
           <div key={item.id} className="relative">
             {cardLoading[item.id] && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
@@ -367,6 +368,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         <p className="text-xs text-gray-400">No progress found.</p>
       )}
 
+      {/* View More button */}
+      {visibleCount < progress.length && (
+        <div className="flex justify-center mt-2">
+          <button
+            className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+          >
+            View More
+          </button>
+        </div>
+      )}
 
       {showForm && (
         <ProgressForm

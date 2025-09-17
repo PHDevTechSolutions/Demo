@@ -35,10 +35,13 @@ interface NotesProps {
     userDetails: UserDetails;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     const [notes, setNotes] = useState<Note[]>(posts);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
     const [activitystatus, setActivityStatus] = useState("");
     const [typeactivity, setTypeActivity] = useState("");
@@ -55,19 +58,16 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         "Documentation",
     ];
 
-    // ✅ Safe setItem with cleanup for notes only
     const safeSetItem = (key: string, value: string) => {
         try {
             localStorage.setItem(key, value);
         } catch (e: any) {
             if (e.name === "QuotaExceededError" || e.code === 22) {
-                console.warn("⚠️ LocalStorage quota exceeded. Cleaning up old notes...");
-                // Hanapin lahat ng `notes_` keys at burahin yung pinakauna
                 const noteKeys = Object.keys(localStorage).filter(k => k.startsWith("notes_"));
                 if (noteKeys.length > 0) {
                     localStorage.removeItem(noteKeys[0]);
                     try {
-                        localStorage.setItem(key, value); // retry
+                        localStorage.setItem(key, value);
                     } catch {
                         console.error("Still cannot save notes after cleanup.");
                     }
@@ -78,25 +78,19 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         }
     };
 
-    // 🔹 Wrapper for notes sync
     const syncToCache = (newNotes: Note[]) => {
         setNotes(newNotes);
         safeSetItem(`notes_${userDetails.ReferenceID}`, JSON.stringify(newNotes));
     };
 
-    // ⏬ Fetch + cache sa localStorage
     useEffect(() => {
         const cached = localStorage.getItem(`notes_${userDetails.ReferenceID}`);
-        if (cached) {
-            setNotes(JSON.parse(cached));
-        }
+        if (cached) setNotes(JSON.parse(cached));
 
         const fetchNotes = async () => {
             setLoading(true);
             try {
-                const res = await fetch(
-                    `/api/ModuleSales/Task/Notes/Fetch?referenceid=${userDetails.ReferenceID}`
-                );
+                const res = await fetch(`/api/ModuleSales/Task/Notes/Fetch?referenceid=${userDetails.ReferenceID}`);
                 if (!res.ok) throw new Error("Failed to fetch notes");
                 const data = await res.json();
                 if (data.success && data.data) {
@@ -113,7 +107,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         fetchNotes();
     }, [userDetails.ReferenceID]);
 
-    // 🔹 Generate ID
     const generateActivityNumber = () => `ACT-${Date.now()}`;
 
     const resetForm = () => {
@@ -150,13 +143,10 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             date_updated: new Date().toISOString(),
         };
 
-        // 🔹 Optimistic update
         syncToCache([payload, ...notes.filter(n => n.id !== payload.id)]);
 
         try {
-            const url = editingId
-                ? "/api/ModuleSales/Task/Notes/Edit"
-                : "/api/ModuleSales/Task/Notes";
+            const url = editingId ? "/api/ModuleSales/Task/Notes/Edit" : "/api/ModuleSales/Task/Notes";
             const method = editingId ? "PUT" : "POST";
 
             const res = await fetch(url, {
@@ -168,7 +158,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             if (!res.ok) throw new Error("Failed to submit activity");
 
             await res.json();
-
             resetForm();
             toast.success(editingId ? "Activity updated!" : "Activity submitted successfully!");
         } catch (err: any) {
@@ -197,7 +186,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
 
             if (!res.ok) throw new Error("Failed to delete activity");
             await res.json();
-
             toast.success("Activity deleted successfully!");
         } catch (err: any) {
             toast.error(err.message || "Something went wrong while deleting!");
@@ -215,7 +203,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         const now = new Date();
         const diffTime = now.getTime() - date.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
         if (diffDays === 0) return "Today";
         if (diffDays === 1) return "Yesterday";
         if (diffDays === 2) return "Last 2 Days";
@@ -251,7 +238,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                             )}
 
                             {filteredNotes
-                                .slice()
+                                .slice(0, visibleCount)
                                 .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
                                 .map(note => (
                                     <div
@@ -261,16 +248,11 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                         onClick={() => handleEdit(note)}
                                     >
                                         <div>
-                                            <div className="text-gray-700 text-sm font-semibold p-2">
-                                                {note.typeactivity}
-                                            </div>
+                                            <div className="text-gray-700 text-sm font-semibold p-2">{note.typeactivity}</div>
                                             <div className="text-xs capitalize text-gray-500 p-2">
-                                                {note.remarks.length > 60
-                                                    ? note.remarks.slice(0, 60) + "..."
-                                                    : note.remarks}
+                                                {note.remarks.length > 60 ? note.remarks.slice(0, 60) + "..." : note.remarks}
                                             </div>
 
-                                            {/* 🔹 Activity Status Badge */}
                                             <div className="px-2">
                                                 <span
                                                     className={`inline-block px-2 py-1 text-[8px] font-medium rounded-full mb-2
@@ -292,6 +274,18 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                         </div>
                                     </div>
                                 ))}
+
+                            {/* 🔹 View More Button */}
+                            {visibleCount < filteredNotes.length && (
+                                <div className="flex justify-center mt-2">
+                                    <button
+                                        className="w-full px-3 py-2 bg-gray-200 text-black rounded text-xs hover:bg-gray-300"
+                                        onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
+                                    >
+                                        View More
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

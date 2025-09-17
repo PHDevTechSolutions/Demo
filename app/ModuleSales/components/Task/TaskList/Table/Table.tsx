@@ -30,6 +30,8 @@ interface TableProps {
   setLimit: (limit: number) => void;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimit }) => {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -37,7 +39,6 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
   const renderTaskRow = (task: Note) => (
     <tr key={task.id} className="hover:bg-gray-50 border-b">
-      {/* 🔹 Remarks fixed wide column */}
       <td className="px-2 py-6 text-xs capitalize w-[300px] whitespace-normal break-words">
         {task.remarks}
       </td>
@@ -49,14 +50,12 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
           <span className="text-gray-500 text-[11px]">₱{task.quotationamount}</span>
         </div>
       </td>
-
       <td className="px-6 py-6 text-xs">
         <div className="flex flex-col">
           <span>{task.sonumber}</span>
           <span className="text-gray-500 text-[11px]">₱{task.soamount}</span>
         </div>
       </td>
-
       <td className="px-6 py-6 text-xs">{new Date(task.date_created).toLocaleString()}</td>
       <td className="px-6 py-6 text-xs">
         <div className="flex items-center gap-2">
@@ -80,8 +79,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         onClick={toggleCollapse}
       >
         <FiChevronRight
-          className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-90"
-            }`}
+          className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-90"}`}
         />
         <span>{title}</span>
         <span className="bg-gray-200 px-2 py-0.5 text-[10px] rounded-full">
@@ -91,14 +89,10 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
       {!collapsed && (
         <>
-          {/* 🔹 Use table-fixed so Remarks width is respected */}
           <table className="min-w-full table-fixed mb-2">
             <thead>
               <tr className="text-xs text-left whitespace-nowrap border-b">
-                {/* 🔹 Fixed wide header for remarks */}
-                <th className="px-2 py-4 font-semibold text-gray-700 w-[300px]">
-                  Remarks
-                </th>
+                <th className="px-2 py-4 font-semibold text-gray-700 w-[300px]">Remarks</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Quotation Number</th>
@@ -111,13 +105,15 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
               {tasks.slice(0, limit).map(renderTaskRow)}
             </tbody>
           </table>
-          {tasks.length > 5 && (
+
+          {/* View More Button */}
+          {limit < tasks.length && (
             <div className="flex justify-center mt-2">
               <button
                 className="w-full px-3 py-2 bg-gray-200 text-black rounded text-xs hover:bg-gray-300"
-                onClick={() => setLimit(limit === 5 ? tasks.length : 5)}
+                onClick={() => setLimit(limit + ITEMS_PER_PAGE)}
               >
-                {limit === 5 ? "Show All" : "Show Less"}
+                View More
               </button>
             </div>
           )}
