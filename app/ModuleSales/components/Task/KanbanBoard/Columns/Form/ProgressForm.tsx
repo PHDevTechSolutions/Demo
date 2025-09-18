@@ -29,6 +29,7 @@ interface ProgressFormProps {
     paymentterm: string;
     actualsales: string;
     deliverydate: string;
+    followup_date: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<
@@ -177,6 +178,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               typecall={formData.typecall}
               callback={formData.callback}
               callstatus={formData.callstatus}
+              followup_date={formData.followup_date}
               handleFormChange={handleFormChange}
             />
           )}
@@ -190,6 +192,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               projectname={formData.projectname}
               projectcategory={formData.projectcategory}
               projecttype={formData.projecttype}
+              followup_date={formData.followup_date}
               handleFormChange={handleFormChange}
               handleProjectCategoryChange={handleProjectCategoryChange}
             />
@@ -201,6 +204,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               sonumber={formData.sonumber}
               soamount={formData.soamount}
               typecall={formData.typecall}
+              
               handleFormChange={handleFormChange}
             />
           )}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, memo } from "react";
-import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaCircle, FaChevronDown, FaChevronUp, FaPen } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 
@@ -38,6 +38,7 @@ export interface ProgressItem {
   paymentterm: string;
   actualsales: string;
   deliverydate: string;
+  followup_date: string;
 }
 
 interface ProgressCardProps {
@@ -120,6 +121,12 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           )}
         </div>
         <div className="flex items-center space-x-2">
+          <button
+              onClick={onAddClick}
+              className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600 flex items-center gap-1"
+            >
+              <FaPen size={10} /> Update
+            </button>
           {isExpanded && <DoughnutChart percent={percent} size="w-5 h-5" />}
           {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
         </div>
@@ -139,12 +146,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
           <div className="flex justify-end mt-2 space-x-1">
-            <button
-              onClick={onAddClick}
-              className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600"
-            >
-              Update
-            </button>
             {onDeleteClick && (
               <button
                 onClick={handleDeleteClick}

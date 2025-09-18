@@ -31,9 +31,9 @@ const QuotationFields: React.FC<QuotationFieldsProps> = ({
 
     // Allow only digits and one dot
     const validInput = inputValue
-      .replace(/[^\d.]/g, "")       // Remove non-numeric and non-dot characters
-      .replace(/^(\d*\.\d*).*$/, "$1") // Allow only one dot (remove additional)
-      .replace(/^0+(?=\d)/, "");    // Remove leading zeros except before decimal
+      .replace(/[^\d.]/g, "")   
+      .replace(/^(\d*\.\d*).*$/, "$1") 
+      .replace(/^0+(?=\d)/, "");
 
     setquotationamount(validInput);
   };
@@ -71,9 +71,6 @@ const QuotationFields: React.FC<QuotationFieldsProps> = ({
           required
         >
           <option value="">Select Status</option>
-          {/*<option value="Follow Up Pending">Follow Up Pending</option>*/}
-          {/*<option value="Requirements">No Requirements</option>*/}
-          {/*<option value="Request for Quotation">Request for Quotation</option>*/}
           <option value="Sent Quotation - Standard">Sent Quotation - Standard</option>
           <option value="Sent Quotation - With Special Price">Sent Quotation - With Special Price</option>
           <option value="Sent Quotation - With SPF">Sent Quotation - With SPF</option>

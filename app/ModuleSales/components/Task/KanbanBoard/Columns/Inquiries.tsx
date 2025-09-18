@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { MdCancel } from 'react-icons/md';
+import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 
 interface Inquiry {
   ticketreferencenumber: string;
@@ -128,11 +130,10 @@ const Inquiries: React.FC<InquiriesProps> = ({
   };
 
   /** Track elapsed time since creation */
-  /** Track elapsed time since creation */
   useEffect(() => {
-    if (!activeInquiry?.date_created) return; // ⚠️ Guard against undefined
+    if (!activeInquiry?.date_created) return;
 
-    const createdDate = new Date(activeInquiry.date_created); // safe now
+    const createdDate = new Date(activeInquiry.date_created);
     const interval = setInterval(() => {
       const now = new Date();
       const diffMs = now.getTime() - createdDate.getTime();
@@ -225,9 +226,9 @@ const Inquiries: React.FC<InquiriesProps> = ({
     <>
       {showModal && <InquiryModal />}
 
-      <div className="space-y-4 overflow-y-auto">
+      <div className="space-y-1 overflow-y-auto">
         <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-          <span className="mr-1">📋</span> Inquiries
+          <span className="mr-1">📋</span> Inquiries: <span className="ml-1 text-orange-500">{inquiries.length}</span>
         </h3>
 
         {inquiries.length > 0 ? (
@@ -243,20 +244,20 @@ const Inquiries: React.FC<InquiriesProps> = ({
                 >
                   <p className="font-semibold uppercase">{inq.companyname}</p>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSubmit(inq, true); }}
-                      className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600"
+                      className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600 flex items-center gap-1"
                     >
-                      Add
+                      <FaPlus size={10} /> Add
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleCancel(inq); }}
-                      className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600"
+                      className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
                     >
-                      Cancel
+                     <MdCancel size={10} /> Cancel
                     </button>
-                    <span className="text-gray-400">{isExpanded ? "▲" : "▼"}</span>
+                    <span>{isExpanded ? <FaChevronUp /> : <FaChevronDown />}</span>
                   </div>
                 </div>
 

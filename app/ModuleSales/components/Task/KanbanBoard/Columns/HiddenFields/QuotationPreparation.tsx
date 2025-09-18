@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Select from "react-select";
 
 interface QuotationPreparationProps {
@@ -10,6 +10,7 @@ interface QuotationPreparationProps {
   projectname: string;
   projectcategory: string;
   projecttype: string;
+  followup_date: string;
   handleFormChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
@@ -60,14 +61,50 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
   projectname,
   projectcategory,
   projecttype,
+  followup_date,
   handleFormChange,
   handleProjectCategoryChange,
 }) => {
+  // 🔹 Auto-set followup_date based on typecall
+  useEffect(() => {
+    let daysToAdd = 0;
+
+    if (!typecall) {
+      // ✅ reset followup_date if no type selected
+      handleFormChange({
+        target: { name: "followup_date", value: "" },
+      } as React.ChangeEvent<HTMLInputElement>);
+      return;
+    }
+
+    if (typecall === "Sent Quotation - Standard") {
+      daysToAdd = 1;
+    } else if (typecall === "Sent Quotation - With Special Price") {
+      daysToAdd = 1;
+    } else if (typecall === "Sent Quotation - With SPF") {
+      daysToAdd = 5;
+    } else if (typecall === "With SPFS") {
+      daysToAdd = 7;
+    }
+
+    if (daysToAdd > 0) {
+      const today = new Date();
+      today.setDate(today.getDate() + daysToAdd);
+      const formattedDate = today.toISOString().split("T")[0]; // YYYY-MM-DD
+
+      handleFormChange({
+        target: { name: "followup_date", value: formattedDate },
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+  }, [typecall, handleFormChange]);
+
   return (
     <>
       {/* 🔹 Project Name */}
       <div className="flex flex-col">
-        <label className="font-semibold">Project Name <span className="text-[8px] text-green-700">Optional</span></label>
+        <label className="font-semibold">
+          Project Name <span className="text-[8px] text-green-700">Optional</span>
+        </label>
         <input
           type="text"
           name="projectname"
@@ -81,7 +118,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
       {/* 🔹 Project Category (React Select) */}
       <div className="flex flex-col">
-        <label className="font-semibold">Item Category <span className="text-[8px] text-green-700">* Required Fields</span></label>
+        <label className="font-semibold">
+          Item Category <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
         <Select
           options={categoryOptions}
           value={categoryOptions.find((opt) => opt.value === projectcategory)}
@@ -89,7 +128,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
             const value = selected ? selected.value : "";
             handleProjectCategoryChange(value);
 
-            // ✅ Force update formData
+            // ✅ Sync with formData
             handleFormChange({
               target: { name: "projectcategory", value },
             } as React.ChangeEvent<HTMLInputElement>);
@@ -97,12 +136,13 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           className="text-xs px-3 py-6"
           required
         />
-
       </div>
 
       {/* 🔹 Customer Type */}
       <div className="flex flex-col">
-        <label className="font-semibold">Customer Type <span className="text-[8px] text-green-700">* Required Fields</span></label>
+        <label className="font-semibold">
+          Customer Type <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
         <select
           name="projecttype"
           value={projecttype}
@@ -121,7 +161,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
       {/* 🔹 Quotation Number */}
       <div className="flex flex-col">
-        <label className="font-semibold">Quotation Number <span className="text-[8px] text-green-700">* Required Fields</span></label>
+        <label className="font-semibold">
+          Quotation Number <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
         <input
           type="text"
           name="quotationnumber"
@@ -135,7 +177,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
       {/* 🔹 Quotation Amount */}
       <div className="flex flex-col">
-        <label className="font-semibold">Quotation Amount <span className="text-[8px] text-green-700">* Required Fields</span></label>
+        <label className="font-semibold">
+          Quotation Amount <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
         <input
           type="number"
           name="quotationamount"
@@ -149,7 +193,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
       {/* 🔹 Type */}
       <div className="flex flex-col">
-        <label className="font-semibold">Type <span className="text-[8px] text-green-700">* Required Fields</span></label>
+        <label className="font-semibold">
+          Type <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
         <select
           name="typecall"
           value={typecall}
@@ -158,17 +204,26 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           required
         >
           <option value="">Select Type</option>
-          <option value="Sent Quotation - Standard">
-            Sent Quotation - Standard
-          </option>
-          <option value="Sent Quotation - With Special Price">
-            Sent Quotation - With Special Price
-          </option>
-          <option value="Sent Quotation - With SPF">
-            Sent Quotation - With SPF
-          </option>
+          <option value="Sent Quotation - Standard">Sent Quotation - Standard</option>
+          <option value="Sent Quotation - With Special Price">Sent Quotation - With Special Price</option>
+          <option value="Sent Quotation - With SPF">Sent Quotation - With SPF</option>
           <option value="With SPFS">With SPFS</option>
         </select>
+      </div>
+
+      {/* 🔹 Follow Up Date */}
+      <div className="flex flex-col">
+        <label className="font-semibold">
+          Follow Up Date <span className="text-[8px] text-green-700">* Required Fields</span>
+        </label>
+        <input
+          type="date"
+          name="followup_date"
+          value={followup_date || ""}
+          onChange={handleFormChange}
+          className="border-b px-3 py-6 rounded text-xs"
+          required
+        />
       </div>
     </>
   );

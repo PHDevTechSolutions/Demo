@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { LuClock, LuCalendarPlus, LuTrash2 } from "react-icons/lu";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 interface FollowUpCardProps {

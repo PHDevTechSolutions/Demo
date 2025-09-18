@@ -15,7 +15,7 @@ async function insertActivity(data: any) {
       area, activitynumber, source, typeactivity, activitystatus,
       remarks, typecall, sonumber, soamount, callback, callstatus,
       startdate, enddate, quotationnumber, quotationamount,
-      projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate,
+      projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date
     } = data;
 
     const result = await sql`
@@ -25,14 +25,14 @@ async function insertActivity(data: any) {
         area, activitynumber, source, typeactivity, activitystatus,
         remarks, typecall, sonumber, soamount, callback, callstatus,
         startdate, enddate, quotationnumber, quotationamount,
-        projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, date_created
+        projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, date_created
       ) VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
         ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
         ${area}, ${activitynumber}, ${source}, ${typeactivity}, ${activitystatus},
         ${remarks}, ${typecall}, ${sonumber}, ${soamount}, ${callback}, ${callstatus},
         ${startdate}, ${enddate}, ${quotationnumber}, ${quotationamount},
-        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, ${actualsales}, ${deliverydate}, NOW()
+        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, ${actualsales}, ${deliverydate}, ${followup_date}, NOW()
       )
       RETURNING *;
     `;

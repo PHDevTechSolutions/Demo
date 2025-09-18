@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { FaSearch } from "react-icons/fa";
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
@@ -41,6 +42,7 @@ interface ProgressItem {
   paymentterm: string;
   actualsales: string;
   deliverydate: string;
+  followup_date: string;
 }
 
 interface UserDetails {
@@ -59,6 +61,7 @@ interface UserDetails {
 interface ProgressProps {
   userDetails: UserDetails | null;
   refreshTrigger: number;
+  searchQuery?: string;
 }
 
 interface CardLoadingState {
@@ -88,6 +91,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     {}
   );
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -109,6 +114,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     paymentterm: "",
     actualsales: "",
     deliverydate: "",
+    followup_date: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -149,6 +155,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       paymentterm: "",
       actualsales: "",
       deliverydate: "",
+      followup_date: "",
     });
 
   /** Add button → open form */
@@ -189,6 +196,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       paymentterm: prog?.paymentterm || "",
       actualsales: prog?.actualsales || "",
       deliverydate: prog?.deliverydate || "",
+      followup_date: prog?.followup_date || "",
     });
 
     setShowForm(true);
@@ -336,6 +344,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
+  // Filter progress by search query
+  const filteredProgress = progress.filter((item) =>
+    item.companyname.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
 
   if (loading) {
     return (
@@ -347,9 +360,34 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   }
 
   return (
-    <div className="space-y-4 relative">
-      {progress.length > 0 ? (
-        progress.slice(0, visibleCount).map((item) => (
+    <div className="space-y-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+        <span className="text-xs text-gray-600 font-bold">Total: <span className="text-orange-500">{progress.length}</span></span>
+        {/* Search button + count */}
+        <button
+          className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+          onClick={() => setSearchOpen((prev) => !prev)}
+        >
+          Search <FaSearch size={15} />
+        </button>
+      </div>
+      {/* Search & count */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-end space-y-2 md:space-y-0 md:space-x-2">
+        {/* Search input (full width on small screens) */}
+        {searchOpen && (
+          <input
+            type="text"
+            placeholder="Search..."
+            className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        )}
+      </div>
+
+      {/* Progress list */}
+      {filteredProgress.length > 0 ? (
+        filteredProgress.slice(0, visibleCount).map((item) => (
           <div key={item.id} className="relative">
             {cardLoading[item.id] && (
               <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
@@ -369,7 +407,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       )}
 
       {/* View More button */}
-      {visibleCount < progress.length && (
+      {visibleCount < filteredProgress.length && (
         <div className="flex justify-center mt-2">
           <button
             className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
@@ -379,6 +417,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           </button>
         </div>
       )}
+
 
       {showForm && (
         <ProgressForm

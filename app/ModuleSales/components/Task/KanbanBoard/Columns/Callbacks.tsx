@@ -184,51 +184,20 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
   }
 
   return (
-    <div className="space-y-4 overflow-y-auto">
+    <div className="space-y-1 overflow-y-auto">
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="mr-1">☎️</span> Callbacks
+        <span className="mr-1">☎️</span>Total Callbacks: <span className="ml-1 text-red-500">{callbacks.length}</span>
       </h3>
 
       {callbacks.length > 0 ? (
-        callbacks.map((inq, idx) => {
-          const isExpanded = expandedId === inq.activitynumber;
-          return (
-            <div
-              key={inq.activitynumber}
-              className="border rounded-lg shadow-sm bg-stone-200"
-            >
-              <button
-                onClick={() => toggleExpand(inq.activitynumber)}
-                className="w-full flex justify-between items-center px-4 py-2 text-left text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-t-lg"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-2">
-                  <img
-                    src={userDetails?.profilePicture || "/taskflow.png"}
-                    alt="Profile"
-                    className="w-6 h-6 rounded-full object-cover"
-                  />
-                  <span className="text-[11px] font-semibold">
-                    {inq.companyname} —{" "}
-                    <span className="text-gray-500">{inq.contactperson}</span>
-                  </span>
-                </div>
-                <span className="ml-2 text-gray-400 text-[10px]">
-                  {isExpanded ? "▲" : "▼"}
-                </span>
-              </button>
-
-              {isExpanded && (
-                <CallbackCard
-                  key={idx}
-                  inq={inq}
-                  userDetails={userDetails}
-                  openFormDrawer={openFormDrawer}
-                />
-              )}
-            </div>
-          );
-        })
+        callbacks.map((inq) => (
+          <CallbackCard
+            key={inq.activitynumber}
+            inq={inq}
+            userDetails={userDetails}
+            openFormDrawer={openFormDrawer}
+          />
+        ))
       ) : (
         <p className="text-xs text-gray-400 italic">
           No callbacks scheduled for today.

@@ -200,9 +200,9 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   }
 
   return (
-    <div className="space-y-4 overflow-y-auto">
+    <div className="space-y-1 overflow-y-auto">
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="mr-1">📌</span> Follow-Ups
+        <span className="mr-1">📌</span> Follow-Ups: <span className="ml-1 text-orange-500">{followUps.length}</span>
       </h3>
 
       {followUps.length > 0 ? (

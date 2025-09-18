@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
+import { MdCancel } from 'react-icons/md';
 
 interface Company {
   id?: number;
@@ -175,10 +176,10 @@ const Companies: React.FC<CompaniesProps> = ({
   };
 
   return (
-    <div className="space-y-4 overflow-y-auto">
+    <div className="space-y-1 overflow-y-auto">
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
         <span className="flex items-center">
-          <span className="mr-1">🏢</span> Companies
+          <span className="mr-1">🏢</span> Companies: <span className="ml-1 text-red-500">{companies.length}</span>
         </span>
       </h3>
 
@@ -200,15 +201,15 @@ const Companies: React.FC<CompaniesProps> = ({
               >
                 <p className="font-semibold uppercase">{comp.companyname}</p>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddCompany(comp);
                     }}
-                    className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600"
+                    className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600 flex items-center gap-1"
                   >
-                    Add
+                   <FaPlus size={10} /> Add
                   </button>
 
                   <button
@@ -216,9 +217,9 @@ const Companies: React.FC<CompaniesProps> = ({
                       e.stopPropagation();
                       removeCompany(comp);
                     }}
-                    className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600"
+                    className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
                   >
-                    Cancel
+                   <MdCancel size={10} /> Cancel
                   </button>
 
                   <span>{isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}</span>

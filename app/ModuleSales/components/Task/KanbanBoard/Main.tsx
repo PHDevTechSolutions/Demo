@@ -9,6 +9,7 @@ import Progress from "./Columns/Progress";
 import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
 import Completed from "./Columns/Completed";
+import { FiSearch } from "react-icons/fi";
 
 interface Inquiry {
   id?: number;
@@ -133,67 +134,61 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   return (
     <div className="w-full p-4">
-      {/*<div className="fixed inset-0 bg-black bg-opacity-50 z-[20] flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
-          <h2 className="text-lg font-bold mb-2">Activity Planner</h2>
-          <p className="text-sm text-gray-600">
-            Ongoing Progress
-          </p>
-        </div>
-      </div>*/}
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-4 gap-4">
         {columns.map((col) => (
-          <div key={col.id} className="flex flex-col">
-            <h2 className="font-semibold text-gray-700 text-center mb-3 border-b">{col.title}</h2>
-            {col.id === "new-task" ? (
-              <div className="space-y-4 border-r p-4">
-                <Companies
-                  expandedIdx={expandedIdx}
-                  setExpandedIdx={setExpandedIdx}
-                  handleSubmit={handleSubmit}
-                  userDetails={userDetails}
-                />
-                <Inquiries
-                  expandedIdx={expandedIdx}
-                  setExpandedIdx={setExpandedIdx}
-                  handleSubmit={handleSubmit}
-                  userDetails={userDetails}
-                  refreshTrigger={refreshTrigger}
-                />
-              </div>
-            ) : col.id === "scheduled" ? (
-              <div className="space-y-4 border-r p-4">
-                <Callbacks
-                  userDetails={userDetails}
-                  refreshTrigger={refreshTrigger}
-                />
-                <FollowUp
-                  userDetails={userDetails}
-                  refreshTrigger={refreshTrigger}
-                />
-              </div>
-            ) : col.id === "in-progress" ? (
-              <div className="space-y-4 border-r p-4">
+          <div key={col.id} className="flex flex-col border-l pl-2 pr-0 py-2 relative">
+            <div className="flex justify-center items-center mb-2">
+              <h2 className="font-semibold text-gray-700 text-center border-b w-full">{col.title}</h2>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto max-h-[600px]">
+              {col.id === "new-task" ? (
+                <>
+                  <Inquiries
+                    expandedIdx={expandedIdx}
+                    setExpandedIdx={setExpandedIdx}
+                    handleSubmit={handleSubmit}
+                    userDetails={userDetails}
+                    refreshTrigger={refreshTrigger}
+                  />
+                  <Companies
+                    expandedIdx={expandedIdx}
+                    setExpandedIdx={setExpandedIdx}
+                    handleSubmit={handleSubmit}
+                    userDetails={userDetails}
+                  />
+                </>
+              ) : col.id === "scheduled" ? (
+                <>
+                  <Callbacks
+                    userDetails={userDetails}
+                    refreshTrigger={refreshTrigger}
+                  />
+                  <FollowUp
+                    userDetails={userDetails}
+                    refreshTrigger={refreshTrigger}
+                  />
+                </>
+              ) : col.id === "in-progress" ? (
                 <Progress
                   userDetails={userDetails}
                   refreshTrigger={refreshTrigger}
                 />
-              </div>
-            ) : col.id === "completed" ? (
-              <div className="space-y-4 border-r p-4">
+              ) : col.id === "completed" ? (
                 <Completed
                   userDetails={userDetails}
                   refreshTrigger={refreshTrigger}
                 />
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
-                No tasks yet
-              </div>
-            )}
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
+                  No tasks yet
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
+      <ToastContainer className="text-xs" autoClose={1000} />
     </div>
   );
 };

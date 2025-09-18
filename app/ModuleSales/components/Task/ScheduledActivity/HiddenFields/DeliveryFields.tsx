@@ -125,8 +125,8 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
   );
 
   const handlePaymentTermChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setpaymentterm(e.target.value);
-    };
+    setpaymentterm(e.target.value);
+  };
 
   return (
     <>
@@ -221,8 +221,8 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
             onClick={() => setShowConfirm(true)}
             disabled={!emailaddress || isSending}
             className={`p-2 rounded flex items-center space-x-2 ${emailaddress && !isSending
-                ? "bg-blue-500 text-white hover:bg-blue-600"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : "bg-gray-300 text-gray-600 cursor-not-allowed"
               }`}
             type="button"
             aria-disabled={!emailaddress || isSending}

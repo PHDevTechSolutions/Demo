@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface OutboundCallProps {
     typecall: string;
     callback: string;
     callstatus: string;
+    followup_date: string;
     handleFormChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => void;
@@ -15,9 +16,18 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
     typecall,
     callback,
     callstatus,
+    followup_date,
     handleFormChange,
 }) => {
     const [showInput, setShowInput] = useState(false);
+
+    // ✅ Formatter for datetime-local
+    const formatDateTimeLocal = (date: Date) => {
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+            date.getDate()
+        )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
 
     const handleCallbackChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const option = e.target.value;
@@ -49,15 +59,53 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                 return;
         }
 
-        // Format as datetime-local
+        // Format as datetime-local with 08:00 AM default
         futureDate.setHours(8, 0, 0, 0);
-        const formattedDate = futureDate.toISOString().slice(0, 16);
+        const formattedDate = formatDateTimeLocal(futureDate);
 
-        // 🔹 Force update callback, startdate, enddate
         handleFormChange({
             target: { name: "callback", value: formattedDate },
         } as React.ChangeEvent<HTMLInputElement>);
     };
+
+    // 🔹 Auto-set followup_date based on typecall
+    useEffect(() => {
+        let daysToAdd = 0;
+        let minutesToAdd = 0;
+
+        if (!typecall) {
+            // ✅ reset followup_date if no type selected
+            handleFormChange({
+                target: { name: "followup_date", value: "" },
+            } as React.ChangeEvent<HTMLInputElement>);
+            return;
+        }
+
+        if (typecall === "Ringing Only") {
+            daysToAdd = 10;
+        } else if (typecall === "No Requirements") {
+            daysToAdd = 15;
+        } else if (typecall === "Cannot Be Reached") {
+            daysToAdd = 3;
+        } else if (typecall === "Not Connected with the Company") {
+            minutesToAdd = 15; // ✅ 15 minutes
+        } else if (typecall === "Waiting for Future Projects") {
+            daysToAdd = 30;
+        }
+
+        if (daysToAdd > 0 || minutesToAdd > 0) {
+            const today = new Date();
+            if (daysToAdd > 0) today.setDate(today.getDate() + daysToAdd);
+            if (minutesToAdd > 0) today.setMinutes(today.getMinutes() + minutesToAdd);
+
+            const formattedDate = formatDateTimeLocal(today);
+
+            handleFormChange({
+                target: { name: "followup_date", value: formattedDate },
+            } as React.ChangeEvent<HTMLInputElement>);
+        }
+    }, [typecall, handleFormChange]);
+
 
     return (
         <>
@@ -92,7 +140,8 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
             {/* 🔹 Call Status */}
             <div className="flex flex-col">
                 <label className="font-semibold">
-                    Call Status <span className="text-[8px] text-green-700">* Required Fields</span>
+                    Call Status{" "}
+                    <span className="text-[8px] text-green-700">* Required Fields</span>
                 </label>
                 <select
                     name="callstatus"
@@ -150,6 +199,22 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                         </>
                     )}
                 </select>
+            </div>
+
+            {/* 🔹 Follow Up Date */}
+            <div className="flex flex-col">
+                <label className="font-semibold">
+                    Follow Up Date{" "}
+                    <span className="text-[8px] text-green-700">* Required Fields</span>
+                </label>
+                <input
+                    type="datetime-local"
+                    name="followup_date"
+                    value={followup_date || ""}
+                    onChange={handleFormChange}
+                    className="border-b px-3 py-6 rounded text-xs"
+                    required
+                />
             </div>
         </>
     );
