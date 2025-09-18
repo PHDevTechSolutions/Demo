@@ -195,7 +195,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
     return (
         <div className="space-y-1 overflow-y-auto">
             <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-                <span className="mr-1">☎️</span>Total Meetings: <span className="ml-1 text-red-500">{meetings.length}</span>
+                <span className="mr-1">📅</span>Total Meetings: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
             {/* 🔹 Form */}
