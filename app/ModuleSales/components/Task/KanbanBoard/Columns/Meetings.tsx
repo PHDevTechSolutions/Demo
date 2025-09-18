@@ -217,7 +217,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             )}
 
             {/* 🔹 Meetings List */}
-            <div className="space-y-2">
+            <div className="space-y-1">
                 {meetings.length === 0 && (
                     <p className="text-xs text-gray-500 italic">No meetings found</p>
                 )}
@@ -230,7 +230,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                                 onClick={() => setExpanded(isExpanded ? null : m.id)}
                             >
                                 <div>
-                                    <p className="text-[10px] font-semibold text-gray-700">{m.typeactivity}</p>
+                                    <p className="text-xs font-semibold text-gray-700">{m.typeactivity}</p>
                                     <p className="text-[10px] text-gray-500">
                                         {new Date(m.startdate).toLocaleString("en-PH")} → {new Date(m.enddate).toLocaleString("en-PH")}
                                     </p>

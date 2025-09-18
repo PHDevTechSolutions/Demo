@@ -83,7 +83,7 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
         >
           <LuCalendarPlus size={15} /> Add
         </button>
-        <span className="ml-2 text-[10px]">
+        <span className="text-[10px]">
           {expanded ? <FaChevronUp /> : <FaChevronDown />}
         </span>
       </div>
