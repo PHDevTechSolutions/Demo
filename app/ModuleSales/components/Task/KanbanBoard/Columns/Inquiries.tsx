@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { MdCancel } from 'react-icons/md';
+import { MdCancel } from "react-icons/md";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 
 interface Inquiry {
@@ -26,6 +26,8 @@ interface InquiriesProps {
   refreshTrigger: number;
 }
 
+const ITEMS_PER_PAGE = 5;
+
 const Inquiries: React.FC<InquiriesProps> = ({
   expandedIdx,
   setExpandedIdx,
@@ -38,10 +40,10 @@ const Inquiries: React.FC<InquiriesProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const [timeSinceCreated, setTimeSinceCreated] = useState<string>("");
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  /** Format date safely */
   const formatPHDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
     try {
@@ -54,7 +56,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     }
   };
 
-  /** Fetch inquiries robustly */
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
     try {
@@ -73,7 +74,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     }
   };
 
-  /** Load inquiries on mount / refresh */
   useEffect(() => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
@@ -93,37 +93,33 @@ const Inquiries: React.FC<InquiriesProps> = ({
       if (myInquiries.length === 0) {
         setActiveInquiry(null);
         setShowModal(false);
-        setLoading(false);
-        return;
+      } else {
+        const todayPH = new Date(
+          new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
+        );
+
+        const todayInquiry = myInquiries.find((inq) => {
+          if (!inq.date_created) return false;
+          const inquiryPH = new Date(
+            new Date(inq.date_created).toLocaleString("en-US", { timeZone: "Asia/Manila" })
+          );
+          return (
+            inquiryPH.getFullYear() === todayPH.getFullYear() &&
+            inquiryPH.getMonth() === todayPH.getMonth() &&
+            inquiryPH.getDate() === todayPH.getDate() &&
+            inq.status?.toLowerCase() !== "endorsed"
+          );
+        });
+
+        setActiveInquiry(todayInquiry || null);
+        setShowModal(!!todayInquiry);
       }
-
-      // Show today's unendorsed inquiry
-      const todayPH = new Date(
-        new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
-      );
-
-      const todayInquiry = myInquiries.find((inq) => {
-        if (!inq.date_created) return false;
-        const inquiryPH = new Date(
-          new Date(inq.date_created).toLocaleString("en-US", { timeZone: "Asia/Manila" })
-        );
-        return (
-          inquiryPH.getFullYear() === todayPH.getFullYear() &&
-          inquiryPH.getMonth() === todayPH.getMonth() &&
-          inquiryPH.getDate() === todayPH.getDate() &&
-          inq.status?.toLowerCase() !== "endorsed"
-        );
-      });
-
-      setActiveInquiry(todayInquiry || null);
-      setShowModal(!!todayInquiry);
       setLoading(false);
     };
 
     loadInquiries();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-  /** Modal close logic */
   const handleCloseModal = () => {
     setShowModal(false);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -135,7 +131,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     }
   };
 
-  /** Track elapsed time safely */
   useEffect(() => {
     if (!activeInquiry?.date_created) return;
 
@@ -151,7 +146,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     return () => clearInterval(interval);
   }, [activeInquiry?.date_created]);
 
-  /** Cancel inquiry */
   const handleCancel = async (inq: Inquiry) => {
     if (!userDetails?.ReferenceID) return;
     try {
@@ -177,7 +171,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     }
   };
 
-  /** Modal UI */
   const InquiryModal = () => {
     if (!activeInquiry) return null;
     return (
@@ -209,6 +202,8 @@ const Inquiries: React.FC<InquiriesProps> = ({
     );
   }
 
+  const visibleInquiries = inquiries.slice(0, visibleCount);
+
   return (
     <>
       {showModal && <InquiryModal />}
@@ -216,8 +211,9 @@ const Inquiries: React.FC<InquiriesProps> = ({
         <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
           <span className="mr-1">📋</span> Inquiries: <span className="ml-1 text-orange-500">{inquiries.length}</span>
         </h3>
-        {inquiries.length > 0 ? (
-          inquiries.map((inq, idx) => {
+
+        {visibleInquiries.length > 0 ? (
+          visibleInquiries.map((inq, idx) => {
             const key = `inq-${idx}`;
             const isExpanded = expandedIdx === key;
             return (
@@ -256,6 +252,18 @@ const Inquiries: React.FC<InquiriesProps> = ({
           })
         ) : (
           <p className="text-sm text-gray-400">No inquiries found.</p>
+        )}
+
+        {/* View More Button */}
+        {visibleCount < inquiries.length && (
+          <div className="flex justify-center mt-2">
+            <button
+              className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+              onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+            >
+              View More
+            </button>
+          </div>
         )}
       </div>
     </>
