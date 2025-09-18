@@ -95,8 +95,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                 <th className="px-2 py-4 font-semibold text-gray-700 w-[300px]">Remarks</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
-                <th className="px-6 py-4 font-semibold text-gray-700">Quotation Number</th>
-                <th className="px-6 py-4 font-semibold text-gray-700">SO Number</th>
+                <th className="px-6 py-4 font-semibold text-gray-700">Quotation</th>
+                <th className="px-6 py-4 font-semibold text-gray-700">SO</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-4 font-semibold text-gray-700">Responsible</th>
               </tr>

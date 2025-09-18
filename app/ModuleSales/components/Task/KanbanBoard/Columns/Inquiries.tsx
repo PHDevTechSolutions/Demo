@@ -41,16 +41,20 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  /** Helper: Format date in PH timezone */
+  /** Format date safely */
   const formatPHDate = (dateStr?: string) => {
     if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleString("en-PH", {
-      timeZone: "Asia/Manila",
-      hour12: false,
-    });
+    try {
+      return new Date(dateStr).toLocaleString("en-PH", {
+        timeZone: "Asia/Manila",
+        hour12: false,
+      });
+    } catch {
+      return "Invalid date";
+    }
   };
 
-  /** Robust fetch function */
+  /** Fetch inquiries robustly */
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
     try {
@@ -71,19 +75,27 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   /** Load inquiries on mount / refresh */
   useEffect(() => {
-    if (!userDetails?.ReferenceID) return;
+    if (!userDetails?.ReferenceID) {
+      setLoading(false);
+      return;
+    }
 
     const loadInquiries = async () => {
       setLoading(true);
-
       const inquiriesData = await fetchInquiries(userDetails.ReferenceID);
 
-      // Filter strictly for this user
       const myInquiries = inquiriesData.filter(
         (inq) => inq.referenceid === userDetails.ReferenceID
       );
 
       setInquiries(myInquiries);
+
+      if (myInquiries.length === 0) {
+        setActiveInquiry(null);
+        setShowModal(false);
+        setLoading(false);
+        return;
+      }
 
       // Show today's unendorsed inquiry
       const todayPH = new Date(
@@ -95,7 +107,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
         const inquiryPH = new Date(
           new Date(inq.date_created).toLocaleString("en-US", { timeZone: "Asia/Manila" })
         );
-
         return (
           inquiryPH.getFullYear() === todayPH.getFullYear() &&
           inquiryPH.getMonth() === todayPH.getMonth() &&
@@ -104,21 +115,15 @@ const Inquiries: React.FC<InquiriesProps> = ({
         );
       });
 
-      if (todayInquiry) {
-        setActiveInquiry(todayInquiry);
-        setShowModal(true);
-      } else {
-        setActiveInquiry(null);
-        setShowModal(false);
-      }
-
+      setActiveInquiry(todayInquiry || null);
+      setShowModal(!!todayInquiry);
       setLoading(false);
     };
 
     loadInquiries();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-  /** Handle modal close */
+  /** Modal close logic */
   const handleCloseModal = () => {
     setShowModal(false);
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -126,11 +131,11 @@ const Inquiries: React.FC<InquiriesProps> = ({
     if (activeInquiry && activeInquiry.status?.toLowerCase() !== "endorsed") {
       timerRef.current = setTimeout(() => {
         setShowModal(true);
-      }, 5 * 60 * 1000); // 5 minutes
+      }, 5 * 60 * 1000);
     }
   };
 
-  /** Track elapsed time since creation */
+  /** Track elapsed time safely */
   useEffect(() => {
     if (!activeInquiry?.date_created) return;
 
@@ -138,10 +143,8 @@ const Inquiries: React.FC<InquiriesProps> = ({
     const interval = setInterval(() => {
       const now = new Date();
       const diffMs = now.getTime() - createdDate.getTime();
-
       const diffMins = Math.floor(diffMs / (1000 * 60));
       const diffSecs = Math.floor((diffMs / 1000) % 60);
-
       setTimeSinceCreated(`${diffMins}m ${diffSecs}s`);
     }, 1000);
 
@@ -151,7 +154,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
   /** Cancel inquiry */
   const handleCancel = async (inq: Inquiry) => {
     if (!userDetails?.ReferenceID) return;
-
     try {
       const res = await fetch("/api/ModuleSales/CSRInquiries/DiscardData", {
         method: "POST",
@@ -162,9 +164,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
           status: "cancelled",
         }),
       });
-
       if (!res.ok) throw new Error("Failed to cancel inquiry");
-
       alert("Inquiry successfully cancelled as Wrong Tagging");
 
       const refreshed = await fetchInquiries(userDetails.ReferenceID);
@@ -184,29 +184,16 @@ const Inquiries: React.FC<InquiriesProps> = ({
       <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
         <div className="bg-white rounded-lg shadow-lg p-6 w-96">
           <h2 className="text-lg font-bold mb-2">📩 New Inquiry</h2>
-          <p className="text-sm mb-1">
-            <span className="font-semibold">Company:</span> {activeInquiry.companyname}
-          </p>
-          <p className="text-sm mb-1">
-            <span className="font-semibold">Contact:</span> {activeInquiry.contactperson} ({activeInquiry.contactnumber})
-          </p>
-          <p className="text-sm mb-1">
-            <span className="font-semibold">Email:</span> {activeInquiry.emailaddress}
-          </p>
-          <p className="text-sm mb-1">
-            <span className="font-semibold">Inquiry:</span> {activeInquiry.inquiries}
-          </p>
-          <p className="text-xs text-gray-500 mt-2">
-            ⏱ Elapsed since created: {timeSinceCreated}
-          </p>
-
+          <p className="text-sm mb-1"><span className="font-semibold">Company:</span> {activeInquiry.companyname}</p>
+          <p className="text-sm mb-1"><span className="font-semibold">Contact:</span> {activeInquiry.contactperson} ({activeInquiry.contactnumber})</p>
+          <p className="text-sm mb-1"><span className="font-semibold">Email:</span> {activeInquiry.emailaddress}</p>
+          <p className="text-sm mb-1"><span className="font-semibold">Inquiry:</span> {activeInquiry.inquiries}</p>
+          <p className="text-xs text-gray-500 mt-2">⏱ Elapsed since created: {timeSinceCreated}</p>
           <div className="flex justify-end mt-4">
             <button
               onClick={handleCloseModal}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Close
-            </button>
+            >Close</button>
           </div>
         </div>
       </div>
@@ -225,17 +212,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
   return (
     <>
       {showModal && <InquiryModal />}
-
       <div className="space-y-1 overflow-y-auto">
         <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
           <span className="mr-1">📋</span> Inquiries: <span className="ml-1 text-orange-500">{inquiries.length}</span>
         </h3>
-
         {inquiries.length > 0 ? (
           inquiries.map((inq, idx) => {
             const key = `inq-${idx}`;
             const isExpanded = expandedIdx === key;
-
             return (
               <div key={key} className="rounded-lg shadow bg-red-100 transition text-[10px] mb-2">
                 <div
@@ -243,24 +227,18 @@ const Inquiries: React.FC<InquiriesProps> = ({
                   onClick={() => setExpandedIdx(isExpanded ? null : key)}
                 >
                   <p className="font-semibold uppercase">{inq.companyname}</p>
-
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSubmit(inq, true); }}
                       className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600 flex items-center gap-1"
-                    >
-                      <FaPlus size={10} /> Add
-                    </button>
+                    ><FaPlus size={10} /> Add</button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleCancel(inq); }}
                       className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <MdCancel size={10} /> Cancel
-                    </button>
+                    ><MdCancel size={10} /> Cancel</button>
                     <span>{isExpanded ? <FaChevronUp /> : <FaChevronDown />}</span>
                   </div>
                 </div>
-
                 {isExpanded && (
                   <div className="p-3 space-y-1">
                     <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>
@@ -272,12 +250,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
                     <p><span className="font-semibold">Status:</span> {inq.status}</p>
                   </div>
                 )}
-
-                {/* PH Time */}
-                <div className="p-2 text-gray-500 text-[9px]">
-                  {formatPHDate(inq.date_created)}
-                </div>
-
+                <div className="p-2 text-gray-500 text-[9px]">{formatPHDate(inq.date_created)}</div>
               </div>
             );
           })

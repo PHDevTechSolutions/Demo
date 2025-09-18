@@ -90,10 +90,7 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
 
     const saveEmailsToDB = useCallback(
         async (emails: EmailData[]) => {
-            if (!emails.length) {
-                console.warn("⚠️ Tried saving but email list is empty.");
-                return;
-            }
+            if (!emails.length) return;
 
             try {
                 const res = await fetch("/api/ModuleSales/Task/XendMail/Save", {
@@ -105,24 +102,15 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
                     }),
                 });
 
-                const data = await res.json().catch(async () => ({
-                    error: await res.text(),
-                }));
+                const data = await res.json().catch(async () => ({ error: await res.text() }));
 
                 if (!res.ok) {
-                    if (data.error === "No valid emails to insert") {
-                        console.warn("ℹ️ No valid new emails to insert (all duplicates or invalid).");
-                        return; // ❌ no toast para hindi nakakaistorbo
-                    }
+                    if (data.error === "No valid emails to insert") return;
                     throw new Error(data.error || "Failed to save emails");
                 }
 
-                console.log("✅ Emails saved to DB:", data);
-
                 if (data.insertedCount > 0) {
                     toast.success(`✅ Saved ${data.insertedCount} new emails`);
-                } else {
-                    console.log("⚠️ No new emails inserted (duplicates skipped).");
                 }
             } catch (err: any) {
                 console.error("Save to DB error:", err);
@@ -133,10 +121,14 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
 
     const fetchEmails = useCallback(async () => {
         const password = imapPass || userDetails.ImapPass;
-        if (!password) return toast.error("IMAP password is missing");
+        if (!password) {
+            console.warn("IMAP password not set. Skipping fetch.");
+            setAllEmails([]);
+            setFetchedCount(0);
+            return;
+        }
 
         setLoading(true);
-
         try {
             const res = await fetch("/api/ModuleSales/Task/XendMail/Fetch", {
                 method: "POST",
@@ -151,52 +143,44 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
             });
 
             const data = await res.json();
-
             if (!Array.isArray(data)) {
-                console.warn("Fetch returned non-array:", data);
-                return toast.error("Invalid email data from server");
+                setAllEmails([]);
+                setFetchedCount(0);
+                return;
             }
 
             setAllEmails(data);
             setFetchedCount(Math.min(PAGE_SIZE, data.length));
-
-            // ✅ Save once after fetch
             await saveEmailsToDB(data);
-        } catch (err: any) {
-            console.error(err);
-            toast.error(err.message || "Error fetching emails");
+        } catch (err) {
+            console.error("Fetch emails error:", err);
+            setAllEmails([]);
+            setFetchedCount(0);
         } finally {
             setLoading(false);
         }
     }, [imapPass, userDetails, saveEmailsToDB]);
 
+
     const fetchSentEmails = useCallback(async () => {
-        setLoading(true);
         try {
             const res = await fetch(
                 `/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`
             );
-
             const result = await res.json();
-
-            if (!result.success || !Array.isArray(result.data)) {
-                console.warn("GetSent returned invalid:", result);
-                return;
-            }
-
-            setSentEmails(result.data); // ✅ tama na
+            if (Array.isArray(result?.data)) setSentEmails(result.data);
         } catch (err) {
-            console.error("Fetch sent error:", err);
-        } finally {
-            setLoading(false);
+            console.error("Fetch sent emails error:", err);
         }
     }, [userDetails.ReferenceID]);
 
-
+    // ✅ Only fetch if IMAP password exists
     useEffect(() => {
-        fetchEmails();
+        if (userDetails.ImapPass) {
+            fetchEmails();
+        }
         fetchSentEmails();
-    }, [fetchEmails, fetchSentEmails]);
+    }, [fetchEmails, fetchSentEmails, userDetails.ImapPass]);
 
     // Load more emails for pagination
     const loadMore = useCallback(() => {

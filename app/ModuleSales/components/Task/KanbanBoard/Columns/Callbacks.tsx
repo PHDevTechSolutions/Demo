@@ -71,11 +71,14 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     const fetchCallbacks = async () => {
       try {
         setLoading(true);
+
         const res = await fetch(
           `/api/ModuleSales/Task/ActivityPlanner/FetchCallback?referenceid=${userDetails.ReferenceID}`
         );
+
         const data = await res.json();
 
+        // ✅ Ensure always an array
         const inquiries: Inquiry[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
@@ -87,12 +90,12 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         const todayCallbacks = inquiries
           .filter((inq) => inq.referenceid === userDetails.ReferenceID)
           .filter((inq) => inq.callback?.startsWith(todayStr))
-          .sort((a, b) => b.callback!.localeCompare(a.callback!));
+          .sort((a, b) => (b.callback || "").localeCompare(a.callback || ""));
 
         setCallbacks(todayCallbacks);
       } catch (error) {
         console.error("❌ Failed to fetch today's callbacks:", error);
-        setCallbacks([]);
+        setCallbacks([]); // ❌ fallback
       } finally {
         setLoading(false);
       }
@@ -100,6 +103,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
 
     fetchCallbacks();
   }, [userDetails?.ReferenceID, refreshTrigger]);
+
 
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -192,9 +196,9 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       {callbacks.length > 0 ? (
         callbacks.map((inq) => (
           <CallbackCard
-            key={inq.activitynumber}
+            key={inq.activitynumber || inq.id || Math.random()} // always unique key
             inq={inq}
-            userDetails={userDetails}
+            userDetails={userDetails || { ReferenceID: "" }}
             openFormDrawer={openFormDrawer}
           />
         ))
@@ -203,6 +207,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
           No callbacks scheduled for today.
         </p>
       )}
+
 
       {/* Slide-up form drawer */}
       <form
