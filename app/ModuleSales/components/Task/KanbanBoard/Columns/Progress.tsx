@@ -43,6 +43,7 @@ interface ProgressItem {
   actualsales: string;
   deliverydate: string;
   followup_date: string;
+  ticketreferencenumber: string;
 }
 
 interface UserDetails {

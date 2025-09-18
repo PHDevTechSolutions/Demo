@@ -33,12 +33,12 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
           <img
             src={userDetails?.profilePicture || "/taskflow.png"}
             alt="Profile"
-            className="w-6 h-6 rounded-full object-cover"
+            className="w-8 h-8 rounded-full object-cover"
           />
-          <span className="text-[11px] font-semibold">
-            {inq.companyname} —{" "}
-            <span className="text-gray-500">{inq.contactperson}</span>
-          </span>
+          <div className="flex-1">
+            <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
+            <p className="text-[9px] text-gray-600">{inq.typecall}</p>
+          </div>
         </div>
         <button
           onClick={() => openFormDrawer(inq)}

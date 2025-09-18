@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { LuClock, LuCalendarPlus, LuTrash2 } from "react-icons/lu";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { LuClock, LuCalendarPlus } from "react-icons/lu";
+import { FaChevronDown, FaChevronUp, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 interface FollowUpCardProps {
@@ -74,8 +74,8 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
           className="w-8 h-8 rounded-full object-cover"
         />
         <div className="flex-1">
-          <p className="font-semibold text-[11px] uppercase">{inq.companyname}</p>
-          <p className="text-[9px] text-gray-600">{inq.contactperson}</p>
+          <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
+          <p className="text-[9px] text-gray-600">{inq.typecall}</p>
         </div>
         <button
           onClick={() => openFormDrawer(inq)}
@@ -83,11 +83,9 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
         >
           <LuCalendarPlus size={15} /> Add
         </button>
-        {expanded ? (
-          <FaChevronUp className="text-gray-600 w-4 h-4" />
-        ) : (
-          <FaChevronDown className="text-gray-600 w-4 h-4" />
-        )}
+        <span className="ml-2 text-[10px]">
+          {expanded ? <FaChevronUp /> : <FaChevronDown />}
+        </span>
       </div>
 
       {/* Body (Collapsible) */}
@@ -116,35 +114,38 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
               <span className="font-semibold">Status:</span>{" "}
               {inq.activitystatus || "-"}
             </p>
-            <p>
-              <span className="font-semibold">Type of Follow:</span>{" "}
-              {inq.typecall || "-"}
-            </p>
           </div>
 
           {/* Footer */}
-          <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1 border-t">
-            <LuClock className="w-3 h-3" />
-            <span>
-              {inq.followup_date
-                ? new Date(inq.followup_date).toLocaleString([], {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-                : "N/A"}
-            </span>
+          <div className="p-2 text-gray-500 text-[9px] flex items-center justify-between border-t">
+            {/* Clock + Time */}
+            <div className="flex items-center gap-1">
+              <LuClock className="w-3 h-3" />
+              <span>
+                {inq.followup_date
+                  ? new Date(inq.followup_date).toLocaleString([], {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                  : "N/A"}
+              </span>
+            </div>
 
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="bg-red-500 hover:bg-red-600 text-white text-[10px] px-2 py-1 rounded flex gap-1 ml-2 disabled:opacity-50"
-            >
-              <LuTrash2 size={15} /> {deleting ? "Deleting..." : "Delete"}
-            </button>
+            {/* Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="bg-red-500 hover:bg-red-600 text-white text-[10px] px-2 py-1 rounded flex gap-1 disabled:opacity-50 items-center"
+              >
+                <FaTrash size={10} /> {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
+
         </>
       )}
     </div>

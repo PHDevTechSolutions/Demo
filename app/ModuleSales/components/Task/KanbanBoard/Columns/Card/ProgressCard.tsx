@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, memo } from "react";
-import { FaCircle, FaChevronDown, FaChevronUp, FaPen } from "react-icons/fa";
+import { FaCircle, FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 
@@ -39,6 +39,7 @@ export interface ProgressItem {
   actualsales: string;
   deliverydate: string;
   followup_date: string;
+  ticketreferencenumber: string;
 }
 
 interface ProgressCardProps {
@@ -116,7 +117,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           </div>
           {progress.activitynumber && (
             <p className="text-[8px] text-gray-600">
-              Activity #: {progress.id} | {progress.activitynumber}
+              {progress.typeclient} | {progress.ticketreferencenumber}
             </p>
           )}
         </div>
@@ -149,9 +150,9 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
             {onDeleteClick && (
               <button
                 onClick={handleDeleteClick}
-                className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600"
+                className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600 flex items-center gap-1"
               >
-                Delete
+               <FaTrash size={10} /> Delete
               </button>
             )}
           </div>
