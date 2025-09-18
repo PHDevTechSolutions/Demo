@@ -71,9 +71,9 @@ const columns: Column[] = [
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
 
+  // Submit handler
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
 
@@ -110,57 +110,35 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         });
       }
 
-      // 🔹 Trigger refresh sa Progress at iba pang columns
-      setRefreshTrigger((prev) => prev + 1);
+      setRefreshTrigger(prev => prev + 1);
 
-      toast.success("Activity successfully added!", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
+      toast.success("Activity successfully added!", { autoClose: 2000 });
     } catch (error) {
       console.error("❌ Error submitting activity:", error);
-      toast.error("Failed to add activity", {
-        position: "top-right",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error("Failed to add activity", { autoClose: 2000 });
     }
   };
 
-  // 🔹 Toggle column visibility
+  // Toggle column collapse
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
   };
 
-  const visibleColumns = columns; // Always render all columns, width changes when collapsed
-  const gridTemplate = visibleColumns
-    .map(col => (collapsedColumns.includes(col.id) ? "w-12" : "flex-1"))
-    .join(" ");
-
   return (
     <div className="w-full p-4">
       <div className="flex gap-4">
-        {visibleColumns.map(col => {
+        {columns.map(col => {
           const isCollapsed = collapsedColumns.includes(col.id);
           const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
 
           return (
             <div
               key={col.id}
-              className={`flex flex-col border-l pl-2 pr-0 py-2 relative transition-all duration-300 ${isCollapsed ? "w-12" : "flex-1"
-                }`}
+              className={`flex flex-col border-l pl-2 pr-0 py-2 relative transition-all duration-300 ${isCollapsed ? "w-12" : "flex-1"}`}
             >
-              {/* Column Header */}
+              {/* Header */}
               <div className="flex justify-between items-center mb-2">
                 {!isCollapsed && (
                   <h2 className="font-semibold text-gray-700 text-center border-b w-full">
@@ -179,40 +157,38 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
               </div>
 
               {/* Column Content */}
-              {!isCollapsed && (
-                <div className="space-y-4 overflow-y-auto max-h-[600px]">
-                  {col.id === "new-task" && (
-                    <>
-                      <Inquiries
-                        expandedIdx={expandedIdx}
-                        setExpandedIdx={setExpandedIdx}
-                        handleSubmit={handleSubmit}
-                        userDetails={userDetails}
-                        refreshTrigger={refreshTrigger}
-                      />
-                      <Companies
-                        expandedIdx={expandedIdx}
-                        setExpandedIdx={setExpandedIdx}
-                        handleSubmit={handleSubmit}
-                        userDetails={userDetails}
-                      />
-                    </>
-                  )}
-                  {col.id === "scheduled" && (
-                    <>
-                      <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                      <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                      <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                    </>
-                  )}
-                  {col.id === "in-progress" && (
-                    <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                  )}
-                  {col.id === "completed" && (
-                    <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                  )}
-                </div>
-              )}
+              <div className={`space-y-4 overflow-y-auto max-h-[600px] ${isCollapsed ? "hidden" : ""}`}>
+                {col.id === "new-task" && !isCollapsed && (
+                  <>
+                    <Inquiries
+                      expandedIdx={expandedIdx}
+                      setExpandedIdx={setExpandedIdx}
+                      handleSubmit={handleSubmit}
+                      userDetails={userDetails}
+                      refreshTrigger={refreshTrigger}
+                    />
+                    <Companies
+                      expandedIdx={expandedIdx}
+                      setExpandedIdx={setExpandedIdx}
+                      handleSubmit={handleSubmit}
+                      userDetails={userDetails}
+                    />
+                  </>
+                )}
+                {col.id === "scheduled" && !isCollapsed && (
+                  <>
+                    <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                    <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                    <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                  </>
+                )}
+                {col.id === "in-progress" && !isCollapsed && (
+                  <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                )}
+                {col.id === "completed" && !isCollapsed && (
+                  <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                )}
+              </div>
             </div>
           );
         })}

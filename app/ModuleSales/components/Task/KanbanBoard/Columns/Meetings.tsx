@@ -77,8 +77,8 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
         if (value !== "pick") {
             const minutes =
                 value === "30" ? 30 :
-                value === "60" ? 60 :
-                value === "120" ? 120 : 180;
+                    value === "60" ? 60 :
+                        value === "120" ? 120 : 180;
 
             const start = getNowInPH();
             const end = getNowInPHPlusMinutes(minutes);
@@ -92,9 +92,11 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
     };
 
     // Fetch meetings from API
+    // Fetch meetings from API
     const fetchMeetings = async () => {
         try {
-            if (!userDetails) return;
+            if (!userDetails || !userDetails.ReferenceID) return; // ✅ Skip if no ReferenceID
+
             const res = await fetch(
                 `/api/ModuleSales/Task/ActivityPlanner/FetchMeeting?referenceid=${userDetails.ReferenceID}`
             );
@@ -106,24 +108,24 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             // Filter for this user, Client or Group Meeting
             const filteredMeetings = data.meetings.filter(
                 (m: MeetingItem) =>
+                    m.referenceid &&
                     m.referenceid === userDetails.ReferenceID &&
                     (m.typeactivity === "Client Meeting" || m.typeactivity === "Group Meeting")
             );
 
-            // Filter meetings to only those happening today
+            // Filter meetings happening today
             const today = getNowInPH();
             const meetingsToday = filteredMeetings.filter((m: MeetingItem) => {
                 const start = new Date(m.startdate);
                 const end = new Date(m.enddate);
 
-                // Check if start or end date is today in PH timezone
                 return (
-                    start.getFullYear() === today.getFullYear() &&
-                    start.getMonth() === today.getMonth() &&
-                    start.getDate() === today.getDate() ||
+                    (start.getFullYear() === today.getFullYear() &&
+                        start.getMonth() === today.getMonth() &&
+                        start.getDate() === today.getDate()) ||
                     (end.getFullYear() === today.getFullYear() &&
-                     end.getMonth() === today.getMonth() &&
-                     end.getDate() === today.getDate())
+                        end.getMonth() === today.getMonth() &&
+                        end.getDate() === today.getDate())
                 );
             });
 
