@@ -90,8 +90,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             setEndDate("");
         }
     };
-
-    // Fetch meetings from API
+    
     // Fetch meetings from API
     const fetchMeetings = async () => {
         try {
