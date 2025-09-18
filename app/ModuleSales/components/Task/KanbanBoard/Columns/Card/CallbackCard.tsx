@@ -25,10 +25,7 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
   return (
     <div className={`rounded-lg shadow overflow-hidden ${bgColor} mb-2`}>
       {/* Header */}
-      <button
-        onClick={toggleExpand}
-        className="w-full flex justify-between items-center px-4 py-4 text-left text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-t-lg"
-      >
+      <div className="w-full flex justify-between items-center px-4 py-4 text-left text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-t-lg cursor-pointer" onClick={toggleExpand}>
         <div className="flex items-center gap-2">
           <img
             src={userDetails?.profilePicture || "/taskflow.png"}
@@ -49,7 +46,7 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
         <span className="ml-2 text-[10px]">
           {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
         </span>
-      </button>
+      </div>
 
       {/* Body */}
       {isExpanded && (
@@ -65,7 +62,7 @@ const CallbackCard: React.FC<CallbackCardProps> = ({ inq, userDetails, openFormD
           {/* Footer */}
           <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
             <LuClock className="w-3 h-3" />
-            <span>{inq.callback ? inq.callback.split("T")[1]?.slice(0, 5) : "N/A"}</span>
+            <span>{new Date(inq.callback).toLocaleString("en-PH")}</span>
           </div>
         </div>
       )}

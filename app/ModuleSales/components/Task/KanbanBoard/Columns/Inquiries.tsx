@@ -255,7 +255,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
                       onClick={(e) => { e.stopPropagation(); handleCancel(inq); }}
                       className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
                     >
-                     <MdCancel size={10} /> Cancel
+                      <MdCancel size={10} /> Cancel
                     </button>
                     <span>{isExpanded ? <FaChevronUp /> : <FaChevronDown />}</span>
                   </div>
@@ -274,8 +274,11 @@ const Inquiries: React.FC<InquiriesProps> = ({
                 )}
 
                 <div className="p-2 text-gray-500 text-[9px]">
-                  {inq.date_created ? new Date(inq.date_created).toLocaleString() : "N/A"}
+                  {inq.date_created
+                    ? new Date(inq.date_created).toLocaleString("en-PH")
+                    : "N/A"}
                 </div>
+
               </div>
             );
           })
