@@ -173,23 +173,25 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     const fetchSentEmails = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`)
+            const res = await fetch(
+                `/api/ModuleSales/Task/XendMail/GetSent?referenceId=${userDetails.ReferenceID}`
+            );
 
-            const data = await res.json();
+            const result = await res.json();
 
-            if (!Array.isArray(data)) {
-                console.warn("GetSent returned non-array:", data);
+            if (!result.success || !Array.isArray(result.data)) {
+                console.warn("GetSent returned invalid:", result);
                 return;
             }
 
-            setSentEmails(data); // ✅ save lahat ng sent emails
-            // ❌ wag na mag-setFetchedCount dito para hindi ma-limit
+            setSentEmails(result.data); // ✅ tama na
         } catch (err) {
             console.error("Fetch sent error:", err);
         } finally {
             setLoading(false);
         }
     }, [userDetails.ReferenceID]);
+
 
     useEffect(() => {
         fetchEmails();
