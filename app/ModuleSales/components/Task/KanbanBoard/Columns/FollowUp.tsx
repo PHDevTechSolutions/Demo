@@ -95,8 +95,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
         const todayFollowUps = activities
           .filter((act) => act.referenceid === userDetails.ReferenceID)
-          .filter((act) => act.followup_date && act.typecall) // ✅ Only if may followup_date at may typecall
-          .filter((act) => act.followup_date?.startsWith(todayStr)) // ✅ Today only
+          .filter((act) => act.followup_date && act.typecall) // Only if may followup_date at may typecall
+          .filter((act) => act.followup_date?.startsWith(todayStr)) // Today only
           .sort((a, b) => (b.followup_date || "").localeCompare(a.followup_date || ""));
 
         setFollowUps(todayFollowUps);
@@ -110,7 +110,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
     fetchFollowUps();
   }, [userDetails?.ReferenceID, refreshTrigger, localRefresh]);
-
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
@@ -148,7 +147,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         remarks,
         startdate: isoStartDate,
         enddate: isoEndDate,
-        activitystatus: activitystatus || "Done", // ✅ default na Done kung wala
+        activitystatus: activitystatus || "Done",
         typecall: typeCall,
         typeactivity: typeActivity,
         referenceid,
@@ -166,8 +165,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
       if (res.ok) {
         toast.success("✅ Activity updated successfully!");
-
-        // ✅ Update local state immediately
         setFollowUps((prev) =>
           prev.map((inq) =>
             inq.activitynumber === selectedInquiry.activitynumber
@@ -175,9 +172,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
               : inq
           )
         );
-
         closeFormDrawer();
-        setLocalRefresh((prev) => prev + 1); // still trigger re-fetch para sync
+        setLocalRefresh((prev) => prev + 1);
       } else {
         console.error("❌ Update failed:", data);
         toast.error("Failed to update activity. Please try again.");
@@ -208,32 +204,13 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {followUps.length > 0 ? (
-        Object.entries(
-          followUps.reduce((acc: any, inq: any) => {
-            const key = `${inq.activitynumber} - ${inq.companyname}`;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(inq);
-            return acc;
-          }, {})
-        ).map(([groupKey, groupInquiries]: any, groupIdx) => (
-          <div key={groupIdx} className="mb-6">
-            {/* Parent Header */}
-            <div className="font-bold text-[10px] text-orange-500 mb-2">
-              {groupKey}
-            </div>
-
-            {/* Child Cards */}
-            <div className="ml-4 border-l-2 border-gray-300 pl-4 space-y-4">
-              {groupInquiries.map((inq: any, idx: number) => (
-                <FollowUpCard
-                  key={idx}
-                  inq={inq}
-                  userDetails={userDetails}
-                  openFormDrawer={openFormDrawer}
-                />
-              ))}
-            </div>
-          </div>
+        followUps.map((inq, idx) => (
+          <FollowUpCard
+            key={idx}
+            inq={inq}
+            userDetails={userDetails}
+            openFormDrawer={openFormDrawer}
+          />
         ))
       ) : (
         <p className="text-xs text-gray-400 italic">
@@ -252,7 +229,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       >
         {selectedInquiry && (
           <>
-            {/* Header */}
             <div className="flex justify-between items-center mb-4 border-b pb-2">
               <h3 className="text-lg font-semibold">Update Activity</h3>
               <button
@@ -265,7 +241,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {/* Remarks */}
               <div className="flex flex-col sm:col-span-2">
                 <label className="font-semibold text-xs mb-1">Remarks</label>
                 <textarea
@@ -276,7 +251,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* Start Date */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Start Date</label>
                 <input
@@ -288,7 +262,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* End Date */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">End Date</label>
                 <input
@@ -299,7 +272,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* Status */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Status</label>
                 <select
@@ -313,7 +285,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
                 </select>
               </div>
 
-              {/* Call Type */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Call Status</label>
                 <select
@@ -330,7 +301,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
               </div>
             </div>
 
-            {/* Submit Button */}
             <div className="mt-4">
               <button
                 type="submit"
