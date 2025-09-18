@@ -72,7 +72,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   const [tsm, setTsm] = useState("");
   const [manager, setManager] = useState("");
   const [localRefresh, setLocalRefresh] = useState(0);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -88,16 +87,18 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         const activities: Inquiry[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
-            ? data.data
-            : [];
+          ? data.data
+          : [];
 
         const todayStr = new Date().toISOString().split("T")[0];
 
         const todayFollowUps = activities
           .filter((act) => act.referenceid === userDetails.ReferenceID)
-          .filter((act) => act.followup_date && act.typecall) // ✅ Only if may followup_date at may typecall
-          .filter((act) => act.followup_date?.startsWith(todayStr)) // ✅ Today only
-          .sort((a, b) => (b.followup_date || "").localeCompare(a.followup_date || ""));
+          .filter((act) => act.followup_date && act.typecall)
+          .filter((act) => act.followup_date?.startsWith(todayStr))
+          .sort((a, b) =>
+            (b.followup_date || "").localeCompare(a.followup_date || "")
+          );
 
         setFollowUps(todayFollowUps);
       } catch (error) {
@@ -110,7 +111,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
     fetchFollowUps();
   }, [userDetails?.ReferenceID, refreshTrigger, localRefresh]);
-
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
@@ -148,7 +148,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         remarks,
         startdate: isoStartDate,
         enddate: isoEndDate,
-        activitystatus: activitystatus || "Done", // ✅ default na Done kung wala
+        activitystatus: activitystatus || "Done",
         typecall: typeCall,
         typeactivity: typeActivity,
         referenceid,
@@ -156,18 +156,20 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         manager,
       };
 
-      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateProgress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        "/api/ModuleSales/Task/ActivityPlanner/UpdateProgress",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await res.json();
 
       if (res.ok) {
         toast.success("✅ Activity updated successfully!");
 
-        // ✅ Update local state immediately
         setFollowUps((prev) =>
           prev.map((inq) =>
             inq.activitynumber === selectedInquiry.activitynumber
@@ -177,7 +179,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         );
 
         closeFormDrawer();
-        setLocalRefresh((prev) => prev + 1); // still trigger re-fetch para sync
+        setLocalRefresh((prev) => prev + 1);
       } else {
         console.error("❌ Update failed:", data);
         toast.error("Failed to update activity. Please try again.");
@@ -202,38 +204,20 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   }
 
   return (
-    <div className="space-y-1 overflow-y-auto">
+    <div className="space-y-2 overflow-y-auto">
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="mr-1">📌</span> Follow-Ups: <span className="ml-1 text-orange-500">{followUps.length}</span>
+        <span className="mr-1">📌</span> Follow-Ups:{" "}
+        <span className="ml-1 text-orange-500">{followUps.length}</span>
       </h3>
 
       {followUps.length > 0 ? (
-        Object.entries(
-          followUps.reduce((acc: any, inq: any) => {
-            const key = `${inq.activitynumber} - ${inq.companyname}`;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(inq);
-            return acc;
-          }, {})
-        ).map(([groupKey, groupInquiries]: any, groupIdx) => (
-          <div key={groupIdx} className="mb-6">
-            {/* Parent Header */}
-            <div className="font-bold text-[10px] text-orange-500 mb-2">
-              {groupKey}
-            </div>
-
-            {/* Child Cards */}
-            <div className="ml-4 border-l-2 border-gray-300 pl-4 space-y-4">
-              {groupInquiries.map((inq: any, idx: number) => (
-                <FollowUpCard
-                  key={idx}
-                  inq={inq}
-                  userDetails={userDetails}
-                  openFormDrawer={openFormDrawer}
-                />
-              ))}
-            </div>
-          </div>
+        followUps.map((inq, idx) => (
+          <FollowUpCard
+            key={idx}
+            inq={inq}
+            userDetails={userDetails}
+            openFormDrawer={openFormDrawer}
+          />
         ))
       ) : (
         <p className="text-xs text-gray-400 italic">
@@ -247,8 +231,9 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
           e.preventDefault();
           handleUpdate();
         }}
-        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${selectedInquiry ? "translate-y-0" : "translate-y-full"
-          }`}
+        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${
+          selectedInquiry ? "translate-y-0" : "translate-y-full"
+        }`}
       >
         {selectedInquiry && (
           <>
@@ -319,7 +304,9 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
                 <select
                   value={typeCall}
                   onChange={(e) =>
-                    setTypeCall(e.target.value as "Successful" | "Unsuccessful" | "")
+                    setTypeCall(
+                      e.target.value as "Successful" | "Unsuccessful" | ""
+                    )
                   }
                   className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
                 >
