@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
@@ -72,6 +72,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
+  const [cacheLoaded, setCacheLoaded] = useState(false);
 
   // Submit handler
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
@@ -118,6 +119,37 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       toast.error("Failed to add activity", { autoClose: 2000 });
     }
   };
+
+  // 🔹 Load cached column data from localStorage on mount
+  useEffect(() => {
+    if (!userDetails) return;
+
+    const cached = localStorage.getItem(`kanban-${userDetails.ReferenceID}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.collapsedColumns) setCollapsedColumns(parsed.collapsedColumns);
+    }
+    setCacheLoaded(true);
+  }, [userDetails]);
+
+  // 🔹 Save to localStorage + Redis whenever collapsedColumns change
+  useEffect(() => {
+    if (!userDetails) return;
+    if (!cacheLoaded) return;
+
+    const cache = { collapsedColumns };
+    localStorage.setItem(`kanban-${userDetails.ReferenceID}`, JSON.stringify(cache));
+
+    // Save to Redis via API
+    fetch("/api/saveKanbanCache", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        referenceid: userDetails.ReferenceID,
+        cache,
+      }),
+    }).catch(err => console.error("Failed to save cache to Redis:", err));
+  }, [collapsedColumns, userDetails, cacheLoaded]);
 
   // Toggle column collapse
   const toggleCollapse = (id: string) => {
