@@ -63,11 +63,24 @@ const Inquiries: React.FC<InquiriesProps> = ({
         `/api/ModuleSales/Task/CSRInquiries/FetchInquiries?referenceid=${referenceId}`
       );
       if (!res.ok) return [];
+
       const data = await res.json();
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.data)) return data.data;
-      if (Array.isArray(data?.inquiries)) return data.inquiries;
-      return [];
+      let inquiries: Inquiry[] = [];
+
+      if (Array.isArray(data)) inquiries = data;
+      else if (Array.isArray(data?.data)) inquiries = data.data;
+      else if (Array.isArray(data?.inquiries)) inquiries = data.inquiries;
+
+      // Filter by referenceId and sort by latest date_created first
+      const myInquiries = inquiries
+        .filter((inq) => inq.referenceid === referenceId)
+        .sort((a, b) => {
+          const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
+          const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
+          return dateB - dateA; // latest first
+        });
+
+      return myInquiries;
     } catch (err) {
       console.error("Unexpected fetch error:", err);
       return [];
