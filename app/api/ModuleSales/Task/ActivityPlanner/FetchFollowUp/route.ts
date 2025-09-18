@@ -32,7 +32,8 @@ export async function GET() {
         remarks,
         referenceid,
         date_created,
-        typeactivity
+        typeactivity,
+        followup_date
       FROM progress;
     `;
 

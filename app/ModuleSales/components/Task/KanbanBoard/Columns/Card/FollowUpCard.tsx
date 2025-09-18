@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { LuClock, LuCalendarPlus, LuTrash2 } from "react-icons/lu";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { toast } from "react-toastify";
 
 interface FollowUpCardProps {
@@ -90,7 +89,7 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
           <span className="font-semibold">Address:</span> {inq.address}
         </p>
         <p>
-          <span className="font-semibold">Type:</span> {inq.typeclient}
+          <span className="font-semibold">Type of Client:</span> {inq.typeclient}
         </p>
         <p>
           <span className="font-semibold">Remarks:</span> {inq.remarks || "-"}
@@ -98,20 +97,23 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
         <p>
           <span className="font-semibold">Status:</span> {inq.activitystatus || "-"}
         </p>
+        <p>
+          <span className="font-semibold">Type of Follow-Up:</span> {inq.typecall || "-"}
+        </p>
       </div>
 
       {/* Footer */}
       <div className="p-2 text-gray-500 text-[9px] flex items-center gap-1">
         <LuClock className="w-3 h-3" />
         <span>
-          {inq.date_created
-            ? new Date(inq.date_created).toLocaleString([], {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+          {inq.followup_date
+            ? new Date(inq.followup_date).toLocaleString([], {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
             : "N/A"}
         </span>
 
@@ -130,7 +132,6 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
           <LuTrash2 size={15} /> {deleting ? "Deleting..." : "Delete"}
         </button>
       </div>
-
     </div>
   );
 };

@@ -29,6 +29,7 @@ interface Inquiry {
   status: string;
   date_created?: string;
   typeactivity?: string;
+  followup_date: string;
 }
 
 interface UserDetails {
@@ -94,9 +95,9 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
         const todayFollowUps = activities
           .filter((act) => act.referenceid === userDetails.ReferenceID)
-          .filter((act) => act.typeactivity === "Follow Up")
-          .filter((act) => act.date_created?.startsWith(todayStr))
-          .sort((a, b) => b.date_created!.localeCompare(a.date_created!));
+          .filter((act) => act.followup_date && act.typecall) // ✅ Only if may followup_date at may typecall
+          .filter((act) => act.followup_date?.startsWith(todayStr)) // ✅ Today only
+          .sort((a, b) => (b.followup_date || "").localeCompare(a.followup_date || ""));
 
         setFollowUps(todayFollowUps);
       } catch (error) {
@@ -109,6 +110,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
     fetchFollowUps();
   }, [userDetails?.ReferenceID, refreshTrigger, localRefresh]);
+
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
