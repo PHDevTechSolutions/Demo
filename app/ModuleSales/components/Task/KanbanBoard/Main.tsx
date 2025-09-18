@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BsArrowsCollapseVertical } from 'react-icons/bs';
 import Inquiries from "./Columns/Inquiries";
 import Companies from "./Columns/Companies";
 import Progress from "./Columns/Progress";
@@ -66,10 +67,12 @@ const columns: Column[] = [
   { id: "in-progress", title: "In Progress" },
   { id: "completed", title: "Completed" },
 ];
- 
+
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
 
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
@@ -132,66 +135,89 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
+  // 🔹 Toggle column visibility
+  const toggleCollapse = (id: string) => {
+    setCollapsedColumns(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
+  const visibleColumns = columns; // Always render all columns, width changes when collapsed
+  const gridTemplate = visibleColumns
+    .map(col => (collapsedColumns.includes(col.id) ? "w-12" : "flex-1"))
+    .join(" ");
+
   return (
     <div className="w-full p-4">
-      <div className="grid grid-cols-4 gap-4">
-        {columns.map((col) => (
-          <div key={col.id} className="flex flex-col border-l pl-2 pr-0 py-2 relative">
-            <div className="flex justify-center items-center mb-2">
-              <h2 className="font-semibold text-gray-700 text-center border-b w-full">{col.title}</h2>
-            </div>
+      <div className="flex gap-4">
+        {visibleColumns.map(col => {
+          const isCollapsed = collapsedColumns.includes(col.id);
+          const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
 
-            <div className="space-y-4 overflow-y-auto max-h-[600px]">
-              {col.id === "new-task" ? (
-                <>
-                  <Inquiries
-                    expandedIdx={expandedIdx}
-                    setExpandedIdx={setExpandedIdx}
-                    handleSubmit={handleSubmit}
-                    userDetails={userDetails}
-                    refreshTrigger={refreshTrigger}
-                  />
-                  <Companies
-                    expandedIdx={expandedIdx}
-                    setExpandedIdx={setExpandedIdx}
-                    handleSubmit={handleSubmit}
-                    userDetails={userDetails}
-                  />
-                </>
-              ) : col.id === "scheduled" ? (
-                <>
-                  <Callbacks
-                    userDetails={userDetails}
-                    refreshTrigger={refreshTrigger}
-                  />
-                  <FollowUp
-                    userDetails={userDetails}
-                    refreshTrigger={refreshTrigger}
-                  />
-                  <Meetings
-                    userDetails={userDetails}
-                    refreshTrigger={refreshTrigger}
-                  />
-                </>
-              ) : col.id === "in-progress" ? (
-                <Progress
-                  userDetails={userDetails}
-                  refreshTrigger={refreshTrigger}
-                />
-              ) : col.id === "completed" ? (
-                <Completed
-                  userDetails={userDetails}
-                  refreshTrigger={refreshTrigger}
-                />
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-400 text-sm italic">
-                  No tasks yet
+          return (
+            <div
+              key={col.id}
+              className={`flex flex-col border-l pl-2 pr-0 py-2 relative transition-all duration-300 ${isCollapsed ? "w-12" : "flex-1"
+                }`}
+            >
+              {/* Column Header */}
+              <div className="flex justify-between items-center mb-2">
+                {!isCollapsed && (
+                  <h2 className="font-semibold text-gray-700 text-center border-b w-full">
+                    {col.title}
+                  </h2>
+                )}
+                {isSchedOrCompleted && (
+                  <button
+                    onClick={() => toggleCollapse(col.id)}
+                    className="ml-2 text-gray-600 hover:text-gray-900"
+                    title={isCollapsed ? "Show Column" : "Collapse Column"}
+                  >
+                    <BsArrowsCollapseVertical size={15} />
+                  </button>
+                )}
+              </div>
+
+              {/* Column Content */}
+              {!isCollapsed && (
+                <div className="space-y-4 overflow-y-auto max-h-[600px]">
+                  {col.id === "new-task" && (
+                    <>
+                      <Inquiries
+                        expandedIdx={expandedIdx}
+                        setExpandedIdx={setExpandedIdx}
+                        handleSubmit={handleSubmit}
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                      />
+                      <Companies
+                        expandedIdx={expandedIdx}
+                        setExpandedIdx={setExpandedIdx}
+                        handleSubmit={handleSubmit}
+                        userDetails={userDetails}
+                      />
+                    </>
+                  )}
+                  {col.id === "scheduled" && (
+                    <>
+                      <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                      <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                      <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                    </>
+                  )}
+                  {col.id === "in-progress" && (
+                    <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                  )}
+                  {col.id === "completed" && (
+                    <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
       <ToastContainer className="text-xs" autoClose={1000} />
     </div>
   );
