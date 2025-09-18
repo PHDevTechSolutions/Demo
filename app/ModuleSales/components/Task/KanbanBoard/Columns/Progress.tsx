@@ -345,11 +345,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // Filter progress by search query
+  // 🔹 Filter progress safely by search query
   const filteredProgress = progress.filter((item) =>
-    item.companyname.toLowerCase().includes(searchQuery.toLowerCase())
+    item.companyname?.toLowerCase().includes(searchQuery?.toLowerCase() || "")
   );
-
 
   if (loading) {
     return (
