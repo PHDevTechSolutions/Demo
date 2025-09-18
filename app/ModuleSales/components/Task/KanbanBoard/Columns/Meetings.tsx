@@ -238,8 +238,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                             {isExpanded && (
                                 <div className="p-3 space-y-1 text-[10px]">
                                     <p><span className="font-semibold">Remarks:</span> {m.remarks || "-"}</p>
-                                    <p><span className="font-semibold">TSM:</span> {m.tsm}</p>
-                                    <p><span className="font-semibold">Manager:</span> {m.manager}</p>
                                     <p><span className="font-semibold">Created:</span> {new Date(m.date_created).toLocaleString("en-PH")}</p>
                                 </div>
                             )}
