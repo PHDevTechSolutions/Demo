@@ -35,27 +35,29 @@ const Inquiries: React.FC<InquiriesProps> = ({
 }) => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [showModal, setShowModal] = useState(false);
   const [activeInquiry, setActiveInquiry] = useState<Inquiry | null>(null);
   const [timeSinceCreated, setTimeSinceCreated] = useState<string>("");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  /** Helper: Format date in PH timezone */
+  const formatPHDate = (dateStr?: string) => {
+    if (!dateStr) return "N/A";
+    return new Date(dateStr).toLocaleString("en-PH", {
+      timeZone: "Asia/Manila",
+      hour12: false,
+    });
+  };
+
   /** Robust fetch function */
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
-
     try {
       const res = await fetch(
         `/api/ModuleSales/Task/CSRInquiries/FetchInquiries?referenceid=${referenceId}`
       );
-
-      if (!res.ok) {
-        console.warn("Fetch failed:", res.status, await res.text());
-        return [];
-      }
-
+      if (!res.ok) return [];
       const data = await res.json();
       if (Array.isArray(data)) return data;
       if (Array.isArray(data?.data)) return data.data;
@@ -78,12 +80,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
       // Filter strictly for this user
       const myInquiries = inquiriesData.filter(
-        (inq) => inq.referenceid === userDetails?.ReferenceID
+        (inq) => inq.referenceid === userDetails.ReferenceID
       );
 
       setInquiries(myInquiries);
 
-      // ✅ Show today's unendorsed inquiry in PH timezone
+      // Show today's unendorsed inquiry
       const todayPH = new Date(
         new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" })
       );
@@ -119,7 +121,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
   /** Handle modal close */
   const handleCloseModal = () => {
     setShowModal(false);
-
     if (timerRef.current) clearTimeout(timerRef.current);
 
     if (activeInquiry && activeInquiry.status?.toLowerCase() !== "endorsed") {
@@ -146,7 +147,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
     return () => clearInterval(interval);
   }, [activeInquiry?.date_created]);
-
 
   /** Cancel inquiry */
   const handleCancel = async (inq: Inquiry) => {
@@ -273,10 +273,9 @@ const Inquiries: React.FC<InquiriesProps> = ({
                   </div>
                 )}
 
+                {/* PH Time */}
                 <div className="p-2 text-gray-500 text-[9px]">
-                  {inq.date_created
-                    ? new Date(inq.date_created).toLocaleString("en-PH")
-                    : "N/A"}
+                  {formatPHDate(inq.date_created)}
                 </div>
 
               </div>

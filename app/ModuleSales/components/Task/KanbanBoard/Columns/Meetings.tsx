@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import MeetingForm from "./Form/MeetingForm";
 
-// ✅ Helper: format Date -> datetime-local string
+// Helper: format Date -> datetime-local string
 const formatDateTimeLocal = (date: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
     const year = date.getFullYear();
@@ -16,16 +16,15 @@ const formatDateTimeLocal = (date: Date) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-// ✅ Helper: current PH time
+// Helper: get current PH date
 const getNowInPH = () => {
     const now = new Date();
-    const phTime = new Date(
+    return new Date(
         now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
     );
-    return phTime;
 };
 
-// ✅ Helper: PH time + X minutes
+// Helper: PH date + minutes
 const getNowInPHPlusMinutes = (minutes: number) => {
     const base = getNowInPH();
     base.setMinutes(base.getMinutes() + minutes);
@@ -68,18 +67,18 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
     const [endDate, setEndDate] = useState("");
     const [typeactivity, setTypeactivity] = useState("Client Meeting");
     const [remarks, setRemarks] = useState("");
-
-    // ✅ New: fetched meetings
     const [meetings, setMeetings] = useState<MeetingItem[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
 
-    // ✅ Handle duration selection
+    // Handle duration selection
     const handleDurationChange = (value: string) => {
         setMode(value);
 
         if (value !== "pick") {
             const minutes =
-                value === "30" ? 30 : value === "60" ? 60 : value === "120" ? 120 : 180;
+                value === "30" ? 30 :
+                value === "60" ? 60 :
+                value === "120" ? 120 : 180;
 
             const start = getNowInPH();
             const end = getNowInPHPlusMinutes(minutes);
@@ -92,7 +91,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
         }
     };
 
-    // ✅ Fetch meetings
+    // Fetch meetings from API
     const fetchMeetings = async () => {
         try {
             if (!userDetails) return;
@@ -104,49 +103,49 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             if (!res.ok || !data.success)
                 throw new Error(data.error || "Failed to fetch meetings");
 
-            // 🔹 Filter only "Client Meeting" and "Group Meeting"
+            // Filter for this user, Client or Group Meeting
             const filteredMeetings = data.meetings.filter(
                 (m: MeetingItem) =>
                     m.referenceid === userDetails.ReferenceID &&
-                    (m.typeactivity === "Client Meeting" ||
-                        m.typeactivity === "Group Meeting")
+                    (m.typeactivity === "Client Meeting" || m.typeactivity === "Group Meeting")
             );
 
-            setMeetings(filteredMeetings);
+            // Filter meetings to only those happening today
+            const today = getNowInPH();
+            const meetingsToday = filteredMeetings.filter((m: MeetingItem) => {
+                const start = new Date(m.startdate);
+                const end = new Date(m.enddate);
+
+                // Check if start or end date is today in PH timezone
+                return (
+                    start.getFullYear() === today.getFullYear() &&
+                    start.getMonth() === today.getMonth() &&
+                    start.getDate() === today.getDate() ||
+                    (end.getFullYear() === today.getFullYear() &&
+                     end.getMonth() === today.getMonth() &&
+                     end.getDate() === today.getDate())
+                );
+            });
+
+            setMeetings(meetingsToday);
         } catch (err: any) {
             console.error("❌ Fetch error:", err);
             toast.error(err.message || "Failed to load meetings");
         }
     };
 
-
     useEffect(() => {
         fetchMeetings();
     }, [userDetails, refreshTrigger]);
 
-    // ✅ Submit to API
+    // Submit meeting to API
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!startDate) {
-            toast.error("Please select a start date");
-            return;
-        }
-
-        if (mode !== "pick" && !startDate) {
-            toast.error("Please select a duration");
-            return;
-        }
-
-        if (mode === "pick" && !endDate) {
-            toast.error("Please select an end date");
-            return;
-        }
-
-        if (new Date(startDate) >= new Date(endDate)) {
-            toast.error("End date must be later than start date");
-            return;
-        }
+        if (!startDate) return toast.error("Please select a start date");
+        if (mode === "pick" && !endDate) return toast.error("Please select an end date");
+        if (new Date(startDate) >= new Date(endDate))
+            return toast.error("End date must be later than start date");
 
         try {
             if (!userDetails) throw new Error("User details missing");
@@ -155,14 +154,11 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 referenceid: userDetails.ReferenceID,
                 tsm: userDetails.TSM,
                 manager: userDetails.Manager,
-                startdate: new Date(startDate).toISOString(), // ✅ ISO timestamp
+                startdate: new Date(startDate).toISOString(),
                 enddate: new Date(endDate).toISOString(),
                 typeactivity,
                 remarks,
             };
-
-            // 🔹 Debug toast
-            toast.info(`📤 Sending: ${JSON.stringify(payload)}`);
 
             const res = await fetch(
                 "/api/ModuleSales/Task/ActivityPlanner/SubmitMeeting",
@@ -172,12 +168,10 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                     body: JSON.stringify(payload),
                 }
             );
-
             const data = await res.json();
 
-            if (!res.ok || !data.success) {
+            if (!res.ok || !data.success)
                 throw new Error(data.error || "Failed to save meeting");
-            }
 
             toast.success("✅ Meeting saved successfully!");
             setShowForm(false);
@@ -186,6 +180,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             setMode("pick");
             setTypeactivity("Client Meeting");
             setRemarks("");
+            fetchMeetings();
         } catch (err: any) {
             console.error("❌ Submit error:", err);
             toast.error(err.message || "Something went wrong");
@@ -195,10 +190,10 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
     return (
         <div className="space-y-1 overflow-y-auto">
             <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-                <span className="mr-1">📅</span>Total Meetings: <span className="ml-1 text-red-500">{meetings.length}</span>
+                <span className="mr-1">📅</span>Total Meetings Today: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
-            {/* 🔹 Form */}
+            {/* Form */}
             {showForm && userDetails && (
                 <MeetingForm
                     mode={mode}
@@ -216,10 +211,10 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 />
             )}
 
-            {/* 🔹 Meetings List */}
+            {/* Meetings List */}
             <div className="space-y-1">
                 {meetings.length === 0 && (
-                    <p className="text-xs text-gray-500 italic">No meetings found</p>
+                    <p className="text-xs text-gray-500 italic">No meetings scheduled for today</p>
                 )}
                 {meetings.map((m) => {
                     const isExpanded = expanded === m.id;
@@ -253,7 +248,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 })}
             </div>
 
-            {/* 🔹 Header */}
+            {/* Toggle Form */}
             <div className="flex justify-between items-center">
                 <button
                     onClick={() => setShowForm((prev) => !prev)}
