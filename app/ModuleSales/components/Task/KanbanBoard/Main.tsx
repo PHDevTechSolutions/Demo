@@ -120,37 +120,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-  // 🔹 Load cached column data from localStorage on mount
-  useEffect(() => {
-    if (!userDetails) return;
-
-    const cached = localStorage.getItem(`kanban-${userDetails.ReferenceID}`);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed.collapsedColumns) setCollapsedColumns(parsed.collapsedColumns);
-    }
-    setCacheLoaded(true);
-  }, [userDetails]);
-
-  // 🔹 Save to localStorage + Redis whenever collapsedColumns change
-  useEffect(() => {
-    if (!userDetails) return;
-    if (!cacheLoaded) return;
-
-    const cache = { collapsedColumns };
-    localStorage.setItem(`kanban-${userDetails.ReferenceID}`, JSON.stringify(cache));
-
-    // Save to Redis via API
-    fetch("/api/saveKanbanCache", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        referenceid: userDetails.ReferenceID,
-        cache,
-      }),
-    }).catch(err => console.error("Failed to save cache to Redis:", err));
-  }, [collapsedColumns, userDetails, cacheLoaded]);
-
   // Toggle column collapse
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
