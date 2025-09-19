@@ -339,9 +339,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // Filter progress by search query
   const filteredProgress = progress.filter((item) =>
-    item.companyname.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -436,7 +435,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         }
         progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
       />
-      
+
     </div>
   );
 };

@@ -12,7 +12,7 @@ import Main from "../../../components/Task/ScheduledActivity/Main";
 import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
-import XendMail from "../../../components/Task/XendMail/Main";
+//import XendMail from "../../../components/Task/XendMail/Main";
 // Tools
 import Tools from "../../../components/Task/Tools/Sidebar";
 // Banner & Modal
@@ -260,6 +260,7 @@ const ListofUser: React.FC = () => {
         <UserFetcher>
           {(user) => (
             <>
+              {/*
               <Banner show={showBanner} />
               <AnnouncementModal
                 isOpen={isSummaryOpen}
@@ -268,6 +269,7 @@ const ListofUser: React.FC = () => {
                 summaryType={summaryType}
                 loadingSummary={loadingSummary} // ✅ added
               />
+              */}
 
               <div className="flex gap-4">
                 <Tools activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -367,13 +369,13 @@ const ListofUser: React.FC = () => {
                     <KanbanBoard userDetails={userDetails} />
                   </div>
 
-                  {/* Xendmail */}
+                  {/* Xendmail
                   <div
                     className={`${activeTab === "xendmail" ? "block" : "hidden"
                       } bg-white shadow-md rounded-lg flex`}
                   >
                     <XendMail userDetails={userDetails} />
-                  </div>
+                  </div> */}
                 </div>
 
                 <ToastContainer className="text-xs" autoClose={1000} />

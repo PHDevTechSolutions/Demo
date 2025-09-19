@@ -119,7 +119,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   };
 
   const filteredData = data.filter((item) =>
-    item.companyname.toLowerCase().includes(searchQuery.toLowerCase())
+    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading && data.length === 0)
