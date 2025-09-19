@@ -5,7 +5,7 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import SearchFilters from "../../../components/National/DailyCallRanking/Filters";
+import SearchFilters from "../../../components/Routes/Filters/DR_Filters";
 import UsersTable from "../../../components/Agents/DailyCallRanking/Table";
 
 // Toast Notifications
