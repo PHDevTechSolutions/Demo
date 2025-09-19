@@ -208,12 +208,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm"
+        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
         toastClassName={() =>
           "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
         }
         progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
       />
+
     </div>
   );
 };
