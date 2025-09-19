@@ -37,7 +37,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
 
   const router = useRouter();
 
-  // ✅ Auto logout checker every 30s
+  // ✅ Session checker every 30s
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -45,29 +45,25 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
           `/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`
         );
         if (!response.ok) throw new Error("Failed to fetch session");
-
         const logs: SessionData[] = await response.json();
 
         if (logs.length > 0) {
-          const latest = logs[0]; // API should return logs sorted by timestamp descending
+          const latest = logs[0]; // naka-sort na sa API
           setSessionInfo(latest);
 
-          // ⚠️ Auto logout trigger (currently commented for debugging)
-          // if (latest.status === "logout" && !isLoggingOut) {
-          //     console.log("⚠️ Triggering auto logout due to session status 'logout'");
-          //     handleLogout();
-          // }
-
+          if (latest.status === "logout" && !isLoggingOut) {
+            handleLogout();
+          }
         }
       } catch (err) {
         console.error("Error checking session:", err);
       }
     };
 
-    // Initial check
+    // initial run
     checkSession();
 
-    // Run every 30s
+    // run every 30s
     const interval = setInterval(checkSession, 30000);
     return () => clearInterval(interval);
   }, [userDetails.Email, isLoggingOut]);
@@ -85,22 +81,22 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    // Play Taskflow logout sound
+    // Play Taskflow sound first
     if (audioTaskflowRef.current) {
       audioTaskflowRef.current.currentTime = 0;
-      await audioTaskflowRef.current.play().catch(() => { });
+      await audioTaskflowRef.current.play().catch(() => {});
     }
 
-    // Play binary sound 1s after
+    // Play binary sound after Taskflow
     setTimeout(() => {
       if (audioBinaryRef.current) {
         audioBinaryRef.current.currentTime = 0;
-        audioBinaryRef.current.play().catch(() => { });
+        audioBinaryRef.current.play().catch(() => {});
       }
     }, 1000);
 
-    // Wait 5s (was 15s in comment) before redirecting
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Wait 15 seconds before redirect
+    await new Promise((resolve) => setTimeout(resolve, 15000));
 
     try {
       await fetch("/api/log-activity", {
