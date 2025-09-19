@@ -12,7 +12,6 @@ import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagin
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { truncateSync } from "fs";
 
 const DeletionAccounts: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
@@ -36,7 +35,7 @@ const DeletionAccounts: React.FC = () => {
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; 
+    const loading = loadingUser || loadingAccounts;
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -84,7 +83,7 @@ const DeletionAccounts: React.FC = () => {
             const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
             const data = await response.json();
             console.log("Fetched data:", data);
-            setPosts(data.data); 
+            setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -111,17 +110,19 @@ const DeletionAccounts: React.FC = () => {
                 ? post?.typeclient === selectedClientType
                 : true;
 
-            const referenceID = userDetails.ReferenceID; 
+            const referenceID = userDetails.ReferenceID;
 
-            const matchesRole = userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-                ? truncateSync
-                : userDetails.Role === "Territory Sales Associate"
-                    ? post?.referenceid === referenceID
-                    : userDetails.Role === "Manager"
-                        ? post?.manager === referenceID
-                        : userDetails.Role === "Territory Sales Manager"
-                            ? post?.tsm === referenceID
-                            : false;
+            const matchesRole =
+                userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                    ? true
+                    : userDetails.Role === "Territory Sales Associate"
+                        ? post?.referenceid === referenceID
+                        : userDetails.Role === "Manager"
+                            ? post?.manager === referenceID
+                            : userDetails.Role === "Territory Sales Manager"
+                                ? post?.tsm === referenceID
+                                : false;
+
 
             const matchesStatus = post?.status === "For Deletion" || post?.status === "Remove" || post?.status === "Approve For Deletion";
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesStatus;
