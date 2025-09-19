@@ -24,7 +24,7 @@ interface ProgressFormProps {
     quotationnumber: string;
     quotationamount: string;
     projectname: string;
-    projectcategory: string;
+    projectcategory: string[]; // <-- changed to array
     projecttype: string;
     paymentterm: string;
     actualsales: string;
@@ -38,7 +38,7 @@ interface ProgressFormProps {
   ) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
-  handleProjectCategoryChange: (selected: any) => void;
+  handleProjectCategoryChange: (selected: string[]) => void; // <-- array
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
@@ -82,24 +82,10 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
       <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-        {/* Start Date */}
-        <input
-          type="hidden"
-          name="startdate"
-          value={formData.startdate}
-          onChange={handleFormChange}
-          readOnly
-        />
-        {/* End Date */}
-        <input
-          type="hidden"
-          name="enddate"
-          value={formData.enddate}
-          onChange={handleFormChange}
-          readOnly
-        />
+        {/* Hidden Start/End Dates */}
+        <input type="hidden" name="startdate" value={formData.startdate} readOnly />
+        <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
-        {/* Form Fields */}
         <div className="grid grid-cols-2 gap-4">
           {/* Source */}
           <div className="flex flex-col mt-4">
@@ -162,17 +148,13 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </select>
           </div>
 
-          {/* 🔹 FB Marketplace */}
+          {/* Conditional Forms */}
           {formData.typeactivity === "FB-Marketplace" && (
             <FBMarketPlace typecall={formData.typecall} handleFormChange={handleFormChange} />
           )}
-
-          {/* 🔹 Inbound Call */}
           {formData.typeactivity === "Inbound Call" && (
             <InboundCall typecall={formData.typecall} handleFormChange={handleFormChange} />
           )}
-
-          {/* 🔹 Outbound Call */}
           {formData.typeactivity === "Outbound calls" && (
             <OutboundCall
               typecall={formData.typecall}
@@ -182,29 +164,24 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               handleFormChange={handleFormChange}
             />
           )}
-
-          {/* 🔹 Quotation Preparation */}
           {formData.typeactivity === "Quotation Preparation" && (
             <QuotationPreparation
               typecall={formData.typecall}
               quotationnumber={formData.quotationnumber}
               quotationamount={formData.quotationamount}
               projectname={formData.projectname}
-              projectcategory={formData.projectcategory}
+              projectcategory={formData.projectcategory} // <-- now array
               projecttype={formData.projecttype}
               followup_date={formData.followup_date}
               handleFormChange={handleFormChange}
               handleProjectCategoryChange={handleProjectCategoryChange}
             />
           )}
-
-          {/* 🔹 Sales Order Preparation */}
           {formData.typeactivity === "Sales Order Preparation" && (
             <SalesOrderPreparation
               sonumber={formData.sonumber}
               soamount={formData.soamount}
               typecall={formData.typecall}
-              
               handleFormChange={handleFormChange}
             />
           )}
@@ -259,7 +236,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </>
           )}
 
-          {/* Remarks */}
+          {/* Remarks Textarea */}
           <div className="flex flex-col col-span-2">
             <label className="font-semibold">
               Remarks<span className="text-[8px] text-red-700">* Required Fields</span>
@@ -287,31 +264,25 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               required
             >
               <option value="">Select Status</option>
-
-              {formData.typeactivity === "Quotation Preparation" ? (
-                <>
-                  <option value="Quote-Done">Quote-Done</option>
-                </>
-              ) : formData.typeactivity === "Sales Order Preparation" ? (
-                <>
-                  <option value="SO-Done">SO-Done</option>
-                </>
-              ) : (
-                <>
-                  <option value="Assisted">
-                    Assisted ( Client Assistance - Touchbase Such As Calls )
-                  </option>
-                  <option value="Paid">
-                    Paid ( Identity - Have SO# )
-                  </option>
-                  <option value="Delivered">
-                    Delivered ( All Fields Completed - SI & DR )
-                  </option>
-                  <option value="Collected">Collected</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Loss">Loss</option>
-                </>
+              {formData.typeactivity === "Quotation Preparation" && (
+                <option value="Quote-Done">Quote-Done</option>
               )}
+              {formData.typeactivity === "Sales Order Preparation" && (
+                <option value="SO-Done">SO-Done</option>
+              )}
+              {formData.typeactivity !== "Quotation Preparation" &&
+                formData.typeactivity !== "Sales Order Preparation" && (
+                  <>
+                    <option value="Assisted">
+                      Assisted ( Client Assistance - Touchbase Such As Calls )
+                    </option>
+                    <option value="Paid">Paid ( Identity - Have SO# )</option>
+                    <option value="Delivered">Delivered ( All Fields Completed - SI & DR )</option>
+                    <option value="Collected">Collected</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Loss">Loss</option>
+                  </>
+                )}
             </select>
           </div>
         </div>
