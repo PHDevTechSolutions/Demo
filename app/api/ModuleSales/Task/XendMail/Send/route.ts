@@ -1,4 +1,4 @@
-/**import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
 type SendEmailData = {
@@ -97,4 +97,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}**/
+}

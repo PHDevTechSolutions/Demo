@@ -1,4 +1,4 @@
-/**import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 
@@ -103,4 +103,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ error: "Invalid request: " + err.message }, { status: 400 });
   }
-}**/
+}

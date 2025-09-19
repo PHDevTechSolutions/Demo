@@ -1,9 +1,10 @@
-/**import { NextRequest, NextResponse } from "next/server";
+
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // ✅ service role para makapag-upsert
 );
 
 export async function POST(req: NextRequest) {
@@ -72,4 +73,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-} **/
+}
