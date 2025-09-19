@@ -45,14 +45,16 @@ const SiteVisit: React.FC<SiteVisitProps> = ({ userDetails, refreshTrigger }) =>
             if (!res.ok) throw new Error("Failed to fetch site visits");
 
             const today = new Date();
-            const todayStr = today.toISOString().split("T")[0];
+            const todayStr = today.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+            // format YYYY-MM-DD sa timezone ng Pilipinas
 
             const filteredData: SiteVisitItem[] = data
-                .filter(
-                    (item) =>
-                        item.ReferenceID === userDetails.ReferenceID &&
-                        item.date_created?.split("T")[0] === todayStr
-                )
+                .filter((item) => {
+                    const itemDate = new Date(item.date_created).toLocaleDateString("en-CA", {
+                        timeZone: "Asia/Manila",
+                    });
+                    return item.ReferenceID === userDetails.ReferenceID && itemDate === todayStr;
+                })
                 .map((item) => ({
                     id: item.id,
                     ReferenceID: item.ReferenceID,
@@ -62,6 +64,7 @@ const SiteVisit: React.FC<SiteVisitProps> = ({ userDetails, refreshTrigger }) =>
                     PhotoURL: item.PhotoURL || "",
                     date_created: item.date_created,
                 }));
+
 
             setSiteVisits(filteredData);
         } catch (err: any) {
