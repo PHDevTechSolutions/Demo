@@ -5,8 +5,8 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
-import SearchFilters from "../../../components/Logs/ActivityLogs/Filters";
-import OutboundTable from "../../../components/Logs/ProgressLogs/Table";
+import SearchFilters from "../../../components/Routes/Filters/LG_Filters";
+import OutboundTable from "../../../components/Routes/Table/PL_Table";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

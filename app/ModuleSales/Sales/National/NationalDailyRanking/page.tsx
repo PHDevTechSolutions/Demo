@@ -5,17 +5,14 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import SearchFilters from "../../../components/National/DailyCallRanking/Filters";
-import Table from "../../../components/National/DailyCallRanking/Table";
+import SearchFilters from "../../../components/Routes/Filters/DR_Filters";
+import Table from "../../../components/Routes/Table/DR_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
 const ListofUser: React.FC = () => {
-    const [showForm, setShowForm] = useState(false);
-    const [showImportForm, setShowImportForm] = useState(false);
-    const [editUser, setEditUser] = useState<any>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");

@@ -5,10 +5,10 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/HelpCenter/Tutorials/Form";
-import UsersCard from "../../../components/HelpCenter/Tutorials/Tutorial";
-import SearchFilters from "../../../components/HelpCenter/Tutorials/Filters";
-import FuturisticSpinner from "../../../components/Spinner/FuturisticSpinner";
+import AddPostForm from "../../../components/Routes/Form/TT_Form";
+import UsersCard from "../../../components/Routes/Table/TT_Table";
+import SearchFilters from "../../../components/Routes/Filters/TT_Filters";
+import FuturisticSpinner from "../../../components/Routes/Spinner/FS_Spinner";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

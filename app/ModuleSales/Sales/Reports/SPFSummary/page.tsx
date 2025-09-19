@@ -5,9 +5,9 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import Form from "../../../components/Reports/CSRSummary/Form";
-import Filters from "../../../components/Reports/SPFSummary/Filters";
-import Table from "../../../components/Reports/SPFSummary/Table";
+import Form from "../../../components/Routes/Form/CS_Form";
+import Filters from "../../../components/Routes/Filters/SF_Filters";
+import Table from "../../../components/Routes/Table/SF_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

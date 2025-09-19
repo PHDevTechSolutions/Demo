@@ -4,9 +4,9 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
-import Form from "../../../components/Reports/CSRSummary/Form";
-import Filters from "../../../components/Reports/NewClientSummary/Filters";
-import Table from "../../../components/Reports/NewClientSummary/Table";
+import Form from "../../../components/Routes/Form/CS_Form";
+import Filters from "../../../components/Routes/Filters/NC_Filters";
+import Table from "../../../components/Routes/Table/NC_Table";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

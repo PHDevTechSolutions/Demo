@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import GaugeChart from "./Chart/GaugeChart";
+import GaugeChart from "../Routes/Charts/DGC_Chart";
 
 interface CallRecord {
   quotationnumber?: string;

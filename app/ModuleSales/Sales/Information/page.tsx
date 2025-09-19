@@ -6,7 +6,7 @@ import SessionChecker from "../../components/Session/SessionChecker";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Developers from "../../components/Information/ViewInformation"; 
+import Developers from "../../components/Routes/Page/VI_Page"; 
 
 const ProfilePage: React.FC = () => {
     const [userDetails, setUserDetails] = useState({

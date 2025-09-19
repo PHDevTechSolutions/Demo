@@ -5,10 +5,10 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/UserManagement/CompanyAccounts/Form";
-import SearchFilters from "../../../components/Taskflow/ActivityLogs/Filters";
-import UsersTable from "../../../components/Taskflow/ActivityLogs/Table";
-import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagination";
+import AddPostForm from "../../../components/Routes/Form/TA_Form";
+import SearchFilters from "../../../components/Routes/Filters/TA_Filters";
+import UsersTable from "../../../components/Routes/Table/TA_Table";
+import Pagination from "../../../components/Routes/Pagination/TA_Pagination";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

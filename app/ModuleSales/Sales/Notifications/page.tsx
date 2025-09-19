@@ -5,7 +5,7 @@ import SessionChecker from "../../components/Session/SessionChecker";
 import UserFetcher from "../../components/User/UserFetcher";
 
 // Components
-import UsersCard from "../../components/Notification/Table";
+import UsersCard from "../../components/Routes/Table/NF_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

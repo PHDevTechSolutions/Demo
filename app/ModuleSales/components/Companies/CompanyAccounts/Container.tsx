@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import ButtonActions from "./ButtonActions";
-import TableXchire from "./Table";
+import TableXchire from "../../Routes/Table/CA_Table";
 
 interface UsersCardProps {
   posts: any[];

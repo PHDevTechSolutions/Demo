@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from "react";
-import TableView from "./TableXchire";
-import Pagination from "./Pagination";
+import TableView from "../../Routes/Table/SA_Table";
+import Pagination from "../../Routes/Pagination/SA_Pagination";
 import GridView from "./GridView";
 import CardView from "./CardView";
-import Form from "./Form";
-import PersonalModalForm from "./Modal/PersonalModalForm";
+import Form from "../../Routes/Form/SA_Form";
+import PersonalModalForm from "../../Routes/Modal/PM_Modal";
 
 import { FaTable, FaTasks, FaCalendarAlt } from "react-icons/fa";
 import { CiSquarePlus } from "react-icons/ci";

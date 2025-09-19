@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Pin from "./Features/Pin";
-import ActivityLogs from "./ActivityLogs";
-import Priorities from "./Features/Priorities";
+import Pin from "../../Routes/Tools/SA_Pin";
+import ActivityLogs from "../../Routes/Tabs/AL_Tabs";
+import Priorities from "../../Routes/Tools/SA_Priorities";
 import { RiEditCircleLine } from "react-icons/ri";
 
 interface Post {

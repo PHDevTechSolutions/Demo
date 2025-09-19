@@ -7,9 +7,9 @@ import * as ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 // Components
-import Form from "../../../components/Reports/CSRSummary/Form";
-import Filters from "../../../components/Reports/CSRSummary/Filters";
-import Table from "../../../components/Reports/CSRSummary/Table";
+import Form from "../../../components/Routes/Form/CS_Form";
+import Filters from "../../../components/Routes/Filters/CS_Filters";
+import Table from "../../../components/Routes/Table/CR_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

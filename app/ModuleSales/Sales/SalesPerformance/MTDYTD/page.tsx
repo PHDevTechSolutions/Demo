@@ -4,8 +4,8 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 // Components
-import SearchFilters from "../../../components/SalesPerformance/MTDYTD/SearchFilters";
-import UsersTable from "../../../components/SalesPerformance/MTDYTD/Table";
+import SearchFilters from "../../../components/Routes/Filters/SP_Filters";
+import UsersTable from "../../../components/Routes/Table/SP_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

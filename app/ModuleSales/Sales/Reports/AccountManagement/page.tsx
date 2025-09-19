@@ -5,8 +5,8 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import Filters from "../../../components/Reports/AccountManagement/Filters";
-import Table from "../../../components/Reports/AccountManagement/Table";
+import Filters from "../../../components/Routes/Filters/AM_Filters";
+import Table from "../../../components/Routes/Table/AM_Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";

@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import GaugeQChart from "./Chart/GaugeQChart";
+import GaugeQChart from "../Routes/Charts/DGQ_Chart";
 
 interface QuotationProps {
   records: any[];

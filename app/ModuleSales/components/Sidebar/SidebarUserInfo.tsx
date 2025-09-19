@@ -44,22 +44,29 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
           `/api/fetchsession?id=${encodeURIComponent(userDetails.Email)}`
         );
         if (!response.ok) throw new Error("Failed to fetch session");
+
         const logs: SessionData[] = await response.json();
 
         if (logs.length > 0) {
-          const latest = logs[0];
+          const latest = logs[0]; // API should return logs sorted by timestamp descending
           setSessionInfo(latest);
 
-          if (latest.status === "logout" && !isLoggingOut) {
-            handleLogout();
-          }
+          // ⚠️ Auto logout trigger (currently commented for debugging)
+          // if (latest.status === "logout" && !isLoggingOut) {
+          //     console.log("⚠️ Triggering auto logout due to session status 'logout'");
+          //     handleLogout();
+          // }
+
         }
       } catch (err) {
         console.error("Error checking session:", err);
       }
     };
 
+    // Initial check
     checkSession();
+
+    // Run every 30s
     const interval = setInterval(checkSession, 30000);
     return () => clearInterval(interval);
   }, [userDetails.Email, isLoggingOut]);
@@ -79,13 +86,13 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
 
     if (audioTaskflowRef.current) {
       audioTaskflowRef.current.currentTime = 0;
-      await audioTaskflowRef.current.play().catch(() => {});
+      await audioTaskflowRef.current.play().catch(() => { });
     }
 
     setTimeout(() => {
       if (audioBinaryRef.current) {
         audioBinaryRef.current.currentTime = 0;
-        audioBinaryRef.current.play().catch(() => {});
+        audioBinaryRef.current.play().catch(() => { });
       }
     }, 1000);
 

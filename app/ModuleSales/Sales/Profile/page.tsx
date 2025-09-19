@@ -3,8 +3,8 @@
 import React from "react";
 import ParentLayout from "../../components/Layouts/ParentLayout";
 import SessionChecker from "../../components/Session/SessionChecker";
-import ProfileForm from "../../components/Profile/Form";
-import GenerateCode from "../../components/Profile/GenerateCode";
+import ProfileForm from "../../components/Routes/Form/PR_Form";
+import GenerateCode from "../../components/Routes/QR/PR_Code";
 
 const ProfilePage: React.FC = () => {
   return (

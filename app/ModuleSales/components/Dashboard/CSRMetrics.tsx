@@ -6,19 +6,6 @@ interface CSRMetricsProps {
     filteredAccounts: any[];
 }
 
-// ✅ Utilities
-function formatInterval(start: string, end: string) {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return "-";
-    const diff = Math.max(0, endDate.getTime() - startDate.getTime());
-    const totalSeconds = Math.floor(diff / 1000);
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
-    return `${h}h ${m}m ${s}s`;
-}
-
 function formatTotalSeconds(seconds: number) {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
