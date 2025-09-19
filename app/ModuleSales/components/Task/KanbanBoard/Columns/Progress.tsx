@@ -35,7 +35,7 @@ interface ProgressItem {
   quotationnumber?: string;
   quotationamount?: string;
   projectname?: string;
-  projectcategory?: string;
+  projectcategory?: string | string[];
   projecttype?: string;
   startdate?: string;
   enddate?: string;
@@ -87,10 +87,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [cardLoading, dispatchCardLoading] = React.useReducer(
-    cardLoadingReducer,
-    {}
-  );
+  const [cardLoading, dispatchCardLoading] = React.useReducer(cardLoadingReducer, {});
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,7 +107,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     quotationnumber: "",
     quotationamount: "",
     projectname: "",
-    projectcategory: "",
+    projectcategory: [] as string[],
     projecttype: "",
     paymentterm: "",
     actualsales: "",
@@ -151,7 +148,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       quotationnumber: "",
       quotationamount: "",
       projectname: "",
-      projectcategory: "",
+      projectcategory: [],
       projecttype: "",
       paymentterm: "",
       actualsales: "",
@@ -192,7 +189,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       quotationnumber: prog?.quotationnumber || "",
       quotationamount: prog?.quotationamount || "",
       projectname: prog?.projectname || "",
-      projectcategory: prog?.projectcategory || "",
+      projectcategory: prog?.projectcategory
+        ? Array.isArray(prog.projectcategory)
+          ? prog.projectcategory
+          : [prog.projectcategory]
+        : [],
       projecttype: prog?.projecttype || "",
       paymentterm: prog?.paymentterm || "",
       actualsales: prog?.actualsales || "",
@@ -248,20 +249,18 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   /** Handle form change */
   const handleFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /** Handle react-select change */
+  /** Handle react-select change for project category */
   const handleProjectCategoryChange = (
-    selected: { value: string; label: string } | null
+    selected: { value: string; label: string }[] | null
   ) => {
     setFormData((prev) => ({
       ...prev,
-      projectcategory: selected ? selected.value : "",
+      projectcategory: selected ? selected.map((s) => s.value) : [],
     }));
   };
 
@@ -275,7 +274,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       return;
     }
 
-    // Sanitize numeric fields
     const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
       payload[field] =
@@ -284,7 +282,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           : Number(payload[field]);
     });
 
-    // 🔹 Start per-card loading if editing existing card
     if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
 
     try {
@@ -304,15 +301,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       resetForm();
       toast.success("Activity successfully added/updated!");
 
-      // Update only the modified card
       if (data?.id) {
         setProgress((prev) => {
           const exists = prev.some((p) => p.id === data.id);
-          if (exists) {
-            return prev.map((p) => (p.id === data.id ? data : p));
-          } else {
-            return [data, ...prev];
-          }
+          return exists
+            ? prev.map((p) => (p.id === data.id ? data : p))
+            : [data, ...prev];
         });
       }
     } catch (err: any) {
@@ -345,9 +339,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // 🔹 Filter progress safely by search query
+  // Filter progress by search query
   const filteredProgress = progress.filter((item) =>
-    item.companyname?.toLowerCase().includes(searchQuery?.toLowerCase() || "")
+    item.companyname.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -362,8 +356,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   return (
     <div className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
-        <span className="text-xs text-gray-600 font-bold">Total: <span className="text-orange-500">{progress.length}</span></span>
-        {/* Search button + count */}
+        <span className="text-xs text-gray-600 font-bold">
+          Total: <span className="text-orange-500">{progress.length}</span>
+        </span>
         <button
           className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
           onClick={() => setSearchOpen((prev) => !prev)}
@@ -371,21 +366,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           Search <FaSearch size={15} />
         </button>
       </div>
-      {/* Search & count */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-end space-y-2 md:space-y-0 md:space-x-2">
-        {/* Search input (full width on small screens) */}
-        {searchOpen && (
-          <input
-            type="text"
-            placeholder="Search..."
-            className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        )}
-      </div>
 
-      {/* Progress list */}
+      {searchOpen && (
+        <input
+          type="text"
+          placeholder="Search..."
+          className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      )}
+
       {filteredProgress.length > 0 ? (
         filteredProgress.slice(0, visibleCount).map((item) => (
           <div key={item.id} className="relative">
@@ -406,7 +397,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         <p className="text-xs text-gray-400">No progress found.</p>
       )}
 
-      {/* View More button */}
       {visibleCount < filteredProgress.length && (
         <div className="flex justify-center mt-2">
           <button
@@ -417,7 +407,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           </button>
         </div>
       )}
-
 
       {showForm && (
         <ProgressForm

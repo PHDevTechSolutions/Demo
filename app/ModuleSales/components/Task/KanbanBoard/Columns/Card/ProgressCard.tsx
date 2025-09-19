@@ -31,7 +31,7 @@ export interface ProgressItem {
   quotationnumber?: string;
   quotationamount?: string;
   projectname?: string;
-  projectcategory?: string;
+  projectcategory?: string | string[];
   projecttype?: string;
   startdate?: string;
   enddate?: string;
@@ -96,6 +96,10 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
     }
   }, [onDeleteClick, progress]);
 
+  const projectCategoryStr = Array.isArray(progress.projectcategory)
+    ? progress.projectcategory.join(", ")
+    : progress.projectcategory || "";
+
   return (
     <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
       {/* Header */}
@@ -140,6 +144,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Contact #:</span> {progress.contactnumber}</p>
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
+          <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p><span className="font-semibold">Status:</span> {progress.activitystatus}</p>
           <p className="text-gray-500 text-[8px]">
             {progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}

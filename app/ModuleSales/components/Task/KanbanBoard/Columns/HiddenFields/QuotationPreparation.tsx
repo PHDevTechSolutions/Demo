@@ -15,7 +15,7 @@ interface QuotationPreparationProps {
   handleFormChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
-  handleProjectCategoryChange: (value: string[]) => void;
+  handleProjectCategoryChange: (selected: { value: string; label: string }[] | null) => void;
 }
 
 interface ShopifyProduct {

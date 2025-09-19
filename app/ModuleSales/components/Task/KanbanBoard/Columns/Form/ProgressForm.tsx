@@ -24,7 +24,7 @@ interface ProgressFormProps {
     quotationnumber: string;
     quotationamount: string;
     projectname: string;
-    projectcategory: string[]; // <-- changed to array
+    projectcategory: string[];
     projecttype: string;
     paymentterm: string;
     actualsales: string;
@@ -38,7 +38,8 @@ interface ProgressFormProps {
   ) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
-  handleProjectCategoryChange: (selected: string[]) => void; // <-- array
+  // Accept both the raw react-select format OR string[]
+  handleProjectCategoryChange: (selected: { value: string; label: string }[] | null) => void;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
