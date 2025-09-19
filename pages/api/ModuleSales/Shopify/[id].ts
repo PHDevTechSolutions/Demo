@@ -11,11 +11,36 @@ export default async function handler(
   const SHOPIFY_STORE = process.env.SHOPIFY_STORE!;
   const SHOPIFY_PRODUCT_TOKEN = process.env.SHOPIFY_PRODUCT_TOKEN!;
 
-  const { id } = req.query; // product ID from URL
-  const { title, product_type, vendor, status, sku } = req.body; // add sku
+  const { id } = req.query; 
+  const { title, product_type, vendor, status, sku } = req.body; 
 
   try {
-    // Build Shopify payload — include SKU
+    // ✅ Fetch existing product first
+    const existingRes = await fetch(
+      `https://${SHOPIFY_STORE}/admin/api/2024-04/products/${id}.json`,
+      {
+        headers: {
+          "X-Shopify-Access-Token": SHOPIFY_PRODUCT_TOKEN,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!existingRes.ok) {
+      const msg = await existingRes.text();
+      throw new Error(`Shopify responded ${existingRes.status}: ${msg}`);
+    }
+
+    const { product: existingProduct } = await existingRes.json();
+
+    // Update SKU in the first variant
+    const updatedVariants = existingProduct.variants.map((v: any, idx: number) => {
+      if (idx === 0) {
+        return { ...v, sku: sku || v.sku };
+      }
+      return v;
+    });
+
     const payload = {
       product: {
         id,
@@ -23,11 +48,7 @@ export default async function handler(
         product_type,
         vendor,
         status,
-        variants: [
-          {
-            sku, // set SKU in the first variant
-          },
-        ],
+        variants: updatedVariants,
       },
     };
 
@@ -52,8 +73,6 @@ export default async function handler(
     return res.status(200).json({ success: true, data: json.product });
   } catch (err: any) {
     console.error("Shopify update error:", err);
-    return res
-      .status(500)
-      .json({ success: false, error: err.message || "Update failed" });
+    return res.status(500).json({ success: false, error: err.message || "Update failed" });
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Select from "react-select";
+import Select, { components } from "react-select";
 import { toast } from "react-toastify";
 
 interface QuotationPreparationProps {
@@ -9,13 +9,13 @@ interface QuotationPreparationProps {
   quotationnumber: string;
   quotationamount: string;
   projectname: string;
-  projectcategory: string;
+  projectcategory: string[];
   projecttype: string;
   followup_date: string;
   handleFormChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
-  handleProjectCategoryChange: (value: string) => void;
+  handleProjectCategoryChange: (value: string[]) => void;
 }
 
 interface ShopifyProduct {
@@ -23,6 +23,23 @@ interface ShopifyProduct {
   title: string;
   sku: string;
 }
+
+// Custom Option component: title on top, SKU below
+const Option = (props: any) => {
+  return (
+    <components.Option {...props}>
+      <div>
+        <div>{props.data.title}</div>
+        <div style={{ fontSize: "10px", color: "#555" }}>{props.data.sku}</div>
+      </div>
+    </components.Option>
+  );
+};
+
+// Custom MultiValueLabel component: only show title
+const MultiValueLabel = (props: any) => (
+  <components.MultiValueLabel {...props}>{props.data.title}</components.MultiValueLabel>
+);
 
 const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
   typecall,
@@ -35,11 +52,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
   handleFormChange,
   handleProjectCategoryChange,
 }) => {
-  const [categoryOptions, setCategoryOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
+  const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
 
-  // 🔹 Fetch Shopify products (SKU + Title)
+  // Fetch Shopify products
   useEffect(() => {
     (async () => {
       try {
@@ -50,10 +65,11 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
         const products: ShopifyProduct[] = json.data;
 
-        // Map SKU + Title for select
         const mapped = products.map((p) => ({
-          value: `${p.sku} | ${p.title}`,
-          label: `${p.sku} | ${p.title}`,
+          value: p.sku,
+          title: p.title.replace(/Super Sale\s*/i, "").trim(),
+          sku: p.sku,
+          label: `${p.title} | ${p.sku}`, // fallback label
         }));
 
         setCategoryOptions(mapped);
@@ -64,7 +80,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
     })();
   }, []);
 
-  // 🔹 Auto-set followup_date based on typecall
+  // Auto-set followup_date based on typecall
   useEffect(() => {
     let daysToAdd = 0;
 
@@ -120,20 +136,26 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Product Category (SKU | Title) */}
-      <div className="flex flex-col">
+      {/* Product Category (Multi-select) */}
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Product Title <span className="text-[8px] text-green-700">* Required</span>
         </label>
         <Select
           options={categoryOptions}
-          value={categoryOptions.find((opt) => opt.value === projectcategory)}
-          onChange={(selected) => {
-            const value = selected ? selected.value : "";
-            handleProjectCategoryChange(value);
+          isMulti
+          closeMenuOnSelect={false}
+          components={{ Option, MultiValueLabel }}
+          value={categoryOptions.filter((opt) =>
+            projectcategory.includes(opt.value)
+          )}
+          onChange={(selected: any) => {
+            const values = selected ? selected.map((s: any) => s.value) : [];
+            handleProjectCategoryChange(values);
+
             handleFormChange({
-              target: { name: "projectcategory", value },
-            } as React.ChangeEvent<HTMLInputElement>);
+              target: { name: "projectcategory", value: values },
+            } as any);
           }}
           className="text-xs px-3 py-6"
           isClearable
@@ -142,7 +164,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Customer Type */}
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Customer Type <span className="text-[8px] text-green-700">* Required</span>
         </label>
@@ -163,7 +185,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Quotation Number */}
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Number <span className="text-[8px] text-green-700">* Required</span>
         </label>
@@ -179,7 +201,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Quotation Amount */}
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Amount <span className="text-[8px] text-green-700">* Required</span>
         </label>
@@ -195,7 +217,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Type */}
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Type <span className="text-[8px] text-green-700">* Required</span>
         </label>
@@ -215,7 +237,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Follow Up Date */}
-      <div className="flex flex-col">
+      <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Follow Up Date <span className="text-[8px] text-green-700">* Required</span>
         </label>
