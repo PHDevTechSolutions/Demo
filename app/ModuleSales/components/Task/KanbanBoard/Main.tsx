@@ -11,6 +11,7 @@ import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
 import Meetings from "./Columns/Meetings";
 import Completed from "./Columns/Completed";
+import SiteVisit from "./Columns/SiteVisit";
 
 interface Inquiry {
   id?: number;
@@ -181,6 +182,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                     <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                    <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
                   </>
                 )}
                 {col.id === "in-progress" && !isCollapsed && (
