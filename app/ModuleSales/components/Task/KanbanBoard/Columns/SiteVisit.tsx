@@ -45,7 +45,7 @@ const SiteVisit: React.FC<SiteVisitProps> = ({ userDetails, refreshTrigger }) =>
             if (!res.ok) throw new Error("Failed to fetch site visits");
 
             const today = new Date();
-            const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD
+            const todayStr = today.toISOString().split("T")[0];
 
             const filteredData: SiteVisitItem[] = data
                 .filter(

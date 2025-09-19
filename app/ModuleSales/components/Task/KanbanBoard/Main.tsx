@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
+// Routes
 import Inquiries from "./Columns/Inquiries";
 import Companies from "./Columns/Companies";
 import Progress from "./Columns/Progress";
@@ -73,7 +74,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
-  const [cacheLoaded, setCacheLoaded] = useState(false);
 
   // Submit handler
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
@@ -197,7 +197,23 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         })}
       </div>
 
-      <ToastContainer className="text-xs" autoClose={1000} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        className="text-sm"
+        toastClassName={() =>
+          "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+        }
+        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+      />
     </div>
   );
 };

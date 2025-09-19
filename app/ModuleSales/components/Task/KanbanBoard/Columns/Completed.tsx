@@ -232,7 +232,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
           );
         })
       ) : (
-        <p className="text-xs text-gray-400">No completed tasks found.</p>
+        <p className="text-xs text-gray-400 italic">No completed tasks found.</p>
       )}
 
       {/* View More Button */}

@@ -394,7 +394,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           </div>
         ))
       ) : (
-        <p className="text-xs text-gray-400">No progress found.</p>
+        <p className="text-xs text-gray-400 italic">No progress found.</p>
       )}
 
       {visibleCount < filteredProgress.length && (
@@ -419,7 +419,23 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         />
       )}
 
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        className="text-sm"
+        toastClassName={() =>
+          "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+        }
+        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+      />
     </div>
   );
 };
