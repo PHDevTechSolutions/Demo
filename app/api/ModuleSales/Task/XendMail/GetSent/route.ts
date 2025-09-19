@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+/**import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
@@ -8,7 +8,6 @@ if (!TASKFLOW_DB_URL) {
 
 const sql = neon(TASKFLOW_DB_URL);
 
-/** Type-safe interface for email */
 interface Email {
   from: { text: string };
   to: string | null;
@@ -90,4 +89,4 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";**/

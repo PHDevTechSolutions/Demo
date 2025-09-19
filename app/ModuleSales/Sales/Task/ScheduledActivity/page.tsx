@@ -1,13 +1,9 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-// Layout
 import ParentLayout from "../../../components/Layouts/ParentLayout";
-// Session
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
-// Filter
-import Filters from "../../../components/Task/ScheduledActivity/Filters/Filters";
-// Route
+import Filters from "../../../components/Routes/Filters/SA_Filters";
 import Main from "../../../components/Task/ScheduledActivity/Main";
 import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+/**import { NextRequest, NextResponse } from "next/server";
 import { ImapFlow } from "imapflow";
 
 export const runtime = "nodejs";
@@ -55,4 +55,4 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
         return NextResponse.json({ error: "Delete failed: " + err.message }, { status: 500 });
     }
-}
+}**/

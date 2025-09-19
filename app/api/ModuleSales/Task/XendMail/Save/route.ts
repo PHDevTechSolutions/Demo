@@ -1,10 +1,9 @@
-// file: app/api/ModuleSales/Task/XendMail/Save/route.ts
-import { NextRequest, NextResponse } from "next/server";
+/**import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // ✅ service role para makapag-upsert
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: NextRequest) {
@@ -73,4 +72,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+} **/

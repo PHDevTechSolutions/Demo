@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+/**import { NextRequest, NextResponse } from "next/server";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
 
@@ -8,7 +8,7 @@ type EmailData = {
   cc: string;
   subject: string;
   date: string;
-  messageId: string;   // ✅ add this
+  messageId: string;
   body: string;
   attachments: {
     filename: string;
@@ -103,4 +103,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ error: "Invalid request: " + err.message }, { status: 400 });
   }
-}
+}**/
