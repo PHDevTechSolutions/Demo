@@ -1,3 +1,4 @@
+{/*
 "use client";
 
 import React from "react";
@@ -64,7 +65,7 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
 
             <p className="text-sm whitespace-pre-wrap">{email.body}</p>
 
-            {/* Attachments */}
+            
             {attachments.length > 0 && (
                 <div className="mt-4">
                     <ul className="text-sm">
@@ -114,3 +115,5 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
 };
 
 export default RightColumn;
+
+*/}

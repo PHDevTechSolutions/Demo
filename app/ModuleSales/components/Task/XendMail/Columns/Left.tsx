@@ -1,3 +1,4 @@
+{/*
 "use client";
 
 import React from "react";
@@ -57,10 +58,10 @@ const Left: React.FC<LeftProps> = ({
 
   return (
     <div className="col-span-1 pr-2 overflow-y-auto max-h-[80vh]">
-      {/* Tabs + Refresh */}
+     
       <div className="mb-2 sticky top-0 bg-white py-2 z-10 border-b">
         <div className="flex justify-between items-center">
-          {/* Tabs */}
+          
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("inbox")}
@@ -84,7 +85,7 @@ const Left: React.FC<LeftProps> = ({
             </button>
           </div>
 
-          {/* Refresh Button */}
+         
           <button
             onClick={handleRefresh}
             className="px-2 py-1 bg-gray-500 text-white rounded shadow hover:bg-gray-600 text-xs flex items-center gap-1"
@@ -95,7 +96,7 @@ const Left: React.FC<LeftProps> = ({
         </div>
       </div>
 
-      {/* Loading state */}
+     
       {loading && (
         <div className="flex justify-center items-center py-4">
           <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
@@ -105,14 +106,14 @@ const Left: React.FC<LeftProps> = ({
         </div>
       )}
 
-      {/* No emails */}
+      
       {!loading && emails.length === 0 && (
         <p className="text-xs text-gray-500 text-center py-4">
           No {activeTab} emails found.
         </p>
       )}
 
-      {/* Email cards */}
+      
       {emails.map((mail) => {
         const isNew = !readEmails.has(mail.messageId);
         return (
@@ -136,7 +137,7 @@ const Left: React.FC<LeftProps> = ({
         );
       })}
 
-      {/* Load More */}
+      
       {fetchedCount < allEmails.length && (
         <button
           onClick={loadMore}
@@ -150,3 +151,5 @@ const Left: React.FC<LeftProps> = ({
 };
 
 export default Left;
+
+*/}

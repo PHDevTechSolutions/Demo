@@ -274,9 +274,9 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               {formData.typeactivity !== "Quotation Preparation" &&
                 formData.typeactivity !== "Sales Order Preparation" && (
                   <>
-                    <option value="Assisted">
-                      Assisted ( Client Assistance - Touchbase Such As Calls )
-                    </option>
+                    <option value="Assisted">Assisted ( Client Assistance - Touchbase Such As Calls )</option>
+                    <option value="Quote-Done">Quote-Done</option>
+                    <option value="SO-Done">SO-Done</option>
                     <option value="Paid">Paid ( Identity - Have SO# )</option>
                     <option value="Delivered">Delivered ( All Fields Completed - SI & DR )</option>
                     <option value="Collected">Collected</option>

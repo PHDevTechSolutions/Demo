@@ -1,3 +1,4 @@
+{/*
 "use client";
 
 import React, { useState } from "react";
@@ -83,7 +84,6 @@ const Form: React.FC<FormProps> = ({
         <input type="email" className="w-full border-b px-2 py-2 text-xs" value={to} onChange={(e) => setTo(e.target.value)} />
       </div>
 
-      {/* Dynamic recipient fields */}
       <div className="mb-2">
         <label className="block text-xs font-semibold mb-1">Recipients:</label>
         {recipients.map((recip, index) => (
@@ -146,5 +146,6 @@ const Form: React.FC<FormProps> = ({
     </div>
   );
 };
-
 export default Form;
+
+*/}

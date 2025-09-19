@@ -1,3 +1,4 @@
+{/*
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
@@ -448,4 +449,5 @@ const Main: React.FC<MainProps> = ({ userDetails }) => {
     );
 };
 
-export default Main;
+export default Main;    
+*/}
