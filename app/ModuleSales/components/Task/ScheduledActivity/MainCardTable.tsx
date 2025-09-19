@@ -98,17 +98,12 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
         }
     };
 
-    const handleButtonClick = () => {
-        setShowPersonalForm(true);
-    };
-
     const closePersonalForm = () => {
         setShowPersonalForm(false);
     };
 
     return (
         <div className="bg-white col-span-3">
-            {/* View & Buttons */}
             <div className="mb-2 flex flex-col md:flex-row md:justify-between md:items-center space-y-2 md:space-y-0">
                 <div className="flex flex-wrap gap-2 text-[10px] justify-center md:justify-start">
                     <button onClick={() => setView("table")}
@@ -139,7 +134,6 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                 </div>
             </div>
 
-            {/* Forms */}
             {showMainForm ? (
                 <Form
                     onCancel={() => {
@@ -175,7 +169,6 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                 </>
             )}
 
-            {/* Personal Form */}
             {showPersonalForm && (
                 <PersonalModalForm
                     onClose={closePersonalForm}
@@ -187,7 +180,6 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                 />
             )}
 
-            {/* Delete Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-[999]">
                     <div className="bg-white rounded-lg p-4 w-[300px]">

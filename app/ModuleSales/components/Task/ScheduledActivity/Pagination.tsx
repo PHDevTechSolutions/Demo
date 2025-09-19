@@ -20,7 +20,6 @@ const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div className="flex flex-wrap items-center space-x-1 text-[10px]">
-      {/* First Page */}
       <button
         onClick={() => goToPage(1)}
         disabled={currentPage === 1}
@@ -31,7 +30,6 @@ const Pagination: React.FC<PaginationProps> = ({
         <AiOutlineDoubleLeft size={12} />
       </button>
 
-      {/* Previous Page */}
       <button
         onClick={() => goToPage(currentPage - 1)}
         disabled={currentPage === 1}
@@ -43,7 +41,6 @@ const Pagination: React.FC<PaginationProps> = ({
         <span>Prev</span>
       </button>
 
-      {/* Next Page */}
       <button
         onClick={() => goToPage(currentPage + 1)}
         disabled={currentPage === totalPages || totalPages === 0}
@@ -55,7 +52,6 @@ const Pagination: React.FC<PaginationProps> = ({
         <MdNavigateNext size={12} />
       </button>
 
-      {/* Last Page */}
       <button
         onClick={() => goToPage(totalPages)}
         disabled={currentPage === totalPages || totalPages === 0}
@@ -66,7 +62,6 @@ const Pagination: React.FC<PaginationProps> = ({
         <AiOutlineDoubleRight size={12} />
       </button>
 
-      {/* Page Info */}
       <span className="ml-2 text-[10px]">
         Page {currentPage} of {totalPages || 1}
       </span>

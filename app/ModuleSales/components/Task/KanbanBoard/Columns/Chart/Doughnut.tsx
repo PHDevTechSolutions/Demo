@@ -1,12 +1,11 @@
-// components/Chart/Doughnut.tsx
 "use client";
 
 import React from "react";
 import { PieChart } from "react-minimal-pie-chart";
 
 interface DoughnutChartProps {
-  percent: number; // completed percent
-  size?: string; // tailwind width/height (default: w-5 h-5)
+  percent: number;
+  size?: string;
 }
 
 const DoughnutChart: React.FC<DoughnutChartProps> = ({ percent, size = "w-5 h-5" }) => {

@@ -36,8 +36,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
   userId,
 }) => {
   const router = useRouter();
-
-  // Dashboard item
   const dashboardItem: MenuItem = {
     title: "Dashboard",
     icon: BsSpeedometer2,
@@ -91,7 +89,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
         const isOpen = !!openSections[item.title];
         const Icon = item.icon;
 
-        // Dashboard
         if (item.isDashboard) {
           return (
             <div key={index} className="w-full mb-1">
@@ -122,14 +119,12 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
               )}
             </button>
 
-            {/* Desktop submenu */}
             {item.subItems.length > 0 && (
               <div className={`hidden md:block overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
                 {isOpen && renderSubItems(item.subItems)}
               </div>
             )}
 
-            {/* Mobile submenu overlay */}
             {isOpen && item.subItems.length > 0 && (
               <button
                 className="md:hidden fixed inset-0 bg-black/40 z-[65]"
@@ -138,7 +133,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
               />
             )}
 
-            {/* Mobile submenu panel */}
             {item.subItems.length > 0 && (
               <div className={`md:hidden fixed left-0 right-0 z-[70] transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-[120%]"} bottom-14`}>
                 <div className="mx-3 rounded-xl border bg-white dark:bg-gray-900 shadow-lg max-h-[60vh] overflow-y-auto p-2">

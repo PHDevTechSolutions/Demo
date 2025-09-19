@@ -25,12 +25,12 @@ const QuotationProductivityOverview: React.FC<Props> = ({ activityData }) => {
     {
       category: "New Account Development",
       Daily: dailyAccountDev,
-      MTD: dailyAccountDev, // Replace with actual MTD if available
+      MTD: dailyAccountDev,
     },
     {
       category: "Existing Client",
       Daily: dailyExistingClient,
-      MTD: dailyExistingClient, // Replace with actual MTD if available
+      MTD: dailyExistingClient,
     },
   ];
 

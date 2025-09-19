@@ -10,7 +10,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
   const [showCharts, setShowCharts] = useState(false);
   const [showComputation, setShowComputation] = useState(false);
 
-  // Filter Quote-Done records
   const quoteDoneRecords = useMemo(() => {
     return records.filter(
       (rec) => (rec.activitystatus || "").trim().toLowerCase() === "quote-done"
@@ -19,7 +18,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
 
   const totalQuoteCount = quoteDoneRecords.length;
 
-  // Total quotation amount
   const totalQuoteAmount = useMemo(() => {
     return quoteDoneRecords.reduce(
       (sum, rec) => sum + (Number(rec.quotationamount) || 0),
@@ -27,7 +25,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
     );
   }, [quoteDoneRecords]);
 
-  // SO-Done stats
   const soStats = useMemo(() => {
     const filtered = records.filter(
       (rec) => (rec.activitystatus || "").trim().toLowerCase() === "so-done"
@@ -42,7 +39,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
     };
   }, [records]);
 
-  // Actual Sales (paid / delivered)
   const paidActualSalesRecords = useMemo(() => {
     return records.filter(
       (rec) =>
@@ -58,15 +54,13 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
     );
   }, [paidActualSalesRecords]);
 
-  // Calculations
-  const quoteToSOCount = soStats.quantity; // QTY
-  const quoteToSOAmount = soStats.totalSOAmount; // Peso Value
+  const quoteToSOCount = soStats.quantity;
+  const quoteToSOAmount = soStats.totalSOAmount;
   const quoteToSOPercent =
-    totalQuoteCount > 0 ? (quoteToSOCount / totalQuoteCount) * 100 : 0; // NEW %
+    totalQuoteCount > 0 ? (quoteToSOCount / totalQuoteCount) * 100 : 0;
   const quoteToSIPercent =
     totalQuoteAmount > 0 ? (totalPaidActualSales / totalQuoteAmount) * 100 : 0;
 
-  // Aggregated quote data for table
   const aggregatedData = useMemo(() => {
     let totalCount = 0;
     let totalAmount = 0;
@@ -133,7 +127,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
           approved, or disapproved.
         </p>
 
-        {/* Gauges */}
         {showCharts && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-4">
             <div className="p-2 flex flex-col items-center border-r">
@@ -154,7 +147,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
           </div>
         )}
 
-        {/* Computation Details */}
         {showComputation && (
           <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
             <h3 className="font-bold mb-2">Computation Details</h3>
@@ -205,7 +197,6 @@ const Quotation: React.FC<QuotationProps> = ({ records }) => {
           </div>
         )}
 
-        {/* Default Table */}
         {aggregatedData.length === 0 ? (
           <p className="text-gray-500 text-xs">
             No quotations with status "Quote-Done".

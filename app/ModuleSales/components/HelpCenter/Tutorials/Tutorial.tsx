@@ -36,8 +36,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
     );
   };
 
-  // Add "bookmarks" as a special filter tab
-  // When activeType === 'bookmarks', show bookmarked posts only
   let filteredPosts = posts;
   if (activeType === "bookmarks") {
     filteredPosts = posts.filter((post) => bookmarks.includes(post.id));
@@ -67,11 +65,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
 
   return (
     <div className="flex flex-col md:flex-row">
-      {/* Left Tabs for Desktop, Select for Mobile */}
       <div className="md:w-1/5 border-b md:border-r md:pr-4">
         <h3 className="text-xs font-semibold mb-2">Module</h3>
-
-        {/* Mobile View: Select Dropdown */}
         <div className="block md:hidden mb-4">
           <select
             value={activeType ?? "all"}
@@ -92,7 +87,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
           </select>
         </div>
 
-        {/* Desktop View: Tabs */}
         <div className="hidden md:block">
           <ul className="space-y-1">
             <li
@@ -149,7 +143,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="md:w-4/5 md:pl-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {visiblePosts.length > 0 ? (
@@ -164,7 +157,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 >
                   <div className="text-sm font-semibold text-gray-800 mb-2">{post.title}</div>
                   <div className="flex-1 mb-3">
-                    {/* Video iframe */}
                     {videoId && (
                       <div className="mt-4 text-xs">
                         <iframe

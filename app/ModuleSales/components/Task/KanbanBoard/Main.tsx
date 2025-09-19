@@ -75,7 +75,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
 
-  // Submit handler
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
 
@@ -121,7 +120,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-  // Toggle column collapse
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
@@ -140,7 +138,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
               key={col.id}
               className={`flex flex-col border-l pl-2 pr-0 py-2 relative transition-all duration-300 ${isCollapsed ? "w-12" : "flex-1"}`}
             >
-              {/* Header */}
               <div className="flex justify-between items-center mb-2">
                 {!isCollapsed && (
                   <h2 className="font-semibold text-gray-700 text-center border-b w-full">
@@ -158,7 +155,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                 )}
               </div>
 
-              {/* Column Content */}
               <div className={`space-y-4 overflow-y-auto max-h-[600px] ${isCollapsed ? "hidden" : ""}`}>
                 {col.id === "new-task" && !isCollapsed && (
                   <>
@@ -208,7 +204,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+        className="text-sm z-[99999]"
         toastClassName={() =>
           "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
         }

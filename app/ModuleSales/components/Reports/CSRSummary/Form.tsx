@@ -71,8 +71,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
       setAlertMessage(editUser ? "The account information has been updated successfully." : "A new account has been created successfully.");
       setAlertType("success");
-
-      // Optionally refresh list
       refreshPosts();
 
     } catch (error) {
@@ -80,7 +78,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       setAlertType("error");
     }
 
-    // Clear alert after 3 seconds
     setTimeout(() => {
       setAlertMessage("");
       setAlertType("");
@@ -123,7 +120,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         The process of <strong>creating</strong> or <strong>editing an account</strong> involves updating key information associated with a company. When adding or editing an account, fields like company name, contact details, client type, and status are essential for ensuring accurate and up-to-date records. This ensures smooth management and tracking of company accounts within the system.
       </p>
 
-      {/* Alert message */}
       {alertMessage && (
         <div
           className={`mb-4 p-2 rounded border text-xs ${alertType === "success"

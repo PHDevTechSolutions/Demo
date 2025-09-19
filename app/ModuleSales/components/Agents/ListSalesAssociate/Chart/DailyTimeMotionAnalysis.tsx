@@ -11,9 +11,9 @@ import {
 } from "recharts";
 
 interface TimeMotionData {
-  inbound: number;   // in seconds
-  outbound: number;  // in seconds
-  others: number;    // in seconds
+  inbound: number;
+  outbound: number;
+  others: number;
 }
 
 interface Props {

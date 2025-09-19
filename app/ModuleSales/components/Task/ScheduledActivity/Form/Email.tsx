@@ -7,11 +7,8 @@ interface EmailProps {
 
 const Email: React.FC<EmailProps> = ({ emailaddress, setemailaddress }) => {
   const [error, setError] = useState("");
-
-  // Simple email regex for validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Validate email on every change
   useEffect(() => {
     if (emailaddress === "") {
       setError("");
@@ -30,7 +27,6 @@ const Email: React.FC<EmailProps> = ({ emailaddress, setemailaddress }) => {
         value={emailaddress ?? ""}
         onChange={(e) => {
           const input = e.target.value;
-          // sanitize input by allowing only these characters
           const allowed = input.replace(/[^a-zA-Z0-9@._-]/g, "");
           setemailaddress(allowed);
         }}

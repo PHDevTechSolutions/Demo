@@ -13,7 +13,6 @@ import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
 import AIRightbar from "../AI/Rightbar/AIRightbar";
 import GPTRightbar from "../AI/Rightbar/GPTRightbar";
-import Image from "next/image";
 
 // 🎵 Songs List
 const songs = [

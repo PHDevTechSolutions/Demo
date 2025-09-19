@@ -150,7 +150,6 @@ const Charts: React.FC<ChartsProps> = ({
           ))}
         </svg>
 
-        {/* ✅ Custom Tooltip */}
         {hoverIndex !== null && tooltipPos && (
           <div
             className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"

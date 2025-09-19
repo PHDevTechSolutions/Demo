@@ -106,7 +106,6 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
             </tbody>
           </table>
 
-          {/* View More Button */}
           {limit < tasks.length && (
             <div className="flex justify-center mt-2">
               <button

@@ -14,7 +14,7 @@ import DropOffRate from "./Analytics/DropOffRate";
 export interface SalesRecord {
   project: string;
   date_created: string;
-  startdate?: string; // assuming some records may have this
+  startdate?: string;
   enddate?: string;
   quotationamount: number;
   soamount: number;
@@ -33,13 +33,10 @@ interface PerformanceAnalyticsProps {
 const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({ groupedPosts }) => {
   const [startDateFilter, setStartDateFilter] = useState<string>("");
   const [endDateFilter, setEndDateFilter] = useState<string>("");
-
-  // Flatten groupedPosts into array
   const records: SalesRecord[] = useMemo(() => {
     return Object.values(groupedPosts).flat();
   }, [groupedPosts]);
 
-  // Filter records by date range based on overlap of record date range and filter date range
   const filteredRecords = useMemo(() => {
     if (!startDateFilter && !endDateFilter) return records;
 
@@ -50,44 +47,15 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({ groupedPost
       const recordStart = startdate ? new Date(startdate) : new Date(date_created);
       const recordEnd = enddate ? new Date(enddate) : new Date(date_created);
 
-      const filterStart = startFilter || new Date(-8640000000000000); // earliest possible date
-      const filterEnd = endFilter || new Date(8640000000000000); // latest possible date
+      const filterStart = startFilter || new Date(-8640000000000000);
+      const filterEnd = endFilter || new Date(8640000000000000);
 
       return recordStart <= filterEnd && recordEnd >= filterStart;
     });
   }, [records, startDateFilter, endDateFilter]);
 
-  // Calculate month-wise totals for quotationamount and actualsales
-  const monthlyTotals = useMemo(() => {
-    const totals: Record<
-      string,
-      { quotationTotal: number; actualsalesTotal: number }
-    > = {};
-
-    filteredRecords.forEach(({ date_created, quotationamount, actualsales }) => {
-      if (!date_created) return;
-      const month = new Date(date_created).toISOString().slice(0, 7); // "YYYY-MM"
-
-      if (!totals[month]) {
-        totals[month] = { quotationTotal: 0, actualsalesTotal: 0 };
-      }
-      totals[month].quotationTotal += quotationamount;
-      totals[month].actualsalesTotal += actualsales;
-    });
-
-    // Sort months ascending
-    const sortedMonths = Object.keys(totals).sort();
-
-    return sortedMonths.map((month) => ({
-      month,
-      quotationTotal: totals[month].quotationTotal,
-      actualsalesTotal: totals[month].actualsalesTotal,
-    }));
-  }, [filteredRecords]);
-
   return (
     <div className="space-y-8 p-4">
-      {/* Date range inputs */}
       <section className="mb-6 flex gap-4 items-center">
         <label className="text-xs">
           Start Date:{" "}
@@ -120,27 +88,16 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({ groupedPost
         </button>
       </section>
 
-      {/* Conversion Rate Chart (Quotation vs Actual Sales) */}
       <QuotationActualSales records={filteredRecords} />
-      {/* Trend Analysis Bar Chart */}
       <TrendAnalysis records={filteredRecords} />
-      {/* Conversion Rate (SO Amount vs Quotation) */}
       <SOAmountQuotation records={filteredRecords} />
-      {/* SO Amount vs Actual Sales (Bar Chart) */}
       <SOAmountActualSales records={filteredRecords} />
-      {/* Sales Growth Rate Chart */}
       <SalesGrowthRate records={filteredRecords} />
-      {/* Lead Time Response Analysis */}
       <LeadTimeResponseAnalysis records={filteredRecords} />
-      {/* Call Status Breakdown */}
       <CallStatusBreakDown records={filteredRecords} />
-      {/* Seasonality */}
       <Seasonality records={filteredRecords} />
-      {/* Project Analysis */}
       <ProjectAnalysis records={filteredRecords} />
-      {/* Sales Pipeline */}
       <SalesPipeline records={filteredRecords} />
-      {/* Drop Off Rate */}
       <DropOffRate records={filteredRecords} />
     </div>
   );

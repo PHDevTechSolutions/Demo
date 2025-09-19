@@ -5,7 +5,6 @@ import Calendar from "../Features/Calendar";
 import Meeting from "../Features/Meeting";
 
 import ConfirmationModal from "./ConfirmationModal";
-import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
 import "leaflet/dist/leaflet.css";
 
 interface PersonalModalFormProps {

@@ -22,7 +22,7 @@ interface SiteVisitItem {
     Location: string;
     Type: string;
     PhotoURL: string;
-    date_created: string; // for filtering today
+    date_created: string;
 }
 
 interface SiteVisitProps {
@@ -46,7 +46,6 @@ const SiteVisit: React.FC<SiteVisitProps> = ({ userDetails, refreshTrigger }) =>
 
             const today = new Date();
             const todayStr = today.toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
-            // format YYYY-MM-DD sa timezone ng Pilipinas
 
             const filteredData: SiteVisitItem[] = data
                 .filter((item) => {

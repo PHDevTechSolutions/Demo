@@ -275,7 +275,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                     </div>
                                 ))}
 
-                            {/* 🔹 View More Button */}
                             {visibleCount < filteredNotes.length && (
                                 <div className="flex justify-center mt-2">
                                     <button
@@ -322,7 +321,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                 draggable
                 pauseOnHover
                 theme="colored"
-                className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+                className="text-sm z-[99999]"
                 toastClassName={() =>
                     "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
                 }

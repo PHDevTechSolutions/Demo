@@ -2,7 +2,7 @@
 import React from "react";
 
 interface HorizontalBarProps {
-  value: number;   // 📊 percentage (0–100)
+  value: number;
   label: string;
   color?: string;
   backgroundColor?: string;

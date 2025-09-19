@@ -12,6 +12,7 @@ import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagin
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { truncateSync } from "fs";
 
 const DeletionAccounts: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
@@ -21,8 +22,8 @@ const DeletionAccounts: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [postsPerPage, setPostsPerPage] = useState(12);
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Manager: "", TSM: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
@@ -31,14 +32,12 @@ const DeletionAccounts: React.FC = () => {
     const [manager, setManager] = useState("");
     const [tsm, setTsm] = useState("");
 
-    // Loading states
     const [error, setError] = useState<string | null>(null);
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
+    const loading = loadingUser || loadingAccounts; 
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -50,7 +49,7 @@ const DeletionAccounts: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         Manager: data.Manager || "",
                         TSM: data.TSM || "",
@@ -79,14 +78,13 @@ const DeletionAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            console.log("Fetched data:", data);
+            setPosts(data.data); 
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -99,43 +97,33 @@ const DeletionAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Filter users by search term (firstname, lastname)
+
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
-            // Check if the company name matches the search term
             const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
-
-            // Parse the date_created field
             const postDate = post.date_created ? new Date(post.date_created) : null;
-
-            // Check if the post's date is within the selected date range
             const isWithinDateRange = (
                 (!startDate || (postDate && postDate >= new Date(startDate))) &&
                 (!endDate || (postDate && postDate <= new Date(endDate)))
             );
 
-            // Check if the post matches the selected client type
             const matchesClientType = selectedClientType
                 ? post?.typeclient === selectedClientType
                 : true;
 
-            // Get the reference ID from userDetails
-            const referenceID = userDetails.ReferenceID; // Manager's ReferenceID from MongoDB
+            const referenceID = userDetails.ReferenceID; 
 
             const matchesRole = userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-                ? true // Super Admin sees all
+                ? truncateSync
                 : userDetails.Role === "Territory Sales Associate"
-                    ? post?.referenceid === referenceID // Manager sees only assigned companies
+                    ? post?.referenceid === referenceID
                     : userDetails.Role === "Manager"
                         ? post?.manager === referenceID
                         : userDetails.Role === "Territory Sales Manager"
                             ? post?.tsm === referenceID
-                            : false; // Default false if no match
+                            : false;
 
-            // Check if the status is 'Inactive' and if the filters match
             const matchesStatus = post?.status === "For Deletion" || post?.status === "Remove" || post?.status === "Approve For Deletion";
-
-            // Return the filtered result, ensuring 'Inactive' status is considered
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole && matchesStatus;
         })
         : [];
@@ -145,7 +133,6 @@ const DeletionAccounts: React.FC = () => {
     const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
     const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
@@ -158,7 +145,6 @@ const DeletionAccounts: React.FC = () => {
                     {(user) => (
                         <div className="mx-auto p-4 text-gray-900">
                             <div className="grid grid-cols-1 md:grid-cols-1">
-                                {/* Backdrop overlay */}
                                 {showForm && (
                                     <div
                                         className="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -169,7 +155,6 @@ const DeletionAccounts: React.FC = () => {
                                     ></div>
                                 )}
 
-                                {/* Sliding Form */}
                                 <div
                                     className={`fixed bottom-0 left-0 w-full h-[80%] shadow-lg z-[9999] transform transition-transform duration-500 ease-in-out overflow-y-auto bg-white ${(showForm) ? "translate-y-0" : "translate-y-full"
                                         }`}
@@ -180,7 +165,7 @@ const DeletionAccounts: React.FC = () => {
                                                 setShowForm(false);
                                                 setEditUser(null);
                                             }}
-                                            refreshPosts={fetchAccount} // Pass the refreshPosts callback
+                                            refreshPosts={fetchAccount}
                                             userDetails={{
                                                 id: editUser ? editUser.id : userDetails.UserId,
                                                 referenceid: editUser ? editUser.referenceid : userDetails.ReferenceID,
@@ -212,7 +197,6 @@ const DeletionAccounts: React.FC = () => {
                                         endDate={endDate}
                                         setEndDate={setEndDate}
                                     />
-                                    {/* Loader or Table */}
                                     {loading ? (
                                         <div className="flex justify-center items-center py-10">
                                             <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -242,7 +226,23 @@ const DeletionAccounts: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

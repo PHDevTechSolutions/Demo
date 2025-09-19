@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from "react";
-import { IoIosSettings } from "react-icons/io";
 import { RiEditCircleLine } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
 
@@ -67,7 +66,6 @@ const formatDate = (timestamp: number): string => {
 
   const date = new Date(timestamp);
 
-  // Format the date to a readable string in UTC
   return date.toLocaleDateString("en-US", {
     timeZone: "UTC",
     month: "short",

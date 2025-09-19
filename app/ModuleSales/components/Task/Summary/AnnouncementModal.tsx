@@ -8,7 +8,7 @@ interface AnnouncementModalProps {
     onClose: () => void;
     summary: any[];
     summaryType: "yesterday" | "latest";
-    loadingSummary: boolean; // ✅ added
+    loadingSummary: boolean;
 }
 
 const statusEmojis: { [key: string]: string } = {
@@ -29,7 +29,7 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
     onClose,
     summary,
     summaryType,
-    loadingSummary, // ✅ used here
+    loadingSummary,
 }) => {
     if (!isOpen) return null;
 
@@ -110,7 +110,6 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
                         : "📌 Last Activity"}
                 </h2>
 
-                {/* ✅ Loader / Data / Empty states */}
                 {loadingSummary ? (
                     <div className="flex justify-center items-center py-10">
                         <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>

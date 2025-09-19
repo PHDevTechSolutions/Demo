@@ -3,7 +3,7 @@ import { MdModeEdit, MdDeleteForever } from "react-icons/md";
 
 interface Activity {
   id: number | string;
-  date_created?: string; // ✅ Added this for sorting
+  date_created?: string;
   startdate: string;
   enddate: string;
   typeactivity: string;
@@ -32,7 +32,6 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
   handleDeleteClick,
   handleEditClick,
 }) => {
-  // ✅ Sort by date_created DESC (latest first)
   const sortedRecords = [...records].sort((a, b) => {
     const dateA = new Date(a.date_created || "").getTime();
     const dateB = new Date(b.date_created || "").getTime();
@@ -41,18 +40,12 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
-
-    // Use UTC getters instead of local ones to prevent timezone shifting.
     let hours = date.getUTCHours();
     const minutes = date.getUTCMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
-
-    // Convert hours to 12-hour format
     hours = hours % 12;
-    hours = hours ? hours : 12; // if hour is 0, display as 12
+    hours = hours ? hours : 12;
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-
-    // Use toLocaleDateString with timeZone 'UTC' to format the date portion
     const formattedDateStr = date.toLocaleDateString('en-US', {
       timeZone: 'UTC',
       month: 'short',
@@ -60,7 +53,6 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
       year: 'numeric',
     });
 
-    // Return combined date and time string
     return `${formattedDateStr} ${hours}:${minutesStr} ${ampm}`;
   };
 

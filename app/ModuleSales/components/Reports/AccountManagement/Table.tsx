@@ -142,7 +142,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         return sum + (isNaN(value) ? 0 : value);
       }, 0);
 
-      // Compute averageSales
       const averageSales =
         filteredEntries.length > 0 ? totalSales / filteredEntries.length : 0;
 
@@ -161,7 +160,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
       return {
         companyName,
         totalSales,
-        averageSales, // <-- ADD THIS
+        averageSales,
         typeClients,
         targetQuota,
         agentName,
@@ -169,8 +168,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
       };
     });
 
-
-    // Sort by totalSales (pinakamataas muna)
     mapped.sort((a, b) => b.totalSales - a.totalSales);
 
     return mapped;
@@ -200,7 +197,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
 
   return (
     <div>
-      {/* Filters & Export */}
       <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
@@ -275,7 +271,6 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto relative">
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100 sticky top-0 z-10">

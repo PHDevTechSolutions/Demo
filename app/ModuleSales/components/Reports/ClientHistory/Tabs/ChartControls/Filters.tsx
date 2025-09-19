@@ -1,6 +1,4 @@
 import React from "react";
-
-// Define the ViewMode type here or import from your types file
 export type ViewMode = "line" | "table";
 
 interface FiltersProps {

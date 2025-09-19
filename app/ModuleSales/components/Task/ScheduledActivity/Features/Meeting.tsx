@@ -1,4 +1,3 @@
-// ./Features/Meeting.tsx
 import React from "react";
 import { FaGoogle, FaMicrosoft, FaVideo } from "react-icons/fa";
 

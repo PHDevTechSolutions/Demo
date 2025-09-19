@@ -5,9 +5,9 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/UserManagement/CompanyAccounts/AddUserForm";
-import SearchFilters from "../../../components/Taskflow/ActivityLogs/SearchFilters";
-import UsersTable from "../../../components/Taskflow/ActivityLogs/ActivityTable";
+import AddPostForm from "../../../components/UserManagement/CompanyAccounts/Form";
+import SearchFilters from "../../../components/Taskflow/ActivityLogs/Filters";
+import UsersTable from "../../../components/Taskflow/ActivityLogs/Table";
 import Pagination from "../../../components/UserManagement/CompanyAccounts/Pagination";
 
 // Toast Notifications
@@ -16,8 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ExcelJS from "exceljs";
 
 // Icons
-import { CiSquarePlus, CiImport, CiExport } from "react-icons/ci";
-import { FiUpload } from "react-icons/fi";
+import {CiImport } from "react-icons/ci";
 import Select from "react-select";
 
 const ListofUser: React.FC = () => {
@@ -29,8 +28,8 @@ const ListofUser: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [postsPerPage, setPostsPerPage] = useState(12);
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
@@ -55,10 +54,10 @@ const ListofUser: React.FC = () => {
     const [TSAOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
     const [selectedReferenceID, setSelectedReferenceID] = useState<{ value: string; label: string } | null>(null);
 
-    const [filterTSA, setFilterTSA] = useState<string>(""); // ✅ Fixed TSA Filter
-    const [tsaList, setTsaList] = useState<any[]>([]); // ✅ Fixed TSA List
+    const [filterTSA, setFilterTSA] = useState<string>("");
+    const [tsaList, setTsaList] = useState<any[]>([]);
 
-    const [selectedStatus, setSelectedStatus] = useState<string>(""); // Status filter ✅ Corrected
+    const [selectedStatus, setSelectedStatus] = useState<string>("");
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -74,7 +73,7 @@ const ListofUser: React.FC = () => {
 
             const parsedData: any[] = [];
             worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber === 1) return; // Skip header row
+                if (rowNumber === 1) return;
 
                 parsedData.push({
                     referenceid,
@@ -106,11 +105,11 @@ const ListofUser: React.FC = () => {
 
     const handleFileUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true); // Start loading
+        setIsLoading(true);
 
         if (!file) {
             toast.error("Please upload a file.");
-            setIsLoading(false); // Stop loading if no file
+            setIsLoading(false);
             return;
         }
 
@@ -125,7 +124,7 @@ const ListofUser: React.FC = () => {
                 const jsonData: any[] = [];
 
                 worksheet.eachRow((row, rowNumber) => {
-                    if (rowNumber === 1) return; // Skip header row
+                    if (rowNumber === 1) return;
 
                     jsonData.push({
                         referenceid,
@@ -149,27 +148,25 @@ const ListofUser: React.FC = () => {
                     });
                 });
 
-                // Debug log to check parsed data
                 console.log("Parsed Excel Data:", jsonData);
 
                 const response = await fetch("/api/ModuleSales/UserManagement/ActivityLogs/ImportActivities", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json", // Set correct header for JSON
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
                         referenceid,
                         tsm,
                         manager,
                         targetquota,
-                        data: jsonData, // Send parsed data as JSON
+                        data: jsonData,
                     }),
                 });
 
                 const result = await response.json();
                 if (result.success) {
                     toast.success(`${result.insertedCount} records imported successfully!`);
-                    // Reset fields after success
                     setreferenceid("");
                     settsm("");
                     setmanager("");
@@ -182,14 +179,13 @@ const ListofUser: React.FC = () => {
                 console.error("Error processing file:", error);
                 toast.error("Error uploading file.");
             } finally {
-                setIsLoading(false); // Stop loading after processing
+                setIsLoading(false);
             }
         };
 
         reader.readAsArrayBuffer(file);
     };
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -201,7 +197,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
                         Email: data.Email || "",
@@ -233,10 +229,9 @@ const ListofUser: React.FC = () => {
                 }
                 const data = await response.json();
 
-                // Use ReferenceID as value
                 const options = data.map((user: any) => ({
-                    value: user.ReferenceID, // ReferenceID ang isesend
-                    label: `${user.Firstname} ${user.Lastname}`, // Pero ang nakikita sa UI ay Name
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
                 }));
 
                 setManagerOptions(options);
@@ -257,10 +252,9 @@ const ListofUser: React.FC = () => {
                 }
                 const data = await response.json();
 
-                // Use ReferenceID as value
                 const options = data.map((user: any) => ({
-                    value: user.ReferenceID, // ReferenceID ang isesend
-                    label: `${user.Firstname} ${user.Lastname}`, // Pero ang nakikita sa UI ay Name
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
                 }));
 
                 setTSMOptions(options);
@@ -281,10 +275,9 @@ const ListofUser: React.FC = () => {
                 }
                 const data = await response.json();
 
-                // Use ReferenceID as value
                 const options = data.map((user: any) => ({
-                    value: user.ReferenceID, // ReferenceID ang isesend
-                    label: `${user.Firstname} ${user.Lastname}`, // Pero ang nakikita sa UI ay Name
+                    value: user.ReferenceID,
+                    label: `${user.Firstname} ${user.Lastname}`,
                 }));
 
                 setTSAOptions(options);
@@ -296,13 +289,12 @@ const ListofUser: React.FC = () => {
         fetchTSA();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/ActivityLogs/FetchAccount");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            console.log("Fetched data:", data);
+            setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -327,34 +319,24 @@ const ListofUser: React.FC = () => {
             .catch((err) => console.error("Error fetching TSA list:", err));
     }, []);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
-            // ✅ Check if the company name or status matches the search term
             const matchesSearchTerm =
                 post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 post?.activitystatus?.toLowerCase().includes(searchTerm.toLowerCase());
+                const postDate = post.date_created ? new Date(post.date_created) : null;
 
-            // ✅ Parse the date_created field
-            const postDate = post.date_created ? new Date(post.date_created) : null;
-
-            // ✅ Check if the post's date is within the selected date range
             const isWithinDateRange =
                 (!startDate || (postDate && postDate >= new Date(startDate))) &&
                 (!endDate || (postDate && postDate <= new Date(endDate)));
 
-            // ✅ Check if the post matches the selected client type
             const matchesClientType = selectedClientType
                 ? post?.typeclient === selectedClientType
                 : true;
 
-            // ✅ Check if the post matches the selected status
             const matchesStatus = selectedStatus ? post?.activitystatus === selectedStatus : true;
-
-            // ✅ Check if the post matches the selected TSA
             const matchesTSA = filterTSA ? post?.referenceid === filterTSA : true;
 
-            // ✅ Return the filtered result
             return (
                 matchesSearchTerm &&
                 isWithinDateRange &&
@@ -370,8 +352,6 @@ const ListofUser: React.FC = () => {
     const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
     const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
@@ -390,8 +370,8 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchAccount}  // Pass the refreshPosts callback
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}  // Ensure id is passed correctly
+                                        refreshPosts={fetchAccount} 
+                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }} 
                                         editUser={editUser}
                                     />
                                 ) : showImportForm ? (
@@ -406,7 +386,7 @@ const ListofUser: React.FC = () => {
                                                     ) : (
                                                         <Select id="Manager" options={managerOptions} value={selectedManager} onChange={(option) => {
                                                             setSelectedManager(option);
-                                                            setmanager(option ? option.value : ""); // Save ReferenceID as Manager
+                                                            setmanager(option ? option.value : "");
                                                         }} className="text-xs capitalize" />
                                                     )}
                                                 </div>
@@ -417,7 +397,7 @@ const ListofUser: React.FC = () => {
                                                     ) : (
                                                         <Select id="TSM" options={TSMOptions} value={selectedTSM} onChange={(option) => {
                                                             setSelectedTSM(option);
-                                                            settsm(option ? option.value : ""); // Save ReferenceID as Manager
+                                                            settsm(option ? option.value : "");
                                                         }} className="text-xs capitalize" />
                                                     )}
                                                 </div>
@@ -428,7 +408,7 @@ const ListofUser: React.FC = () => {
                                                     ) : (
                                                         <Select id="ReferenceID" options={TSAOptions} value={selectedReferenceID} onChange={(option) => {
                                                             setSelectedReferenceID(option);
-                                                            setreferenceid(option ? option.value : ""); // Save ReferenceID as Manager
+                                                            setreferenceid(option ? option.value : "");
                                                         }} className="text-xs capitalize" />
                                                     )}
                                                 </div>
@@ -468,7 +448,6 @@ const ListofUser: React.FC = () => {
                                             </div>
                                         </form>
 
-                                        {/* Display Table if Data is Loaded */}
                                         {jsonData.length > 0 && (
                                             <div className="mt-4">
                                                 <h3 className="text-sm font-bold mb-2">Preview Data ({jsonData.length} records)</h3>
@@ -537,15 +516,15 @@ const ListofUser: React.FC = () => {
                                                 setPostsPerPage={setPostsPerPage}
                                                 selectedClientType={selectedClientType}
                                                 setSelectedClientType={setSelectedClientType}
-                                                selectedStatus={selectedStatus} // ✅ Corrected
-                                                setSelectedStatus={setSelectedStatus} // ✅ Corrected
+                                                selectedStatus={selectedStatus}
+                                                setSelectedStatus={setSelectedStatus}
                                                 startDate={startDate}
                                                 setStartDate={setStartDate}
                                                 endDate={endDate}
                                                 setEndDate={setEndDate}
-                                                filterTSA={filterTSA} // ✅ Added
-                                                setFilterTSA={setFilterTSA} // ✅ Added
-                                                tsaList={tsaList} // ✅ Added
+                                                filterTSA={filterTSA}
+                                                setFilterTSA={setFilterTSA}
+                                                tsaList={tsaList}
                                             />
 
                                             <UsersTable
@@ -567,7 +546,23 @@ const ListofUser: React.FC = () => {
                                     </>
                                 )}
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

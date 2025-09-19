@@ -18,12 +18,12 @@ const COLORS = {
 };
 
 const CHART_HEIGHT = 300;
-const Y_AXIS_WIDTH = 40; // space for y-axis labels
-const GAP_RATIO = 0.3; // Gap as ratio to bar width
+const Y_AXIS_WIDTH = 40;
+const GAP_RATIO = 0.3;
 
 const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(800); // default width
+  const [containerWidth, setContainerWidth] = useState(800);
   const [tooltip, setTooltip] = useState<{
     x: number;
     y: number;
@@ -31,7 +31,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
     data: any;
   }>({ x: 0, y: 0, visible: false, data: null });
 
-  // Update container width on resize
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
@@ -56,7 +55,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
       stages[callstatus].deals += 1;
       stages[callstatus].totalSales += actualsales || 0;
 
-      // Calculate time to close only if both dates exist and valid
       if (startdate && enddate) {
         const start = new Date(startdate);
         const end = new Date(enddate);
@@ -88,7 +86,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
   const barWidth = (containerWidth - Y_AXIS_WIDTH) / totalUnits;
   const gap = barWidth * GAP_RATIO;
 
-  // Prepare Y-axis ticks (5 steps)
   const yTicksTime = 5;
   const yTicksRate = 5;
 
@@ -113,12 +110,11 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
           viewBox={`0 0 ${containerWidth} ${CHART_HEIGHT}`}
           preserveAspectRatio="none"
         >
-          {/* Y axis lines and labels for Avg Time to Close (left) */}
+         
           {yTickValuesTime.map((val, i) => {
             const y = CHART_HEIGHT - 20 - (val / maxTime) * (CHART_HEIGHT - 60);
             return (
               <g key={"left-tick-" + i}>
-                {/* grid line */}
                 <line
                   x1={Y_AXIS_WIDTH}
                   y1={y}
@@ -127,7 +123,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
                   stroke="#eee"
                   strokeWidth={1}
                 />
-                {/* tick label */}
                 <text
                   x={Y_AXIS_WIDTH - 5}
                   y={y + 4}
@@ -141,12 +136,10 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
             );
           })}
 
-          {/* Y axis lines and labels for Conversion Rate % (right) */}
           {yTickValuesRate.map((val, i) => {
             const y = CHART_HEIGHT - 20 - (val / maxRate) * (CHART_HEIGHT - 60);
             return (
               <g key={"right-tick-" + i}>
-                {/* tick label */}
                 <text
                   x={containerWidth - 5}
                   y={y + 4}
@@ -160,7 +153,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
             );
           })}
 
-          {/* Y axis lines */}
           <line
             x1={Y_AXIS_WIDTH}
             y1={20}
@@ -178,7 +170,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
             strokeWidth={1.5}
           />
 
-          {/* Bars and X-axis labels */}
           {pipelineData.map((item, index) => {
             const xBase = Y_AXIS_WIDTH + gap + index * (2 * barWidth + gap * 2);
             const timeBarHeight = (item.avgTimeToClose / maxTime) * (CHART_HEIGHT - 60);
@@ -194,7 +185,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
                   let x = e.clientX - bounds.left + 10;
                   let y = e.clientY - bounds.top - 20;
 
-                  // Clamp tooltip X/Y so it stays within container
                   const tooltipWidth = 160;
                   if (x + tooltipWidth > bounds.width) {
                     x = bounds.width - tooltipWidth - 10;
@@ -230,7 +220,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
                 }}
                 onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
               >
-                {/* Time bar */}
                 <rect
                   x={xBase}
                   y={CHART_HEIGHT - timeBarHeight - 20}
@@ -239,7 +228,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
                   fill={COLORS.time}
                   rx={4}
                 />
-                {/* Rate bar */}
                 <rect
                   x={xBase + barWidth + 5}
                   y={CHART_HEIGHT - rateBarHeight - 20}
@@ -248,7 +236,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
                   fill={COLORS.conversion}
                   rx={4}
                 />
-                {/* X-axis label */}
                 <text
                   x={xBase + barWidth}
                   y={CHART_HEIGHT - 4}
@@ -261,10 +248,8 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
               </g>
             );
           })}
-
         </svg>
 
-        {/* Tooltip */}
         {tooltip.visible && (
           <div
             className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"
@@ -281,7 +266,6 @@ const SalesPipeline: React.FC<SalesPipelineProps> = ({ records }) => {
         )}
       </div>
 
-      {/* Legends */}
       <div className="flex justify-center gap-6 mt-3 text-xs text-gray-700">
         <div className="flex items-center gap-2">
           <span

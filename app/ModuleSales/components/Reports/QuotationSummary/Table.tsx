@@ -19,11 +19,7 @@ interface TableProps {
 const Table: React.FC<TableProps> = ({ posts }) => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-
-    // Sorting state
     const [dateSortOrder, setDateSortOrder] = useState<"asc" | "desc">("desc");
-
-    // Date range filter state
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
 
@@ -34,7 +30,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         return isNaN(d.getTime()) ? null : d;
     };
 
-    // Filter posts by date range
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
@@ -48,7 +43,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         });
     }, [posts, startDate, endDate]);
 
-    // Sort filtered posts by date_created
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
             const dateA = new Date(a.date_created).getTime();
@@ -94,7 +88,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         }, 0);
     }, [filteredPosts]);
 
-    // Total Quotation Count
     const totalQuotationCount = useMemo(() => {
         return filteredPosts.length;
     }, [filteredPosts]);
@@ -144,7 +137,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
     return (
         <div>
-            {/* Filters */}
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                     <label className="font-semibold text-xs whitespace-nowrap">Start Date:</label>
@@ -188,7 +180,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto relative">
                 <table className="min-w-full table-auto text-xs">
                     <thead className="bg-gray-100 sticky top-0 z-10">
@@ -259,7 +250,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                 </table>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
                 <button
                     onClick={() => goToPage(currentPage - 1)}

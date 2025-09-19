@@ -12,7 +12,7 @@ interface Session {
   timestamp: string;
 }
 
-const DATES_PER_PAGE = 3; // Number of dates per page
+const DATES_PER_PAGE = 3;
 
 const SessionLogs: React.FC = () => {
   const [userDetails, setUserDetails] = useState({
@@ -102,7 +102,6 @@ const SessionLogs: React.FC = () => {
     return date.toLocaleDateString("en-US", options);
   };
 
-  // Group sessions by date
   const sessionsByDate: Record<string, Session[]> = sessions.reduce((acc, session) => {
     const date = formatDateOnly(session.timestamp);
     if (!acc[date]) acc[date] = [];
@@ -127,7 +126,6 @@ const SessionLogs: React.FC = () => {
     <SessionChecker>
       <ParentLayout>
         <div className="mx-auto p-4 space-y-6">
-          {/* Profile Card */}
           <div className="flex items-center bg-white rounded-xl shadow-lg p-4 space-x-4 animate-fade-in">
             <img
               src={userDetails.profilePicture}
@@ -143,7 +141,6 @@ const SessionLogs: React.FC = () => {
             </div>
           </div>
 
-          {/* Timeline by date with pagination */}
           {paginatedDates.length > 0 ? (
             <>
               {paginatedDates.map((date) => (
@@ -152,7 +149,6 @@ const SessionLogs: React.FC = () => {
                   <div className="relative border-l-2 border-gray-200 ml-6 space-y-4">
                     {sessionsByDate[date].map((session, idx) => (
                       <div key={idx} className="relative flex items-start animate-slide-up">
-                        {/* Taskflow image */}
                         <div className="absolute -left-6 mt-1 w-8 h-8 flex-shrink-0">
                           <img
                             src="/taskflow.png"
@@ -163,9 +159,8 @@ const SessionLogs: React.FC = () => {
 
                         <div className="ml-8 p-4 bg-white rounded-lg shadow hover:shadow-lg transition duration-300 flex-1">
                           <p
-                            className={`font-semibold ${
-                              session.status.toLowerCase() === "login" ? "text-green-600" : "text-red-600"
-                            }`}
+                            className={`font-semibold ${session.status.toLowerCase() === "login" ? "text-green-600" : "text-red-600"
+                              }`}
                           >
                             {session.status.toUpperCase()}
                           </p>
@@ -176,8 +171,7 @@ const SessionLogs: React.FC = () => {
                   </div>
                 </div>
               ))}
-
-              {/* Pagination Controls */}
+              
               <div className="flex justify-between items-center mt-4">
                 <button
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -202,7 +196,23 @@ const SessionLogs: React.FC = () => {
             <p className="text-gray-500 text-center py-4">No session logs available</p>
           )}
         </div>
-        <ToastContainer />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          className="text-sm z-[99999]"
+          toastClassName={() =>
+            "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+          }
+          progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+        />
       </ParentLayout>
     </SessionChecker>
   );

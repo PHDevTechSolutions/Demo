@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 
 type Contributor = {
@@ -9,7 +9,6 @@ type Contributor = {
     roleTag: string;
 };
 
-// Current contributors
 const currentContributors: Contributor[] = [
     { name: "Liesther Roluna | Leroux Y Xchire", role: "Senior Fullstack Developer", roleTag: "Fullstack" },
     { name: "Babyrose Nebril", role: "Junior Developer", roleTag: "Frontend" },
@@ -18,7 +17,6 @@ const currentContributors: Contributor[] = [
     { name: "Jomelee Merencillo", role: "Project Manager", roleTag: "PM" },
 ];
 
-// Previous contributors
 const previousContributors: Contributor[] = [
     { name: "Mark Rivera", role: "Project Supervisor", roleTag: "Previous" },
     { name: "Anthony Melgarejo", role: "Network and Securities", roleTag: "Previous" },
@@ -56,8 +54,6 @@ const Developer: React.FC = () => {
             className="space-y-8 p-6 bg-white shadow-lg rounded-2xl text-gray-800"
         >
             <h2 className="text-2xl font-bold text-center mb-6">Project Contributors</h2>
-
-            {/* Current Contributors */}
             <div>
                 <h3 className="text-lg font-semibold mb-4">Current Contributors</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -80,7 +76,6 @@ const Developer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Previous Contributors */}
             <div>
                 <h3 className="text-lg font-semibold mb-4">Previous Contributors</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -103,7 +98,6 @@ const Developer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Version History */}
             <div>
                 <h3 className="text-lg font-semibold mb-2">Version History</h3>
                 <ul className="space-y-2 text-xs text-gray-600">
@@ -121,7 +115,6 @@ const Developer: React.FC = () => {
                     ))}
                 </ul>
             </div>
-
 
             <p className="text-right text-xs text-gray-500 italic mt-4">
                 Contributors: Maricris Mercado, Betty Rodriguez

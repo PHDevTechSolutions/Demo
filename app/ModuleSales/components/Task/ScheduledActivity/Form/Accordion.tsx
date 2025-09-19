@@ -10,7 +10,6 @@ interface AccordionProps {
     source: string; setsource: (value: string) => void;
 }
 
-// Define product category options for react-select
 const productCategoryOptions = [
     { value: "Bollard Light", label: "Bollard Light" },
     { value: "Bulb Light", label: "Bulb Light" },
@@ -56,7 +55,6 @@ const Accordion: React.FC<AccordionProps> = ({
     source, setsource,
 }) => {
 
-    // Find selected option object for react-select based on current value
     const selectedCategory = productCategoryOptions.find(
         (opt) => opt.value === projectcategory
     ) || null;
@@ -82,7 +80,6 @@ const Accordion: React.FC<AccordionProps> = ({
                             <span className="text-[10px] text-red-500 capitalize">(enter "N/A" if not applicable)</span>
                         </div>
 
-                        {/* Product Category - replaced with react-select */}
                         <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                             <label className="block text-xs font-bold mb-1 text-black">Item Category <span className="text-red-500">*</span></label>
                             <Select
@@ -116,8 +113,6 @@ const Accordion: React.FC<AccordionProps> = ({
                             />
                         </div>
 
-
-                        {/* Project Type */}
                         <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                             <label className="block text-xs font-bold mb-1 text-black">Customer Type <span className="text-red-500">*</span></label>
                             <select
@@ -137,7 +132,6 @@ const Accordion: React.FC<AccordionProps> = ({
             </div>
 
             <div className="flex flex-wrap -mx-4 rounded">
-                {/* Source */}
                 <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                     <label className="block text-xs font-bold mb-1 text-black">Source <span className="text-red-500">*</span></label>
                     <select

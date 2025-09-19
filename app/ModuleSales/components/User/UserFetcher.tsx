@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { FaSpinner } from "react-icons/fa"; // Using a spinner icon for loading state
+import { FaSpinner } from "react-icons/fa";
 
 const UserFetcher: React.FC<{
   children: (user: Record<string, any> | null, loading: boolean) => React.ReactNode;
@@ -15,11 +15,9 @@ const UserFetcher: React.FC<{
     if (userId) {
       const cachedUser = localStorage.getItem(`user-${userId}`);
       if (cachedUser) {
-        // Use cached user data if available
         setUser(JSON.parse(cachedUser));
         setLoading(false);
       } else {
-        // Fetch user data if not cached
         fetch(`/api/user?id=${encodeURIComponent(userId)}`)
           .then((response) => {
             if (!response.ok) {
@@ -29,18 +27,18 @@ const UserFetcher: React.FC<{
           })
           .then((data) => {
             setUser(data);
-            localStorage.setItem(`user-${userId}`, JSON.stringify(data)); // Cache the user data
+            localStorage.setItem(`user-${userId}`, JSON.stringify(data));
           })
           .catch((error) => {
             console.error("Error fetching user data:", error);
-            setUser(null); // Reset user to null on error
+            setUser(null);
           })
           .finally(() => {
-            setLoading(false); // Set loading to false after fetch
+            setLoading(false);
           });
       }
     } else {
-      setLoading(false); // No userId in URL; stop loading
+      setLoading(false);
     }
   }, []);
 

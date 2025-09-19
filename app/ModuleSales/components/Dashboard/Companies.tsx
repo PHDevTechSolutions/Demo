@@ -40,7 +40,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
         setLoading(true);
         setTotalLoaded(false);
 
-        // Fetch Companies
         const companyRes = await fetch("/api/ModuleSales/Dashboard/FetchDatabase");
         if (!companyRes.ok) throw new Error("Failed to fetch companies");
         const companyJson = await companyRes.json();
@@ -58,7 +57,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
           );
         }
 
-        // ✅ Always set totalCompanies, default to 0
         setTotalCompanies(companiesArray.length || 0);
         setTotalLoaded(true);
       } catch (error) {
@@ -79,7 +77,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
   <section className="bg-white select-none">
     <div className="flex justify-end">
       <div className="w-full sm:w-80 md:w-96">
-        {/* Total Companies */}
         <div className="bg-blue-100 rounded-lg p-4 shadow flex items-center justify-between overflow-hidden relative">
           <div className="flex items-center gap-3">
             <FiDatabase className="text-blue-600 text-3xl" />

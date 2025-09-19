@@ -22,7 +22,6 @@ const Picture: React.FC<PictureProps> = ({
     const [croppedImage, setCroppedImage] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Called when user selects or drops an image
     const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
@@ -32,7 +31,6 @@ const Picture: React.FC<PictureProps> = ({
         }
     };
 
-    // For drag & drop
     const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -53,11 +51,9 @@ const Picture: React.FC<PictureProps> = ({
             if (!imageSrc || !croppedAreaPixels) return;
             const croppedImg = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
             setCroppedImage(croppedImg);
-
-            // Convert dataURL to file and upload
             const file = dataURLtoFile(croppedImg, "profile_cropped.jpeg");
             onImageUpload(file);
-            setImageSrc(null); // close cropper
+            setImageSrc(null); 
         } catch (e) {
             console.error(e);
         }
@@ -67,7 +63,6 @@ const Picture: React.FC<PictureProps> = ({
         setImageSrc(null);
     };
 
-    // Prevent default behaviors for drag & drop
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
     };
@@ -76,7 +71,6 @@ const Picture: React.FC<PictureProps> = ({
         <div className="bg-white rounded-md p-6 shadow-md flex flex-col items-center w-full">
             <h2 className="text-md font-semibold mb-4 text-black">Profile Picture</h2>
 
-            {/* Drag & Drop zone */}
             {!imageSrc && (
                 <>
                     {croppedImage ? (
@@ -119,10 +113,8 @@ const Picture: React.FC<PictureProps> = ({
                 </>
             )}
 
-            {/* Cropper */}
             {imageSrc && (
                 <div className="w-full bg-gray-100 rounded-md p-4">
-                    {/* Cropper with fixed height */}
                     <div className="relative w-full h-64 rounded-md overflow-hidden">
                         <Cropper
                             image={imageSrc}
@@ -137,7 +129,6 @@ const Picture: React.FC<PictureProps> = ({
                         />
                     </div>
 
-                    {/* Controls: Cancel & Confirm buttons */}
                     <div className="flex justify-between items-center mt-4 space-x-2">
                         <button
                             onClick={onCancelCrop}
@@ -152,7 +143,6 @@ const Picture: React.FC<PictureProps> = ({
                             Confirm
                         </button>
                     </div>
-
 
                     <div className="mt-4 flex flex-col space-y-4">
                         <div className="flex items-center space-x-2">
@@ -181,9 +171,6 @@ const Picture: React.FC<PictureProps> = ({
                             />
                         </div>
                     </div>
-
-
-
                 </div>
             )}
         </div>
@@ -192,7 +179,6 @@ const Picture: React.FC<PictureProps> = ({
 
 export default Picture;
 
-// Helper: read file as dataURL
 function readFile(file: File): Promise<string> {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -201,7 +187,6 @@ function readFile(file: File): Promise<string> {
     });
 }
 
-// Helper: convert dataURL to File object
 function dataURLtoFile(dataurl: string, filename: string) {
     const arr = dataurl.split(",");
     const mime = arr[0].match(/:(.*?);/)![1];
@@ -214,7 +199,6 @@ function dataURLtoFile(dataurl: string, filename: string) {
     return new File([u8arr], filename, { type: mime });
 }
 
-// Inline getCroppedImg helper using canvas to crop and rotate
 async function getCroppedImg(
     imageSrc: string,
     pixelCrop: { width: number; height: number; x: number; y: number },
@@ -225,7 +209,7 @@ async function getCroppedImg(
             const image = new Image();
             image.addEventListener("load", () => resolve(image));
             image.addEventListener("error", (error) => reject(error));
-            image.setAttribute("crossOrigin", "anonymous"); // needed for cross origin images
+            image.setAttribute("crossOrigin", "anonymous");
             image.src = url;
         });
 
@@ -235,7 +219,6 @@ async function getCroppedImg(
 
     if (!ctx) throw new Error("Failed to get canvas context");
 
-    // Calculate safe area for rotation
     const maxSize = Math.max(image.width, image.height);
     const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
 
@@ -250,17 +233,14 @@ async function getCroppedImg(
 
     const data = ctx.getImageData(0, 0, safeArea, safeArea);
 
-    // Set canvas to final size - cropped area
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
 
-    // Draw cropped image
     ctx.putImageData(
         data,
         Math.round(0 - safeArea / 2 + image.width / 2 - pixelCrop.x),
         Math.round(0 - safeArea / 2 + image.height / 2 - pixelCrop.y)
     );
 
-    // Return base64 image
     return canvas.toDataURL("image/jpeg");
 }

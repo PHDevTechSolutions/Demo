@@ -1,4 +1,3 @@
-// src/components/HiddenFields/InboundFields.tsx
 import React, { useState } from "react";
 
 interface InboundFieldsProps {
@@ -13,53 +12,10 @@ interface InboundFieldsProps {
 const InboundFields: React.FC<InboundFieldsProps> = ({
     callback,
     setcallback,
-    callstatus,
-    setcallstatus,
     typecall,
     settypecall,
 }) => {
-    const [showInput, setShowInput] = useState(false);
-
-    const handleCallbackChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedOption = e.target.value;
-
-        if (selectedOption === "Select Callback") {
-            setcallback("");
-            setShowInput(false);
-            return;
-        }
-
-        if (selectedOption === "Pick a DateTime") {
-            setcallback("");
-            setShowInput(true);
-            return;
-        }
-
-        setShowInput(false);
-
-        const today = new Date();
-        let futureDate = new Date(today);
-
-        switch (selectedOption) {
-            case "Callback Tomorrow":
-                futureDate.setDate(today.getDate() + 1);
-                break;
-            case "Callback After 3 Days":
-                futureDate.setDate(today.getDate() + 3);
-                break;
-            case "Callback After a Week":
-                futureDate.setDate(today.getDate() + 7);
-                break;
-            default:
-                setcallback("");
-                return;
-        }
-
-        futureDate.setHours(8, 0, 0, 0);
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-        setcallback(formattedDate);
-    };
-
+    
     return (
         <>
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">

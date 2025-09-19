@@ -8,11 +8,10 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, setCurrentPage }) => {
-    if (totalPages < 1) return null; // Hide pagination if there are no pages
+    if (totalPages < 1) return null;
 
     return (
         <div className="flex justify-center items-center gap-2 mt-4 text-xs">
-            {/* First Page */}
             <button
                 className="bg-gray-200 px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(1)}
@@ -21,7 +20,6 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, setCur
                 «
             </button>
 
-            {/* Previous Page */}
             <button
                 className="bg-gray-200 px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(currentPage - 1)}
@@ -30,12 +28,10 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, setCur
                 Previous
             </button>
 
-            {/* Page Indicator */}
             <span className="px-4">
                 Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
             </span>
 
-            {/* Next Page */}
             <button
                 className="bg-gray-200 px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(currentPage + 1)}
@@ -43,8 +39,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, setCur
             >
                 Next
             </button>
-
-            {/* Last Page */}
+            
             <button
                 className="bg-gray-200 px-3 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setCurrentPage(totalPages)}

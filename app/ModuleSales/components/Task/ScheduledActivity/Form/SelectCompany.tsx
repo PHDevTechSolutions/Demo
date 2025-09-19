@@ -63,7 +63,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
 }) => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [isManual, setIsManual] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false); // collapsible state
+    const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
         if (referenceid) {
@@ -133,11 +133,9 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
     return (
         <div>
             <div className="flex flex-wrap -mx-4 transition-all duration-300 ease-in-out">
-                {/* Company Name */}
                 <div className="w-full px-4 mb-4">
                     <label className="block text-xs font-bold mb-2">Company Name <span className="text-red-500">*</span></label>
                     <div className="flex gap-4">
-                        {/* Select or disabled input */}
                         <div className="w-1/2">
                             {!isManual ? (
                                 <Select
@@ -180,7 +178,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                             )}
                         </div>
 
-                        {/* Disabled input (showing companyname) */}
                         {!isManual && (
                             <div className="w-1/2">
                                 <input
@@ -193,7 +190,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         )}
                     </div>
 
-                    {/* Toggle button below both inputs */}
                     <button
                         type="button"
                         onClick={() => setIsManual(prev => !prev)}
@@ -223,7 +219,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
 
             {isExpanded && (
                 <div className="flex flex-wrap -mx-4 transition-all duration-300 ease-in-out">
-                    {/* Affiliate Name */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Affiliate Name</label>
                         <input
@@ -237,7 +232,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
 
                     </div>
 
-                    {/* Contact Person */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Contact Person <span className="text-red-500">*</span></label>
                         <input
@@ -254,7 +248,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         )}
                     </div>
 
-                    {/* Contact Number */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Contact Number <span className="text-red-500">*</span></label>
                         <input
@@ -265,13 +258,11 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         />
                     </div>
 
-                    {/* Email Address */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Email Address <span className="text-red-500">*</span></label>
                         <Email emailaddress={emailaddress} setemailaddress={setemailaddress} />
                     </div>
 
-                    {/* Registered Address */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Registered Address <span className="text-red-500">*</span></label>
                         <input
@@ -282,7 +273,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         />
                     </div>
 
-                    {/* Delivery Address */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Delivery Address</label>
                         <input
@@ -293,13 +283,11 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         />
                     </div>
 
-                    {/* Area */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Region <span className="text-red-500">*</span></label>
                         <Area area={area} setarea={setarea} />
                     </div>
 
-                    {/* Type Client */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Type of Customer <span className="text-red-500">*</span></label>
                         <select
@@ -316,7 +304,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                         </select>
                     </div>
 
-                    {/* Status */}
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                         <label className="block text-xs font-bold mb-2">Customer Status <span className="text-red-500">*</span></label>
                         <select

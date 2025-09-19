@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { CiEdit } from "react-icons/ci";
 
 interface Post {
     id: string;
@@ -17,7 +16,7 @@ interface TableProps {
     handleEdit: (post: any) => void;
 }
 
-const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
+const Table: React.FC<TableProps> = ({ posts }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
@@ -31,7 +30,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         return isNaN(d.getTime()) ? null : d;
     };
 
-    // 🔹 filter + sort
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
@@ -106,14 +104,13 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
 
     const totalAmount = useMemo(() => {
         return filteredPosts.reduce((sum, post) => {
-            const amount = Number(post.quotationamount) || 0; // siguraduhin na number
+            const amount = Number(post.quotationamount) || 0;
             return sum + amount;
         }, 0);
     }, [filteredPosts]);
 
     return (
         <div>
-            {/* Filters */}
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold">Start Date:</label>
@@ -131,7 +128,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto relative">
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
@@ -177,7 +173,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                 </table>
             </div>
 
-            {/* Pagination */}
             <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
                 <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="bg-gray-200 text-xs px-4 py-2 rounded">Previous</button>
                 <span>Page {currentPage} of {totalPages || 1}</span>

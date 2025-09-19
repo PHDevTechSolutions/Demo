@@ -1,4 +1,3 @@
-// ChartControls/QuotationCharts.tsx
 import React from "react";
 
 interface QuotationChartsProps {
@@ -162,7 +161,7 @@ const QuotationCharts: React.FC<QuotationChartsProps> = ({
                     className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"
                     style={{
                         position: "absolute",
-                        left: Math.min(tooltip.x, chartWidth - 160), // prevent overflow on right
+                        left: Math.min(tooltip.x, chartWidth - 160),
                         top: tooltip.y,
                     }}>
 

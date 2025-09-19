@@ -6,10 +6,10 @@ interface DeleteModalProps {
   isOpen: boolean;
   isChild: boolean;
   deleteTarget: { companyname?: string; activitynumber?: string } | null;
-  step: 1 | 2; // step 1 = confirmation, step 2 = permanent
+  step: 1 | 2;
   onCancel: () => void;
-  onContinue?: () => void; // step 1 button
-  onConfirm?: () => void; // step 2 button
+  onContinue?: () => void;
+  onConfirm?: () => void;
 }
 
 const DeleteModal: React.FC<DeleteModalProps> = ({

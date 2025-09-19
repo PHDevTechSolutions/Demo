@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 
-interface UsersCardProps {
+interface TableProps {
   posts: any[];
   handleEdit: (post: any) => void;
   referenceid?: string;
 }
 
-const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid }) => {
+const Table: React.FC<TableProps> = ({ posts, handleEdit, referenceid }) => {
   const [updatedUser, setUpdatedUser] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -16,13 +16,11 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
     setUpdatedUser(posts);
   }, [posts]);
 
-  // Show confirmation modal before updating
   const confirmUpdate = (id: string) => {
     setSelectedId(id);
     setShowModal(true);
   };
 
-  // Handle update to Approve For Deletion
   const handleUpdate = async () => {
     if (!selectedId) return;
 
@@ -39,7 +37,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
       );
 
       if (response.ok) {
-        // Update status locally
         setUpdatedUser((prev) =>
           prev.map((post) =>
             post.id === selectedId ? { ...post, status: "Approve For Deletion" } : post
@@ -57,7 +54,7 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("/api/getUsers"); // API endpoint mo
+        const response = await fetch("/api/getUsers");
         const data = await response.json();
         setUsersList(data);
       } catch (error) {
@@ -75,7 +72,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
 
   return (
     <div className="mb-4">
-      {/* Modal Confirmation */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[999]">
           <div className="bg-white p-6 rounded-md shadow-lg max-w-sm text-center">
@@ -101,7 +97,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
         </div>
       )}
 
-      {/* Users Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100">
@@ -172,4 +167,4 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, referenceid })
   );
 };
 
-export default UsersCard;
+export default Table;

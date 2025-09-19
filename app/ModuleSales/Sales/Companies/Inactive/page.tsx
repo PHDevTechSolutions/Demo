@@ -24,8 +24,8 @@ const InactiveAccounts: React.FC = () => {
     const [postsPerPage, setPostsPerPage] = useState(12);
     const [selectedClientType, setSelectedClientType] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Manager: "", TSM: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
@@ -40,14 +40,12 @@ const InactiveAccounts: React.FC = () => {
     const [manager, setManager] = useState("");
     const [tsm, setTsm] = useState("");
 
-    // Loading states
     const [error, setError] = useState<string | null>(null);
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
+    const loading = loadingUser || loadingAccounts;
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -77,7 +75,7 @@ const InactiveAccounts: React.FC = () => {
                     console.error("Error fetching user data:", err);
                     setError("Failed to load user data. Please try again later.");
                 } finally {
-                    setLoadingUser(false); // ✅ dito lang i-off
+                    setLoadingUser(false);
                 }
             } else {
                 setError("User ID is missing.");
@@ -88,9 +86,8 @@ const InactiveAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
-        setLoadingAccounts(true); // ✅ hiwalay na loading
+        setLoadingAccounts(true);
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/CompanyAccounts/FetchAccount");
             const data = await response.json();
@@ -99,7 +96,7 @@ const InactiveAccounts: React.FC = () => {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
         } finally {
-            setLoadingAccounts(false); // ✅ dito lang i-off
+            setLoadingAccounts(false); 
         }
     };
 
@@ -107,7 +104,6 @@ const InactiveAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -140,7 +136,6 @@ const InactiveAccounts: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Fetch TSM options (for Manager)
     useEffect(() => {
         const fetchTSM = async () => {
             if (userDetails.Role !== "Manager") return;
@@ -161,7 +156,6 @@ const InactiveAccounts: React.FC = () => {
         fetchTSM();
     }, [userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -234,7 +228,6 @@ const InactiveAccounts: React.FC = () => {
     const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
     const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
@@ -248,7 +241,6 @@ const InactiveAccounts: React.FC = () => {
                         <>
                             <div className="mx-auto p-4 text-gray-900">
                                 <div className="grid grid-cols-1 md:grid-cols-1">
-                                    {/* Backdrop overlay */}
                                     {(showForm || showImportForm) && (
                                         <div
                                             className="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -292,12 +284,10 @@ const InactiveAccounts: React.FC = () => {
                                             to potentially revive these business relationships.
                                         </p>
 
-                                        {/* Filters Grid */}
                                         {(userDetails.Role === "Territory Sales Manager" ||
                                             userDetails.Role === "Super Admin" ||
                                             userDetails.Role === "Manager") && (
                                                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                    {/* Filter by Agent (TSA) */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">
                                                             Filter by Agent (TSA)
@@ -316,7 +306,6 @@ const InactiveAccounts: React.FC = () => {
                                                         </select>
                                                     </div>
 
-                                                    {/* Filter by TSM (only for Manager role) */}
                                                     {userDetails.Role === "Manager" && (
                                                         <div>
                                                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -337,7 +326,6 @@ const InactiveAccounts: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Total Companies */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
                                                             Total
@@ -363,7 +351,7 @@ const InactiveAccounts: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
-                                        {/* Loader or Table */}
+
                                         {loading ? (
                                             <div className="flex justify-center items-center py-10">
                                                 <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -394,7 +382,23 @@ const InactiveAccounts: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <ToastContainer className="text-xs" autoClose={1000} />
+                            <ToastContainer
+                                position="bottom-right"
+                                autoClose={2000}
+                                hideProgressBar={false}
+                                newestOnTop
+                                closeOnClick
+                                rtl={false}
+                                pauseOnFocusLoss
+                                draggable
+                                pauseOnHover
+                                theme="colored"
+                                className="text-sm z-[99999]"
+                                toastClassName={() =>
+                                    "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                }
+                                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                            />
                         </>
                     )}
                 </UserFetcher>

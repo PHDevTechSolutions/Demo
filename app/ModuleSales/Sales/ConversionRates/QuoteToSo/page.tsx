@@ -5,8 +5,8 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import SearchFilters from "../../../components/ConversionRates/CallsToQuote/SearchFilters";
-import UsersTable from "../../../components/ConversionRates/QuoteToSO/UsersTable";
+import SearchFilters from "../../../components/ConversionRates/CallsToQuote/Filters";
+import UsersTable from "../../../components/ConversionRates/QuoteToSO/Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
@@ -18,15 +18,13 @@ const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", TSM: "", Manager: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
     });
     const [usersList, setUsersList] = useState<any[]>([]);
-
-    // Loading states
     const [error, setError] = useState<string | null>(null);
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
@@ -37,9 +35,7 @@ const ListofUser: React.FC = () => {
     const [selectedTSM, setSelectedTSM] = useState("");
 
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
-
-    // Fetch user data based on query parameters (user ID)
+    const loading = loadingUser || loadingAccounts;
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -51,7 +47,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         TSM: data.TSM || "",
                         Manager: data.Manager || "",
@@ -77,11 +73,10 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch users from MongoDB or PostgreSQL
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch("/api/getUsers"); // API endpoint mo
+                const response = await fetch("/api/getUsers");
                 const data = await response.json();
                 setUsersList(data);
             } catch (error) {
@@ -110,7 +105,6 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -143,7 +137,6 @@ const ListofUser: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Fetch TSM options (for Manager)
     useEffect(() => {
         const fetchTSM = async () => {
             if (userDetails.Role !== "Manager") return;
@@ -164,7 +157,6 @@ const ListofUser: React.FC = () => {
         fetchTSM();
     }, [userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -215,12 +207,6 @@ const ListofUser: React.FC = () => {
             .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
 
-    // Handle editing a post
-    const handleEdit = (post: any) => {
-        setEditUser(post);
-        setShowForm(true);
-    };
-
     return (
         <SessionChecker>
             <ParentLayout>
@@ -238,7 +224,6 @@ const ListofUser: React.FC = () => {
                                         userDetails.Role === "Super Admin" ||
                                         userDetails.Role === "Manager") && (
                                             <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                {/* Filter by Agent (TSA) */}
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-700 mb-1">
                                                         Filter by Agent (TSA)
@@ -257,7 +242,6 @@ const ListofUser: React.FC = () => {
                                                     </select>
                                                 </div>
 
-                                                {/* Filter by TSM (only for Manager role) */}
                                                 {userDetails.Role === "Manager" && (
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -284,7 +268,7 @@ const ListofUser: React.FC = () => {
                                         searchTerm={searchTerm}
                                         setSearchTerm={setSearchTerm}
                                     />
-                                    {/* Loader or Table */}
+
                                     {loading ? (
                                         <div className="flex justify-center items-center py-10">
                                             <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -298,7 +282,23 @@ const ListofUser: React.FC = () => {
                                         </>
                                     )}
                                 </div>
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

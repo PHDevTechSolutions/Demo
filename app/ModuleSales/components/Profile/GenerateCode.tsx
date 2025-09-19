@@ -24,7 +24,6 @@ const GenerateCode: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [suffixCounter, setSuffixCounter] = useState(0);
 
-  // Fetch user data from API based on ID from URL
   const fetchUserData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -67,7 +66,6 @@ const GenerateCode: React.FC = () => {
     fetchUserData();
   }, [fetchUserData]);
 
-  // Generate custom user code based on user details + suffix
   useEffect(() => {
     if (userDetails && userDetails.id && userDetails.Firstname && userDetails.Lastname) {
       const suffix = suffixCounter.toString().padStart(3, "0");
@@ -76,12 +74,10 @@ const GenerateCode: React.FC = () => {
     }
   }, [userDetails, suffixCounter]);
 
-  // Generate QR code from user info and generated code
   useEffect(() => {
     if (generatedCode && userDetails) {
       generateQRCode();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [generatedCode]);
 
   const generateQRCode = async () => {
@@ -103,7 +99,6 @@ Link: https://ecoshiftcorp.com`;
     }
   };
 
-  // Download QR code as PNG file
   const handleDownload = () => {
     if (!qrCode) return;
     const link = document.createElement("a");
@@ -112,9 +107,8 @@ Link: https://ecoshiftcorp.com`;
     link.click();
   };
 
-  // Regenerate code with incremented suffix
   const handleRegenerate = () => {
-    setSuffixCounter((prev) => (prev + 1) % 1000); // wrap after 999
+    setSuffixCounter((prev) => (prev + 1) % 1000);
   };
 
   if (loading)
@@ -175,7 +169,6 @@ Link: https://ecoshiftcorp.com`;
 
   return (
     <div className="flex flex-col items-center mt-6" role="main">
-      {/* Generated code */}
       {generatedCode && (
         <p className="text-sm font-semibold text-black" aria-live="polite">
           Generated Code:{" "}
@@ -183,7 +176,6 @@ Link: https://ecoshiftcorp.com`;
         </p>
       )}
 
-      {/* QR Code Image */}
       {qrCode && (
         <img
           src={qrCode}
@@ -193,7 +185,6 @@ Link: https://ecoshiftcorp.com`;
         />
       )}
 
-      {/* Buttons */}
       <div className="mt-4 flex gap-4 text-xs">
         {generatedCode && (
           <button

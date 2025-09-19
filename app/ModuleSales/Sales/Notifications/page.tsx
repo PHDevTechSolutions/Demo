@@ -5,23 +5,18 @@ import SessionChecker from "../../components/Session/SessionChecker";
 import UserFetcher from "../../components/User/UserFetcher";
 
 // Components
-import UsersCard from "../../components/Notification/UsersTable"; // Assuming this is the component handling the Kanban-style cards
+import UsersCard from "../../components/Notification/Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { CiTrash, CiCircleRemove, CiStickyNote } from "react-icons/ci";
 
 const ListofUser: React.FC = () => {
-    const [showForm, setShowForm] = useState(false);
-    const [editUser, setEditUser] = useState<any>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [postToDelete, setPostToDelete] = useState<string | null>(null);
+    const [startDate, setStartDate] = useState(""); 
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Manager: "", TSM: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
@@ -29,7 +24,6 @@ const ListofUser: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -67,7 +61,6 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all posts from the API
     const fetchAccount = async () => {
         try {
             const response = await fetch("/api/ModuleSales/Notification/FetchNotifications");
@@ -83,11 +76,10 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Filter users by search term (title)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
-                const hasType = !!post?.type; // Check if type exists
+                const hasType = !!post?.type;
                 const matchesSearchTerm =
                     hasType && post.type.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -100,7 +92,6 @@ const ListofUser: React.FC = () => {
                     ? post?.typeclient === selectedClientType
                     : true;
 
-                // ✅ ReferenceID-based filtering based on user role
                 const userReferenceID = userDetails.ReferenceID;
                 const matchesReferenceID =
                     (userDetails.Role === "Manager" && post?.manager === userReferenceID) ||
@@ -122,10 +113,6 @@ const ListofUser: React.FC = () => {
             )
         : [];
 
-
-    const currentPosts = filteredAccounts.slice();
-    const totalPages = Math.ceil(filteredAccounts.length);
-
     return (
         <SessionChecker>
             <ParentLayout>
@@ -140,7 +127,23 @@ const ListofUser: React.FC = () => {
                                         userDetails={userDetails}
                                     />
                                 </div>
-                                <ToastContainer className="text-xs" />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

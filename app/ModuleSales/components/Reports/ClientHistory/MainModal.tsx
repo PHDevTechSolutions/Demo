@@ -43,10 +43,9 @@ interface Post {
   companygroup: string;
   paymentterm: string;
   actualsales: string;
-  dealClosed?: boolean; // add optional dealClosed if relevant
+  dealClosed?: boolean;
 }
 
-// Define SalesRecord interface expected by PerformanceAnalytics
 interface SalesRecord {
   project: string;
   date_created: string;
@@ -92,8 +91,6 @@ const MainModal: React.FC<MainModalProps> = ({ selectedPosts, onClose }) => {
   const [activeTab, setActiveTab] = useState(0);
 
   if (!selectedPosts || selectedPosts.length === 0) return null;
-
-  // Group posts by companyname
   const groupedPosts = selectedPosts.reduce((groups, post) => {
     const key = post.companyname || "Unknown";
     if (!groups[key]) groups[key] = [];
@@ -101,7 +98,6 @@ const MainModal: React.FC<MainModalProps> = ({ selectedPosts, onClose }) => {
     return groups;
   }, {} as Record<string, Post[]>);
 
-  // Transform groupedPosts into SalesRecord type for PerformanceAnalytics
   const salesGroupedPosts: Record<string, SalesRecord[]> = {};
   for (const company in groupedPosts) {
     salesGroupedPosts[company] = transformPostsToSalesRecords(groupedPosts[company]);
@@ -134,7 +130,6 @@ const MainModal: React.FC<MainModalProps> = ({ selectedPosts, onClose }) => {
           {selectedPosts[0].companyname} - History ({selectedPosts.length} records)
         </h2>
 
-        {/* Tabs */}
         <nav className="flex border-b border-gray-300 mb-4">
           {tabs.map((tab, index) => (
             <button
@@ -155,7 +150,6 @@ const MainModal: React.FC<MainModalProps> = ({ selectedPosts, onClose }) => {
           ))}
         </nav>
 
-        {/* Tab Panels */}
         <div
           id={`tab-panel-${activeTab}`}
           role="tabpanel"

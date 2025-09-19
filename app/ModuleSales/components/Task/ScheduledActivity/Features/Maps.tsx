@@ -3,7 +3,6 @@ import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import { useMapEvent } from "react-leaflet";
 
-// Dynamic imports for Next.js SSR compatibility
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false }
@@ -35,7 +34,6 @@ interface MapsProps {
   setMultipleLocations?: (locs: { lat: number; lng: number }[]) => void;
 }
 
-// Helper component to capture the map instance
 const SetMapRef: React.FC<{ mapRef: React.MutableRefObject<any> }> = ({
   mapRef,
 }) => {
@@ -50,9 +48,6 @@ const SetMapRef: React.FC<{ mapRef: React.MutableRefObject<any> }> = ({
 const Maps: React.FC<MapsProps> = ({
   location,
   locationAddress,
-  setLocation,
-  setActivityRemarks,
-  setLocationAddress,
   multipleLocations = [],
   setMultipleLocations,
 }) => {
@@ -63,8 +58,6 @@ const Maps: React.FC<MapsProps> = ({
 
   useEffect(() => {
     setIsMounted(true);
-
-    // Dynamically import leaflet here so no SSR issues
     import("leaflet").then((L) => {
       const icon = new L.Icon({
         iconUrl:

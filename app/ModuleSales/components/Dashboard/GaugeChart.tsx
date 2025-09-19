@@ -2,7 +2,7 @@ import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 interface GaugeChartProps {
-  value: number; // percentage 0-100
+  value: number;
   label: string;
   size?: number;
 }
@@ -13,7 +13,7 @@ const GaugeChart: React.FC<GaugeChartProps> = ({ value, label, size = 150 }) => 
     { name: "remaining", value: 100 - value },
   ];
 
-  const COLORS = ["#00C49F", "#E0E0E0"]; // green progress, gray background
+  const COLORS = ["#00C49F", "#E0E0E0"];
 
   return (
     <div style={{ width: size, height: size, textAlign: "center", margin: "0 auto" }}>

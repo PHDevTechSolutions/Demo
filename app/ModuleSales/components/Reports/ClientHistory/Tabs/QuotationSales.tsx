@@ -38,7 +38,6 @@ const QuotationSales: React.FC<QuotationSalesProps> = ({ groupedPosts }) => {
     companyname: "",
   });
 
-  // Load from localStorage
   useEffect(() => {
     const savedStart = localStorage.getItem("quotationChartStartDate");
     const savedEnd = localStorage.getItem("quotationChartEndDate");
@@ -50,7 +49,6 @@ const QuotationSales: React.FC<QuotationSalesProps> = ({ groupedPosts }) => {
     }
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("quotationChartStartDate", dateRange.start);
     localStorage.setItem("quotationChartEndDate", dateRange.end);

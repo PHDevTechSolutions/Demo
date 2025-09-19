@@ -20,8 +20,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
     handleFormChange,
 }) => {
     const [showInput, setShowInput] = useState(false);
-
-    // ✅ Formatter for datetime-local
     const formatDateTimeLocal = (date: Date) => {
         const pad = (n: number) => n.toString().padStart(2, "0");
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
@@ -59,7 +57,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                 return;
         }
 
-        // Format as datetime-local with 08:00 AM default
         futureDate.setHours(8, 0, 0, 0);
         const formattedDate = formatDateTimeLocal(futureDate);
 
@@ -68,13 +65,11 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
         } as React.ChangeEvent<HTMLInputElement>);
     };
 
-    // 🔹 Auto-set followup_date based on typecall
     useEffect(() => {
         let daysToAdd = 0;
         let minutesToAdd = 0;
 
         if (!typecall) {
-            // ✅ reset followup_date if no type selected
             handleFormChange({
                 target: { name: "followup_date", value: "" },
             } as React.ChangeEvent<HTMLInputElement>);
@@ -88,7 +83,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
         } else if (typecall === "Cannot Be Reached") {
             daysToAdd = 3;
         } else if (typecall === "Not Connected with the Company") {
-            minutesToAdd = 15; // ✅ 15 minutes
+            minutesToAdd = 15; 
         } else if (typecall === "Waiting for Future Projects") {
             daysToAdd = 30;
         }
@@ -109,7 +104,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
 
     return (
         <>
-            {/* 🔹 Callback */}
             <div className="flex flex-col">
                 <label className="font-semibold">
                     Callback <span className="text-[8px] text-green-700">Optional</span>
@@ -137,7 +131,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                 )}
             </div>
 
-            {/* 🔹 Call Status */}
             <div className="flex flex-col">
                 <label className="font-semibold">
                     Call Status{" "}
@@ -156,7 +149,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                 </select>
             </div>
 
-            {/* 🔹 Type */}
             <div className="flex flex-col">
                 <label className="font-semibold">
                     Type <span className="text-[8px] text-green-700">* Required Fields</span>
@@ -200,8 +192,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                     )}
                 </select>
             </div>
-
-            {/* 🔹 Follow Up Date */}
+            
             <div className="flex flex-col">
                 <label className="font-semibold">
                     Follow Up Date{" "}

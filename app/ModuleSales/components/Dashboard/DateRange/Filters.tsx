@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
-// SearchFilters Component
 interface SearchFiltersProps {
     startDate: string;
     setStartDate: (date: string) => void;

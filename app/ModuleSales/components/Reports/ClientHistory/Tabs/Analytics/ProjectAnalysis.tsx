@@ -86,10 +86,10 @@ const ProjectAnalysis: React.FC<ProjectAnalysisProps> = ({ records }) => {
                 }}
                 onMouseLeave={() => setTooltip({ ...tooltip, visible: false })}
               >
-                {/* Row */}
+
                 <foreignObject x={0} y={0} width="100%" height={BAR_HEIGHT}>
                   <div
-                    style={{
+                   style={{
                       display: "flex",
                       alignItems: "center",
                       height: BAR_HEIGHT,
@@ -134,7 +134,6 @@ const ProjectAnalysis: React.FC<ProjectAnalysisProps> = ({ records }) => {
           })}
         </svg>
 
-        {/* Tooltip */}
         {tooltip.visible && (
           <div
             className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"
@@ -155,7 +154,6 @@ const ProjectAnalysis: React.FC<ProjectAnalysisProps> = ({ records }) => {
         )}
       </div>
 
-      {/* Legend */}
       <div className="flex justify-center gap-6 mt-3 text-xs text-gray-700">
         <div className="flex items-center gap-2">
           <span className="inline-block w-4 h-4 rounded-sm" style={{ backgroundColor: COLORS.actual }} />

@@ -71,11 +71,9 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
       <h2 className="text-sm font-semibold mb-4">Trend Analysis (Monthly)</h2>
       <div ref={containerRef} style={{ width: "100%" }}>
         <svg width={width} height={height} style={{ borderRadius: 4 }}>
-          {/* Axes */}
           <line x1={margin.left} y1={margin.top} x2={margin.left} y2={height - margin.bottom} stroke="#333" />
           <line x1={margin.left} y1={height - margin.bottom} x2={width - margin.right} y2={height - margin.bottom} stroke="#333" />
 
-          {/* Y axis */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = yScale(t * maxVal);
             const val = Math.round(t * maxVal).toLocaleString();
@@ -90,7 +88,6 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
             );
           })}
 
-          {/* X axis */}
           {data.map((d, i) => {
             const x = margin.left + i * barWidth * 3 + barWidth;
             return (
@@ -100,13 +97,11 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
             );
           })}
 
-          {/* Bars */}
           {data.map((d, i) => {
             const baseX = margin.left + i * barWidth * 3;
             const radius = 4;
             return (
               <g key={d.month}>
-                {/* actualsales */}
                 <rect
                   x={baseX}
                   y={yScale(d.actualsales)}
@@ -119,7 +114,6 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
                   onMouseLeave={() => setHovered(null)}
                   cursor="pointer"
                 />
-                {/* quotationamount */}
                 <rect
                   x={baseX + barWidth}
                   y={yScale(d.quotationamount)}
@@ -136,7 +130,6 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
             );
           })}
 
-          {/* Legend */}
           <g transform={`translate(${(width - totalLegendWidth) / 2}, ${height - margin.bottom + 40})`}>
             {Object.entries(COLORS).map(([key, color], idx) => (
               <g key={key} transform={`translate(${idx * legendItemWidth}, 0)`}>
@@ -148,7 +141,6 @@ const TrendAnalysis: React.FC<TrendAnalysisProps> = ({ records }) => {
             ))}
           </g>
 
-          {/* Tooltip */}
           {hovered && (
             <foreignObject
               x={

@@ -21,7 +21,6 @@ const Pin: React.FC<PinProps> = ({
   const [limitReached, setLimitReached] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
-  // Tooltip show/hide with delay
   const showTooltip = () => {
     timeoutRef.current = window.setTimeout(() => setTooltipVisible(true), 600);
   };
@@ -42,7 +41,7 @@ const Pin: React.FC<PinProps> = ({
 
     if (!isPinned && pinnedCompanies.length >= MAX_PINS) {
       setLimitReached(true);
-      setTimeout(() => setLimitReached(false), 700); // bounce reset
+      setTimeout(() => setLimitReached(false), 700);
       return;
     }
 
@@ -53,7 +52,6 @@ const Pin: React.FC<PinProps> = ({
       : [...pinnedCompanies, companyname];
 
     localStorage.setItem("pinnedCompanies", JSON.stringify(updatedList));
-    // Trigger update to external listeners (e.g., parent badge)
     window.dispatchEvent(new Event("storage"));
   };
 

@@ -24,7 +24,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     const endDate = new Date(end);
     let count = 0;
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      if (d.getDay() !== 0) count++; // exclude Sundays
+      if (d.getDay() !== 0) count++; 
     }
     return count;
   };
@@ -41,7 +41,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
-  // ✅ Hiwalay: lahat ng valid quotations
   const totalQuotations = useMemo(() => {
     return filteredCalls.reduce((count, call) => {
       const value = (call.quotationnumber || "").toString().trim().toLowerCase();
@@ -52,7 +51,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
     }, 0);
   }, [filteredCalls]);
 
-  // ✅ Hiwalay: lahat ng delivered
   const totalDelivered = useMemo(() => {
     return filteredCalls.reduce((count, call) => {
       if ((call.activitystatus || "").toLowerCase() === "delivered") {
@@ -123,7 +121,7 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
           <p className="text-gray-500 text-xs">No calls found in selected date range.</p>
         ) : (
           <>
-            {/* Gauge Charts */}
+
             {showCharts && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 {groupedBySource.map((item, index) => (
@@ -142,7 +140,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
               </div>
             )}
 
-            {/* Computation Details */}
             {showComputation && (
               <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
                 <h3 className="font-bold mb-2">Computation Details</h3>
@@ -163,7 +160,6 @@ const OutboundCalls: React.FC<OutboundCallsProps> = ({ filteredCalls, dateRange 
               </div>
             )}
 
-            {/* Table */}
             {!showCharts && !showComputation && (
               <div className="border rounded mb-4 overflow-x-auto">
                 <table className="w-full text-xs table-auto">

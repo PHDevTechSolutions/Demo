@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 
 export interface SalesRecord {
-  callback: string; // minutes as string number
+  callback: string;
   date_created: string;
 }
 
@@ -40,7 +40,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Group records into buckets
   const bucketData = useMemo(() => {
     const counts = buckets.map(() => 0);
 
@@ -71,13 +70,11 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
   const mapY = (value: number) =>
     margin.top + ((maxCount - value) / maxCount) * (height - margin.top - margin.bottom);
 
-  // Handler for mouse enter
   const handleMouseEnter = (
     e: React.MouseEvent<SVGRectElement, MouseEvent>,
     i: number
   ) => {
     setHoveredIndex(i);
-    // Get SVG rect position relative to container for tooltip positioning
     if (containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const svgRect = e.currentTarget.getBoundingClientRect();
@@ -109,7 +106,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
         }}
       >
         <svg width={width} height={height}>
-          {/* Y axis */}
           <line
             x1={margin.left}
             y1={margin.top}
@@ -117,7 +113,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             y2={height - margin.bottom}
             stroke="#999"
           />
-          {/* X axis */}
           <line
             x1={margin.left}
             y1={height - margin.bottom}
@@ -126,7 +121,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             stroke="#999"
           />
 
-          {/* Y ticks and labels */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = margin.top + t * (height - margin.top - margin.bottom);
             const val = Math.round(maxCount - t * maxCount);
@@ -146,7 +140,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             );
           })}
 
-          {/* Bars */}
           {bucketData.map((d, i) => {
             const x = margin.left + i * (barWidth * 2 + gap) + gap;
             const y = mapY(d.count);
@@ -168,7 +161,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             );
           })}
 
-          {/* X axis labels */}
           {bucketData.map((d, i) => {
             const x = margin.left + i * (barWidth * 2 + gap) + gap + barWidth / 2;
             return (
@@ -186,7 +178,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             );
           })}
 
-          {/* Y axis label */}
           <text
             transform={`translate(${margin.left - 40}, ${height / 2}) rotate(-90)`}
             textAnchor="middle"
@@ -197,7 +188,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
             Number of Leads
           </text>
 
-          {/* Legend centered */}
           <g transform={`translate(${width / 2 - 70}, ${height - margin.bottom + 50})`}>
             <rect width={15} height={15} fill={barColor} rx={3} ry={3} />
             <text x={20} y={12} fontSize={12} fill="#333">
@@ -206,7 +196,6 @@ const LeadTimeResponseAnalysis: React.FC<LeadTimeResponseAnalysisProps> = ({
           </g>
         </svg>
 
-        {/* Tooltip */}
         {hoveredIndex !== null && tooltipPos && (
           <div
             className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"

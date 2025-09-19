@@ -49,7 +49,6 @@ const validActivities = new Set([
   "Sample Request",
 ]);
 
-// Format duration into Hours and Minutes
 const formatDuration = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -61,10 +60,7 @@ const DailyActivitySummary: React.FC<Props> = ({ timeMotionData }) => {
     .filter(([activity]) => validActivities.has(activity))
     .map(([activity, duration]) => ({ name: activity, value: duration }));
 
-  // compute total duration (raw seconds)
   const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  // convert to percentage
   const percentageData = data.map((item) => ({
     ...item,
     value: total > 0 ? (item.value / total) * 100 : 0,
@@ -97,7 +93,6 @@ const DailyActivitySummary: React.FC<Props> = ({ timeMotionData }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Total Work Hours under the chart */}
       <div className="mt-4 text-center">
         <span className="text-sm font-semibold">Total Work Hours: </span>
         <span className="text-sm text-gray-700">{formatDuration(total)}</span>

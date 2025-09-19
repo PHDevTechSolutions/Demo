@@ -67,13 +67,10 @@ interface GridViewProps {
 
 const PINNED_POSTS_STORAGE_KEY = "pinnedPosts";
 
-const DAYS_THRESHOLD = 7; // days threshold for follow-up and pending checks
-
 const GridView: React.FC<GridViewProps> = ({ posts, handleEdit }) => {
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [activityDataMap, setActivityDataMap] = useState<Record<string, ActivityFetchState>>({});
 
-  // Load pinned posts from localStorage
   useEffect(() => {
     const stored = localStorage.getItem(PINNED_POSTS_STORAGE_KEY);
     if (stored) {
@@ -86,12 +83,10 @@ const GridView: React.FC<GridViewProps> = ({ posts, handleEdit }) => {
     }
   }, []);
 
-  // Save pinned posts to localStorage when pinnedIds change
   useEffect(() => {
     localStorage.setItem(PINNED_POSTS_STORAGE_KEY, JSON.stringify(Array.from(pinnedIds)));
   }, [pinnedIds]);
 
-  // Fetch activity data for posts when posts change
   useEffect(() => {
     posts.forEach((post) => {
       if (!activityDataMap[post.activitynumber]) {
@@ -163,7 +158,6 @@ const GridView: React.FC<GridViewProps> = ({ posts, handleEdit }) => {
     "TSM Coaching"
   ];
 
-  // Filter posts to exclude those with activitystatus in fieldOnlyStatus
   const visiblePosts = posts.filter(
     (p) => !fieldOnlyStatus.includes(p.activitystatus)
   );
@@ -230,7 +224,6 @@ const GridView: React.FC<GridViewProps> = ({ posts, handleEdit }) => {
                   </span>
 
                   <div className="flex items-center space-x-2">
-                    {/* Activity Status Badge */}
                     <Priorities post={post} activities={activities} />
                   </div>
                 </div>

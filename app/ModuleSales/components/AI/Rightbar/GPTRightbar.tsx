@@ -14,7 +14,6 @@ const GPTRightbar: React.FC<GPTRightbarProps> = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -22,8 +21,6 @@ const GPTRightbar: React.FC<GPTRightbarProps> = ({ isOpen, onClose }) => {
   const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input.trim();
-
-    // Add user's message immediately
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);

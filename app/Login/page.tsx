@@ -94,7 +94,23 @@ const Login: React.FC = () => {
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-cover bg-left" style={{ backgroundImage: "url('/ecoshift-wallpaper.jpg')" }}>
       <div className="flex w-full max-w-4xl bg-white rounded-sm shadow-xl overflow-hidden">
-        <ToastContainer className="text-xs" />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+          toastClassName={() =>
+            "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+          }
+          progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+        />
 
         {/* Left Side - Login */}
         <div className="flex flex-col justify-center w-full md:w-1/2 p-8 mt-10">

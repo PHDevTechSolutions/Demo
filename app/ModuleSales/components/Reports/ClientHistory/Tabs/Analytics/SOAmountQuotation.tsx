@@ -26,14 +26,11 @@ const COLORS = {
   conversionRate: "#ffc658",
 };
 
-// Helper to create smooth Bezier curve path (monotone-like)
 function getCurvePath(points: { x: number; y: number }[]) {
   if (points.length < 2) return "";
 
   const linePath = [`M${points[0].x},${points[0].y}`];
 
-  // Calculate control points for smooth curve
-  // Using Catmull-Rom to Bezier spline conversion
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i === 0 ? i : i - 1];
     const p1 = points[i];
@@ -100,8 +97,6 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
   };
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
-  // Prepare points for each line for the curve path function
   const getPoints = (key: keyof DataPoint, scale: (v: number) => number) =>
     data.map((d, i) => ({ x: margin.left + i * xStep, y: scale(d[key] as number) }));
 
@@ -110,12 +105,9 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
       <h2 className="text-sm font-semibold mb-4">Conversion Rate (SO Amount vs Quotation)</h2>
       <div ref={containerRef} style={{ width: "100%" }}>
         <svg width={width} height={height} style={{ borderRadius: 4, background: "#fff" }}>
-          {/* Axes */}
           <line x1={margin.left} y1={margin.top} x2={margin.left} y2={height - margin.bottom} stroke="#333" />
           <line x1={width - margin.right} y1={margin.top} x2={width - margin.right} y2={height - margin.bottom} stroke="#333" />
           <line x1={margin.left} y1={height - margin.bottom} x2={width - margin.right} y2={height - margin.bottom} stroke="#333" />
-
-          {/* Y left ticks and labels */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = yScaleLeft(t * maxLeft);
             const val = Math.round(t * maxLeft).toLocaleString();
@@ -128,7 +120,6 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
             );
           })}
 
-          {/* Y right ticks and labels */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = yScaleRight(t * maxRight);
             const val = `${Math.round(t * maxRight * 100)}%`;
@@ -140,7 +131,6 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
             );
           })}
 
-          {/* X axis labels */}
           {data.map((d, i) => {
             const x = margin.left + i * xStep;
             return (
@@ -150,12 +140,10 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
             );
           })}
 
-          {/* Lines with curves */}
           <path d={getCurvePath(getPoints("quotationTotal", yScaleLeft))} fill="none" stroke={COLORS.quotationTotal} strokeWidth={2} />
           <path d={getCurvePath(getPoints("soAmountTotal", yScaleLeft))} fill="none" stroke={COLORS.soAmountTotal} strokeWidth={2} />
           <path d={getCurvePath(getPoints("conversionRate", yScaleRight))} fill="none" stroke={COLORS.conversionRate} strokeWidth={2} strokeDasharray="6 3" />
 
-          {/* Dots & Hover */}
           {data.map((d, i) => {
             const x = margin.left + i * xStep;
             return (
@@ -197,19 +185,13 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
             );
           })}
 
-          {/* Tooltip */}
           {hoveredIndex !== null && (() => {
             const tooltipWidth = 300;
             const tooltipHeight = 150;
-            // Compute dot x pos based on hovered index
             const dotX = margin.left + hoveredIndex * xStep;
-
-            // Clamp tooltip x so hindi lumalabas sa left or right edge ng chart
             let tooltipX = dotX - tooltipWidth / 2;
             if (tooltipX < margin.left) tooltipX = margin.left;
             if (tooltipX + tooltipWidth > width - margin.right) tooltipX = width - margin.right - tooltipWidth;
-
-            // Y pos ng tooltip sa itaas ng chart area, pwede i-adjust depende sa gusto mo
             const tooltipY = margin.top;
 
             return (
@@ -235,9 +217,7 @@ const SOAmountQuotation: React.FC<SOAmountQuotationProps> = ({ records }) => {
               </foreignObject>
             );
           })()}
-
-
-          {/* Legend centered */}
+          
           <g transform={`translate(${width / 2}, ${height - margin.bottom + 40})`}>
             {Object.entries(COLORS).map(([key, color], idx, arr) => (
               <g

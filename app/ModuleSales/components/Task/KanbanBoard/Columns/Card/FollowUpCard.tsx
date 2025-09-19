@@ -63,7 +63,6 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
 
   return (
     <div className={`rounded-lg shadow overflow-hidden ${bgColor}`}>
-      {/* Header */}
       <div
         className="flex items-center p-3 gap-2 cursor-pointer select-none"
         onClick={() => setExpanded((prev) => !prev)}
@@ -88,7 +87,6 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
         </span>
       </div>
 
-      {/* Body (Collapsible) */}
       {expanded && (
         <>
           <div className="p-3 space-y-1 text-[10px] border-t">
@@ -116,9 +114,7 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
             </p>
           </div>
 
-          {/* Footer */}
           <div className="p-2 text-gray-500 text-[9px] flex items-center justify-between border-t">
-            {/* Clock + Time */}
             <div className="flex items-center gap-1">
               <LuClock className="w-3 h-3" />
               <span>
@@ -134,7 +130,6 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
               </span>
             </div>
 
-            {/* Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleDelete}
@@ -145,7 +140,6 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
               </button>
             </div>
           </div>
-
         </>
       )}
     </div>

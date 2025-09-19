@@ -43,7 +43,6 @@ const CombinationChart: React.FC<CombinationChartProps> = ({ data }) => {
             tick={{ fontSize: 12 }}
             axisLine={{ stroke: "#ccc" }}
             tickLine={false}
-            // Optional: format ticks (e.g., number format)
           />
           <YAxis
             yAxisId="right"
@@ -70,7 +69,6 @@ const CombinationChart: React.FC<CombinationChartProps> = ({ data }) => {
             wrapperStyle={{ fontSize: 12 }}
           />
 
-          {/* Bars (left Y-axis) */}
           <Bar
             yAxisId="left"
             dataKey="soCount"
@@ -86,7 +84,6 @@ const CombinationChart: React.FC<CombinationChartProps> = ({ data }) => {
             radius={[4, 4, 0, 0]}
           />
 
-          {/* Lines (right Y-axis) */}
           <Line
             yAxisId="right"
             type="monotone"

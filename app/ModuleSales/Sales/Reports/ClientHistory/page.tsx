@@ -15,8 +15,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "", TargetQuota: "", ReferenceID: "",
@@ -32,9 +32,8 @@ const ListofUser: React.FC = () => {
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
+    const loading = loadingUser || loadingAccounts;
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -46,7 +45,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
                         Email: data.Email || "",
@@ -71,14 +70,13 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
             const response = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchSales");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            console.log("Fetched data:", data); 
+            setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -91,7 +89,6 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -124,7 +121,6 @@ const ListofUser: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Fetch TSM options (for Manager)
     useEffect(() => {
         const fetchTSM = async () => {
             if (userDetails.Role !== "Manager") return;
@@ -145,24 +141,17 @@ const ListofUser: React.FC = () => {
         fetchTSM();
     }, [userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
-                // Check if the company name matches the search term
                 const matchesSearchTerm = post?.companyname
                     ?.toLowerCase()
                     .includes(searchTerm.toLowerCase());
-
-                // Parse the date_created field
                 const postDate = post.date_created ? new Date(post.date_created) : null;
-
-                // Check if the post's date is within the selected date range
                 const isWithinDateRange =
                     (!startDate || (postDate && postDate >= new Date(startDate))) &&
                     (!endDate || (postDate && postDate <= new Date(endDate)));
 
-                // Match by Reference ID (user or post may have lowercase or uppercase)
                 const referenceID = userDetails.ReferenceID;
 
                 const matchesRole =
@@ -178,8 +167,6 @@ const ListofUser: React.FC = () => {
 
                 const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
                 const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
-
-                // Final return with all conditions
                 return matchesSearchTerm && isWithinDateRange && matchesRole && matchesAgentFilter && matchesTSMFilter;
             })
             .sort(
@@ -202,12 +189,10 @@ const ListofUser: React.FC = () => {
                                             This section provides an organized overview of <strong>client accounts</strong> handled by the Sales team. It enables users to efficiently monitor account status, track communications, and manage key activities and deliverables. The table below offers a detailed summary to support effective relationship management and ensure client needs are consistently met.
                                         </p>
 
-                                        {/* Filters Grid */}
                                         {(userDetails.Role === "Territory Sales Manager" ||
                                             userDetails.Role === "Super Admin" ||
                                             userDetails.Role === "Manager") && (
                                                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                    {/* Filter by Agent (TSA) */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">
                                                             Filter by Agent (TSA)
@@ -226,7 +211,6 @@ const ListofUser: React.FC = () => {
                                                         </select>
                                                     </div>
 
-                                                    {/* Filter by TSM (only for Manager role) */}
                                                     {userDetails.Role === "Manager" && (
                                                         <div>
                                                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -247,7 +231,6 @@ const ListofUser: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Total Companies */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
                                                             Total
@@ -267,7 +250,7 @@ const ListofUser: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
-                                        {/* Loader or Table */}
+
                                         {loading ? (
                                             <div className="flex justify-center items-center py-10">
                                                 <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -283,7 +266,23 @@ const ListofUser: React.FC = () => {
                                     </div>
                                 </>
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

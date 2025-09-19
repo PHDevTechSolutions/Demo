@@ -5,9 +5,9 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/HelpCenter/Tutorials/AddUserForm";
+import AddPostForm from "../../../components/HelpCenter/Tutorials/Form";
 import UsersCard from "../../../components/HelpCenter/Tutorials/Tutorial";
-import SearchFilters from "../../../components/HelpCenter/Tutorials/SearchFilters";
+import SearchFilters from "../../../components/HelpCenter/Tutorials/Filters";
 import FuturisticSpinner from "../../../components/Spinner/FuturisticSpinner";
 
 // Toast Notifications
@@ -20,8 +20,8 @@ const ListofUser: React.FC = () => {
     const [editUser, setEditUser] = useState<any>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState(""); 
+    const [endDate, setEndDate] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [postToDelete, setPostToDelete] = useState<string | null>(null);
 
@@ -33,7 +33,6 @@ const ListofUser: React.FC = () => {
     const [postsLoading, setPostsLoading] = useState<boolean>(true);
     const [showSpinner, setShowSpinner] = useState(true);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -71,7 +70,6 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all posts from the API
     const fetchAccount = async () => {
         setPostsLoading(true);
         try {
@@ -100,7 +98,6 @@ const ListofUser: React.FC = () => {
         );
     }
 
-    // Filter users by search term (title)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -201,7 +198,23 @@ const ListofUser: React.FC = () => {
                                     </div>
                                 )}
 
-                                <ToastContainer className="text-xs" />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

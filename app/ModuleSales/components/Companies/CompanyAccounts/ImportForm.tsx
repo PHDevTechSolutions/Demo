@@ -30,20 +30,18 @@ const ImportForm: React.FC<ImportFormProps> = ({
     const [jsonData, setJsonData] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const maxSizeInBytes = 2 * 1024 * 1024; // 2MB max file size
+    const maxSizeInBytes = 2 * 1024 * 1024; 
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
 
-        // Validate file type
         const validTypes = ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
         if (!validTypes.includes(selectedFile.type)) {
             toast.error("Invalid file type. Please upload an Excel file.");
             return;
         }
 
-        // Validate file size
         if (selectedFile.size > maxSizeInBytes) {
             toast.error("File too large. Max size is 2MB.");
             return;
@@ -60,7 +58,7 @@ const ImportForm: React.FC<ImportFormProps> = ({
 
             const parsedData: any[] = [];
             worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber === 1) return; // Skip header
+                if (rowNumber === 1) return;
 
                 parsedData.push({
                     referenceid,
@@ -153,7 +151,6 @@ const ImportForm: React.FC<ImportFormProps> = ({
     return (
         <div className="bg-white text-gray-900 rounded-lg p-4 text-xs transition-all duration-300 w-full">
             <form onSubmit={handleFileUpload}>
-                {/* Buttons */}
                 <div className="flex justify-end mb-4 gap-1 flex-wrap">
                     <button type="submit" className="bg-blue-500 text-xs text-white px-4 py-2 rounded flex items-center gap-1" disabled={loading}>
                         <CiSaveUp2 size={15} />
@@ -204,8 +201,6 @@ const ImportForm: React.FC<ImportFormProps> = ({
             </form>
 
             {loading && <p className="text-sm mt-4 text-blue-500 animate-pulse">⏳ Processing file, please wait...</p>}
-
-            {/* Preview Table */}
             {jsonData.length > 0 && (
                 <div className="mt-4">
                     <PreviewTable data={jsonData} />

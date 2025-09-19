@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { FaCrown, FaRibbon } from "react-icons/fa";
 import { IoIosRibbon } from "react-icons/io";
 
-interface UsersCardProps {
+interface TableProps {
     posts: any[];
 }
 
-const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
+const Table: React.FC<TableProps> = ({ posts }) => {
     const [groupedUsers, setGroupedUsers] = useState<any[]>([]);
     const [totals, setTotals] = useState({
         totalOutbound: 0,
@@ -65,7 +65,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
 
     return (
         <div className="overflow-x-auto px-2">
-            {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 {[
                     { title: "Total Outbound", value: totals.totalOutbound, bg: "bg-blue-900" },
@@ -80,7 +79,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 ))}
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto">
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
@@ -142,4 +140,4 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
     );
 };
 
-export default UsersCard;
+export default Table;

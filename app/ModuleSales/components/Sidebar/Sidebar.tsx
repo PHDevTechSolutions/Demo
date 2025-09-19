@@ -31,13 +31,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     ReferenceID: "",
   });
 
-  // Get userId once
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setUserId(params.get("id"));
   }, []);
 
-  // Fetch userDetails in background without blocking render
   useEffect(() => {
     if (!userId) return;
     fetch(`/api/user?id=${encodeURIComponent(userId)}`)
@@ -65,10 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Menu items memoized
   const menuItems = useMemo(() => getMenuItems(userId), [userId]);
 
-  // Filter menu items by role (default to Admin, avoids blocking)
   const filteredMenuItems = useMemo(() => {
     const role = userDetails.Role || "Admin";
     const allowed: Record<string, string[]> = {
@@ -113,20 +109,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
         )}
       </div>
 
-      {/* Mobile Bottom Nav */}
       <div className={`md:hidden fixed bottom-0 left-0 right-0 z-[9998] flex items-center shadow-t-lg text-sm relative
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"} transition-all duration-300`}>
         <button className="absolute left-0 top-1/2 -translate-y-1/2 z-[10000] p-2 bg-orange-300 hover:bg-orange-400 dark:bg-gray-700 shadow-md h-full"
           onClick={() => document.getElementById("mobileMenuScroll")?.scrollBy({ left: -100, behavior: "smooth" })}>◀</button>
 
         <div id="mobileMenuScroll" className="flex overflow-x-auto no-scrollbar flex-1 px-12 gap-x-4 items-center">
-          {/* Dashboard */}
           <Link href={`/ModuleSales/Sales/Dashboard${userId ? `?id=${encodeURIComponent(userId)}` : ""}`} className="relative flex-shrink-0 w-20 flex flex-col items-center justify-center py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
             <BsSpeedometer2 className="text-xl mb-1" />
             <span className="text-[11px] truncate">Dashboard</span>
           </Link>
 
-          {/* Other menu items */}
           {filteredMenuItems.map((item, idx) => (
             <div key={idx} className="relative flex-shrink-0 w-20 text-center">
               <button onClick={() => handleToggle(item.title)} className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
@@ -136,7 +129,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
             </div>
           ))}
 
-          {/* My Profile */}
           <div className="relative flex-shrink-0 w-20 text-center">
             <button onClick={() => handleToggle("My Profile")} className="flex flex-col items-center justify-center w-full py-3 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition">
               <span className="text-xl mb-1"><LuSettings2 /></span>

@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
-// SearchFilters Component
 interface SearchFiltersProps {
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -15,10 +14,6 @@ interface SearchFiltersProps {
 const SearchFilters: React.FC<SearchFiltersProps> = ({
     searchTerm,
     setSearchTerm,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate
 }) => {
     return (
         <div className="flex flex-wrap gap-2 mb-4 items-center">

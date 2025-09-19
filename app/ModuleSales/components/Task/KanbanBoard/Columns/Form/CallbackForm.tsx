@@ -49,7 +49,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
         activitynumber ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      {/* Header */}
       <div className="flex justify-between items-center mb-4 border-b pb-2">
         <h3 className="text-lg font-semibold">Update Activity</h3>
         <button
@@ -62,7 +61,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-        {/* Hidden fields */}
         <input type="hidden" value={activitynumber} />
         <input type="hidden" value={companyname} />
         <input type="hidden" value={contactperson} />
@@ -72,7 +70,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
         <input type="hidden" value={tsm} />
         <input type="hidden" value={manager} />
 
-        {/* Remarks */}
         <div className="flex flex-col sm:col-span-2">
           <label className="font-semibold text-xs mb-1">Remarks</label>
           <textarea
@@ -83,7 +80,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
           />
         </div>
 
-        {/* Start Date */}
         <div className="flex flex-col">
           <label className="font-semibold text-xs mb-1">Start Date</label>
           <input
@@ -95,7 +91,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
           />
         </div>
 
-        {/* End Date */}
         <div className="flex flex-col">
           <label className="font-semibold text-xs mb-1">End Date</label>
           <input
@@ -106,7 +101,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
           />
         </div>
 
-        {/* Status */}
         <div className="flex flex-col">
           <label className="font-semibold text-xs mb-1">Status</label>
           <select
@@ -120,7 +114,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
           </select>
         </div>
 
-        {/* Call Type */}
         <div className="flex flex-col">
           <label className="font-semibold text-xs mb-1">Call Status</label>
           <select
@@ -134,8 +127,6 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
           </select>
         </div>
       </div>
-
-      {/* Submit Button */}
       <div className="mt-4">
         <button
           type="submit"

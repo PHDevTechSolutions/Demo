@@ -52,7 +52,6 @@ const NewClientAccounts: React.FC = () => {
 
     const loading = loadingUser || loadingAccounts;
 
-    // Fetch user data
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -96,7 +95,6 @@ const NewClientAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch accounts
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
@@ -115,7 +113,6 @@ const NewClientAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -148,7 +145,6 @@ const NewClientAccounts: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Fetch TSM options (for Manager)
     useEffect(() => {
         const fetchTSM = async () => {
             if (userDetails.Role !== "Manager") return;
@@ -169,7 +165,6 @@ const NewClientAccounts: React.FC = () => {
         fetchTSM();
     }, [userDetails.Role]);
 
-    // Filter accounts
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -254,8 +249,6 @@ const NewClientAccounts: React.FC = () => {
                         <>
                             <div className="mx-auto p-4 text-gray-900">
                                 <div className="grid grid-cols-1 md:grid-cols-1">
-
-                                    {/* Backdrop overlay */}
                                     {(showForm || showImportForm) && (
                                         <div
                                             className="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -263,7 +256,6 @@ const NewClientAccounts: React.FC = () => {
                                         ></div>
                                     )}
 
-                                    {/* Form/Import Panel */}
                                     <div className={`fixed bottom-0 left-0 w-full h-[80%] shadow-lg z-[9999] transform transition-transform duration-500 ease-in-out overflow-y-auto bg-white ${(showForm || showImportForm) ? "translate-y-0" : "translate-y-full"}`}>
                                         {showForm ? (
                                             <Form
@@ -290,7 +282,6 @@ const NewClientAccounts: React.FC = () => {
                                         ) : null}
                                     </div>
 
-                                    {/* Import Button */}
                                     <div className="flex justify-between items-center mb-4">
                                         <button
                                             className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-green-600 hover:text-white transition"
@@ -300,19 +291,16 @@ const NewClientAccounts: React.FC = () => {
                                         </button>
                                     </div>
 
-                                    {/* Accounts Section */}
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
                                         <h2 className="text-lg font-bold mb-2">List of Accounts - New Client</h2>
                                         <p className="text-xs text-gray-600 mb-4">
                                             The <strong>New Client Accounts</strong> section highlights recently added company accounts.
                                         </p>
 
-                                        {/* Filters Grid */}
                                         {(userDetails.Role === "Territory Sales Manager" ||
                                             userDetails.Role === "Super Admin" ||
                                             userDetails.Role === "Manager") && (
                                                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                    {/* Filter by Agent (TSA) */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">
                                                             Filter by Agent (TSA)
@@ -331,7 +319,6 @@ const NewClientAccounts: React.FC = () => {
                                                         </select>
                                                     </div>
 
-                                                    {/* Filter by TSM (only for Manager role) */}
                                                     {userDetails.Role === "Manager" && (
                                                         <div>
                                                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -352,7 +339,6 @@ const NewClientAccounts: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Total Companies */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
                                                             Total
@@ -364,7 +350,6 @@ const NewClientAccounts: React.FC = () => {
                                                 </div>
                                             )}
 
-                                        {/* Search & Filters */}
                                         <SearchFilters
                                             searchTerm={searchTerm}
                                             setSearchTerm={setSearchTerm}
@@ -380,7 +365,6 @@ const NewClientAccounts: React.FC = () => {
                                             setEndDate={setEndDate}
                                         />
 
-                                        {/* Loader / Table */}
                                         {loading ? (
                                             <div className="flex justify-center items-center py-10">
                                                 <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -409,7 +393,23 @@ const NewClientAccounts: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <ToastContainer className="text-xs" autoClose={1000} />
+                            <ToastContainer
+                                position="bottom-right"
+                                autoClose={2000}
+                                hideProgressBar={false}
+                                newestOnTop
+                                closeOnClick
+                                rtl={false}
+                                pauseOnFocusLoss
+                                draggable
+                                pauseOnHover
+                                theme="colored"
+                                className="text-sm z-[99999]"
+                                toastClassName={() =>
+                                    "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                }
+                                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                            />
                         </>
                     )}
                 </UserFetcher>

@@ -24,7 +24,6 @@ interface ShopifyProduct {
   sku: string;
 }
 
-// Custom Option component: title on top, SKU below
 const Option = (props: any) => {
   return (
     <components.Option {...props}>
@@ -36,7 +35,6 @@ const Option = (props: any) => {
   );
 };
 
-// Custom MultiValueLabel component: only show title
 const MultiValueLabel = (props: any) => (
   <components.MultiValueLabel {...props}>{props.data.title}</components.MultiValueLabel>
 );
@@ -54,7 +52,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 }) => {
   const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
 
-  // Fetch Shopify products
   useEffect(() => {
     (async () => {
       try {
@@ -69,7 +66,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           value: p.sku,
           title: p.title.replace(/Super Sale\s*/i, "").trim(),
           sku: p.sku,
-          label: `${p.title} | ${p.sku}`, // fallback label
+          label: `${p.title} | ${p.sku}`,
         }));
 
         setCategoryOptions(mapped);
@@ -80,7 +77,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
     })();
   }, []);
 
-  // Auto-set followup_date based on typecall
   useEffect(() => {
     let daysToAdd = 0;
 
@@ -121,7 +117,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
 
   return (
     <>
-      {/* Project Name */}
       <div className="flex flex-col">
         <label className="font-semibold">
           Project Name <span className="text-[8px] text-green-700">Optional</span>
@@ -136,7 +131,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Product Category (Multi-select) */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Product Title <span className="text-[8px] text-green-700">* Required</span>
@@ -163,7 +157,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Customer Type */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Customer Type <span className="text-[8px] text-green-700">* Required</span>
@@ -184,7 +177,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         </select>
       </div>
 
-      {/* Quotation Number */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Number <span className="text-[8px] text-green-700">* Required</span>
@@ -200,7 +192,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Quotation Amount */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Amount <span className="text-[8px] text-green-700">* Required</span>
@@ -216,7 +207,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Type */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Type <span className="text-[8px] text-green-700">* Required</span>
@@ -236,7 +226,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         </select>
       </div>
 
-      {/* Follow Up Date */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Follow Up Date <span className="text-[8px] text-green-700">* Required</span>

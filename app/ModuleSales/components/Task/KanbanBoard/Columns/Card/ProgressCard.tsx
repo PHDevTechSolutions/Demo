@@ -102,7 +102,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
 
   return (
     <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
-      {/* Header */}
       <div
         className="flex items-center mb-2 cursor-pointer"
         onClick={() => setIsExpanded((prev) => !prev)}
@@ -137,7 +136,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         </div>
       </div>
 
-      {/* Collapsible Content */}
       {isExpanded && (
         <div className="pl-2 mb-2 text-[10px]">
           <p><span className="font-semibold">Contact Person:</span> {progress.contactperson}</p>
@@ -164,7 +162,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         </div>
       )}
 
-      {/* Delete Modals */}
       <DeleteModal
         isOpen={showDeleteModal && !showFinalModal}
         isChild={false}
@@ -188,7 +185,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   );
 };
 
-// Memoized for faster rendering
 const ProgressCard = memo(ProgressCardComponent, (prev, next) => prev.progress.id === next.progress.id);
 
 export default ProgressCard;

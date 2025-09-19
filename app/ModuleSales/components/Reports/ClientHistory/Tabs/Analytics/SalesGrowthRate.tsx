@@ -10,12 +10,12 @@ interface SalesGrowthRateProps {
   records: SalesRecord[];
 }
 
-const margin = { top: 30, right: 30, bottom: 70, left: 50 }; // more bottom for legend
+const margin = { top: 30, right: 30, bottom: 70, left: 50 };
 const height = 300;
 
 const COLORS = {
-  quotationGrowth: "#4f46e5", // Indigo
-  actualsalesGrowth: "#10b981", // Green
+  quotationGrowth: "#4f46e5",
+  actualsalesGrowth: "#10b981",
 };
 
 const formatMonth = (month: string) => {
@@ -24,7 +24,6 @@ const formatMonth = (month: string) => {
 };
 
 const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
-  // Same calculation logic as original
   const monthlyTotals = useMemo(() => {
     const totals: Record<
       string,
@@ -33,7 +32,7 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
 
     records.forEach(({ date_created, quotationamount, actualsales }) => {
       if (!date_created) return;
-      const month = new Date(date_created).toISOString().slice(0, 7); // "YYYY-MM"
+      const month = new Date(date_created).toISOString().slice(0, 7);
 
       if (!totals[month]) {
         totals[month] = { quotationTotal: 0, actualsalesTotal: 0 };
@@ -97,7 +96,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
   const mapY = (val: number) =>
     margin.top + ((maxY - val) / (maxY - minY)) * (height - margin.top - margin.bottom);
 
-  // Function to create smooth SVG path with cubic Bezier curves
   const createSmoothPath = (points: { x: number; y: number }[]) => {
     if (points.length === 0) return "";
     let d = `M ${points[0].x} ${points[0].y}`;
@@ -122,10 +120,7 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
     y: mapY(d.actualsalesGrowth),
   }));
 
-  // Tooltip
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-
-  // Legend position centered
   const legendWidth = 320;
   const legendX = margin.left + (width - margin.left - margin.right) / 2 - legendWidth / 2;
   const legendY = height - margin.bottom + 40;
@@ -152,7 +147,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
           width={Math.max(width, margin.left + margin.right + growthRateData.length * xStep)}
           height={height}
         >
-          {/* Axes */}
           <line
             x1={margin.left}
             y1={margin.top}
@@ -168,7 +162,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
             stroke="#999"
           />
 
-          {/* Y ticks */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = margin.top + t * (height - margin.top - margin.bottom);
             const val = Math.round(maxY - t * (maxY - minY));
@@ -188,7 +181,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
             );
           })}
 
-          {/* X axis labels */}
           {growthRateData.map((d, i) => (
             <text
               key={d.month}
@@ -202,11 +194,9 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
             </text>
           ))}
 
-          {/* Areas */}
           <path d={createSmoothPath(quotationPoints) + `L ${quotationPoints[quotationPoints.length-1].x} ${height - margin.bottom} L ${quotationPoints[0].x} ${height - margin.bottom} Z`} fill={COLORS.quotationGrowth} fillOpacity={0.3} />
           <path d={createSmoothPath(actualsalesPoints) + `L ${actualsalesPoints[actualsalesPoints.length-1].x} ${height - margin.bottom} L ${actualsalesPoints[0].x} ${height - margin.bottom} Z`} fill={COLORS.actualsalesGrowth} fillOpacity={0.3} />
 
-          {/* Curved Lines */}
           <path
             d={createSmoothPath(quotationPoints)}
             fill="none"
@@ -220,7 +210,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
             strokeWidth={2}
           />
 
-          {/* Dots */}
           {growthRateData.map((d, i) => {
             const x = mapX(i);
             const yQ = mapY(d.quotationGrowth);
@@ -253,7 +242,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
             );
           })}
 
-          {/* Legend - centered */}
           <g transform={`translate(${legendX}, ${legendY})`} fontSize={13} fill="#333">
             <rect width={15} height={15} fill={COLORS.quotationGrowth} rx={3} ry={3} />
             <text x={20} y={12} fontSize={12}>Quotation Growth</text>
@@ -263,7 +251,6 @@ const SalesGrowthRate: React.FC<SalesGrowthRateProps> = ({ records }) => {
           </g>
         </svg>
 
-        {/* Tooltip */}
         {hoverIndex !== null && (
           <div
             style={{

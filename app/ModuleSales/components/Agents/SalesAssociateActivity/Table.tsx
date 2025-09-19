@@ -8,7 +8,7 @@ interface UsersCardProps {
   fetchAccount: () => Promise<void>;
 }
 
-const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, ReferenceID, fetchAccount }) => {
+const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
   const [updatedUser, setUpdatedUser] = useState<any[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>("");
 
@@ -32,12 +32,10 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts, handleEdit, ReferenceID, f
     return `${hours > 0 ? hours + "h " : ""}${minutes > 0 ? minutes + "m " : ""}${seconds}s`;
   };
 
-  // Filter users by the selected agent
   const filteredUsers = selectedAgent
     ? updatedUser.filter((user) => `${user.AgentFirstname} ${user.AgentLastname}` === selectedAgent)
     : updatedUser;
 
-  // Get all unique agent names from the full posts list (not filtered/paginated)
   const agentNames = Array.from(
     new Set(posts.map((user) => `${user.AgentFirstname} ${user.AgentLastname}`))
   );

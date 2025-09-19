@@ -45,13 +45,11 @@ const NewClientAccounts: React.FC = () => {
     const [status, setstatus] = useState("");
     const [isMaximized, setIsMaximized] = useState(false);
 
-    // Loading states
     const [error, setError] = useState<string | null>(null);
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
-    // Fetch user data
+    const loading = loadingUser || loadingAccounts;
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -95,7 +93,6 @@ const NewClientAccounts: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch accounts
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
@@ -114,7 +111,6 @@ const NewClientAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
-    // Fetch TSA options
     useEffect(() => {
         const fetchTSA = async () => {
             try {
@@ -147,7 +143,6 @@ const NewClientAccounts: React.FC = () => {
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
-    // Fetch TSM options (for Manager)
     useEffect(() => {
         const fetchTSM = async () => {
             if (userDetails.Role !== "Manager") return;
@@ -168,7 +163,6 @@ const NewClientAccounts: React.FC = () => {
         fetchTSM();
     }, [userDetails.Role]);
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = Array.isArray(posts)
         ? posts
             .filter((post) => {
@@ -240,7 +234,6 @@ const NewClientAccounts: React.FC = () => {
     const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
     const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
@@ -256,7 +249,6 @@ const NewClientAccounts: React.FC = () => {
                         <>
                             <div className="mx-auto p-4 text-gray-900">
                                 <div className="grid grid-cols-1 md:grid-cols-1">
-                                    {/* Backdrop overlay */}
                                     {(showForm || showImportForm) && (
                                         <div
                                             className="fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -316,12 +308,10 @@ const NewClientAccounts: React.FC = () => {
                                             strategies to encourage potential conversions in the future.
                                         </p>
 
-                                        {/* Filters Grid */}
                                         {(userDetails.Role === "Territory Sales Manager" ||
                                             userDetails.Role === "Super Admin" ||
                                             userDetails.Role === "Manager") && (
                                                 <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                    {/* Filter by Agent (TSA) */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1">
                                                             Filter by Agent (TSA)
@@ -340,7 +330,6 @@ const NewClientAccounts: React.FC = () => {
                                                         </select>
                                                     </div>
 
-                                                    {/* Filter by TSM (only for Manager role) */}
                                                     {userDetails.Role === "Manager" && (
                                                         <div>
                                                             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -361,7 +350,6 @@ const NewClientAccounts: React.FC = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Total Companies */}
                                                     <div>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1 invisible">
                                                             Total
@@ -387,7 +375,7 @@ const NewClientAccounts: React.FC = () => {
                                             endDate={endDate}
                                             setEndDate={setEndDate}
                                         />
-                                        {/* Loader or Table */}
+
                                         {loading ? (
                                             <div className="flex justify-center items-center py-10">
                                                 <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -418,7 +406,23 @@ const NewClientAccounts: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <ToastContainer className="text-xs" autoClose={1000} />
+                            <ToastContainer
+                                position="bottom-right"
+                                autoClose={2000}
+                                hideProgressBar={false}
+                                newestOnTop
+                                closeOnClick
+                                rtl={false}
+                                pauseOnFocusLoss
+                                draggable
+                                pauseOnHover
+                                theme="colored"
+                                className="text-sm z-[99999]"
+                                toastClassName={() =>
+                                    "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                }
+                                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                            />
                         </>
                     )}
                 </UserFetcher>

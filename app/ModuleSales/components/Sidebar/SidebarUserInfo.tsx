@@ -37,7 +37,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
 
   const router = useRouter();
 
-  // ✅ Session checker every 30s
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -48,7 +47,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         const logs: SessionData[] = await response.json();
 
         if (logs.length > 0) {
-          const latest = logs[0]; // naka-sort na sa API
+          const latest = logs[0];
           setSessionInfo(latest);
 
           if (latest.status === "logout" && !isLoggingOut) {
@@ -60,10 +59,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       }
     };
 
-    // initial run
     checkSession();
-
-    // run every 30s
     const interval = setInterval(checkSession, 30000);
     return () => clearInterval(interval);
   }, [userDetails.Email, isLoggingOut]);
@@ -81,13 +77,11 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    // Play Taskflow sound first
     if (audioTaskflowRef.current) {
       audioTaskflowRef.current.currentTime = 0;
       await audioTaskflowRef.current.play().catch(() => {});
     }
 
-    // Play binary sound after Taskflow
     setTimeout(() => {
       if (audioBinaryRef.current) {
         audioBinaryRef.current.currentTime = 0;
@@ -95,7 +89,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       }
     }, 1000);
 
-    // Wait 15 seconds before redirect
     await new Promise((resolve) => setTimeout(resolve, 15000));
 
     try {
@@ -124,11 +117,9 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       className="relative p-2 dark:bg-gray-900 dark:border-gray-700 flex items-center justify-between flex-shrink-0 overflow-hidden"
       style={{ position: "sticky", bottom: 0, zIndex: 10 }}
     >
-      {/* Audio Elements */}
       <audio src="/taskflow-logout.mp3" ref={audioTaskflowRef} />
       <audio src="/binary-logout-sfx.mp3" ref={audioBinaryRef} />
 
-      {/* Logout Overlay */}
       {isLoggingOut && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-900 backdrop-blur-sm">
           <div className="absolute inset-0 opacity-20 animate-pulse-slow bg-[radial-gradient(circle,_#00ffff33_1px,_transparent_1px)] bg-[length:20px_20px]" />
@@ -142,7 +133,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         </div>
       )}
 
-      {/* Avatar + Info */}
       <div className="flex items-center gap-2 z-10">
         <div className="relative w-12 h-12">
           <img
@@ -173,7 +163,6 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
         </div>
       </div>
 
-      {/* Logout Button */}
       <button
         onClick={handleLogout}
         disabled={isLoggingOut}

@@ -6,8 +6,6 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiMinusCircle,
-  FiEye,
-  FiEyeOff,
   FiChevronDown,
   FiChevronUp,
 } from "react-icons/fi";
@@ -45,9 +43,8 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        setTotalLoaded(false); // reset while loading
+        setTotalLoaded(false);
 
-        // Fetch Calls
         let calls: Post[] = [];
         if (filteredAccounts && filteredAccounts.length > 0) {
           calls = filteredAccounts;
@@ -85,7 +82,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     return true;
   });
 
-  // ✅ Count categories
   const successfulCompanies = filteredTouchbaseCalls.filter(
     (item) => item.callstatus === "Successful"
   );
@@ -98,7 +94,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
       (item.callstatus !== "Successful" && item.callstatus !== "Unsuccessful")
   );
 
-  // ✅ Just adjust the counts calculation
   const successfulCount = filteredTouchbaseCalls.length > 0
     ? filteredTouchbaseCalls.filter(item => item.callstatus === "Successful").length
     : 0;
@@ -117,7 +112,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
 
   if (userDetails?.Role === "Territory Sales Manager") return null;
 
-  // Determine the header label
   let headerLabel = "Daily Outbound Call - Touchbase";
   if (filteredTouchbaseCalls.length === 0) {
     headerLabel = "Daily Outbound Call - Touchbase (All data over time, no record for today)";
@@ -129,8 +123,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
         {headerLabel}
       </h2>
 
-
-      {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4 mb-4">
         <div className="bg-yellow-100 rounded-lg p-4 shadow flex items-center gap-3">
           <FiPhone className="text-yellow-600 text-3xl" />
@@ -177,7 +169,6 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
       </div>
 
       <div className="space-y-4">
-        {/* Collapsible Sections */}
         {successfulCompanies.length > 0 && (
           <div className="bg-green-50 rounded-lg p-4 border">
             <div

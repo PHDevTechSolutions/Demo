@@ -35,7 +35,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Prepare data grouped by month
   const data: DataPoint[] = useMemo(() => {
     const grouped: Record<
       string,
@@ -67,7 +66,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
       .sort((a, b) => a.month.localeCompare(b.month));
   }, [records]);
 
-  // Scales
   const xScale = (index: number) =>
     margin.left + (index * (width - margin.left - margin.right)) / (data.length - 1 || 1);
 
@@ -113,7 +111,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
     return d.toLocaleDateString(undefined, { year: "numeric", month: "short" });
   };
 
-  // Legend data
   const legendItems = [
     { color: "#8884d8", label: "Quotation Total" },
     { color: "#82ca9d", label: "Actual Sales" },
@@ -130,7 +127,7 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
         height={height}
         style={{ overflow: "visible" }}
       >
-        {/* Axes */}
+
         <line
           x1={margin.left}
           y1={height - margin.bottom}
@@ -153,7 +150,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
           stroke="#333"
         />
 
-        {/* X axis labels */}
         {data.map((d, i) => {
           const x = xScale(i);
           return (
@@ -171,7 +167,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
           );
         })}
 
-        {/* Y axis left labels (amount) */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const val = t * maxAmount;
           const y = yScaleAmount(val);
@@ -198,7 +193,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
           );
         })}
 
-        {/* Y axis right labels (conversion rate %) */}
         {[0, 0.25, 0.5, 0.75, 1].map((t) => {
           const y = yScaleConv(t);
           return (
@@ -224,7 +218,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
           );
         })}
 
-        {/* Lines */}
         <path
           d={linePath("quotationTotal", yScaleAmount)}
           fill="none"
@@ -245,20 +238,17 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
           strokeDasharray="6 3"
         />
 
-        {/* Circles and tooltips */}
         {data.map((d, i) => {
           const x = xScale(i);
           const yQuotation = yScaleAmount(d.quotationTotal);
           const yActual = yScaleAmount(d.actualTotal);
           const yConv = yScaleConv(d.conversionRate);
 
-          // Tooltip positioning logic: place to right, but if near right edge, place to left
           const tooltipWidth = 160;
           let tooltipX = x + 10;
           if (x + tooltipWidth + 20 > width) {
             tooltipX = x - tooltipWidth - 10;
           }
-          // Tooltip vertical position - above highest circle
           const tooltipY = Math.min(yQuotation, yActual, yConv) - 65;
 
           return (
@@ -312,7 +302,6 @@ const QuotationActualSales: React.FC<QuotationActualSalesProps> = ({ records }) 
         })}
       </svg>
 
-      {/* Legend */}
       <div
         style={{
           marginTop: 10,

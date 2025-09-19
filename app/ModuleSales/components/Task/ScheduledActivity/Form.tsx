@@ -554,7 +554,23 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         </div>
       )}
 
-      <ToastContainer className="text-xs" autoClose={1000} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+        toastClassName={() =>
+          "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+        }
+        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+      />
     </>
   );
 };

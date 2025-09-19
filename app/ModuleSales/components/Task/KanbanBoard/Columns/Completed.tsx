@@ -135,7 +135,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
   return (
     <div className="space-y-1">
-      {/* Total Count */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{filteredData.length}</span>
@@ -148,7 +147,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         </button>
       </div>
 
-      {/* Search & Toggle */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-end space-y-2 md:space-y-0 md:space-x-2">
         {searchOpen && (
           <input
@@ -161,7 +159,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         )}
       </div>
 
-      {/* Completed Items */}
       {filteredData.length > 0 ? (
         filteredData.slice(0, visibleCount).map((item) => {
           const isExpanded = expandedItems.has(item.id);
@@ -171,7 +168,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
               className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
               onClick={() => toggleExpand(item.id)}
             >
-              {/* Header */}
               <div className="flex items-center">
                 <img
                   src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
@@ -194,7 +190,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
                 </div>
               </div>
 
-              {/* Expanded Content */}
               {isExpanded && (
                 <div className="pl-2 mt-2 text-[10px] space-y-1">
                   {renderField("Contact Person", item.contactperson)}
@@ -235,7 +230,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         <p className="text-xs text-gray-400 italic">No completed tasks found.</p>
       )}
 
-      {/* View More Button */}
       {visibleCount < filteredData.length && (
         <div className="flex justify-center mt-2">
           <button

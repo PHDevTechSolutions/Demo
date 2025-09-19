@@ -77,7 +77,6 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
         <h2 className="text-sm font-bold mb-4">Edit History Logs</h2>
 
         <div className="grid grid-cols-2 gap-4 text-xs">
-          {/* Hidden Fields */}
           <input type="hidden" name="referenceid" value={activity.referenceid} onChange={onChange} />
           <input type="hidden" name="manager" value={activity.manager} onChange={onChange} />
           <input type="hidden" name="tsm" value={activity.tsm} onChange={onChange} />
@@ -95,8 +94,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
           <input type="hidden" name="projecttype" value={activity.projecttype} onChange={onChange} />
           <input type="hidden" name="source" value={activity.source} onChange={onChange} />
           <input type="hidden" name="targetquota" value={activity.targetquota} onChange={onChange} />
-          {/* Hidden Fields */}
-
+        
           <input
             name="typeactivity"
             value={activity.typeactivity || ""}
@@ -177,7 +175,6 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
             value={activity.quotationamount || ""}
             onChange={(e) => {
               const value = e.target.value;
-              // Allow only digits and at most one dot
               const validNumber = /^\d*\.?\d*$/;
               if (validNumber.test(value)) {
                 onChange(e);

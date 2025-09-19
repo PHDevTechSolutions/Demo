@@ -19,21 +19,16 @@ interface TableProps {
 const Table: React.FC<TableProps> = ({ posts }) => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // ✅ toggle state
-
-    // Date range filter state
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
-
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
-    // Parse dates helper
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
     };
 
-    // Filter posts by date range
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
@@ -47,7 +42,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         });
     }, [posts, startDate, endDate]);
 
-    // ✅ Sort by date_created with toggle
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
             const dateA = new Date(a.date_created).getTime();
@@ -136,7 +130,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
     return (
         <div>
-            {/* Filters */}
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                     <label className="font-semibold text-xs whitespace-nowrap">Start Date:</label>
@@ -178,7 +171,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto relative">
                 <table className="min-w-full table-auto text-xs">
                     <thead className="bg-gray-100 sticky top-0 z-10">
@@ -239,7 +231,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                 </table>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
                 <button
                     onClick={() => goToPage(currentPage - 1)}

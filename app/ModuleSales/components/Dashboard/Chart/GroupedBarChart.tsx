@@ -50,13 +50,13 @@ const GroupedBarChart: React.FC<GroupedBarChartProps> = ({ data }) => {
           />
           <Bar
             dataKey="SO_Done"
-            fill="#3b82f6" // blue
+            fill="#3b82f6"
             name="SO-Done"
             radius={[4, 4, 0, 0]}
           />
           <Bar
             dataKey="Delivered"
-            fill="#10b981" // green
+            fill="#10b981"
             name="Delivered"
             radius={[4, 4, 0, 0]}
           />

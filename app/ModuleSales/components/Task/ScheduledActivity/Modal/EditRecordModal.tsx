@@ -53,7 +53,6 @@ const EditRecordModal: React.FC<EditRecordModalProps> = ({
         <h2 className="text-md font-bold mb-4">Edit History Logs</h2>
 
         <div className="grid grid-cols-2 gap-4 text-xs">
-          {/* Hidden Fields */}
           <input type="hidden" name="referenceid" value={selectedActivity.referenceid || ""} onChange={handleInputChange} />
           <input type="hidden" name="manager" value={selectedActivity.manager || ""} onChange={handleInputChange} />
           <input type="hidden" name="tsm" value={selectedActivity.tsm || ""} onChange={handleInputChange} />
@@ -71,7 +70,6 @@ const EditRecordModal: React.FC<EditRecordModalProps> = ({
           <input type="hidden" name="projecttype" value={selectedActivity.projecttype || ""} onChange={handleInputChange} />
           <input type="hidden" name="source" value={selectedActivity.source || ""} onChange={handleInputChange} />
           <input type="hidden" name="targetquota" value={selectedActivity.targetquota || ""} onChange={handleInputChange} />
-          {/* Hidden Fields */}
 
           <input
             name="typeactivity"

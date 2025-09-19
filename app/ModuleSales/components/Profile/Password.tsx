@@ -26,7 +26,6 @@ const Password: React.FC<PasswordProps> = ({
   const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
 
-  // Validate password length and complexity
   useEffect(() => {
     if (Password.length > 0 && Password.length < 6) {
       setPasswordError("Password must be at least 6 characters");
@@ -37,7 +36,6 @@ const Password: React.FC<PasswordProps> = ({
     }
   }, [Password]);
 
-  // Validate confirm password matches password
   useEffect(() => {
     if (ContactPassword && ContactPassword !== Password) {
       setConfirmError("Passwords do not match");
@@ -76,7 +74,6 @@ const Password: React.FC<PasswordProps> = ({
           {showPassword ? <IoIosEyeOff size={18} /> : <IoIosEye size={18} />}
         </button>
 
-        {/* Password Strength Meter */}
         {passwordStrength && (
           <div className="mt-1 h-1 w-full bg-gray-300 rounded" id="passwordStrengthMeter">
             <div
@@ -93,7 +90,6 @@ const Password: React.FC<PasswordProps> = ({
           </div>
         )}
 
-        {/* Password requirements hint */}
         <p
           id="passwordHelp"
           className="mt-1 text-xs text-gray-500 select-none"
@@ -101,7 +97,6 @@ const Password: React.FC<PasswordProps> = ({
           Password must be 6-10 characters.
         </p>
 
-        {/* Password error message */}
         {passwordError && (
           <p id="passwordError" className="mt-1 text-xs text-red-600">
             {passwordError}
@@ -137,7 +132,6 @@ const Password: React.FC<PasswordProps> = ({
           {showConfirmPassword ? <IoIosEyeOff size={18} /> : <IoIosEye size={18} />}
         </button>
 
-        {/* Confirm password error */}
         {confirmError && (
           <p id="confirmPasswordError" className="mt-1 text-xs text-red-600">
             {confirmError}

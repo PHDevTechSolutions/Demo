@@ -27,15 +27,9 @@ const Remarks: React.FC<RemarksProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     let input = e.target.value;
-
-    // Remove all characters except letters, numbers, spaces, dot, comma, slash, minus and #
     const pattern = /[^a-zA-Z0-9\s.,#/-]/g;
     let filtered = input.replace(pattern, "");
-
-    // Convert to lowercase first
     filtered = filtered.toLowerCase();
-
-    // Capitalize first letter of each word
     filtered = filtered.replace(/\b\w/g, (c) => c.toUpperCase());
 
     if (filtered.length > maxLength) {

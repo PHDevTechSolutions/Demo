@@ -14,8 +14,6 @@ interface SalesOrderProps {
 
 const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
   const [showComputation, setShowComputation] = useState(false);
-
-  // SO-Done summary
   const soDoneSummary = useMemo(() => {
     const soDoneRecords = records.filter(
       (rec) => (rec.activitystatus || "").toLowerCase() === "so-done"
@@ -28,7 +26,6 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
     return { totalCount, totalAmount };
   }, [records]);
 
-  // Actual delivered sales summary
   const actualSalesSummary = useMemo(() => {
     const deliveredRecords = records.filter(
       (rec) => (rec.activitystatus || "").toLowerCase() === "delivered"
@@ -41,9 +38,8 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
     return { count, totalActualSales };
   }, [records]);
 
-  // Conversion calculations
-  const soToSICount = actualSalesSummary.count; // QTY
-  const soToSIAmount = actualSalesSummary.totalActualSales; // Peso value
+  const soToSICount = actualSalesSummary.count;
+  const soToSIAmount = actualSalesSummary.totalActualSales;
   const soToSIPercent =
     soDoneSummary.totalAmount > 0
       ? (actualSalesSummary.totalActualSales / soDoneSummary.totalAmount) * 100
@@ -66,7 +62,6 @@ const SalesOrder: React.FC<SalesOrderProps> = ({ records }) => {
           Overview of all sales orders, showing completed and delivered transactions.
         </p>
 
-        {/* Computation Details */}
         {showComputation && (
           <div className="bg-gray-50 border rounded-lg p-4 mb-4 text-xs space-y-2">
             <h3 className="font-bold mb-2">Computation Details</h3>

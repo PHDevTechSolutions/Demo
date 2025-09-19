@@ -3,7 +3,7 @@
 import React from "react";
 import ParentLayout from "../../components/Layouts/ParentLayout";
 import SessionChecker from "../../components/Session/SessionChecker";
-import ProfileForm from "../../components/Profile/ProfileForm";
+import ProfileForm from "../../components/Profile/Form";
 import GenerateCode from "../../components/Profile/GenerateCode";
 
 const ProfilePage: React.FC = () => {

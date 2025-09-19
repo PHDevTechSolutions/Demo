@@ -40,7 +40,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
     const pointCount = sortedHours.length;
     const stepX = pointCount > 1 ? (width - padding * 2) / (pointCount - 1) : 0;
 
-    // Create points array for easier handling
     const points = sortedHours.map((hour, idx) => {
         const count = groupedByHour[hour];
         const x = padding + idx * stepX;
@@ -48,8 +47,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
         return { x, y };
     });
 
-    // Helper to create a smooth SVG path from points (cubic Bezier curve)
-    // This uses a simple smoothing approach averaging control points.
     const createSmoothPath = (pts: { x: number; y: number }[]) => {
         if (pts.length === 0) return "";
         if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`;
@@ -70,7 +67,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
 
             d += ` C${controlPoint1X},${controlPoint1Y} ${controlPoint2X},${controlPoint2Y} ${p2.x},${p2.y}`;
         }
-
         return d;
     };
 
@@ -167,7 +163,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
                         height={height}
                         className="text-sm text-gray-500"
                     >
-                        {/* Axes */}
                         <line
                             x1={padding}
                             y1={height - padding}
@@ -183,7 +178,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
                             stroke="#ccc"
                         />
 
-                        {/* Y-axis labels */}
                         {[0, maxY].map((val) => (
                             <text
                                 key={val}
@@ -197,7 +191,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
                             </text>
                         ))}
 
-                        {/* X-axis labels */}
                         {sortedHours
                             .filter((_, idx) => idx % Math.ceil(pointCount / 6) === 0)
                             .map((hour) => {
@@ -219,7 +212,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
                                 );
                             })}
 
-                        {/* Curved Path in orange-600 */}
                         <path
                             fill="none"
                             stroke="#f97316"
@@ -227,7 +219,6 @@ const TimelineProgress: React.FC<TimelineProgressProps> = ({ calls }) => {
                             d={pathData}
                         />
 
-                        {/* Circles in orange-600 */}
                         {points.map(({ x, y }, idx) => {
                             const hour = sortedHours[idx];
                             const count = groupedByHour[hour];

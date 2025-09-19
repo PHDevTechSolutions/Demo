@@ -5,16 +5,15 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
-import SearchFilters from "../../../components/Logs/ActivityLogs/SearchFilters";
-import OutboundTable from "../../../components/Logs/ActivityLogs/ActivityTable";
-import Pagination from "../../../components/Logs/ActivityLogs/Pagination";
+import SearchFilters from "../../../components/Logs/ActivityLogs/Filters";
+import OutboundTable from "../../../components/Logs/ActivityLogs/Table";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const OutboundCallPage: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0); // Total count from API
+  const [totalRecords, setTotalRecords] = useState(0); 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClientType, setSelectedClientType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,7 +25,7 @@ const OutboundCallPage: React.FC = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `https://ecoshiftcorp.com.ph/activity_api.php` // No limit here
+          `https://ecoshiftcorp.com.ph/activity_api.php`
         );
 
         if (!response.ok) {
@@ -34,8 +33,8 @@ const OutboundCallPage: React.FC = () => {
         }
 
         const data = await response.json();
-        setPosts(data || []);  // Set posts data
-        setTotalRecords(data.length); // Total records (adjust as needed)
+        setPosts(data || []);
+        setTotalRecords(data.length);
       } catch (error) {
         console.error("Error fetching data:", error);
         setPosts([]);
@@ -57,7 +56,6 @@ const OutboundCallPage: React.FC = () => {
                 This section displays details about outbound calls made to clients. It includes a search and filter functionality to refine call records based on client type, date range, and other criteria.
               </p>
 
-              {/* Display total entries */}
               <div className="mb-4 text-xs">
                 Total Entries: {totalRecords}
               </div>
@@ -77,7 +75,23 @@ const OutboundCallPage: React.FC = () => {
                 />
                 <OutboundTable posts={posts} />
               </div>
-              <ToastContainer />
+              <ToastContainer
+                position="bottom-right"
+                autoClose={2000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                className="text-sm z-[99999]" 
+                toastClassName={() =>
+                  "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                }
+                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+              />
             </div>
           )}
         </UserFetcher>

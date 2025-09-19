@@ -6,15 +6,15 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Developers from "../../../components/Profile/Developers"; // Import the form component
+import Developers from "../../../components/Profile/Developers";
 
 const ProfilePage: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
-        id: "", // Add an id property to send in the API request
+        id: "",
         Firstname: "",
         Lastname: "",
         Email: "",
-        Role: "", // Added Role to state
+        Role: "",
     });
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ const ProfilePage: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        id: data._id, // Set the user's id here
+                        id: data._id,
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
                         Email: data.Email || "",
@@ -51,31 +51,6 @@ const ProfilePage: React.FC = () => {
         fetchUserData();
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            const response = await fetch("/api/Setting/UpdateProfile", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(userDetails), // Send the whole userDetails object with id
-            });
-
-            if (response.ok) {
-                toast.success("Profile updated successfully");
-            } else {
-                throw new Error("Failed to update profile");
-            }
-        } catch (err: unknown) {
-            toast.error("Failed to update profile");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     if (loading) return <div>Loading...</div>;
 
     return (
@@ -84,11 +59,26 @@ const ProfilePage: React.FC = () => {
                 <div className="mx-auto p-4">
                     <div className="grid grid-cols-1 md:grid-cols-1">
                         {error && <div className="text-red-500 mb-4">{error}</div>}
-                        {/* Use ProfileForm component here */}
                         <Developers />
                     </div>
                 </div>
-                <ToastContainer />
+                <ToastContainer
+                    position="bottom-right"
+                    autoClose={2000}
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="colored"
+                    className="text-sm z-[99999]"
+                    toastClassName={() =>
+                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                    }
+                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                />
             </ParentLayout>
         </SessionChecker>
     );

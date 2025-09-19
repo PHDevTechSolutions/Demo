@@ -9,7 +9,7 @@ interface Post {
   activitystatus: string;
   activityremarks: string;
   ticketreferencenumber: string;
-  date_created: string; // YYYY-MM-DD or ISO string
+  date_created: string;
   date_updated: string | null;
   activitynumber: string;
 }
@@ -89,8 +89,6 @@ const CardCalendarView: React.FC<CardCalendarViewProps> = ({
 
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-
-  // New state: selected status to highlight
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   const fieldOnlyStatus = [
@@ -133,7 +131,6 @@ const CardCalendarView: React.FC<CardCalendarViewProps> = ({
     [currentYear, currentMonth]
   );
 
-  // Count activities per status for current month
   const activityStatusCount = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredPosts.forEach((post) => {
@@ -163,14 +160,12 @@ const CardCalendarView: React.FC<CardCalendarViewProps> = ({
     }
   };
 
-  // Handler for clicking legend status
   const handleLegendClick = (status: string) => {
     setSelectedStatus((prev) => (prev === status ? null : status));
   };
 
   return (
     <div>
-      {/* Month navigation */}
       <div className="mb-4 flex items-center justify-between">
         <div />
         <div className="flex items-center gap-4">
@@ -197,7 +192,6 @@ const CardCalendarView: React.FC<CardCalendarViewProps> = ({
         </div>
       </div>
 
-      {/* Legend showing activity statuses + counts */}
       <div className="mb-4 flex flex-wrap gap-2">
         {Object.entries(activityStatusCount).map(([status, count]) => {
           const badgeClass = statusColors[status] || "bg-gray-300 text-black";
@@ -222,16 +216,13 @@ const CardCalendarView: React.FC<CardCalendarViewProps> = ({
         })}
       </div>
 
-      {/* Month view calendar */}
       <div className="grid grid-cols-7 gap-1 border rounded-md shadow-sm p-2 text-xs">
-        {/* Weekday headers */}
         {DAYS_OF_WEEK.map((day) => (
           <div key={day} className="font-semibold text-center border-b pb-1">
             {day}
           </div>
         ))}
 
-        {/* Days grid */}
         {calendarGridDates.map((dateObj) => {
           const dateKey = formatDateKey(dateObj);
           const postsForDay = postsByDate[dateKey] || [];

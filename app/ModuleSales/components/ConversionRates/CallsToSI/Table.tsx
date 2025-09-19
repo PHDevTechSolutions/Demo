@@ -13,7 +13,7 @@ interface Post {
     actualsales: number;
     typeactivity: string;
     source: string;
-    activitystatus: string; // <-- dito gagamitin natin
+    activitystatus: string;
 }
 
 interface GroupedData {
@@ -101,11 +101,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 }
 
                 acc[key].records.push(post);
-
-                // Outbound calls
                 if (post.source === "Outbound - Touchbase") acc[key].OutboundCalls += 1;
 
-                // SI count based on activitystatus === "Delivered"
                 acc[key].totalSI += post.activitystatus === "Delivered" ? 1 : 0;
 
                 return acc;
@@ -118,7 +115,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
 
     return (
         <div className="overflow-x-auto">
-            {/* Main Tabs */}
             <div className="mb-4 border-b border-gray-300">
                 <nav className="flex space-x-4">
                     <button
@@ -138,7 +134,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 </nav>
             </div>
 
-            {/* Filters */}
             <div className="mb-4 flex items-center gap-4">
                 <select
                     value={selectedMonth}
@@ -160,7 +155,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 </select>
             </div>
 
-            {/* Sub Tabs */}
             <div className="mb-4 border-b border-gray-200">
                 <nav className="flex space-x-4">
                     <button
@@ -180,7 +174,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                 </nav>
             </div>
 
-            {/* Table */}
             <table className="min-w-full table-auto">
                 <thead className="bg-gray-100">
                     <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
@@ -192,7 +185,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                         <th className="px-6 py-4 font-semibold text-gray-700">% Calls to SI</th>
                     </tr>
                 </thead>
-                {/* TOTAL Row */}
                 <thead className="bg-gray-50 font-semibold text-xs">
                     <tr>
                         <td className="px-6 py-4">TOTAL</td>
@@ -244,7 +236,6 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
                         </tr>
                     )}
                 </tbody>
-
             </table>
         </div>
     );

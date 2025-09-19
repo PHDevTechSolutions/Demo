@@ -5,7 +5,7 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import SearchFilters from "../../../components/National/DailyCallRanking/SearchFilters";
+import SearchFilters from "../../../components/National/DailyCallRanking/Filters";
 import Table from "../../../components/National/DailyCallRanking/Table";
 
 // Toast Notifications
@@ -19,22 +19,19 @@ const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
     });
     const [usersList, setUsersList] = useState<any[]>([]);
-
-    // Loading states
     const [error, setError] = useState<string | null>(null);
     const [loadingUser, setLoadingUser] = useState<boolean>(true);
     const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-    const loading = loadingUser || loadingAccounts; // 🔑 combined state
+    const loading = loadingUser || loadingAccounts;
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -46,7 +43,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
@@ -70,11 +67,10 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch users from MongoDB or PostgreSQL
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch("/api/getUsers"); // API endpoint mo
+                const response = await fetch("/api/getUsers");
                 const data = await response.json();
                 setUsersList(data);
             } catch (error) {
@@ -85,8 +81,6 @@ const ListofUser: React.FC = () => {
         fetchUsers();
     }, []);
 
-
-    // Fetch all users from the API
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
@@ -105,8 +99,7 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    const today = new Date().toISOString().split("T")[0]; // Kunin ang YYYY-MM-DD format ng today
-
+    const today = new Date().toISOString().split("T")[0]; 
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
             const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -122,18 +115,16 @@ const ListofUser: React.FC = () => {
             const userRole = userDetails.Role;
             const referenceID = userDetails.ReferenceID;
 
-            // Logic for role-based filtering
             const matchesRole =
-                userRole === "Super Admin" || // Kita lahat
-                userRole === "Special Access" || // Kita lahat
-                userRole === "Manager" || // Kita lahat
-                userRole === "Territory Sales Manager" || // Kita lahat
-                userRole === "Territory Sales Associate" || // Kita lahat
-                post?.manager === referenceID; // Filtered by ReferenceID for other roles
+                userRole === "Super Admin" || 
+                userRole === "Special Access" || 
+                userRole === "Manager" || 
+                userRole === "Territory Sales Manager" ||
+                userRole === "Territory Sales Associate" || 
+                post?.manager === referenceID; 
 
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole;
         }).map((post) => {
-            // Hanapin ang Agent na may parehong ReferenceID sa usersList
             const agent = usersList.find((user) => user.ReferenceID === post.referenceid);
 
             return {
@@ -169,7 +160,6 @@ const ListofUser: React.FC = () => {
                                         endDate={endDate}
                                         setEndDate={setEndDate}
                                     />
-                                    {/* Loader or Table */}
                                     {loading ? (
                                         <div className="flex justify-center items-center py-10">
                                             <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -183,7 +173,23 @@ const ListofUser: React.FC = () => {
                                         </>
                                     )}
                                 </div>
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

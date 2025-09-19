@@ -38,12 +38,10 @@ interface ProgressFormProps {
   ) => void;
   handleFormSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
-  // Accept both the raw react-select format OR string[]
   handleProjectCategoryChange: (selected: { value: string; label: string }[] | null) => void;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
-// 🔹 Consistent Manila timestamp formatter
 const getFormattedTimestamp = () => {
   return new Date().toLocaleString("en-US", {
     timeZone: "Asia/Manila",
@@ -58,7 +56,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   handleProjectCategoryChange,
   setFormData,
 }) => {
-  // 🔹 Set startdate once (when form opens)
   useEffect(() => {
     if (!formData.startdate) {
       setFormData((prev: any) => ({
@@ -68,7 +65,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
     }
   }, []);
 
-  // 🔹 Update enddate in realtime
   useEffect(() => {
     const interval = setInterval(() => {
       setFormData((prev: any) => ({
@@ -83,12 +79,10 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
       <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-        {/* Hidden Start/End Dates */}
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Source */}
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Source <span className="text-[8px] text-red-700">* Required Fields</span>
@@ -115,7 +109,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </select>
           </div>
 
-          {/* Type of Activity */}
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Type of Activity <span className="text-[8px] text-red-700">* Required Fields</span>
@@ -149,7 +142,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </select>
           </div>
 
-          {/* Conditional Forms */}
           {formData.typeactivity === "FB-Marketplace" && (
             <FBMarketPlace typecall={formData.typecall} handleFormChange={handleFormChange} />
           )}
@@ -171,7 +163,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               quotationnumber={formData.quotationnumber}
               quotationamount={formData.quotationamount}
               projectname={formData.projectname}
-              projectcategory={formData.projectcategory} // <-- now array
+              projectcategory={formData.projectcategory}
               projecttype={formData.projecttype}
               followup_date={formData.followup_date}
               handleFormChange={handleFormChange}
@@ -187,7 +179,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             />
           )}
 
-          {/* Remarks */}
           {formData.activitystatus === "Delivered" && (
             <>
               <div className="flex flex-col">
@@ -237,7 +228,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             </>
           )}
 
-          {/* Remarks Textarea */}
           <div className="flex flex-col col-span-2">
             <label className="font-semibold">
               Remarks<span className="text-[8px] text-red-700">* Required Fields</span>
@@ -252,7 +242,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             />
           </div>
 
-          {/* Status */}
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Status <span className="text-[8px] text-red-700">* Required Fields</span>
@@ -288,7 +277,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex justify-end space-x-2 mt-4">
           <button
             type="button"

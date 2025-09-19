@@ -84,7 +84,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
         }}
       >
         <svg width={width} height={height}>
-          {/* Bars */}
           {monthlyData.map((d, i) => {
             const x = margin.left + i * (barWidth + 10);
             const quoteHeight = scaleY(d.quotation);
@@ -93,7 +92,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
 
             return (
               <g key={d.month}>
-                {/* Quotation Bar */}
                 <rect
                   x={x}
                   y={baseY - quoteHeight}
@@ -113,7 +111,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
                   }
                   onMouseLeave={() => setTooltip(null)}
                 />
-                {/* Actual Bar */}
                 <rect
                   x={x + barWidth / 2}
                   y={baseY - actualHeight}
@@ -133,8 +130,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
                   }
                   onMouseLeave={() => setTooltip(null)}
                 />
-
-                {/* X Axis Label */}
                 <text
                   x={x + barWidth / 2}
                   y={baseY + 20}
@@ -148,7 +143,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
             );
           })}
 
-          {/* Y Axis line */}
           <line
             x1={margin.left}
             y1={height - margin.bottom}
@@ -157,7 +151,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
             stroke="#ccc"
           />
 
-          {/* Y Axis ticks */}
           {[0.25, 0.5, 0.75, 1].map((t, i) => {
             const y = height - margin.bottom - t * (height - margin.top - margin.bottom);
             const val = Math.round(maxVal * t);
@@ -184,7 +177,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
             );
           })}
 
-          {/* Legend */}
           <g transform={`translate(${width / 2 - 80}, ${height - 20})`}>
             <rect width={15} height={15} fill={barColors[0]} rx={3} ry={3} />
             <text x={20} y={12} fontSize={12} fill="#333">
@@ -197,7 +189,6 @@ const Seasonality: React.FC<SeasonalityProps> = ({ records }) => {
           </g>
         </svg>
 
-        {/* Tooltip */}
         {tooltip && (
           <div
             className="absolute bg-white border border-gray-200 rounded-md shadow-md p-2 text-xs z-50 pointer-events-none"

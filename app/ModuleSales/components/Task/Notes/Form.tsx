@@ -19,9 +19,7 @@ interface FormProps {
     handleSubmit: () => void;
     resetForm: () => void;
     handleDelete: (id: number) => void;
-
-    // Added props
-    dateUpdated?: string; // ISO datetime string
+    dateUpdated?: string;
 }
 
 const Form: React.FC<FormProps> = ({
@@ -44,7 +42,6 @@ const Form: React.FC<FormProps> = ({
 }) => {
     const [relativeTime, setRelativeTime] = useState("");
 
-    // Helper function for relative time
     const formatRelativeTime = (date: string) => {
         if (!date) return "";
         const now = new Date();
@@ -73,7 +70,6 @@ const Form: React.FC<FormProps> = ({
         return `Last edited ${months} month${months !== 1 ? "s" : ""} ago`;
     };
 
-    // Update relative time every minute
     useEffect(() => {
         if (dateUpdated) {
             setRelativeTime(formatRelativeTime(dateUpdated));
@@ -106,7 +102,7 @@ const Form: React.FC<FormProps> = ({
     useEffect(() => {
         const interval = setInterval(() => {
             setRelativeTime(formatTimeAgo(dateUpdated));
-        }, 1000); // every 1 second for live seconds counting
+        }, 1000);
         return () => clearInterval(interval);
     }, [dateUpdated]);
 
@@ -125,8 +121,6 @@ const Form: React.FC<FormProps> = ({
                 )}
             </div>
 
-
-            {/* Status & Activity */}
             <div className="flex gap-2 border-b border-t p-2">
                 <select
                     value={activitystatus}
@@ -153,7 +147,6 @@ const Form: React.FC<FormProps> = ({
                 </select>
             </div>
 
-            {/* Remarks */}
             <textarea
                 placeholder="Remarks"
                 value={remarks}
@@ -162,7 +155,6 @@ const Form: React.FC<FormProps> = ({
                 className="w-full p-2 border-b text-xs focus:outline-none focus:ring focus:ring-blue-300"
             />
 
-            {/* Dates */}
             <div className="flex gap-2">
                 <div className="flex-1">
                     <label className="block text-xs mb-1">Start Date</label>
@@ -184,9 +176,7 @@ const Form: React.FC<FormProps> = ({
                 </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-between items-center mt-2 text-xs">
-                {/* Left Side: Submit/Update + Cancel */}
                 <div className="flex gap-2">
                     <button
                         onClick={handleSubmit}
@@ -205,7 +195,6 @@ const Form: React.FC<FormProps> = ({
                     )}
                 </div>
 
-                {/* Right Side: Delete */}
                 {editingId && (
                     <button
                         onClick={() => {

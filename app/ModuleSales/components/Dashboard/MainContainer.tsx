@@ -102,7 +102,6 @@ const MainContainer: React.FC<MainContainerProps> = ({
     }
   };
 
-  // Filter by date
   const filteredByDate = useMemo(() => {
     if (!dateRange.start && !dateRange.end) return filteredAccounts;
 
@@ -119,37 +118,29 @@ const MainContainer: React.FC<MainContainerProps> = ({
     });
   }, [filteredAccounts, dateRange]);
 
-  // Manager can see all filters
   const canFilterByTSM = ["Super Admin", "Manager"].includes(userDetails.Role);
   const canFilterByAgent = ["Super Admin", "Manager", "Territory Sales Manager"].includes(userDetails.Role);
 
-  // Filter by TSM
   const filteredByTSM = useMemo(() => {
     if (!canFilterByTSM || !selectedTSM) return filteredByDate;
     return filteredByDate.filter((acc) => acc.tsm === selectedTSM);
   }, [filteredByDate, selectedTSM, canFilterByTSM]);
 
-  // Filter by Agent
   const filteredByAgent = useMemo(() => {
     if (!canFilterByAgent) return filteredByTSM;
 
-    // If a Manager selected a TSM, show all TSAs under that TSM automatically
     if (userDetails.Role === "Manager" && selectedTSM) {
-      return filteredByTSM; // filteredByTSM already contains only accounts under selected TSM
+      return filteredByTSM; 
     }
 
-    // If Agent selected, filter by selectedAgent
     if (selectedAgent) {
       return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
     }
 
-    // Default: no agent filter applied
     return filteredByTSM;
   }, [filteredByTSM, selectedAgent, userDetails.Role, selectedTSM, canFilterByAgent]);
 
-  // Compute TSAs to show in the dropdown
   const filteredTSAOptions = useMemo(() => {
-    // If user is Manager and has selected a TSM, show only TSAs under that TSM
     if (userDetails.Role === "Manager" && selectedTSM) {
       return tsaOptions.filter((agent) =>
         filteredAccounts.some(
@@ -157,15 +148,12 @@ const MainContainer: React.FC<MainContainerProps> = ({
         )
       );
     }
-    // Otherwise, show all TSAs
     return tsaOptions;
   }, [tsaOptions, userDetails.Role, selectedTSM, filteredAccounts]);
 
   return (
     <div className="mx-auto p-4">
-      {/* Filters Row */}
       <div className="mb-4 flex flex-wrap gap-4 items-end">
-        {/* Filter by TSM */}
         {canFilterByTSM && (
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -186,7 +174,6 @@ const MainContainer: React.FC<MainContainerProps> = ({
           </div>
         )}
 
-        {/* Filter by Agent */}
         {canFilterByAgent && (
           <div className="flex-1 min-w-[200px]">
             <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -209,7 +196,6 @@ const MainContainer: React.FC<MainContainerProps> = ({
 
       </div>
 
-      {/* Date Range Filters */}
       <div className="mb-4 flex flex-wrap gap-4 items-center">
         <div>
           <label htmlFor="datePreset" className="block text-xs font-medium">

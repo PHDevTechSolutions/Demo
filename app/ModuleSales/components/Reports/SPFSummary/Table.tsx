@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { CiEdit } from "react-icons/ci";
 
 interface Post {
     id: string;
@@ -24,14 +23,11 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
     const [endDate, setEndDate] = useState("");
     const [agentNames, setAgentNames] = useState<Record<string, string>>({});
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-
-    // 🔹 Date parsing
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
     };
 
-    // 🔹 Filter by date range
     const filteredPosts = useMemo(() => {
         const start = parseDate(startDate);
         const end = parseDate(endDate);
@@ -42,7 +38,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         });
     }, [posts, startDate, endDate]);
 
-    // 🔹 Sort by date_created
     const sortedPosts = useMemo(() => {
         return [...filteredPosts].sort((a, b) => {
             const dateA = new Date(a.date_created).getTime();
@@ -51,14 +46,12 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         });
     }, [filteredPosts, sortOrder]);
 
-    // 🔹 Pagination
     const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
     const paginatedData = useMemo(() => {
         const startIdx = (currentPage - 1) * itemsPerPage;
         return sortedPosts.slice(startIdx, startIdx + itemsPerPage);
     }, [sortedPosts, currentPage, itemsPerPage]);
 
-    // 🔹 Formatters
     const formatDate = (timestamp: string) => {
         const date = new Date(timestamp);
         return date.toLocaleString("en-US", {
@@ -80,12 +73,10 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         });
     };
 
-    // 🔹 Pagination handler
     const goToPage = (page: number) => {
         setCurrentPage(Math.min(Math.max(page, 1), totalPages));
     };
 
-    // 🔹 Fetch agent names
     useEffect(() => {
         const fetchAgents = async () => {
             const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
@@ -110,7 +101,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
 
     return (
         <div>
-            {/* Filters */}
             <div className="mb-4 flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2">
                     <label className="text-xs font-semibold">Start Date:</label>
@@ -128,7 +118,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                 </div>
             </div>
 
-            {/* Table */}
             <div className="overflow-x-auto relative">
                 <table className="min-w-full table-auto">
                     <thead className="bg-gray-100">
@@ -174,7 +163,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                 </table>
             </div>
 
-            {/* Pagination */}
             <div className="flex justify-between items-center mt-4 text-xs text-gray-600">
                 <button onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="bg-gray-200 text-xs px-4 py-2 rounded">Previous</button>
                 <span>Page {currentPage} of {totalPages || 1}</span>

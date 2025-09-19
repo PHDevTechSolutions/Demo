@@ -92,15 +92,13 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
 
     try {
       if (soChanged) {
-        // 1. Update original activity to reflect RE-SO
         const updatedOriginal = {
           ...selectedActivity,
           soamount: "0",
           activitystatus: "RE-SO",
-          sonumber: originalActivity.sonumber, // keep old SO number
+          sonumber: originalActivity.sonumber,
         };
 
-        // PUT update for RE-SO activity
         const updateRes = await fetch(
           "/api/ModuleSales/Task/DailyActivity/EditProgress",
           {
@@ -112,10 +110,9 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
 
         if (!updateRes.ok) throw new Error("Failed to update RE-SO activity");
 
-        // 2. POST new duplicated activity with new SO details
         const newActivity = {
           ...selectedActivity,
-          id: undefined, // let backend assign new ID
+          id: undefined,
           date_created: new Date().toISOString(),
         };
 
@@ -131,8 +128,6 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
         if (!postRes.ok) throw new Error("Failed to create new activity");
 
         const created = await postRes.json();
-
-        // Update UI
         setActivityList((prev) =>
           prev.map((a) =>
             a.id === updatedOriginal.id ? updatedOriginal : a
@@ -140,7 +135,6 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
         );
         setHighlightedId(created.id);
       } else {
-        // Normal edit
         const response = await fetch(
           "/api/ModuleSales/Task/DailyActivity/EditProgress",
           {
@@ -162,7 +156,7 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
     } catch (error) {
       console.error("Error during save:", error);
       alert("Update failed. Please try again.");
-      setActivityList(activities); // revert
+      setActivityList(activities);
     }
   };
 
@@ -197,7 +191,6 @@ const ActivityLogs: React.FC<ActivityLogsProps> = ({ activities, loading, postId
     return <p className="text-xs text-gray-500 italic">No activity logs.</p>;
   }
 
-  // Helper to format time spent nicely
   const formatTimeSpent = (startStr: string, endStr: string) => {
     const start = new Date(startStr);
     const end = new Date(endStr);

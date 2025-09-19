@@ -91,7 +91,6 @@ const CustomPieChart = ({
     );
 };
 
-// ✅ Main Component
 const CallDetails: React.FC<CallDetailsProps> = ({ groupedPosts }) => {
     const allCalls: Call[] = Object.values(groupedPosts).flat();
     const [startDate, setStartDate] = useState<string>("");
@@ -115,7 +114,6 @@ const CallDetails: React.FC<CallDetailsProps> = ({ groupedPosts }) => {
 
     return (
         <>
-            {/* Date Picker */}
             <div className="flex gap-4 mb-2 items-center">
                 <label className="text-xs text-gray-600">
                     Start Date:
@@ -147,7 +145,6 @@ const CallDetails: React.FC<CallDetailsProps> = ({ groupedPosts }) => {
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
-                {/* LEFT: Call History + Timeline */}
                 <div className="md:w-1/2 space-y-4 border rounded-md shadow-md p-4">
                     <h2 className="font-semibold text-sm text-gray-700">Timeline Progress</h2>
                     <TimelineProgress calls={filteredCalls} />
@@ -189,8 +186,6 @@ const CallDetails: React.FC<CallDetailsProps> = ({ groupedPosts }) => {
                         </table>
                     </div>
                 </div>
-
-                {/* RIGHT: Pie Charts */}
                 <div className="md:w-1/2 flex flex-col gap-6">
                     <div className="border rounded-md shadow-md bg-white p-4">
                         <h3 className="font-semibold text-sm text-gray-700 mb-2">Call Status Distribution</h3>

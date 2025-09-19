@@ -131,7 +131,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     address: "",
   });
 
-  /** Reset formData */
   const resetForm = () =>
     setFormData({
       activitystatus: "",
@@ -156,7 +155,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       followup_date: "",
     });
 
-  /** Add button → open form */
   const handleAddClick = (prog?: ProgressItem) => {
     setHiddenFields({
       referenceid: userDetails?.ReferenceID || "",
@@ -204,7 +202,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setShowForm(true);
   };
 
-  /** Fetch progress data */
   const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
@@ -234,7 +231,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         })
       );
 
-      setVisibleCount(ITEMS_PER_PAGE); // Reset visible count on refresh
+      setVisibleCount(ITEMS_PER_PAGE);
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
       setProgress([]);
@@ -247,14 +244,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     fetchProgress();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-  /** Handle form change */
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  /** Handle react-select change for project category */
   const handleProjectCategoryChange = (
     selected: { value: string; label: string }[] | null
   ) => {
@@ -264,7 +259,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }));
   };
 
-  /** Submit form */
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload: any = { ...hiddenFields, ...formData };
@@ -317,7 +311,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  /** Delete activity */
   const handleDelete = async (item: ProgressItem) => {
     dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
     try {
@@ -429,7 +422,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+        className="text-sm z-[99999]"
         toastClassName={() =>
           "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
         }

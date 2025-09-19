@@ -57,10 +57,7 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
     100
   );
 
-  // scales y values to svg coords
   const yScale = (val: number) => height - margin.bottom - (val / maxValue) * (height - margin.top - margin.bottom);
-
-  // calculate total width needed for bars per month (2 bars + gap)
   const totalBarsWidth = data.length * (barWidth * 2 + barGap);
 
   const formatMonth = (month: string) => {
@@ -75,12 +72,9 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
       <h2 className="text-sm font-semibold mb-4">SO Amount vs Actual Sales</h2>
       <div ref={containerRef} style={{ width: "100%", overflowX: "auto" }}>
         <svg width={Math.max(width, totalBarsWidth + margin.left + margin.right)} height={height} style={{ background: "#fff", borderRadius: 4 }}>
-          {/* Y Axis line */}
           <line x1={margin.left} y1={margin.top} x2={margin.left} y2={height - margin.bottom} stroke="#333" />
-          {/* X Axis line */}
           <line x1={margin.left} y1={height - margin.bottom} x2={Math.max(width, totalBarsWidth + margin.left + margin.right) - margin.right} y2={height - margin.bottom} stroke="#333" />
 
-          {/* Y axis ticks & labels */}
           {[0, 0.25, 0.5, 0.75, 1].map((t) => {
             const y = yScale(t * maxValue);
             const val = Math.round(t * maxValue).toLocaleString();
@@ -93,7 +87,6 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
             );
           })}
 
-          {/* Bars */}
           {data.map((d, i) => {
             const xBase = margin.left + i * (barWidth * 2 + barGap);
 
@@ -107,7 +100,6 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
                 onMouseLeave={() => setHoveredIndex(null)}
                 style={{ cursor: "pointer" }}
               >
-                {/* SO Amount bar */}
                 <rect
                   x={xBase}
                   y={yScale(d.soAmountTotal)}
@@ -116,7 +108,7 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
                   fill={COLORS.soAmountTotal}
                   opacity={hoveredIndex !== null && hoveredIndex !== i ? 0.5 : 1}
                 />
-                {/* Actual Sales bar */}
+
                 <rect
                   x={xBase + barWidth}
                   y={yScale(d.actualsalesTotal)}
@@ -125,7 +117,6 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
                   fill={COLORS.actualsalesTotal}
                   opacity={hoveredIndex !== null && hoveredIndex !== i ? 0.5 : 1}
                 />
-                {/* Month label */}
                 <text
                   x={xBase + barWidth}
                   y={height - margin.bottom + 15}
@@ -139,7 +130,6 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
             );
           })}
 
-          {/* Tooltip */}
           {hoveredIndex !== null && (
             <foreignObject
               x={margin.left + hoveredIndex * (barWidth * 2 + barGap)}
@@ -156,7 +146,6 @@ const SOAmountActualSales: React.FC<SOAmountActualSalesProps> = ({ records }) =>
             </foreignObject>
           )}
 
-          {/* Legend - centered */}
           <g transform={`translate(${(Math.max(width, totalBarsWidth + margin.left + margin.right) / 2)}, ${height - margin.bottom + 50})`}>
             {Object.entries(COLORS).map(([key, color], idx, arr) => (
               <g key={key} transform={`translate(${(idx - (arr.length - 1) / 2) * 150}, 0)`}>

@@ -49,7 +49,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Form fields
   const [activitynumber, setActivityNumber] = useState("");
   const [companyname, setCompanyName] = useState("");
   const [contactperson, setContactPerson] = useState("");
@@ -64,7 +63,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
   const [referenceid, setReferenceid] = useState("");
   const [manager, setManager] = useState("");
 
-  // Fetch today's callbacks
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
@@ -77,8 +75,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         );
 
         const data = await res.json();
-
-        // ✅ Ensure always an array
         const inquiries: Inquiry[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.data)
@@ -95,7 +91,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         setCallbacks(todayCallbacks);
       } catch (error) {
         console.error("❌ Failed to fetch today's callbacks:", error);
-        setCallbacks([]); // ❌ fallback
+        setCallbacks([]);
       } finally {
         setLoading(false);
       }
@@ -104,12 +100,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     fetchCallbacks();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-
-  const toggleExpand = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
-  };
-
-  // Open slide-up form with pre-filled data
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
     setActivityNumber(inq.activitynumber);
@@ -133,7 +123,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     if (!selectedInquiry) return;
 
     try {
-      setUpdating(true); // 🔹 activate loading
+      setUpdating(true);
 
       const isoStartDate = new Date(startdate).toISOString();
       const isoEndDate = enddate ? new Date(enddate).toISOString() : null;
@@ -174,7 +164,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       console.error("❌ Error updating activity:", error);
       alert("An error occurred while updating the activity.");
     } finally {
-      setUpdating(false); // 🔹 stop loading
+      setUpdating(false);
     }
   };
 
@@ -196,7 +186,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       {callbacks.length > 0 ? (
         callbacks.map((inq) => (
           <CallbackCard
-            key={inq.activitynumber || inq.id || Math.random()} // always unique key
+            key={inq.activitynumber || inq.id || Math.random()}
             inq={inq}
             userDetails={userDetails || { ReferenceID: "" }}
             openFormDrawer={openFormDrawer}
@@ -208,8 +198,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         </p>
       )}
 
-
-      {/* Slide-up form drawer */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -220,7 +208,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       >
         {selectedInquiry && (
           <>
-            {/* Header */}
             <div className="flex justify-between items-center mb-4 border-b pb-2">
               <h3 className="text-lg font-semibold">Update Activity</h3>
               <button
@@ -233,7 +220,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {/* Activity Number */}
               <input type="hidden" value={activitynumber} onChange={(e) => setActivityNumber(e.target.value)} />
               <input type="hidden" value={companyname} onChange={(e) => setCompanyName(e.target.value)} />
               <input type="hidden" value={contactperson} onChange={(e) => setContactPerson(e.target.value)} />
@@ -243,7 +229,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
               <input type="hidden" value={tsm} onChange={(e) => setTsm(e.target.value)} />
               <input type="hidden" value={manager} onChange={(e) => setManager(e.target.value)} />
 
-              {/* Remarks */}
               <div className="flex flex-col sm:col-span-2">
                 <label className="font-semibold text-xs mb-1">Remarks</label>
                 <textarea
@@ -254,7 +239,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* Start Date */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Start Date</label>
                 <input
@@ -266,7 +250,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* End Date */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">End Date</label>
                 <input
@@ -277,7 +260,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 />
               </div>
 
-              {/* Status */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Status</label>
                 <select
@@ -291,7 +273,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 </select>
               </div>
 
-              {/* Call Type */}
               <div className="flex flex-col">
                 <label className="font-semibold text-xs mb-1">Call Status</label>
                 <select
@@ -305,8 +286,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 </select>
               </div>
             </div>
-
-            {/* Submit Button */}
+            
             <div className="mt-4">
               <button
                 type="submit"

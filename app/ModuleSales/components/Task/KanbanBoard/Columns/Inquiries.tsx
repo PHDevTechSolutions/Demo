@@ -71,13 +71,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
       else if (Array.isArray(data?.data)) inquiries = data.data;
       else if (Array.isArray(data?.inquiries)) inquiries = data.inquiries;
 
-      // Filter by referenceId and sort by latest date_created first
       const myInquiries = inquiries
         .filter((inq) => inq.referenceid === referenceId)
         .sort((a, b) => {
           const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
           const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
-          return dateB - dateA; // latest first
+          return dateB - dateA;
         });
 
       return myInquiries;
@@ -267,7 +266,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
           <p className="text-sm text-gray-400">No inquiries found.</p>
         )}
 
-        {/* View More Button */}
         {visibleCount < inquiries.length && (
           <div className="flex justify-center mt-2">
             <button

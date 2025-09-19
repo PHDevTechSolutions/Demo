@@ -19,7 +19,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
   activitystatus, setactivitystatus,
   paymentterm, setpaymentterm
 }) => {
-  // Local state
   const [emailOptions, setEmailOptions] = useState<string[]>([]);
   const [customMessage, setCustomMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -27,7 +26,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [recentEmails, setRecentEmails] = useState<string[]>([]);
 
-  // Load recent emails from localStorage on mount
   useEffect(() => {
     const savedEmails = localStorage.getItem(EMAIL_STORAGE_KEY);
     if (savedEmails) {
@@ -35,19 +33,15 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
     }
   }, []);
 
-  // Example to populate email options (replace this with actual fetch or props)
   useEffect(() => {
-    // For demo, combine recentEmails with current email if not duplicate
     const emailsSet = new Set(recentEmails);
     if (emailaddress) emailsSet.add(emailaddress);
     setEmailOptions(Array.from(emailsSet));
   }, [recentEmails, emailaddress]);
 
-  // Validate email format helper
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Handle sending email
   const sendEmail = useCallback(async () => {
     if (!emailaddress || !isValidEmail(emailaddress)) {
       setErrorMessage("Please select a valid email.");
@@ -66,7 +60,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
 
       if (data.success) {
         alert("Email sent successfully!");
-        // Save email to recent emails
         const updatedEmails = [emailaddress, ...recentEmails.filter(e => e !== emailaddress)].slice(0, 10);
         setRecentEmails(updatedEmails);
         localStorage.setItem(EMAIL_STORAGE_KEY, JSON.stringify(updatedEmails));
@@ -82,7 +75,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
     }
   }, [emailaddress, customMessage, recentEmails]);
 
-  // Reset form inputs
   const resetForm = () => {
     setactualsales("");
     setemailaddress("");
@@ -90,10 +82,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
     setErrorMessage(null);
   };
 
-  // Character limit for message
-  const MESSAGE_CHAR_LIMIT = 500;
-
-  // Confirmation modal component
   const ConfirmModal = () => (
     <div
       role="dialog"
@@ -242,7 +230,6 @@ const DeliveryFields: React.FC<DeliveryFieldsProps> = ({
         </div>
       </div>
 
-      {/* Confirmation modal */}
       {showConfirm && <ConfirmModal />}
     </>
   );

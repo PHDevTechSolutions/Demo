@@ -2,10 +2,10 @@
 import React from "react";
 
 interface HorizontalBarProps {
-  value: number; // from 0 to 100
+  value: number;
   label: string;
-  size?: number; // optional width in px
-  height?: number; // bar thickness
+  size?: number; 
+  height?: number;
   color?: string;
   backgroundColor?: string;
 }
@@ -22,15 +22,13 @@ const HorizontalBar: React.FC<HorizontalBarProps> = ({
 
   return (
     <div style={{ width: size, textAlign: "center" }}>
-      {/* Label + Percentage */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
         <span style={{ fontSize: 12, fontWeight: "500", color: "#444" }}>{label}</span>
         <span style={{ fontSize: 12, fontWeight: "bold", color: "#111" }}>
           {clampedValue.toFixed(2)}%
         </span>
       </div>
-
-      {/* Bar */}
+      
       <div
         style={{
           width: "100%",

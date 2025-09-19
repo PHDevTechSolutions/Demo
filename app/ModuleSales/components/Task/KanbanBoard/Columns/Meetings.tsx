@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import MeetingForm from "./Form/MeetingForm";
 
-// Helper: format Date -> datetime-local string
 const formatDateTimeLocal = (date: Date) => {
     const pad = (n: number) => String(n).padStart(2, "0");
     const year = date.getFullYear();
@@ -16,7 +15,6 @@ const formatDateTimeLocal = (date: Date) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-// Helper: get current PH date
 const getNowInPH = () => {
     const now = new Date();
     return new Date(
@@ -24,7 +22,6 @@ const getNowInPH = () => {
     );
 };
 
-// Helper: PH date + minutes
 const getNowInPHPlusMinutes = (minutes: number) => {
     const base = getNowInPH();
     base.setMinutes(base.getMinutes() + minutes);
@@ -70,7 +67,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
     const [meetings, setMeetings] = useState<MeetingItem[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
 
-    // Handle duration selection
     const handleDurationChange = (value: string) => {
         setMode(value);
 
@@ -90,11 +86,10 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             setEndDate("");
         }
     };
-    
-    // Fetch meetings from API
+
     const fetchMeetings = async () => {
         try {
-            if (!userDetails || !userDetails.ReferenceID) return; // ✅ Skip if no ReferenceID
+            if (!userDetails || !userDetails.ReferenceID) return;
 
             const res = await fetch(
                 `/api/ModuleSales/Task/ActivityPlanner/FetchMeeting?referenceid=${userDetails.ReferenceID}`
@@ -104,7 +99,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             if (!res.ok || !data.success)
                 throw new Error(data.error || "Failed to fetch meetings");
 
-            // Filter for this user, Client or Group Meeting
             const filteredMeetings = data.meetings.filter(
                 (m: MeetingItem) =>
                     m.referenceid &&
@@ -112,7 +106,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                     (m.typeactivity === "Client Meeting" || m.typeactivity === "Group Meeting")
             );
 
-            // Filter meetings happening today
             const today = getNowInPH();
             const meetingsToday = filteredMeetings.filter((m: MeetingItem) => {
                 const start = new Date(m.startdate);
@@ -139,7 +132,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
         fetchMeetings();
     }, [userDetails, refreshTrigger]);
 
-    // Submit meeting to API
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -194,7 +186,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 <span className="mr-1">📅</span>Total Meetings Today: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
-            {/* Form */}
             {showForm && userDetails && (
                 <MeetingForm
                     mode={mode}
@@ -212,7 +203,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 />
             )}
 
-            {/* Meetings List */}
             <div className="space-y-1">
                 {meetings.length === 0 && (
                     <p className="text-xs text-gray-400 italic">No meetings scheduled for today</p>
@@ -247,7 +237,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 })}
             </div>
 
-            {/* Toggle Form */}
             <div className="flex justify-between items-center">
                 <button
                     onClick={() => setShowForm((prev) => !prev)}

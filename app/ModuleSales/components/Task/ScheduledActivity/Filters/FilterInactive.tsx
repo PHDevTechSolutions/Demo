@@ -34,7 +34,7 @@ const FilterInactive: React.FC<FilterCardProps> = ({
   expandedIds,
   setExpandedIds,
 }) => {
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
 
   const filteredAccounts = useMemo(() => {
     const todayStr = new Date().toISOString().slice(0, 10);

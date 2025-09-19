@@ -35,7 +35,7 @@ interface Activity {
 interface PrioritiesProps {
   post: Post;
   activities: Activity[];
-  daysThreshold?: number; // Optional threshold for follow-up days, default 7
+  daysThreshold?: number;
 }
 
 const DAYS_THRESHOLD_DEFAULT = 7;
@@ -45,7 +45,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
   activities,
   daysThreshold = DAYS_THRESHOLD_DEFAULT,
 }) => {
-  // Calculate days since last activity
   const daysSinceLastActivity = (activities: Activity[]) => {
     if (activities.length === 0) return null;
     const latest = activities.reduce((a, b) =>
@@ -55,14 +54,12 @@ const Priorities: React.FC<PrioritiesProps> = ({
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));
   };
 
-  // Count callbacks without quotation
   const hasMultipleCallbacksNoQuotation = (activities: Activity[]) => {
     const callbacks = activities.filter((a) => a.typecall === "Ringing Only");
     const hasQuotation = activities.some((a) => a.quotationnumber);
     return callbacks.length >= 2 && !hasQuotation;
   };
 
-  // Check pending status duration in days
   const pendingStatusDuration = (post: Post) => {
     if (post.activitystatus.toLowerCase() !== "assisted") return null;
     const created = new Date(post.date_created).getTime();
@@ -70,7 +67,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
     return Math.floor(diffMs / (1000 * 60 * 60 * 24));
   };
 
-  // Check remarks for keywords
   const remarksHasLowPriorityKeywords = (remarks?: string) => {
     if (!remarks) return false;
     const keywords = ["not interested", "waiting", "no budget"];
@@ -78,7 +74,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
     return keywords.some((k) => lowerRemarks.includes(k));
   };
 
-  // Check remarks for negative feedback keywords
   const remarksHasNegativeFeedback = (remarks?: string) => {
     if (!remarks) return false;
     const negativeKeywords = ["complaint", "issue", "unsatisfied", "problem"];
@@ -86,7 +81,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
     return negativeKeywords.some((k) => lowerRemarks.includes(k));
   };
 
-  // Compute priority level
   const computePriority = (activities: Activity[]) => {
     let totalValue = 0;
     activities.forEach((a) => {
@@ -107,17 +101,14 @@ const Priorities: React.FC<PrioritiesProps> = ({
     return "Low";
   };
 
-  // Check for urgent activities
   const hasUrgentActivity = activities.some(
     (a) => a.activitystatus?.toLowerCase() === "delivered"
   );
 
-  // Count failed or no answer calls
   const failedCalls = activities.filter(
     (a) => a.callstatus === "Unsuccessful"
   );
 
-  // Calculate total quotation and actual sales
   const totalQuotation = activities.reduce(
     (sum, a) => sum + (parseFloat(a.quotationamount || "0") || 0),
     0
@@ -127,7 +118,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
     0
   );
 
-  // Calculate priority and labels
   const priority = computePriority(activities);
   const daysLastActivity = daysSinceLastActivity(activities);
 
@@ -172,7 +162,6 @@ const Priorities: React.FC<PrioritiesProps> = ({
     );
   }
 
-  // Optional: Last contacted date display
   const lastContactDate =
     activities.length > 0
       ? new Date(

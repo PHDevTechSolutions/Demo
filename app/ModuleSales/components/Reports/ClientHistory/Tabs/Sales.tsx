@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Filters from "./ChartControls/Filters";
 import Charts from "./ChartControls/SalesCharts";
 
@@ -44,7 +44,6 @@ const Sales: React.FC<SalesProps> = ({ groupedPosts }) => {
 
     return (
         <div className="space-y-4 max-w-full">
-            {/* Controls */}
             <div className="flex flex-wrap items-center gap-4">
                 <Filters
                     customStartDate={customStartDate}
@@ -56,7 +55,6 @@ const Sales: React.FC<SalesProps> = ({ groupedPosts }) => {
                 />
             </div>
 
-            {/* Companies */}
             {Object.entries(groupedPosts).map(([companyname, posts]) => {
                 const dateMap: Record<string, number> = {};
 

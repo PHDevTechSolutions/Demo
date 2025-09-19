@@ -42,16 +42,8 @@ const statusOptions = [
 ];
 
 const ActivityStatus: React.FC<ActivityStatusProps> = ({
-  currentRecords,
-  quotationnumber,
-  quotationamount,
-  paymentterm,
-  sonumber,
-  soamount,
-  actualsales,
   activitystatus,
   setactivitystatus,
-  setpaymentterm,
 }) => {
   const [isLocked, setIsLocked] = useState(false);
 

@@ -2,11 +2,9 @@ import React, { useEffect, useState } from "react";
 import { CiCircleMinus, CiCirclePlus } from "react-icons/ci";
 
 interface FormFieldsProps {
-  // Users Credentials
   referenceid: string; setreferenceid: (value: string) => void;
   manager: string; setmanager: (value: string) => void;
   tsm: string; settsm: (value: string) => void;
-  //
   companyname: string; setcompanyname: (value: string) => void;
   contactperson: string; setcontactperson: (value: string) => void;
   remarks: string; setremarks: (value: string) => void;
@@ -15,43 +13,33 @@ interface FormFieldsProps {
   editPost?: any;
 }
 
-const UserFormFields: React.FC<FormFieldsProps> = ({
-  // Users Credentials
+const FormFields: React.FC<FormFieldsProps> = ({
   referenceid, setreferenceid,
   manager, setmanager,
   tsm, settsm,
-  //
   companyname, setcompanyname,
   contactperson, setcontactperson,
   remarks, setremarks,
   activitystatus, setactivitystatus,
-  isMaximized = false, // default false
+  isMaximized = false,
   editPost,
 }) => {
-  // Select Fields
 
-  // Dynamic Fields
   const [contactPersons, setContactPersons] = useState<string[]>([]);
-  const [contactNumbers, setContactNumbers] = useState<string[]>([]);
-  const [emailAddresses, setEmailAddresses] = useState<string[]>([]);
 
   useEffect(() => {
     setContactPersons(contactperson ? contactperson.split(", ") : [""]);
   }, [contactperson]);
 
-  // Add new fields
   const addContactPerson = () => setContactPersons([...contactPersons, ""]);
-
-  // Remove fields
   const removeContactPerson = (index: number) => {
     if (contactPersons.length > 1) {
       const updated = contactPersons.filter((_, i) => i !== index);
       setContactPersons(updated);
-      setcontactperson(updated.join(", ")); // Update the contactperson field
+      setcontactperson(updated.join(", "));
     }
   };
 
-  // Handle changes
   const handleContactPersonChange = (index: number, value: string) => {
     const updated = [...contactPersons];
     updated[index] = value;
@@ -65,13 +53,10 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
       setmanager(editPost.manager || "");
       settsm(editPost.tsm || "");
       setreferenceid(editPost.referenceid || "");
-
-      // Ensure contact persons, numbers, and emails are properly set
       setContactPersons(editPost.contactperson ? editPost.contactperson.split(", ") : [""]);
     }
   }, [editPost]);
 
-  // Ensure selected values are updated when options are available
   const fieldWidthClass = isMaximized ? "w-full sm:w-1/2 px-4 mb-4" : "w-full px-4 mb-4";
   const isEditMode = !!editPost && Object.keys(editPost).length > 0;
 
@@ -102,7 +87,6 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
           />
         </div>
 
-        {/* Contact Person */}
         <div className={fieldWidthClass}>
           <label className="block text-xs font-bold mb-2">Contact Person</label>
           {contactPersons.map((person, index) => (
@@ -162,4 +146,4 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
   );
 };
 
-export default UserFormFields;
+export default FormFields;

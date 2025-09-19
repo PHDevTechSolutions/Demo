@@ -7,10 +7,8 @@ interface CalendarProps {
   end: Date;
 }
 
-// Helper to check if a date is valid
 const isValidDate = (date: Date) => date instanceof Date && !isNaN(date.getTime());
 
-// Safer formatter for Google Calendar and ICS (UTC format)
 const formatDateForCalendar = (date: Date) => {
   if (!isValidDate(date)) {
     throw new Error("Invalid Date passed to formatDateForCalendar");
@@ -18,7 +16,6 @@ const formatDateForCalendar = (date: Date) => {
   return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 };
 
-// Google Calendar URL builder
 export const buildGoogleCalendarUrl = ({ title, details, start, end }: CalendarProps) => {
   try {
     const params = new URLSearchParams({
@@ -33,7 +30,6 @@ export const buildGoogleCalendarUrl = ({ title, details, start, end }: CalendarP
   }
 };
 
-// Outlook Calendar URL builder
 export const buildOutlookCalendarUrl = ({ title, details, start, end }: CalendarProps) => {
   try {
     const params = new URLSearchParams({
@@ -50,7 +46,6 @@ export const buildOutlookCalendarUrl = ({ title, details, start, end }: Calendar
   }
 };
 
-// ICS file generator
 export const buildICSFileContent = ({ title, details, start, end }: CalendarProps) => {
   try {
     return `BEGIN:VCALENDAR
@@ -89,7 +84,6 @@ const Calendar: React.FC<CalendarProps> = ({ title, details, start, end }) => {
     setShowOptions(false);
   }, [title, details, start, end]);
 
-  // Don't render if dates are invalid
   if (!isValidDate(start) || !isValidDate(end)) {
     console.warn("Invalid date passed to Calendar component");
     return null;

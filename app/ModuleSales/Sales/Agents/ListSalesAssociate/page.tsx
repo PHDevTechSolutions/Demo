@@ -3,14 +3,11 @@ import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
-
-// Components
-import AddPostForm from "../../../components/Agents/ListSalesAssociate/AddUserForm";
-import SearchFilters from "../../../components/UserManagement/TerritorySalesAssociates/SearchFilters";
-import UsersTable from "../../../components/Agents/ListSalesAssociate/UsersTable";
+import AddPostForm from "../../../components/Agents/ListSalesAssociate/Form";
+import SearchFilters from "../../../components/UserManagement/TerritorySalesAssociates/Filters";
+import UsersTable from "../../../components/Agents/ListSalesAssociate/Table";
 import Pagination from "../../../components/UserManagement/TerritorySalesAssociates/Pagination";
 
-// Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -43,7 +40,6 @@ const ListofUser: React.FC = () => {
 
   const loading = loadingUser || loadingAccounts;
 
-  // Fetch current user details
   useEffect(() => {
     const fetchUserData = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -78,7 +74,6 @@ const ListofUser: React.FC = () => {
     fetchUserData();
   }, []);
 
-  // Fetch TSA options
   useEffect(() => {
     const fetchTSA = async () => {
       if (!["Territory Sales Manager", "Super Admin", "Manager"].includes(userDetails.Role)) return;
@@ -102,7 +97,6 @@ const ListofUser: React.FC = () => {
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
-  // Fetch TSM options (only for Manager role)
   useEffect(() => {
     if (userDetails.Role !== "Manager") return;
     const fetchTSM = async () => {
@@ -118,7 +112,6 @@ const ListofUser: React.FC = () => {
     fetchTSM();
   }, [userDetails.Role]);
 
-  // Fetch all users
   const fetchUsers = async () => {
     setLoadingAccounts(true);
     try {
@@ -137,7 +130,6 @@ const ListofUser: React.FC = () => {
     fetchUsers();
   }, []);
 
-  // Filter users
   const filteredAccounts = posts.filter((post) => {
     const excludedStatuses = ["Resigned", "Terminated"];
     if (excludedStatuses.includes(post?.Status)) return false;
@@ -174,7 +166,6 @@ const ListofUser: React.FC = () => {
   const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-  // Handlers
   const handleEdit = (post: any) => {
     setEditUser(post);
     setShowForm(true);
@@ -204,10 +195,8 @@ const ListofUser: React.FC = () => {
                     <strong>Agents</strong> manage client relationships, drive sales, and ensure excellent service.
                   </p>
 
-                  {/* Filters Grid */}
                   {["Territory Sales Manager", "Super Admin", "Manager"].includes(userDetails.Role) && (
                     <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                      {/* TSM Filter */}
                       {userDetails.Role === "Manager" && (
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">Filter by TSM</label>
@@ -226,7 +215,6 @@ const ListofUser: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Total Users */}
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1 invisible">Total</label>
                         <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm text-center">
@@ -243,7 +231,6 @@ const ListofUser: React.FC = () => {
                     setPostsPerPage={setPostsPerPage}
                   />
 
-                  {/* Table or Loader */}
                   {loading ? (
                     <div className="flex justify-center items-center py-10">
                       <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -262,7 +249,23 @@ const ListofUser: React.FC = () => {
                 </div>
               )}
 
-              <ToastContainer className="text-xs" autoClose={1000} />
+              <ToastContainer
+                position="bottom-right"
+                autoClose={2000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                className="text-sm z-[99999]"
+                toastClassName={() =>
+                  "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                }
+                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+              />
             </div>
           )}
         </UserFetcher>

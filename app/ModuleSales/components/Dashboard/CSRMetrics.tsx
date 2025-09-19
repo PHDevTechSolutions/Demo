@@ -56,8 +56,6 @@ const SEC_KEY_MAP: Record<
 const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
     const data = useMemo(() => {
         const grouped: Record<string, any> = {};
-
-        // ✅ Filter: CSR Inquiry + activitystatus Quote-Done or Assisted
         const csrAccounts = filteredAccounts.filter(
             (acc) =>
                 acc.source === "CSR Inquiry" &&
@@ -224,7 +222,6 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
                 Key performance indicators of Customer Service Representatives including their productivity and efficiency.
             </p>
 
-            {/* ✅ Chart */}
             {data.length === 0 ? (
                 <p className="text-center text-gray-500 text-xs">No CSR metrics available.</p>
             ) : (
@@ -300,7 +297,6 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
                 </svg>
             )}
 
-            {/* ✅ Legend */}
             <div className="flex justify-center gap-8 mt-6 select-none flex-wrap">
                 {(Object.keys(COLORS) as (keyof typeof COLORS)[]).map((key) => {
                     const total = data.reduce((sum, d) => sum + (d[key] ?? 0), 0);
@@ -325,7 +321,6 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
                 })}
             </div>
 
-            {/* ✅ View Computation Section */}
             {showComputation && (
                 <div className="bg-gray-50 border rounded-lg p-4 mt-6 text-xs space-y-3">
                     <h3 className="font-bold">Computation Details</h3>
@@ -371,7 +366,6 @@ const CSRMetrics: React.FC<CSRMetricsProps> = ({ filteredAccounts }) => {
                 </div>
             )}
 
-            {/* ✅ Tooltip */}
             {tooltip.visible && (
                 <div
                     className="fixed border rounded-lg p-2 bg-white shadow-md text-xs z-50 whitespace-nowrap pointer-events-none"

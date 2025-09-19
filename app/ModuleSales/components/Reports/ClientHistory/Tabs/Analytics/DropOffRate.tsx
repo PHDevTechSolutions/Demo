@@ -23,7 +23,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
     rate?: number;
   }>({ visible: false, x: 0, y: 0 });
 
-  // Responsive width update
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
@@ -35,13 +34,12 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Prepare data grouped by month with drop off rate
   const monthlyRates = useMemo(() => {
     const monthlyTotals: Record<string, { total: number; dropped: number }> = {};
 
     records.forEach(({ date_created, activitystatus }) => {
       if (!date_created) return;
-      const month = new Date(date_created).toISOString().slice(0, 7); // YYYY-MM
+      const month = new Date(date_created).toISOString().slice(0, 7);
 
       if (!monthlyTotals[month]) monthlyTotals[month] = { total: 0, dropped: 0 };
       monthlyTotals[month].total += 1;
@@ -64,15 +62,12 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
     });
   }, [records]);
 
-  // Calculate points for line chart
   const innerWidth = width - MARGIN.left - MARGIN.right;
   const innerHeight = CHART_HEIGHT - MARGIN.top - MARGIN.bottom;
   const maxY = 100;
 
-  // X positions spaced evenly
   const xStep = monthlyRates.length > 1 ? innerWidth / (monthlyRates.length - 1) : innerWidth;
 
-  // Build SVG path for the line chart (smooth cubic Bezier)
   const buildPath = () => {
     if (monthlyRates.length === 0) return "";
 
@@ -87,7 +82,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
       return `M${p.x},${p.y}`;
     }
 
-    // For smooth line use cubic Bezier curves
     let path = `M${points[0].x},${points[0].y}`;
 
     for (let i = 0; i < points.length - 1; i++) {
@@ -99,13 +93,11 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
     return path;
   };
 
-  // Y-axis ticks
   const yTicks = 5;
   const yTickValues = Array.from({ length: yTicks + 1 }, (_, i) =>
     +(maxY * (i / yTicks)).toFixed(0)
   );
 
-  // Handler for tooltip on points
   const handleMouseMove = (e: React.MouseEvent, d: typeof monthlyRates[0], index: number) => {
     if (!containerRef.current) return;
     const bounds = containerRef.current.getBoundingClientRect();
@@ -132,8 +124,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
         style={{ width: "100%", position: "relative", height: CHART_HEIGHT }}
       >
         <svg width={width} height={CHART_HEIGHT}>
-
-          {/* Y Axis lines and labels */}
           {yTickValues.map((val) => {
             const y = MARGIN.top + innerHeight * (1 - val / maxY);
             return (
@@ -158,7 +148,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
             );
           })}
 
-          {/* X Axis labels */}
           {monthlyRates.map((d, i) => {
             const x = MARGIN.left + i * xStep;
             const label = d.month;
@@ -176,7 +165,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
             );
           })}
 
-          {/* X Axis line */}
           <line
             x1={MARGIN.left}
             y1={CHART_HEIGHT - MARGIN.bottom}
@@ -185,7 +173,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
             stroke="#bbb"
           />
 
-          {/* Y Axis line */}
           <line
             x1={MARGIN.left}
             y1={MARGIN.top}
@@ -194,7 +181,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
             stroke="#bbb"
           />
 
-          {/* Line path */}
           <path
             d={buildPath()}
             fill="none"
@@ -202,7 +188,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
             strokeWidth={2}
           />
 
-          {/* Points */}
           {monthlyRates.map((d, i) => {
             const cx = MARGIN.left + i * xStep;
             const cy = MARGIN.top + innerHeight * (1 - d.dropOffRate / maxY);
@@ -223,7 +208,6 @@ const DropOffRate: React.FC<DropOffRateProps> = ({ records }) => {
           })}
         </svg>
 
-        {/* Tooltip */}
         {tooltip.visible && (
           <div
             style={{

@@ -50,8 +50,6 @@ const Table: React.FC<UsersTableProps> = ({ posts }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCompanyPosts, setSelectedCompanyPosts] = useState<Post[] | null>(null);
   const itemsPerPage = 10;
-
-  // Group posts by companyname
   const groupedPosts = useMemo(() => {
     const groups: Record<string, Post[]> = {};
     posts.forEach((post) => {
@@ -63,12 +61,9 @@ const Table: React.FC<UsersTableProps> = ({ posts }) => {
     return groups;
   }, [posts]);
 
-  // Array of company names to paginate
   const companyNames = Object.keys(groupedPosts);
-
   const totalPages = Math.ceil(companyNames.length / itemsPerPage);
 
-  // Get paginated company names for current page
   const currentCompanyNames = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return companyNames.slice(startIndex, startIndex + itemsPerPage);
@@ -101,7 +96,6 @@ const Table: React.FC<UsersTableProps> = ({ posts }) => {
             ) : (
               currentCompanyNames.map((companyName) => {
                 const postsForCompany = groupedPosts[companyName];
-                // Sum actualsales for this company (assuming actualsales is stringified number)
                 const totalSales = postsForCompany.reduce((sum, post) => {
                   const val = Number(post.actualsales);
                   return sum + (isNaN(val) ? 0 : val);
@@ -133,7 +127,6 @@ const Table: React.FC<UsersTableProps> = ({ posts }) => {
         goToPage={goToPage}
       />
 
-      {/* Pass the selected company's posts array to MainModal */}
       <MainModal
         selectedPosts={selectedCompanyPosts}
         onClose={() => setSelectedCompanyPosts(null)}

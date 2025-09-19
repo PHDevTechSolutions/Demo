@@ -23,7 +23,6 @@ interface CompaniesProps {
 
 const DAILY_QUOTA = 35;
 
-// 🔹 Check kung due na ang company based on typeclient cycle
 const isCompanyDue = (comp: Company): boolean => {
   const lastAddedRaw = comp.id ? localStorage.getItem(`lastAdded_${comp.id}`) : null;
   if (!lastAddedRaw) return true;
@@ -37,7 +36,6 @@ const isCompanyDue = (comp: Company): boolean => {
   return true;
 };
 
-// 🔹 Helper: get yesterday’s date string
 const getYesterdayKey = () => {
   const d = new Date();
   d.setDate(d.getDate() - 1);
@@ -54,7 +52,6 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
 
-  // 🔹 Main fetch on load
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
@@ -65,7 +62,6 @@ const Companies: React.FC<CompaniesProps> = ({
       try {
         setLoading(true);
 
-        // 1️⃣ Try Supabase DailyQuota
         const res = await fetch(
           `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayDate}`
         );
@@ -78,7 +74,6 @@ const Companies: React.FC<CompaniesProps> = ({
           return;
         }
 
-        // 2️⃣ Fallback: Fetch from CompanyAccounts (main source)
         const accountsRes = await fetch(
           `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
         );
@@ -95,7 +90,6 @@ const Companies: React.FC<CompaniesProps> = ({
           return;
         }
 
-        // 3️⃣ Apply quota logic
         const eligibleCompanies = companiesData.filter(isCompanyDue);
 
         const top50 = eligibleCompanies.filter(c => c.typeclient === "Top 50");
@@ -119,7 +113,6 @@ const Companies: React.FC<CompaniesProps> = ({
           ...pickRandom(tsa, 5),
         ].slice(0, todayQuota);
 
-        // 4️⃣ Save to Supabase DailyQuota
         await fetch("/api/ModuleSales/Companies/DailyQuota", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -145,7 +138,6 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  // 🔹 Remove company + update Supabase DailyQuota
   const removeCompany = async (comp: Company) => {
     if (!userDetails?.ReferenceID) return;
 
@@ -168,7 +160,6 @@ const Companies: React.FC<CompaniesProps> = ({
     });
   };
 
-  // 🔹 Handle Add action
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
     removeCompany(comp);

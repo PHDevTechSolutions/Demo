@@ -13,7 +13,6 @@ import {
   LabelList,
 } from "recharts";
 
-// Props interface
 interface Props {
   countsales: {
     MonthToDateSales?: number;

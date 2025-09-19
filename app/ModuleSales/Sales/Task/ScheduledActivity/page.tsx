@@ -15,9 +15,6 @@ import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
 //import XendMail from "../../../components/Task/XendMail/Main";
 // Tools
 import Tools from "../../../components/Task/Tools/Sidebar";
-// Banner & Modal
-import Banner from "../../../components/Task/Banner/ComingSoon";
-import AnnouncementModal from "../../../components/Task/Summary/AnnouncementModal";
 // Toast
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -64,13 +61,12 @@ const ListofUser: React.FC = () => {
 
   const loading = loadingUser || loadingAccounts;
 
-  // ✅ Fetch summary function (ginagamit din ng button)
   const fetchSummary = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
 
     try {
       setLoadingSummary(true);
-      setIsSummaryOpen(true); // ✅ open agad modal kahit di pa tapos fetch
+      setIsSummaryOpen(true);
 
       const res = await fetch(
         "/api/ModuleSales/Task/DailyActivity/FetchProgress"
@@ -118,7 +114,6 @@ const ListofUser: React.FC = () => {
     }
   }, [userDetails]);
 
-  // Fetch user details
   useEffect(() => {
     const fetchUserData = async () => {
       const userId = new URLSearchParams(window.location.search).get("id");
@@ -155,7 +150,6 @@ const ListofUser: React.FC = () => {
     fetchUserData();
   }, []);
 
-  // Fetch activities (account mgmt)
   const fetchAccount = useCallback(async () => {
     setLoadingAccounts(true);
     try {
@@ -176,7 +170,6 @@ const ListofUser: React.FC = () => {
     fetchAccount();
   }, [fetchAccount]);
 
-  // Fetch TSA options
   useEffect(() => {
     const fetchTSA = async () => {
       try {
@@ -211,7 +204,6 @@ const ListofUser: React.FC = () => {
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
-  // Filter accounts
   const filteredAccounts = useMemo(() => {
     return posts
       .filter((post) => {
@@ -290,7 +282,6 @@ const ListofUser: React.FC = () => {
                           </p>
                         </div>
 
-                        {/* ✅ Show Recent Summary button aligned to right */}
                         <button
                           onClick={fetchSummary}
                           className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
@@ -327,7 +318,6 @@ const ListofUser: React.FC = () => {
                           </div>
                         )}
 
-                      {/* Filters + Main */}
                       <Filters
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
@@ -345,7 +335,6 @@ const ListofUser: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Task List */}
                   <div
                     className={`${activeTab === "tasklist" ? "block" : "hidden"
                       } bg-white shadow-md rounded-lg flex`}
@@ -353,7 +342,6 @@ const ListofUser: React.FC = () => {
                     <TaskList userDetails={userDetails} />
                   </div>
 
-                  {/* Notes */}
                   <div
                     className={`${activeTab === "notes" ? "block" : "hidden"
                       } bg-white shadow-md rounded-lg flex`}
@@ -361,7 +349,6 @@ const ListofUser: React.FC = () => {
                     <Notes userDetails={userDetails} />
                   </div>
 
-                  {/* Kanban */}
                   <div
                     className={`${activeTab === "activity" ? "block" : "hidden"
                       } bg-white shadow-md rounded-lg flex`}
@@ -378,7 +365,23 @@ const ListofUser: React.FC = () => {
                   </div> */}
                 </div>
 
-                <ToastContainer className="text-xs" autoClose={1000} />
+                <ToastContainer
+                  position="bottom-right"
+                  autoClose={2000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                  className="text-sm z-[99999]"
+                  toastClassName={() =>
+                    "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                  }
+                  progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                />
               </div>
             </>
           )}

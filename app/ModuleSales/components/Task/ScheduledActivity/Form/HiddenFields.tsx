@@ -33,7 +33,7 @@ const HiddenFields: React.FC<HiddenFieldsProps> = ({
 }) => {
 
     const generateActivityNumber = () => {
-        if (editPost?.activitynumber) return; // Don't regenerate if editing
+        if (editPost?.activitynumber) return;
         if (!companyname || !referenceid) return;
 
         const firstLetter = companyname.charAt(0).toUpperCase();
@@ -61,7 +61,6 @@ const HiddenFields: React.FC<HiddenFieldsProps> = ({
     return (
         <div className="flex flex-wrap -mx-4">
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4 space-y-2">
-                {/* Visible but read-only */}
                 <input
                     type="hidden"
                     id="activitynumber"
@@ -70,7 +69,6 @@ const HiddenFields: React.FC<HiddenFieldsProps> = ({
                     className="bg-gray-100 text-gray-700 w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
 
-                {/* Hidden fields */}
                 <input type="hidden" id="referenceid" value={referenceid ?? ""} onChange={(e) => setreferenceid(e.target.value)} />
                 <input type="hidden" id="manager" value={manager ?? ""} onChange={(e) => setmanager(e.target.value)} />
                 <input type="hidden" id="tsm" value={tsm ?? ""} onChange={(e) => settsm(e.target.value)} />

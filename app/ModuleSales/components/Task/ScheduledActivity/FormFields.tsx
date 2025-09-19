@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 // Routes
 import TimeSpent from "./Form/TimeSpent";
 import HiddenFields from "./Form/HiddenFields";
-import SelectCompany, { CompanyOption } from "./Form/SelectCompany";
+import SelectCompany from "./Form/SelectCompany";
 import Accordion from "./Form/Accordion";
 import Submenu from "./Form/Submenu";
 
@@ -125,20 +125,17 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
     const getFormattedTimestamp = () => {
         const now = new Date();
 
-        // Convert to YYYY-MM-DD HH:mm:ss format (MySQL TIMESTAMP)
         const formattedTimestamp = now
             .toLocaleString("en-US", { timeZone: "Asia/Manila" })
-            .replace(",", ""); // Remove comma from formatted string
+            .replace(",", "");
 
         return formattedTimestamp;
     };
-
-    // Capture start date & time only once when the component mounts
+    
     useEffect(() => {
         setstartdate(getFormattedTimestamp());
     }, []);
 
-    // Continuously update end date & time in real-time
     useEffect(() => {
         const interval = setInterval(() => {
             setenddate(getFormattedTimestamp());

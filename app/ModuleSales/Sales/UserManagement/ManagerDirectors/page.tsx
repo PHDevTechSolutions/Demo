@@ -5,9 +5,9 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/UserManagement/ManagerDirectors/AddUserForm";
-import SearchFilters from "../../../components/UserManagement/ManagerDirectors/SearchFilters";
-import UsersTable from "../../../components/UserManagement/ManagerDirectors/UsersTable";
+import AddPostForm from "../../../components/UserManagement/ManagerDirectors/Form";
+import SearchFilters from "../../../components/UserManagement/ManagerDirectors/Filters";
+import UsersTable from "../../../components/UserManagement/ManagerDirectors/Table";
 import Pagination from "../../../components/UserManagement/ManagerDirectors/Pagination";
 
 // Toast Notifications
@@ -33,7 +33,6 @@ const ListofUser: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -45,7 +44,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID,
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
@@ -69,7 +68,6 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchUsers = async () => {
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/ManagerDirector/FetchUser");
@@ -81,16 +79,10 @@ const ListofUser: React.FC = () => {
         }
     };
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = posts.filter((post) => {
-        // Check if the user's name matches the search term
         const matchesSearchTerm = [post?.Firstname, post?.Lastname]
             .some((field) => field?.toLowerCase().includes(searchTerm.toLowerCase()));
-
-        // Get the reference ID from userDetails
-        const referenceID = userDetails.ReferenceID; // TSM's ReferenceID from MongoDB
-
-        // Check role-based filtering
+        const referenceID = userDetails.ReferenceID; 
         const matchesRole = (
             (userDetails.Role === "Super Admin" || userDetails.Role === "Admin") &&
             (post?.Role === "Manager" || post?.Role === "Admin") &&
@@ -98,7 +90,6 @@ const ListofUser: React.FC = () => {
             (userDetails.Role !== "Admin" || post?.Role !== "Super Admin")
         );
 
-        // Return the filtered result
         return matchesSearchTerm && matchesRole;
     });
 
@@ -111,19 +102,16 @@ const ListofUser: React.FC = () => {
         fetchUsers();
     }, []);
 
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
     };
 
-    // Show delete modal
     const confirmDelete = (postId: string) => {
         setPostToDelete(postId);
         setShowDeleteModal(true);
     };
 
-    // Handle deleting a post
     const handleDelete = async () => {
         if (!postToDelete) return;
         try {
@@ -163,9 +151,9 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchUsers}  // Pass the refreshPosts callback
-                                        userName={user ? user.userName : ""}  // Ensure userName is passed properly
-                                        userDetails={{ id: editUser ? editUser._id : userDetails.UserId }}  // Ensure id is passed correctly
+                                        refreshPosts={fetchUsers}
+                                        userName={user ? user.userName : ""} 
+                                        userDetails={{ id: editUser ? editUser._id : userDetails.UserId }}
                                         editUser={editUser}
                                     />
 
@@ -230,7 +218,23 @@ const ListofUser: React.FC = () => {
                                     </div>
                                 )}
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

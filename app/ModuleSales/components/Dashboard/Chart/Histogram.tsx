@@ -8,14 +8,14 @@ interface HistogramProps {
   xAxisLabel?: string;
   yAxisLabel?: string;
   logScale?: boolean;
-  height?: number; // optional fixed height, will fallback to responsive height if not provided
+  height?: number;
   onBarClick?: (binIndex: number) => void;
 }
 
 const Histogram: React.FC<HistogramProps> = ({
   data,
   bins = 10,
-  color = "#3B82F6", // blue-500
+  color = "#3B82F6",
   barGap = 2,
   xAxisLabel,
   yAxisLabel,
@@ -53,8 +53,6 @@ const Histogram: React.FC<HistogramProps> = ({
   });
 
   const maxCount = Math.max(...counts);
-
-  // Use responsive height if not provided, 40% of container width
   const computedHeight = height ?? Math.floor(containerWidth * 0.4);
 
   const scaleY = (count: number) => {
@@ -66,7 +64,6 @@ const Histogram: React.FC<HistogramProps> = ({
     }
   };
 
-  // Format milliseconds simplified to seconds (if < 1000 ms, show ms)
   const formatInterval = (ms: number) => {
     if (ms < 1000) return `${ms}ms`;
     const totalSeconds = Math.floor(ms / 1000);
@@ -108,8 +105,6 @@ const Histogram: React.FC<HistogramProps> = ({
           const barHeight = scaleY(count);
           const x = i * (barWidth + barGap);
           const y = computedHeight - barHeight;
-
-          // Dynamic color on hover
           const fillColor = hoveredIndex === i ? "#2563EB" : color;
 
           return (
@@ -148,7 +143,6 @@ const Histogram: React.FC<HistogramProps> = ({
           );
         })}
 
-        {/* X axis baseline */}
         <line
           x1={0}
           y1={computedHeight}
@@ -158,7 +152,6 @@ const Histogram: React.FC<HistogramProps> = ({
           strokeWidth={1}
         />
 
-        {/* X axis labels */}
         {counts.map((_, i) => {
           const x = i * (barWidth + barGap) + barWidth / 2;
           const labelVal = min + i * binSize;
@@ -198,7 +191,6 @@ const Histogram: React.FC<HistogramProps> = ({
           </text>
         )}
 
-        {/* Y axis grid lines and labels */}
         {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
           const y = computedHeight - ratio * computedHeight;
           const countVal = logScale

@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FaSpinner } from "react-icons/fa"; // Using a spinner for loading state
+import { FaSpinner } from "react-icons/fa"; 
 
 const SessionChecker: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(true);
@@ -8,7 +8,6 @@ const SessionChecker: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   useEffect(() => {
     const checkSession = async () => {
-      // Check localStorage first for cached session status
       const cachedSession = localStorage.getItem("isLoggedIn");
 
       if (cachedSession) {
@@ -18,13 +17,12 @@ const SessionChecker: React.FC<{ children: React.ReactNode }> = ({ children }) =
           router.push("/login");
         }
       } else {
-        // Fetch session data if not cached
+
         try {
           const response = await fetch("/api/session");
           const data = await response.json();
 
           if (data.isLoggedIn) {
-            // Cache session status for future checks
             localStorage.setItem("isLoggedIn", JSON.stringify(data));
             setLoading(false);
           } else {

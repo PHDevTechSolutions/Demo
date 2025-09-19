@@ -17,18 +17,14 @@ const SoFields: React.FC<QuotationFieldsProps> = ({
     typecall,
     settypecall,
 }) => {
-    // Handler to sanitize quotation number input (letters and numbers only)
     const handleSONumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const input = e.target.value;
         const sanitized = input.replace(/[^a-zA-Z0-9]/g, "");
         setsonumber(sanitized.toUpperCase());
     };
 
-    // Handler to allow only numbers and one decimal point
     const handleSOAmountChange = (e: React.FormEvent<HTMLInputElement>) => {
         const inputValue = e.currentTarget.value;
-
-        // Allow only digits and one dot
         const validInput = inputValue
             .replace(/[^\d.]/g, "")
             .replace(/^(\d*\.\d*).*$/, "$1")

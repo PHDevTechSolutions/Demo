@@ -74,7 +74,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
           return dateB.getTime() - dateA.getTime();
         });
 
-      // Update only if there is new data
       if (userTasks.length !== lastTaskCount.current) {
         setTasks(userTasks);
         lastTaskCount.current = userTasks.length;
@@ -90,12 +89,9 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
     if (pollTimeout.current) clearTimeout(pollTimeout.current);
 
     const poll = async () => {
-      // Only poll if page is visible
       if (document.visibilityState === "visible") {
         await fetchTasks();
       }
-
-      // Adjust next interval: increase slightly if no new tasks
       const nextInterval = lastTaskCount.current === tasks.length ? Math.min(interval * 1.5, 30000) : 5000;
       pollTimeout.current = setTimeout(poll, nextInterval);
     };
@@ -104,12 +100,12 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   };
 
   useEffect(() => {
-    fetchTasks(); // Initial fetch
+    fetchTasks();
     startPolling();
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        fetchTasks(); // Fetch immediately when tab becomes active
+        fetchTasks();
       }
     };
 
@@ -121,7 +117,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
     };
   }, [userDetails?.ReferenceID]);
 
-  // Filtering logic
   const filteredTasks = tasks.filter(task => {
     const term = searchTerm.toLowerCase();
     const searchMatch = Object.values(task).some(
@@ -152,7 +147,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
       <h2 className="text-lg font-semibold text-black mb-2">Task List</h2>
       <p className="text-sm text-gray-500 mb-4">Track, manage, and update your daily activities.</p>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <input
           type="text"
@@ -226,7 +220,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+        className="text-sm z-[99999]"
         toastClassName={() =>
           "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
         }

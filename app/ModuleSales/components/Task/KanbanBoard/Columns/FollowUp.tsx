@@ -54,15 +54,11 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-
-  // form states
   const [remarks, setRemarks] = useState("");
   const [activitystatus, setActivityStatus] = useState("Ongoing");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [typeCall, setTypeCall] = useState<"Successful" | "Unsuccessful" | "">("");
-
-  // hidden field states
   const [activityNumber, setActivityNumber] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -72,7 +68,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
   const [tsm, setTsm] = useState("");
   const [manager, setManager] = useState("");
   const [localRefresh, setLocalRefresh] = useState(0);
-  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -95,8 +90,8 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
         const todayFollowUps = activities
           .filter((act) => act.referenceid === userDetails.ReferenceID)
-          .filter((act) => act.followup_date && act.typecall) // Only if may followup_date at may typecall
-          .filter((act) => act.followup_date?.startsWith(todayStr)) // Today only
+          .filter((act) => act.followup_date && act.typecall)
+          .filter((act) => act.followup_date?.startsWith(todayStr))
           .sort((a, b) => (b.followup_date || "").localeCompare(a.followup_date || ""));
 
         setFollowUps(todayFollowUps);
@@ -218,7 +213,6 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         </p>
       )}
 
-      {/* Slide-up form drawer */}
       <form
         onSubmit={(e) => {
           e.preventDefault();

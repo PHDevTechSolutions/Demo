@@ -23,7 +23,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
   endDate,
   typeactivity,
   remarks,
-  setMode,
   setStartDate,
   setEndDate,
   setTypeactivity,
@@ -33,7 +32,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
 }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-2 mb-3">
-      {/* Duration */}
       <div>
         <label className="block text-xs text-gray-600 mb-1">Duration</label>
         <select
@@ -50,7 +48,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
         </select>
       </div>
 
-      {/* Start */}
       <div>
         <label className="block text-xs text-gray-600 mb-1">Start Date</label>
         <input
@@ -63,7 +60,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
         />
       </div>
 
-      {/* End */}
       <div>
         <label className="block text-xs text-gray-600 mb-1">End Date</label>
         <input
@@ -76,7 +72,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
         />
       </div>
 
-      {/* Type */}
       <div>
         <label className="block text-xs text-gray-600 mb-1">Type</label>
         <select
@@ -90,7 +85,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
         </select>
       </div>
 
-      {/* Remarks */}
       <div>
         <label className="block text-xs text-gray-600 mb-1">Remarks</label>
         <textarea
@@ -100,8 +94,6 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
           className="w-full border px-2 py-1 rounded text-xs"
         />
       </div>
-
-      {/* Save */}
       <button
         type="submit"
         className="bg-green-600 text-white text-xs px-3 py-1 rounded hover:bg-green-700"

@@ -35,14 +35,11 @@ const groupByDate = (items: any[]) => {
 };
 
 export default function Notification({
-    totalNotifCount,
     showSidebar,
     setShowSidebar,
-    dropdownRef,
     sidebarRef,
     notifications,
     setNotifications,
-    userEmail,
 }: {
     totalNotifCount: number;
     showSidebar: boolean;

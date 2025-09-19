@@ -30,8 +30,7 @@ const DashboardPage: React.FC = () => {
 
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
   const [showVersionBanner, setShowVersionBanner] = useState(true);
-  
-  // Load Welcome Banner state from localStorage
+
   useEffect(() => {
     if (localStorage.getItem("hideWelcomeBanner") === "true") {
       setShowWelcomeBanner(false);
@@ -41,19 +40,16 @@ const DashboardPage: React.FC = () => {
     }
   }, []);
 
-  // Close Welcome Banner + persist in localStorage
   const handleCloseWelcomeBanner = () => {
     setShowWelcomeBanner(false);
     localStorage.setItem("hideWelcomeBanner", "true");
   };
 
-  // Close Version Banner + persist in localStorage
   const handleCloseVersionBanner = () => {
     setShowVersionBanner(false);
     localStorage.setItem("hideVersionBanner", "true");
   };
 
-  // Fetch all posts
   const fetchData = async () => {
     try {
       const response = await fetch("/api/ModuleSales/Dashboard/FetchProgress");
@@ -69,7 +65,6 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
-  // Fetch TSA
   useEffect(() => {
     const fetchTSA = async () => {
       try {
@@ -101,7 +96,6 @@ const DashboardPage: React.FC = () => {
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
-  // Fetch TSM
   useEffect(() => {
     const fetchTSM = async () => {
       try {
@@ -149,9 +143,9 @@ const DashboardPage: React.FC = () => {
               ? post?.referenceid === referenceID
               : userDetails.Role === "Territory Sales Manager"
                 ? post?.tsm === referenceID
-              : userDetails.Role === "Manager"
-                ? post?.manager === referenceID  
-                : false;
+                : userDetails.Role === "Manager"
+                  ? post?.manager === referenceID
+                  : false;
 
         const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
@@ -193,15 +187,12 @@ const DashboardPage: React.FC = () => {
   return (
     <SessionChecker>
       <ParentLayout>
-        {/* Welcome Banner */}
         {showWelcomeBanner && (
           <div className="bg-green-50 border border-green-300 text-green-800 px-6 py-4 rounded-xl shadow-md mb-4 relative flex items-start gap-3">
-            {/* Icon */}
             <div className="mt-1 text-green-600">
               <BsInfoCircle size={22} />
             </div>
 
-            {/* Text Content */}
             <div className="flex-1 text-sm leading-relaxed">
               <strong className="font-semibold text-green-900 text-base">Welcome to Task-Flow!</strong>
               <p className="mt-1">
@@ -220,8 +211,6 @@ const DashboardPage: React.FC = () => {
                 <span className="font-medium">Activities</span>.
               </p>
             </div>
-
-            {/* Close button */}
             <button
               className="absolute top-3 right-3 text-green-500 hover:text-green-700 transition"
               onClick={handleCloseWelcomeBanner}
@@ -231,7 +220,6 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
 
-        {/* New Version Banner */}
         {showVersionBanner && (
           <div className="relative flex items-start gap-4 bg-purple-50 border border-purple-300 text-purple-800 px-6 py-4 rounded-xl shadow-md mb-4">
             {/* Icon */}
@@ -239,7 +227,6 @@ const DashboardPage: React.FC = () => {
               <BsInfoCircle size={22} />
             </div>
 
-            {/* Content */}
             <div className="flex-1 text-sm leading-relaxed">
               <strong className="block font-semibold text-purple-900 text-base mb-1">
                 🎉 TaskFlow v4.4 Released!
@@ -262,7 +249,6 @@ const DashboardPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-purple-500 hover:text-purple-700 transition"
               onClick={handleCloseVersionBanner}
@@ -281,7 +267,23 @@ const DashboardPage: React.FC = () => {
           tsaOptions={tsaOptions}
           tsmOptions={tsmOptions}
         />
-        <ToastContainer />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={2000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          className="text-sm z-[99999]" 
+          toastClassName={() =>
+            "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+          }
+          progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+        />
       </ParentLayout>
     </SessionChecker>
   );

@@ -9,21 +9,20 @@ const FuturisticSpinner: React.FC<FuturisticSpinnerProps> = ({ setShowSpinner })
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSpinner(false);
-    }, 2000); // Shorter delay for faster perceived load
+    }, 2000); 
 
     return () => clearTimeout(timer);
   }, [setShowSpinner]);
 
   return (
     <div className="flex justify-center items-center h-full w-full relative">
-      {/* Rotating, glowing, fading logo */}
       <div className="relative z-10 animate-logo-spin-glow">
         <Image
           src="/taskflow.png"
           alt="Taskflow Logo"
           width={64}
           height={64}
-          priority // Faster image fetch
+          priority
         />
       </div>
 

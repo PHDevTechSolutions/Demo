@@ -5,24 +5,19 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import SearchFilters from "../../../components/National/DailyCallRanking/SearchFilters";
-import UsersTable from "../../../components/Agents/DailyCallRanking/UsersTable";
+import SearchFilters from "../../../components/National/DailyCallRanking/Filters";
+import UsersTable from "../../../components/Agents/DailyCallRanking/Table";
 
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
 const ListofUser: React.FC = () => {
-    const [showForm, setShowForm] = useState(false);
-    const [showImportForm, setShowImportForm] = useState(false);
-    const [editUser, setEditUser] = useState<any>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-    const [postsPerPage, setPostsPerPage] = useState(10);
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
         UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "", Department: "", Company: "",
@@ -31,7 +26,6 @@ const ListofUser: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [usersList, setUsersList] = useState<any[]>([]);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -43,7 +37,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
@@ -67,11 +61,10 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch users from MongoDB or PostgreSQL
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch("/api/getUsers"); // API endpoint mo
+                const response = await fetch("/api/getUsers");
                 const data = await response.json();
                 setUsersList(data);
             } catch (error) {
@@ -82,13 +75,12 @@ const ListofUser: React.FC = () => {
         fetchUsers();
     }, []);
 
-    // Fetch all progress from the API
     const fetchAccount = async () => {
         try {
             const response = await fetch("/api/ModuleSales/National/FetchDailyCallRanking");
             const data = await response.json();
-            console.log("Fetched data:", data); // Debugging line
-            setPosts(data.data); // Make sure you're setting `data.data` if API response has `{ success: true, data: [...] }`
+            console.log("Fetched data:", data);
+            setPosts(data.data);
         } catch (error) {
             toast.error("Error fetching users.");
             console.error("Error Fetching", error);
@@ -99,7 +91,7 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    const today = new Date().toISOString().split("T")[0]; // Kunin ang YYYY-MM-DD format ng today
+    const today = new Date().toISOString().split("T")[0];
 
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
@@ -115,7 +107,6 @@ const ListofUser: React.FC = () => {
 
             const referenceID = userDetails.ReferenceID;
 
-            // Role-based filtering logic
             const matchesRole = userDetails.Role === "Super Admin"
                 ? true
                 : userDetails.Role === "Manager"
@@ -126,7 +117,6 @@ const ListofUser: React.FC = () => {
 
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole;
         }).map((post) => {
-            // Hanapin ang Agent na may parehong ReferenceID sa usersList
             const agent = usersList.find((user) => user.ReferenceID === post.referenceid);
 
             return {
@@ -164,7 +154,23 @@ const ListofUser: React.FC = () => {
                                         posts={filteredAccounts}
                                     />
                                 </div>
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}

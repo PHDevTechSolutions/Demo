@@ -5,9 +5,9 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
-import AddPostForm from "../../../components/UserManagement/TerritorySalesAssociates/AddUserForm";
-import SearchFilters from "../../../components/UserManagement/TerritorySalesAssociates/SearchFilters";
-import UsersTable from "../../../components/UserManagement/TerritorySalesAssociates/UsersTable";
+import AddPostForm from "../../../components/UserManagement/TerritorySalesAssociates/Form";
+import SearchFilters from "../../../components/UserManagement/TerritorySalesAssociates/Filters";
+import UsersTable from "../../../components/UserManagement/TerritorySalesAssociates/Table";
 import Pagination from "../../../components/UserManagement/TerritorySalesAssociates/Pagination";
 
 // Toast Notifications
@@ -33,7 +33,6 @@ const ListofUser: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch user data based on query parameters (user ID)
     useEffect(() => {
         const fetchUserData = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -45,7 +44,7 @@ const ListofUser: React.FC = () => {
                     if (!response.ok) throw new Error("Failed to fetch user data");
                     const data = await response.json();
                     setUserDetails({
-                        UserId: data._id, // Set the user's id here
+                        UserId: data._id,
                         ReferenceID: data.ReferenceID || "",
                         Firstname: data.Firstname || "",
                         Lastname: data.Lastname || "",
@@ -70,7 +69,6 @@ const ListofUser: React.FC = () => {
         fetchUserData();
     }, []);
 
-    // Fetch all users from the API
     const fetchUsers = async () => {
         try {
             const response = await fetch("/api/ModuleSales/UserManagement/TerritorySalesAssociates/FetchUser");
@@ -82,25 +80,18 @@ const ListofUser: React.FC = () => {
         }
     };
 
-    // Filter users by search term (firstname, lastname)
     const filteredAccounts = posts.filter((post) => {
-        // Check if the user's name matches the search term
         const matchesSearchTerm = [post?.Firstname, post?.Lastname, post?.TSM, post?.ReferenceID]
             .some((field) => field?.toLowerCase().includes(searchTerm.toLowerCase()));
-
-        // Get the reference ID from userDetails
-        const referenceID = userDetails.ReferenceID; // TSM's ReferenceID from MongoDB
-
-        // Check role-based filtering
+        const referenceID = userDetails.ReferenceID;
         const matchesRole = userDetails.Role === "Super Admin"
-            ? post?.Role === "Territory Sales Associate" && post?.Department === "Sales" // Super Admin only sees TSAs in the Sales department
+            ? post?.Role === "Territory Sales Associate" && post?.Department === "Sales"
             : userDetails.Role === "Admin" && post?.Department === "Sales"
-                ? post?.Role !== "Super Admin" // Admin cannot see Super Admin
+                ? post?.Role !== "Super Admin"
                 : userDetails.Role === "Territory Sales Manager"
-                    ? post?.Department === "Sales" && post?.TSM === referenceID // TSM sees only assigned TSAs in the Sales department
-                    : false; // Default false if no match
+                    ? post?.Department === "Sales" && post?.TSM === referenceID
+                    : false;
 
-        // Return the filtered result
         return matchesSearchTerm && matchesRole;
     });
 
@@ -113,19 +104,16 @@ const ListofUser: React.FC = () => {
         fetchUsers();
     }, []);
 
-    // Handle editing a post
     const handleEdit = (post: any) => {
         setEditUser(post);
         setShowForm(true);
     };
 
-    // Show delete modal
     const confirmDelete = (postId: string) => {
         setPostToDelete(postId);
         setShowDeleteModal(true);
     };
 
-    // Handle deleting a post
     const handleDelete = async () => {
         if (!postToDelete) return;
         try {
@@ -165,9 +153,9 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchUsers}  // Pass the refreshPosts callback
-                                        userName={user ? user.userName : ""}  // Ensure userName is passed properly
-                                        userDetails={{ id: editUser ? editUser._id : userDetails.UserId }}  // Ensure id is passed correctly
+                                        refreshPosts={fetchUsers}
+                                        userName={user ? user.userName : ""}
+                                        userDetails={{ id: editUser ? editUser._id : userDetails.UserId }}
                                         editUser={editUser}
                                     />
 
@@ -234,7 +222,23 @@ const ListofUser: React.FC = () => {
                                     </div>
                                 )}
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                <ToastContainer
+                                    position="bottom-right"
+                                    autoClose={2000}
+                                    hideProgressBar={false}
+                                    newestOnTop
+                                    closeOnClick
+                                    rtl={false}
+                                    pauseOnFocusLoss
+                                    draggable
+                                    pauseOnHover
+                                    theme="colored"
+                                    className="text-sm z-[99999]"
+                                    toastClassName={() =>
+                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
+                                    }
+                                    progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+                                />
                             </div>
                         </div>
                     )}
