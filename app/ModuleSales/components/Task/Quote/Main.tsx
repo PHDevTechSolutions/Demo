@@ -117,7 +117,7 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                                     Quotation #: {q.quotationnumber}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    {q.companyname} – {q.projectcategory}
+                                    {q.companyname}
                                 </p>
                             </li>
                         ))}

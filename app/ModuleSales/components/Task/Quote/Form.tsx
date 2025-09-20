@@ -85,6 +85,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
     const [managerDetails, setManagerDetails] = useState<UserDetails | null>(null);
     const [headDetails, setHeadDetails] = useState<UserDetails | null>(null);
+    const [vatOption, setVatOption] = useState<"Vat Inc" | "Vat Exe" | "Zero-Rated">("Vat Inc");
 
     // 📦 Load products from Shopify
     useEffect(() => {
@@ -189,7 +190,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
     }, [userDetails.Manager, userDetails.TSM]);
 
     return (
-        <form onSubmit={handleSubmit} className="border rounded p-4 bg-gray-50">
+        <form className="border rounded p-4 bg-gray-50">
             {/* Header Image */}
             <div>
                 <img
@@ -292,8 +293,8 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                         </p>
                         <div className="border-t border-black w-full max-w-xs my-1"></div>
                         <p className="font-semibold">SALES MANAGER</p>
-                        <p>Mobile No: {headDetails ? `${headDetails.ContactNumber}`: ""}</p>
-                        <p>Email: {headDetails ? `${headDetails.Email}`: ""}</p>
+                        <p>Mobile No: {headDetails ? `${headDetails.ContactNumber}` : ""}</p>
+                        <p>Email: {headDetails ? `${headDetails.Email}` : ""}</p>
                     </div>
 
                     <div>
@@ -309,7 +310,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                 </div>
 
                 {/* Right Column */}
-                <div className="col-span-2 w-full pl-4 space-y-12">
+                <div className="col-span-2 w-full pl-4 space-y-12 mt-8">
                     <div className="mt-8">
                         <div className="border-t border-black w-full max-w-sm my-1"></div>
                         <p>COMPANY AUTHORIZED REPRESENTATIVE</p>
@@ -322,7 +323,6 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                     </div>
                 </div>
             </div>
-
 
             {/* Submit */}
             <div className="mt-4">
