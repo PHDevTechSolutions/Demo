@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Table from "./Table";
+import InformationSection from "./InformationSection";
 
 interface QuoteItem {
     id: number;
@@ -155,16 +156,16 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
             </div>
 
             {/* Reference No & Date */}
-            <div className="mt-2 text-right text-xs">
-                <div className="mb-1">
+            <div className="mt-2 text-right text-xs space-y-1">
+                <div>
                     Reference No:{" "}
-                    <span className="font-semibold text-center inline-block min-w-[100px]">
+                    <span className="font-semibold">
                         {selectedQuote.quotationnumber}
                     </span>
                 </div>
                 <div>
                     Date:{" "}
-                    <span className="font-semibold text-center inline-block min-w-[100px]">
+                    <span className="font-semibold">
                         {today}
                     </span>
                 </div>
@@ -220,21 +221,25 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
                 grandTotal={grandTotal}
             />
 
+            {/* Information Section */}
+            <InformationSection />
+
             {/* Submit */}
             <div className="mt-4">
                 <button
                     type="submit"
                     disabled={loading}
-                    className={`px-4 py-2 rounded text-sm font-semibold shadow ${loading
+                    className={`px-4 py-2 rounded text-xs font-semibold shadow ${loading
                         ? "bg-gray-400 cursor-not-allowed text-white"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
                 >
-                    {loading ? "Loading..." : "Submit"}
+                    {loading ? "Loading..." : "Export to Excel"}
                 </button>
             </div>
         </form>
     );
+
 };
 
 export default Form;

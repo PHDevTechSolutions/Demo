@@ -87,8 +87,9 @@ const Table: React.FC<TableProps> = ({ products, updateProduct, grandTotal }) =>
                     ))}
                 </tbody>
                 <tfoot>
-                    <tr className="bg-gray-100 font-semibold">
-                        <td colSpan={6} className="border-b px-2 py-2 text-xs">
+                    <tr className="bg-gray-100 font-semibold text-xs">
+                        {/* Left side: Radio buttons */}
+                        <td colSpan={4} className="border-b px-2 py-2">
                             <div className="flex items-center space-x-4">
                                 <span>Choose Once:</span>
                                 <label className="flex items-center space-x-1">
@@ -105,17 +106,14 @@ const Table: React.FC<TableProps> = ({ products, updateProduct, grandTotal }) =>
                                 </label>
                             </div>
                         </td>
-                    </tr>
-                    <tr className="bg-gray-100 font-semibold">
-                        <td colSpan={5} className="border-b px-2 py-1 text-right">
-                            Total Price:
-                        </td>
-                        <td className="border-b px-2 py-1 text-right">
-                            {grandTotal.toFixed(2)}
+
+                        {/* Right side: Total price */}
+                        <td colSpan={2} className="border-b px-2 py-1 text-right">
+                            Total Price:{" "}
+                            <span className="font-semibold">{grandTotal.toFixed(2)}</span>
                         </td>
                     </tr>
                 </tfoot>
-
             </table>
         </div>
     );
