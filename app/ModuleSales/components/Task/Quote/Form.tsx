@@ -292,8 +292,8 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                         </p>
                         <div className="border-t border-black w-full max-w-xs my-1"></div>
                         <p className="font-semibold">SALES MANAGER</p>
-                        <p>Mobile No:</p>
-                        <p>Email:</p>
+                        <p>Mobile No: {managerDetails ? `${managerDetails.ContactNumber}`: ""}</p>
+                        <p>Email: {managerDetails ? `${managerDetails.Email}`: ""}</p>
                     </div>
 
                     <div>
