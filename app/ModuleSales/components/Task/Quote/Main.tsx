@@ -12,6 +12,7 @@ interface UserDetails {
     Manager: string;
     TSM: string;
     Role: string;
+    ContactNumber: string;
     profilePicture?: string;
 }
 

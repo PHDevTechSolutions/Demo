@@ -238,30 +238,31 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             <InformationSection />
 
             {/* ✅ Two Column Signatures Section */}
-            <div className="mt-6 grid grid-cols-2 gap-6 text-xs">
+            <div className="mt-6 grid grid-cols-4 gap-6 text-xs border-t">
                 {/* Left Column */}
                 <div className="space-y-6">
+                    <p>Ecoshift Corporation</p>
                     <div>
                         <p className="font-semibold">
                             {userDetails.Firstname} {userDetails.Lastname}
                         </p>
                         <div className="border-t border-black w-48 my-1"></div>
                         <p>SALES REPRESENTATIVE</p>
-                        <p>MOBILE NO: {userDetails.ContactNumber || "-"}</p>
-                        <p>EMAIL: {userDetails.Email || "-"}</p>
+                        <p>Mobile No: {userDetails.ContactNumber || "-"}</p>
+                        <p>Email: {userDetails.Email || "-"}</p>
                     </div>
 
                     <div>
                         <p>Approved By:</p>
-                        <div className="border-t border-black w-48 my-1"></div>
+                        <div className="border-t border-black w-48 my-1 mt-8"></div>
                         <p>SALES MANAGER</p>
-                        <p>MOBILE NO: __________</p>
-                        <p>EMAIL: __________</p>
+                        <p>Mobile No:</p>
+                        <p>Email:</p>
                     </div>
 
                     <div>
                         <p>Noted By:</p>
-                        <div className="border-t border-black w-48 my-1"></div>
+                        <div className="border-t border-black w-48 my-1 mt-8"></div>
                         <p>SALES HEAD B2B</p>
                     </div>
                 </div>
