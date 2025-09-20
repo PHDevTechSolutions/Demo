@@ -146,15 +146,17 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
     return (
         <form onSubmit={handleSubmit} className="border rounded p-4 bg-gray-50">
             {/* Header Image */}
-            <div className="relative">
+            <div>
                 <img
                     src="/quote-header.png"
                     alt="Quote Header"
                     className="w-full object-cover"
                 />
             </div>
-            <div className="bottom-2 right-4 text-right text-xs">
-                <div>
+
+            {/* Reference No & Date */}
+            <div className="mt-2 text-right text-xs">
+                <div className="mb-1">
                     Reference No:{" "}
                     <span className="font-semibold text-center inline-block min-w-[100px]">
                         {selectedQuote.quotationnumber}
@@ -169,7 +171,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
             </div>
 
             {/* Company Info */}
-            <div className="mt-4 text-xs space-y-1 border-b pb-2">
+            <div className="mt-4 text-xs space-y-1 border-t border-b pb-2">
                 <div>
                     Company Name:{" "}
                     <span className="font-semibold text-center inline-block w-full">
