@@ -1,0 +1,221 @@
+"use client";
+
+import React, { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+interface UserDetails {
+    ReferenceID: string;
+    Firstname: string;
+    Lastname: string;
+    Manager: string;
+    TSM: string;
+    Role: string;
+    profilePicture?: string;
+}
+
+interface QuoteItem {
+    id: number;
+    referenceid: string;
+    manager: string;
+    tsm: string;
+    companyname: string;
+    contactperson: string;
+    contactnumber: string;
+    emailaddress: string;
+    address: string;
+    quotationnumber: string;
+    projectcategory: string;
+    quotationamount: string;
+}
+
+interface QuoteProps {
+    userDetails: UserDetails;
+}
+
+const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
+    const [searchValue, setSearchValue] = useState("");
+    const [results, setResults] = useState<QuoteItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [selectedQuote, setSelectedQuote] = useState<QuoteItem | null>(null);
+    const [showForm, setShowForm] = useState(false);
+
+    // ✅ Fetch quotationumber
+    // ✅ Fetch quotationnumber
+    const handleSearch = async () => {
+        if (!searchValue.trim()) {
+            toast.error("Please enter a quotation number");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await fetch(
+                `/api/ModuleSales/Task/ActivityPlanner/FetchQuote?referenceid=${userDetails.ReferenceID}`
+            );
+            if (!res.ok) throw new Error("Failed to fetch data");
+
+            const { data } = await res.json();
+
+            // 🚀 Exact match na lang, walang lowercase
+            const filtered = (data || []).filter(
+                (q: QuoteItem) => q.quotationnumber === searchValue
+            );
+
+            if (filtered.length === 0) {
+                toast.info("No matching quotation found");
+            }
+
+            setResults(filtered);
+        } catch (err: any) {
+            toast.error(err.message || "Error while fetching quotations");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    return (
+        <div className="w-full bg-white p-4">
+            <h2 className="text-lg font-semibold text-black mb-2">Quotation</h2>
+            <p className="text-sm text-gray-500 mb-4">
+                Search quotation numbers and generate activity forms.
+            </p>
+
+            {/* 🔍 Search bar */}
+            <div className="flex items-center gap-2 mb-4">
+                <input
+                    type="text"
+                    placeholder="Enter Quotation Number"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    className="border border-gray-300 px-3 py-2 rounded text-sm w-full focus:ring-1 focus:ring-blue-500"
+                />
+                <button
+                    onClick={handleSearch}
+                    disabled={loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
+                >
+                    {loading ? "Searching..." : "Search"}
+                </button>
+            </div>
+
+            {/* 📋 Results */}
+            {results.length > 0 && (
+                <div className="border rounded p-3 mb-4 bg-gray-50">
+                    <h3 className="font-semibold text-sm mb-2">Results:</h3>
+                    <ul className="space-y-2">
+                        {results.map((q) => (
+                            <li
+                                key={q.id}
+                                onClick={() => setSelectedQuote(q)}
+                                className={`p-2 rounded cursor-pointer border ${selectedQuote?.id === q.id
+                                        ? "bg-blue-100 border-blue-400"
+                                        : "bg-white hover:bg-gray-100"
+                                    }`}
+                            >
+                                <p className="text-sm font-medium">
+                                    Quotation #: {q.quotationnumber}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {q.companyname} – {q.projectcategory}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {/* 🖱 Generate button */}
+            {selectedQuote && !showForm && (
+                <div className="mb-4">
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
+                    >
+                        Generate
+                    </button>
+                </div>
+            )}
+
+            {/* 📑 Form */}
+            {showForm && selectedQuote && (
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        toast.success("Form submitted successfully!");
+                    }}
+                    className="border rounded p-4 bg-gray-50"
+                >
+                    <h3 className="font-semibold mb-3 text-sm">Generate Activity</h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <label className="font-semibold text-xs">Quotation #</label>
+                            <input
+                                type="text"
+                                value={selectedQuote.quotationnumber}
+                                readOnly
+                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
+                            />
+                        </div>
+                        <div>
+                            <label className="font-semibold text-xs">Company</label>
+                            <input
+                                type="text"
+                                value={selectedQuote.companyname}
+                                readOnly
+                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
+                            />
+                        </div>
+                        <div>
+                            <label className="font-semibold text-xs">Contact Person</label>
+                            <input
+                                type="text"
+                                value={selectedQuote.contactperson}
+                                readOnly
+                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
+                            />
+                        </div>
+                        <div>
+                            <label className="font-semibold text-xs">Quotation Amount</label>
+                            <input
+                                type="text"
+                                value={selectedQuote.quotationamount}
+                                readOnly
+                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
+                            />
+                        </div>
+                        <div>
+                            <label className="font-semibold text-xs">Item</label>
+                            <input
+                                type="text"
+                                value={selectedQuote.projectcategory}
+                                readOnly
+                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
+                        >
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            <ToastContainer
+                position="bottom-right"
+                autoClose={2000}
+                theme="colored"
+                className="text-sm z-[99999]"
+            />
+        </div>
+    );
+};
+
+export default Quote;

@@ -8,6 +8,7 @@ import Main from "../../../components/Task/ScheduledActivity/Main";
 import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
+import Quote from "../../../components/Task/Quote/Main";
 //import XendMail from "../../../components/Task/XendMail/Main";
 // Tools
 import Tools from "../../../components/Task/Tools/Sidebar";
@@ -47,14 +48,12 @@ const ListofUser: React.FC = () => {
   );
   const [selectedAgent, setSelectedAgent] = useState("");
   const [showBanner] = useState(true);
-
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [yesterdaySummary, setYesterdaySummary] = useState<any[]>([]);
   const [summaryType, setSummaryType] = useState<"yesterday" | "latest">(
     "yesterday"
   );
   const [loadingSummary, setLoadingSummary] = useState(false);
-
   const loading = loadingUser || loadingAccounts;
 
   const fetchSummary = useCallback(async () => {
@@ -350,6 +349,13 @@ const ListofUser: React.FC = () => {
                       } bg-white shadow-md rounded-lg flex`}
                   >
                     <KanbanBoard userDetails={userDetails} />
+                  </div>
+
+                  <div
+                    className={`${activeTab === "quote" ? "block" : "hidden"
+                      } bg-white shadow-md rounded-lg flex`}
+                  >
+                    <Quote userDetails={userDetails} />
                   </div>
 
                   {/* Xendmail

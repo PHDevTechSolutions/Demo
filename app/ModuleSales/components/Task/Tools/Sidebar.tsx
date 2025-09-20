@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BsListTask, BsCalendar4Week } from "react-icons/bs";
+import { BsListTask, BsCalendar4Week, BsFileEarmarkCheck } from "react-icons/bs";
 import { LuNotebookPen } from "react-icons/lu";
 import { SiMinutemailer } from 'react-icons/si';
 import { FaSquareCheck } from 'react-icons/fa6';
@@ -54,6 +54,16 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab }) => {
           }`}
       >
         <LuNotebookPen />
+      </button>
+
+      <button
+        onClick={() => setActiveTab("quote")}
+        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "quote"
+            ? "bg-orange-400 text-white"
+            : "bg-gray-100"
+          }`}
+      >
+        <BsFileEarmarkCheck />
       </button>
       
       {/*

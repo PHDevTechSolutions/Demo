@@ -81,11 +81,18 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
             ? data.data
             : [];
 
-        const todayStr = new Date().toISOString().split("T")[0];
+        // ✅ Define start and end of today
+        const today = new Date();
+        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
         const todayCallbacks = inquiries
           .filter((inq) => inq.referenceid === userDetails.ReferenceID)
-          .filter((inq) => inq.callback?.startsWith(todayStr))
+          .filter((inq) => {
+            if (!inq.callback) return false;
+            const cbDate = new Date(inq.callback);
+            return cbDate >= startOfDay && cbDate <= endOfDay;
+          })
           .sort((a, b) => (b.callback || "").localeCompare(a.callback || ""));
 
         setCallbacks(todayCallbacks);
@@ -286,7 +293,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
                 </select>
               </div>
             </div>
-            
+
             <div className="mt-4">
               <button
                 type="submit"
