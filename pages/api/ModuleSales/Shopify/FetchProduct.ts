@@ -21,11 +21,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { products } = await response.json();
 
-    // Map products to include first variant SKU + cleaned title
+    // ✅ Include body_html + first image
     const mappedProducts = products.map((p: any) => {
       const sku = p.variants?.[0]?.sku || "";
       const cleanTitle = p.title.replace(/Super Sale\s*/i, "").trim();
-      return { id: p.id, title: cleanTitle, sku };
+
+      return {
+        id: p.id,
+        title: cleanTitle,
+        sku,
+        body_html: p.body_html || null, // ✅ description
+        image: p.image ? { src: p.image.src } : null, // ✅ featured image
+      };
     });
 
     return res.status(200).json({ success: true, data: mappedProducts });

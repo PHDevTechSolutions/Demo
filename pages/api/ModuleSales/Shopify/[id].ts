@@ -5,9 +5,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method !== "PUT") {
-    return res
-      .status(405)
-      .json({ success: false, error: "Method Not Allowed" });
+    return res.status(405).json({ success: false, error: "Method Not Allowed" });
   }
 
   const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
@@ -20,7 +18,8 @@ export default async function handler(
   }
 
   const { id } = req.query;
-  const { title, product_type, vendor, status, sku, description } = req.body; // ✅ description supported
+  const { title, product_type, vendor, status, sku, description, images } =
+    req.body; // ✅ images supported
 
   if (!id) {
     return res
@@ -52,7 +51,7 @@ export default async function handler(
       idx === 0 ? { ...v, sku: sku || v.sku } : v
     );
 
-    // 📝 Build payload (description = body_html)
+    // 📝 Build payload (description = body_html + images support)
     const payload = {
       product: {
         id,
@@ -63,8 +62,9 @@ export default async function handler(
         body_html:
           description !== undefined
             ? description
-            : existingProduct.body_html, // ✅ allow null or keep existing
+            : existingProduct.body_html,
         variants: updatedVariants,
+        images: images ?? existingProduct.images, // ✅ allow update / keep existing
       },
     };
 

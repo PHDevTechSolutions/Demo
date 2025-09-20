@@ -14,7 +14,7 @@ interface QuoteItem {
   emailaddress: string;
   address: string;
   quotationnumber: string;
-  projectcategory: string; // contains SKUs
+  projectcategory: string;
   quotationamount: string;
 }
 
@@ -26,16 +26,42 @@ interface ShopifyProduct {
   sku: string;
   title: string;
   body_html: string | null;
+  image?: { src: string } | null;
 }
 
 interface ProductRow {
   sku: string;
-  description: string; // plain: title + sku
-  rawDescription: string | null; // HTML galing Shopify
+  description: string;
+  tableText: string | null; // ✅ plain text version of table
+  photo?: string | null;
   qty: number;
   unitPrice: number;
   total: number;
 }
+
+// 🔎 Helper: Convert <table> → plain text
+const extractTableAsText = (html: string): string | null => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const table = doc.querySelector("table");
+
+  if (!table) return null;
+
+  let textRows: string[] = [];
+  table.querySelectorAll("tr").forEach((tr) => {
+    const cells = tr.querySelectorAll("td, th");
+    if (cells.length >= 2) {
+      const label = cells[0].textContent?.trim() || "";
+      const value = cells[1].textContent?.trim() || "";
+      if (label && value) textRows.push(`${label}: ${value}`);
+    } else if (cells.length === 1) {
+      const single = cells[0].textContent?.trim() || "";
+      if (single) textRows.push(single);
+    }
+  });
+
+  return textRows.length > 0 ? textRows.join("\n") : null;
+};
 
 const Form: React.FC<FormProps> = ({ selectedQuote }) => {
   const [products, setProducts] = useState<ProductRow[]>([]);
@@ -73,10 +99,16 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
     const mapped: ProductRow[] = skus.map((sku) => {
       const match = shopifyProducts.find((p) => p.sku === sku);
 
+      let tableText: string | null = null;
+      if (match?.body_html) {
+        tableText = extractTableAsText(match.body_html);
+      }
+
       return {
         sku,
         description: match ? `${match.title} | ${match.sku}` : `SKU: ${sku} (No details found)`,
-        rawDescription: match?.body_html ?? null,
+        tableText,
+        photo: match?.image?.src ?? null,
         qty: 1,
         unitPrice: 0,
         total: 0,
@@ -106,7 +138,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
     <form onSubmit={handleSubmit} className="border rounded p-4 bg-gray-50">
       <h3 className="font-semibold mb-3 text-sm">Generate Activity</h3>
 
-      {/* Header details */}
+      {/* Header */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
         <div>
           <label className="font-semibold text-xs">Quotation #</label>
@@ -122,24 +154,6 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
           <input
             type="text"
             value={selectedQuote.companyname}
-            readOnly
-            className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-          />
-        </div>
-        <div>
-          <label className="font-semibold text-xs">Contact Person</label>
-          <input
-            type="text"
-            value={selectedQuote.contactperson}
-            readOnly
-            className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-          />
-        </div>
-        <div>
-          <label className="font-semibold text-xs">Quotation Amount</label>
-          <input
-            type="text"
-            value={selectedQuote.quotationamount}
             readOnly
             className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
           />
@@ -175,19 +189,18 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
                   />
                 </td>
                 <td className="border px-2 py-1 text-center">
-                  <input type="file" className="text-xs" />
-                </td>
-                <td className="border px-2 py-1 align-top">
-                  {/* Title + SKU always visible */}
-                  <div className="font-semibold">{prod.description}</div>
-
-                  {/* Render Shopify HTML (table, description, etc.) */}
-                  {prod.rawDescription && (
-                    <div
-                      className="prose prose-sm max-w-none mt-1 prose-table:border prose-table:border-gray-300 prose-th:border prose-th:border-gray-300 prose-td:border prose-td:border-gray-300"
-                      dangerouslySetInnerHTML={{ __html: prod.rawDescription }}
+                  {prod.photo ? (
+                    <img
+                      src={prod.photo}
+                      alt={prod.description}
+                      className="h-16 w-16 object-cover rounded mx-auto"
                     />
+                  ) : (
+                    <span className="text-gray-400 text-xs">No image</span>
                   )}
+                </td>
+                <td className="border px-2 py-1 align-top text-xs whitespace-pre-line">
+                  {prod.tableText ? prod.tableText : prod.description}
                 </td>
                 <td className="border px-2 py-1 text-right">
                   <input
@@ -211,13 +224,15 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
               <td colSpan={5} className="border px-2 py-1 text-right">
                 Grand Total:
               </td>
-              <td className="border px-2 py-1 text-right">{grandTotal.toFixed(2)}</td>
+              <td className="border px-2 py-1 text-right">
+                {grandTotal.toFixed(2)}
+              </td>
             </tr>
           </tfoot>
         </table>
       </div>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <div className="mt-4">
         <button
           type="submit"
