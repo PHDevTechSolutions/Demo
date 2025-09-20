@@ -83,6 +83,9 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
     const [shopifyProducts, setShopifyProducts] = useState<ShopifyProduct[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const [managerDetails, setManagerDetails] = useState<UserDetails | null>(null);
+    const [headDetails, setHeadDetails] = useState<UserDetails | null>(null);
+
     // 📦 Load products from Shopify
     useEffect(() => {
         (async () => {
@@ -157,6 +160,34 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
     const today = new Date().toLocaleDateString();
 
+    // 🔎 Fetch user by ReferenceID
+    const fetchUserById = async (referenceId: string): Promise<UserDetails | null> => {
+        if (!referenceId) return null;
+        try {
+            const res = await fetch(`/api/User/FetchById?referenceid=${referenceId}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data || null;
+        } catch (err) {
+            console.error("Failed to fetch user:", err);
+            return null;
+        }
+    };
+
+    // 📌 Load Manager & Head when form mounts
+    useEffect(() => {
+        (async () => {
+            if (userDetails.Manager) {
+                const mgr = await fetchUserById(userDetails.Manager);
+                setManagerDetails(mgr);
+            }
+            if (userDetails.TSM) {
+                const head = await fetchUserById(userDetails.TSM);
+                setHeadDetails(head);
+            }
+        })();
+    }, [userDetails.Manager, userDetails.TSM]);
+
     return (
         <form onSubmit={handleSubmit} className="border rounded p-4 bg-gray-50">
             {/* Header Image */}
@@ -185,7 +216,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             </div>
 
             {/* Company Info */}
-            <div className="mt-4 text-xs space-y-1 border-t border-b pb-2">
+            <div className="mt-4 text-xs space-y-1 border-t border-b pb-2 mt-4">
                 <div>
                     Company Name:{" "}
                     <span className="font-semibold text-center inline-block w-full">
@@ -238,32 +269,42 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             <InformationSection />
 
             {/* ✅ Two Column Signatures Section */}
-            <div className="mt-6 grid grid-cols-4 gap-6 text-xs border-t">
+            <div className="mt-6 grid grid-cols-2 gap-6 text-xs">
                 {/* Left Column */}
-                <div className="space-y-6">
-                    <p>Ecoshift Corporation</p>
+                <div className="space-y-6 mb-2">
+                    <p className="italic font-semibold">Ecoshift Corporation</p>
                     <div>
                         <p className="font-semibold">
                             {userDetails.Firstname} {userDetails.Lastname}
                         </p>
                         <div className="border-t border-black w-48 my-1"></div>
-                        <p>SALES REPRESENTATIVE</p>
+                        <p className="font-semibold">SALES REPRESENTATIVE</p>
                         <p>Mobile No: {userDetails.ContactNumber || "-"}</p>
                         <p>Email: {userDetails.Email || "-"}</p>
                     </div>
 
                     <div>
                         <p>Approved By:</p>
-                        <div className="border-t border-black w-48 my-1 mt-8"></div>
-                        <p>SALES MANAGER</p>
+                        <p className="font-semibold mt-8">
+                            {managerDetails
+                                ? `${managerDetails.Firstname} ${managerDetails.Lastname}`
+                                : ""}
+                        </p>
+                        <div className="border-t border-black w-48 my-1"></div>
+                        <p className="font-semibold">SALES MANAGER</p>
                         <p>Mobile No:</p>
                         <p>Email:</p>
                     </div>
 
                     <div>
                         <p>Noted By:</p>
-                        <div className="border-t border-black w-48 my-1 mt-8"></div>
-                        <p>SALES HEAD B2B</p>
+                        <p className="font-semibold mt-8">
+                            {headDetails
+                                ? `${headDetails.Firstname} ${headDetails.Lastname}`
+                                : ""}
+                        </p>
+                        <div className="border-t border-black w-48 my-1"></div>
+                        <p className="font-semibold">SALES HEAD B2B</p>
                     </div>
                 </div>
 
