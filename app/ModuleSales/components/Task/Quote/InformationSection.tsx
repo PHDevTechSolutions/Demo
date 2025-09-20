@@ -142,7 +142,8 @@ const InformationSection: React.FC = () => {
             </div>
 
             {/* Thank You */}
-            <div className="col-span-4 font-semibold border-t mt-4">
+            <div className="col-span-4 border-t"></div>
+            <div className="col-span-4 font-semibold mt-4">
                 Thank you for allowing us to service your requirements. We hope that the above offer merits your acceptance. <br />
                 Unless otherwise indicated in your Approved Purchase Order, you are deemed to have accepted the Terms and Conditions of this Quotation.
             </div>

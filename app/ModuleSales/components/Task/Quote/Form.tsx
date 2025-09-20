@@ -269,9 +269,9 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             <InformationSection />
 
             {/* ✅ Two Column Signatures Section */}
-            <div className="mt-6 grid grid-cols-2 text-xs w-full">
+            <div className="mt-4 grid grid-cols-4 gap-4 text-xs">
                 {/* Left Column */}
-                <div className="w-full pr-4 space-y-6">
+                <div className="col-span-2 w-full pr-4 space-y-6">
                     <p className="italic font-semibold">Ecoshift Corporation</p>
                     <div>
                         <p className="font-semibold capitalize">
@@ -309,7 +309,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                 </div>
 
                 {/* Right Column */}
-                <div className="w-full pl-4 space-y-12">
+                <div className="col-span-2 w-full pl-4 space-y-12">
                     <div>
                         <div className="border-t border-black w-full max-w-sm my-1"></div>
                         <p>COMPANY AUTHORIZED REPRESENTATIVE</p>
