@@ -20,8 +20,21 @@ interface QuoteItem {
     quotationamount: string;
 }
 
+interface UserDetails {
+    ReferenceID: string;
+    Firstname: string;
+    Lastname: string;
+    Manager: string;
+    TSM: string;
+    Role: string;
+    profilePicture?: string;
+    ContactNumber?: string;
+    Email?: string;
+}
+
 interface FormProps {
     selectedQuote: QuoteItem;
+    userDetails: UserDetails;
 }
 
 interface ShopifyProduct {
@@ -65,7 +78,7 @@ const extractTableAsText = (html: string): string | null => {
     return textRows.length > 0 ? textRows.join("\n") : null;
 };
 
-const Form: React.FC<FormProps> = ({ selectedQuote }) => {
+const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
     const [products, setProducts] = useState<ProductRow[]>([]);
     const [shopifyProducts, setShopifyProducts] = useState<ShopifyProduct[]>([]);
     const [loading, setLoading] = useState(false);
@@ -223,6 +236,50 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
 
             {/* Information Section */}
             <InformationSection />
+
+            {/* ✅ Two Column Signatures Section */}
+            <div className="mt-6 grid grid-cols-2 gap-6 text-xs">
+                {/* Left Column */}
+                <div className="space-y-6">
+                    <div>
+                        <p className="font-semibold">
+                            {userDetails.Firstname} {userDetails.Lastname}
+                        </p>
+                        <div className="border-t border-black w-48 my-1"></div>
+                        <p>SALES REPRESENTATIVE</p>
+                        <p>MOBILE NO: {userDetails.ContactNumber || "-"}</p>
+                        <p>EMAIL: {userDetails.Email || "-"}</p>
+                    </div>
+
+                    <div>
+                        <p>Approved By:</p>
+                        <div className="border-t border-black w-48 my-1"></div>
+                        <p>SALES MANAGER</p>
+                        <p>MOBILE NO: __________</p>
+                        <p>EMAIL: __________</p>
+                    </div>
+
+                    <div>
+                        <p>Noted By:</p>
+                        <div className="border-t border-black w-48 my-1"></div>
+                        <p>SALES HEAD B2B</p>
+                    </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                    <div>
+                        <div className="border-t border-black w-64 my-1"></div>
+                        <p>COMPANY AUTHORIZED REPRESENTATIVE</p>
+                        <p>(PLEASE SIGN OVER PRINTED NAME)</p>
+                    </div>
+
+                    <div>
+                        <div className="border-t border-black w-64 my-1"></div>
+                        <p>PAYMENT RELEASE DATE</p>
+                    </div>
+                </div>
+            </div>
 
             {/* Submit */}
             <div className="mt-4">

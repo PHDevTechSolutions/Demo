@@ -137,7 +137,11 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
             )}
 
             {/* 📑 Form Component */}
-            {showForm && selectedQuote && <Form selectedQuote={selectedQuote} />}
+            {showForm && selectedQuote &&
+                <Form
+                    selectedQuote={selectedQuote}
+                    userDetails={userDetails}
+                />}
 
             <ToastContainer
                 position="bottom-right"
