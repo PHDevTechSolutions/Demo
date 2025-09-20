@@ -269,15 +269,15 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             <InformationSection />
 
             {/* ✅ Two Column Signatures Section */}
-            <div className="mt-6 grid grid-cols-2 gap-6 text-xs">
+            <div className="mt-6 grid grid-cols-2 text-xs w-full">
                 {/* Left Column */}
-                <div className="space-y-6 mb-2">
+                <div className="w-full pr-4 space-y-6">
                     <p className="italic font-semibold">Ecoshift Corporation</p>
                     <div>
-                        <p className="font-semibold">
+                        <p className="font-semibold capitalize">
                             {userDetails.Firstname} {userDetails.Lastname}
                         </p>
-                        <div className="border-t border-black w-48 my-1"></div>
+                        <div className="border-t border-black w-full max-w-xs my-1"></div>
                         <p className="font-semibold">SALES REPRESENTATIVE</p>
                         <p>Mobile No: {userDetails.ContactNumber || "-"}</p>
                         <p>Email: {userDetails.Email || "-"}</p>
@@ -285,12 +285,12 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
                     <div>
                         <p>Approved By:</p>
-                        <p className="font-semibold mt-8">
+                        <p className="font-semibold mt-8 capitalize">
                             {managerDetails
                                 ? `${managerDetails.Firstname} ${managerDetails.Lastname}`
                                 : ""}
                         </p>
-                        <div className="border-t border-black w-48 my-1"></div>
+                        <div className="border-t border-black w-full max-w-xs my-1"></div>
                         <p className="font-semibold">SALES MANAGER</p>
                         <p>Mobile No:</p>
                         <p>Email:</p>
@@ -298,30 +298,31 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
                     <div>
                         <p>Noted By:</p>
-                        <p className="font-semibold mt-8">
+                        <p className="font-semibold mt-8 capitalize">
                             {headDetails
                                 ? `${headDetails.Firstname} ${headDetails.Lastname}`
                                 : ""}
                         </p>
-                        <div className="border-t border-black w-48 my-1"></div>
+                        <div className="border-t border-black w-full max-w-xs my-1"></div>
                         <p className="font-semibold">SALES HEAD B2B</p>
                     </div>
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6">
+                <div className="w-full pl-4 space-y-12">
                     <div>
-                        <div className="border-t border-black w-64 my-1"></div>
+                        <div className="border-t border-black w-full max-w-sm my-1"></div>
                         <p>COMPANY AUTHORIZED REPRESENTATIVE</p>
                         <p>(PLEASE SIGN OVER PRINTED NAME)</p>
                     </div>
 
                     <div>
-                        <div className="border-t border-black w-64 my-1"></div>
+                        <div className="border-t border-black w-full max-w-sm my-1"></div>
                         <p>PAYMENT RELEASE DATE</p>
                     </div>
                 </div>
             </div>
+
 
             {/* Submit */}
             <div className="mt-4">
