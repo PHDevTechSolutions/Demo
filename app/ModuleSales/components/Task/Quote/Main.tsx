@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Form from "./Form";
 
 interface UserDetails {
     ReferenceID: string;
@@ -40,8 +41,6 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
     const [selectedQuote, setSelectedQuote] = useState<QuoteItem | null>(null);
     const [showForm, setShowForm] = useState(false);
 
-    // ✅ Fetch quotationumber
-    // ✅ Fetch quotationnumber
     const handleSearch = async () => {
         if (!searchValue.trim()) {
             toast.error("Please enter a quotation number");
@@ -73,7 +72,6 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="w-full bg-white p-4">
@@ -110,8 +108,8 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                                 key={q.id}
                                 onClick={() => setSelectedQuote(q)}
                                 className={`p-2 rounded cursor-pointer border ${selectedQuote?.id === q.id
-                                        ? "bg-blue-100 border-blue-400"
-                                        : "bg-white hover:bg-gray-100"
+                                    ? "bg-blue-100 border-blue-400"
+                                    : "bg-white hover:bg-gray-100"
                                     }`}
                             >
                                 <p className="text-sm font-medium">
@@ -138,75 +136,9 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                 </div>
             )}
 
-            {/* 📑 Form */}
-            {showForm && selectedQuote && (
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        toast.success("Form submitted successfully!");
-                    }}
-                    className="border rounded p-4 bg-gray-50"
-                >
-                    <h3 className="font-semibold mb-3 text-sm">Generate Activity</h3>
+            {/* 📑 Form Component */}
+            {showForm && selectedQuote && <Form selectedQuote={selectedQuote} />}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <label className="font-semibold text-xs">Quotation #</label>
-                            <input
-                                type="text"
-                                value={selectedQuote.quotationnumber}
-                                readOnly
-                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                            />
-                        </div>
-                        <div>
-                            <label className="font-semibold text-xs">Company</label>
-                            <input
-                                type="text"
-                                value={selectedQuote.companyname}
-                                readOnly
-                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                            />
-                        </div>
-                        <div>
-                            <label className="font-semibold text-xs">Contact Person</label>
-                            <input
-                                type="text"
-                                value={selectedQuote.contactperson}
-                                readOnly
-                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                            />
-                        </div>
-                        <div>
-                            <label className="font-semibold text-xs">Quotation Amount</label>
-                            <input
-                                type="text"
-                                value={selectedQuote.quotationamount}
-                                readOnly
-                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                            />
-                        </div>
-                        <div>
-                            <label className="font-semibold text-xs">Item</label>
-                            <input
-                                type="text"
-                                value={selectedQuote.projectcategory}
-                                readOnly
-                                className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-4">
-                        <button
-                            type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
-                        >
-                            Submit
-                        </button>
-                    </div>
-                </form>
-            )}
 
             <ToastContainer
                 position="bottom-right"
