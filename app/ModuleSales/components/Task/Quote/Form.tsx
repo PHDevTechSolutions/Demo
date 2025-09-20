@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import Table from "./Table";
 
 interface QuoteItem {
     id: number;
@@ -32,7 +33,7 @@ interface ShopifyProduct {
 interface ProductRow {
     sku: string;
     description: string;
-    tableText: string | null; // ✅ plain text version of table
+    tableText: string | null;
     photo?: string | null;
     qty: number;
     unitPrice: number;
@@ -106,7 +107,9 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
 
             return {
                 sku,
-                description: match ? `${match.title} | ${match.sku}` : `SKU: ${sku} (No details found)`,
+                description: match
+                    ? `${match.title} | ${match.sku}`
+                    : `SKU: ${sku} (No details found)`,
                 tableText,
                 photo: match?.image?.src ?? null,
                 qty: 1,
@@ -119,7 +122,11 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
     }, [selectedQuote.projectcategory, shopifyProducts]);
 
     // 🔄 Handle Qty / Price Change
-    const updateProduct = (index: number, field: "qty" | "unitPrice", value: number) => {
+    const updateProduct = (
+        index: number,
+        field: "qty" | "unitPrice",
+        value: number
+    ) => {
         const updated = [...products];
         updated[index][field] = value;
         updated[index].total = updated[index].qty * updated[index].unitPrice;
@@ -134,110 +141,82 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
         toast.success("Form submitted successfully!");
     };
 
+    const today = new Date().toLocaleDateString();
+
     return (
         <form onSubmit={handleSubmit} className="border rounded p-4 bg-gray-50">
-            <h3 className="font-semibold mb-3 text-sm">Generate Activity</h3>
-
-            {/* Header */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
+            {/* Header Image */}
+            <div className="relative">
+                <img
+                    src="/quote-header.png"
+                    alt="Quote Header"
+                    className="w-full object-cover"
+                />
+            </div>
+            <div className="bottom-2 right-4 text-right text-xs">
                 <div>
-                    <label className="font-semibold text-xs">Quotation #</label>
-                    <input
-                        type="text"
-                        value={selectedQuote.quotationnumber}
-                        readOnly
-                        className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                    />
+                    Reference No:{" "}
+                    <span className="font-semibold text-center inline-block min-w-[100px]">
+                        {selectedQuote.quotationnumber}
+                    </span>
                 </div>
                 <div>
-                    <label className="font-semibold text-xs">Company</label>
-                    <input
-                        type="text"
-                        value={selectedQuote.companyname}
-                        readOnly
-                        className="border px-2 py-1 rounded w-full text-sm bg-gray-100"
-                    />
+                    Date:{" "}
+                    <span className="font-semibold text-center inline-block min-w-[100px]">
+                        {today}
+                    </span>
                 </div>
             </div>
 
-            {/* 📝 Items Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full border text-sm bg-white">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border px-2 py-1 text-xs">Item No</th>
-                            <th className="border px-2 py-1 text-xs">Qty</th>
-                            <th className="border px-2 py-1 text-xs">Photo</th>
-                            <th className="border px-2 py-1 text-xs">Product Description</th>
-                            <th className="border px-2 py-1 text-xs">Unit Price</th>
-                            <th className="border px-2 py-1 text-xs">Total Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map((prod, idx) => (
-                            <tr key={idx}>
-                                <td className="border px-2 py-1 text-center">{idx + 1}</td>
-                                <td className="border px-2 py-1 text-center">
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={prod.qty}
-                                        onChange={(e) =>
-                                            updateProduct(idx, "qty", parseInt(e.target.value) || 0)
-                                        }
-                                        className="w-16 border rounded px-1 text-sm text-center"
-                                    />
-                                </td>
-                                <td className="border px-2 py-1 text-center">
-                                    {prod.photo ? (
-                                        <img
-                                            src={prod.photo}
-                                            alt={prod.description}
-                                            className="h-40 w-40 object-cover rounded mx-auto"
-                                        />
-                                    ) : (
-                                        <span className="text-gray-400 text-xs">No image</span>
-                                    )}
-                                </td>
-                                <td className="border px-2 py-1 align-top text-xs whitespace-pre-line">
-                                    {/* Always show product title first */}
-                                    <div className="font-semibold">{prod.description}</div>
-
-                                    {/* Then show extracted table details if available */}
-                                    {prod.tableText && (
-                                        <div className="mt-1">{prod.tableText}</div>
-                                    )}
-                                </td>
-
-                                <td className="border px-2 py-1 text-right">
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={prod.unitPrice}
-                                        onChange={(e) =>
-                                            updateProduct(idx, "unitPrice", parseFloat(e.target.value) || 0)
-                                        }
-                                        className="w-24 border rounded px-1 text-sm text-right"
-                                    />
-                                </td>
-                                <td className="border px-2 py-1 text-right">
-                                    {prod.total.toFixed(2)}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                    <tfoot>
-                        <tr className="bg-gray-100 font-semibold">
-                            <td colSpan={5} className="border px-2 py-1 text-right">
-                                Grand Total:
-                            </td>
-                            <td className="border px-2 py-1 text-right">
-                                {grandTotal.toFixed(2)}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+            {/* Company Info */}
+            <div className="mt-4 text-xs space-y-1 border-b pb-2">
+                <div>
+                    Company Name:{" "}
+                    <span className="font-semibold text-center inline-block w-full">
+                        {selectedQuote.companyname}
+                    </span>
+                </div>
+                <div>
+                    Address:{" "}
+                    <span className="font-semibold text-center inline-block w-full uppercase">
+                        {selectedQuote.address}
+                    </span>
+                </div>
+                <div>
+                    Tel No:{" "}
+                    <span className="font-semibold text-center inline-block w-full">
+                        {selectedQuote.contactnumber}
+                    </span>
+                </div>
+                <div>
+                    Email Address:{" "}
+                    <span className="font-semibold text-center inline-block w-full">
+                        {selectedQuote.emailaddress}
+                    </span>
+                </div>
             </div>
+
+            {/* Attention & Subject */}
+            <div className="mt-2 text-xs border-b pb-2">
+                <div>
+                    Attention:{" "}
+                    <span className="font-semibold text-center inline-block w-full uppercase">
+                        {selectedQuote.contactperson}
+                    </span>
+                </div>
+                <div>
+                    Subject:{" "}
+                    <span className="font-semibold text-center inline-block w-full uppercase">
+                        {selectedQuote.companyname} - {selectedQuote.contactperson}
+                    </span>
+                </div>
+            </div>
+
+            <Table
+                products={products}
+                updateProduct={updateProduct}
+                grandTotal={grandTotal}
+            />
 
             {/* Submit */}
             <div className="mt-4">
@@ -245,8 +224,8 @@ const Form: React.FC<FormProps> = ({ selectedQuote }) => {
                     type="submit"
                     disabled={loading}
                     className={`px-4 py-2 rounded text-sm font-semibold shadow ${loading
-                            ? "bg-gray-400 cursor-not-allowed text-white"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        ? "bg-gray-400 cursor-not-allowed text-white"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
                 >
                     {loading ? "Loading..." : "Submit"}

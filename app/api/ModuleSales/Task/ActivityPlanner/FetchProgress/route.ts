@@ -15,10 +15,6 @@ export async function GET() {
       SELECT
         id,
         companyname,
-        contactperson,
-        contactnumber,
-        emailaddress,
-        typeclient,
         referenceid,
         tsm,
         manager,
@@ -30,27 +26,11 @@ export async function GET() {
         quotationamount,
         soamount,
         sonumber,
-        callback,
-        projectname,
-        projectcategory,
-        projecttype,
-        typecall,
         typeactivity,
-        source,
         remarks,
-        callstatus,
-        startdate,
-        enddate,
-        ticketreferencenumber,
-        wrapup,
-        inquiries,
-        csragent,
         paymentterm,
         deliverydate,
-        address,
-        area,
-        actualsales,
-        deliveryaddress
+        actualsales
       FROM progress;
     `;
 

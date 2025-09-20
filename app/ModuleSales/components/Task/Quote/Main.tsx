@@ -87,12 +87,12 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                     placeholder="Enter Quotation Number"
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="border border-gray-300 px-3 py-2 rounded text-sm w-full focus:ring-1 focus:ring-blue-500"
+                    className="border border-gray-300 px-3 py-2 rounded text-xs w-full focus:ring-1 focus:ring-blue-500"
                 />
                 <button
                     onClick={handleSearch}
                     disabled={loading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-xs font-semibold shadow"
                 >
                     {loading ? "Searching..." : "Search"}
                 </button>
@@ -101,7 +101,7 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
             {/* 📋 Results */}
             {results.length > 0 && (
                 <div className="border rounded p-3 mb-4 bg-gray-50">
-                    <h3 className="font-semibold text-sm mb-2">Results:</h3>
+                    <h3 className="font-semibold text-xs mb-2">Results:</h3>
                     <ul className="space-y-2">
                         {results.map((q) => (
                             <li
@@ -129,7 +129,7 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                 <div className="mb-4">
                     <button
                         onClick={() => setShowForm(true)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-semibold shadow"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs font-semibold shadow"
                     >
                         Generate
                     </button>
@@ -138,7 +138,6 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
 
             {/* 📑 Form Component */}
             {showForm && selectedQuote && <Form selectedQuote={selectedQuote} />}
-
 
             <ToastContainer
                 position="bottom-right"

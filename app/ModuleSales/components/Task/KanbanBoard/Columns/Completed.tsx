@@ -6,10 +6,6 @@ import { FaCircle, FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 export interface CompletedItem {
   id: string;
   companyname: string;
-  contactperson: string;
-  contactnumber: string;
-  emailaddress: string;
-  typeclient: string;
   referenceid: string;
   date_created: string;
   date_updated?: string;
@@ -20,21 +16,8 @@ export interface CompletedItem {
   quotationamount?: string;
   soamount?: string;
   sonumber?: string;
-  callback?: string;
-  projectname?: string;
-  projectcategory?: string;
-  projecttype?: string;
-  typecall?: string;
   typeactivity?: string;
-  source?: string;
   remarks?: string;
-  callstatus?: string;
-  startdate?: string;
-  enddate?: string;
-  ticketreferencenumber?: string;
-  wrapup?: string;
-  inquiries?: string;
-  csragent?: string;
   paymentterm?: string;
   deliverydate?: string;
 }
@@ -192,29 +175,12 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
               {isExpanded && (
                 <div className="pl-2 mt-2 text-[10px] space-y-1">
-                  {renderField("Contact Person", item.contactperson)}
-                  {renderField("Contact #", item.contactnumber)}
-                  {renderField("Email", item.emailaddress)}
-                  {renderField("Type", item.typeclient)}
                   {renderField("Quotation Number", item.quotationnumber)}
                   {renderField("Quotation Amount", item.quotationamount)}
                   {renderField("SO Amount", item.soamount)}
                   {renderField("SO Number", item.sonumber)}
-                  {renderField("Callback", item.callback)}
-                  {renderField("Project Name", item.projectname)}
-                  {renderField("Project Category", item.projectcategory)}
-                  {renderField("Project Type", item.projecttype)}
-                  {renderField("Type Call", item.typecall)}
-                  {renderField("Source", item.source)}
                   {renderField("Status", item.activitystatus)}
                   {renderField("Remarks", item.remarks)}
-                  {renderField("Call Status", item.callstatus)}
-                  {renderField("Start Date", item.startdate)}
-                  {renderField("End Date", item.enddate)}
-                  {renderField("Ticket Ref #", item.ticketreferencenumber)}
-                  {renderField("Wrap Up", item.wrapup)}
-                  {renderField("Inquiries", item.inquiries)}
-                  {renderField("CSR Agent", item.csragent)}
                   {renderField("Payment Term", item.paymentterm)}
                   {renderField("Delivery Date", item.deliverydate)}
                   {renderField(
