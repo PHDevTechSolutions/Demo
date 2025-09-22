@@ -66,7 +66,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab }) => {
         <BsFileEarmarkCheck />
       </button>
       
-      {/*
+      
       <button
         onClick={() => setActiveTab("xendmail")}
         className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${activeTab === "xendmail"
@@ -76,7 +76,6 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab }) => {
       >
         <SiMinutemailer />
       </button>
-      */}
     </div>
   );
 };

@@ -9,7 +9,7 @@ import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
 import Quote from "../../../components/Task/Quote/Main";
-//import XendMail from "../../../components/Task/XendMail/Main";
+import XendMail from "../../../components/Task/XendMail/Main";
 // Tools
 import Tools from "../../../components/Task/Tools/Sidebar";
 // Toast
@@ -360,13 +360,13 @@ const ListofUser: React.FC = () => {
                     <Quote userDetails={userDetails} />
                   </div>
 
-                  {/* Xendmail
+                 {/* Xendmail */} 
                   <div
                     className={`${activeTab === "xendmail" ? "block" : "hidden"
                       } bg-white shadow-md rounded-lg flex`}
                   >
                     <XendMail userDetails={userDetails} />
-                  </div> */}
+                  </div>
                 </div>
 
                 <ToastContainer

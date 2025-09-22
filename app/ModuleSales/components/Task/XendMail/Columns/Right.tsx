@@ -1,4 +1,3 @@
-{/*
 "use client";
 
 import React from "react";
@@ -115,5 +114,3 @@ const RightColumn: React.FC<RightColumnProps> = ({ email, handleReply, handleFor
 };
 
 export default RightColumn;
-
-*/}
