@@ -91,6 +91,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -261,10 +262,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true); // ✅ start loading
+
     const payload: any = { ...hiddenFields, ...formData };
 
     if (!payload.activitynumber) {
       toast.error("Activity number is missing!");
+      setSubmitting(false);
       return;
     }
 
@@ -279,23 +283,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
 
     try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
+      toast.success("Activity successfully added/updated!");
       setShowForm(false);
       resetForm();
-      toast.success("Activity successfully added/updated!");
 
-      const newItem = data?.progress; // ✅ correct key from API
+      const newItem = data?.progress;
       if (newItem?.id) {
         setProgress((prev) => {
           const exists = prev.some((p) => p.id === newItem.id);
@@ -305,13 +306,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         });
       }
 
-      // ✅ Always refetch after submit
-      await fetchProgress();
-
+      fetchProgress(); // background refresh
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     } finally {
+      setSubmitting(false); // ✅ stop loading
       if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
   };
