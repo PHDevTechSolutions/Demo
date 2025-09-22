@@ -396,11 +396,59 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
             // ----------------- Fill Grand Total -----------------
             const totalRowNumber = insertRowNumber + products.length;
-        const totalRow = worksheet.getRow(totalRowNumber);
-        totalRow.getCell(5).value = "Total Price"; // Optional: text in column E
-        totalRow.getCell(6).value = grandTotal; // Column F
-        totalRow.font = { bold: true, size: 10 };
-        totalRow.commit();
+            const totalRow = worksheet.getRow(totalRowNumber);
+            totalRow.getCell(5).value = "Total Price"; // Optional: text in column E
+            totalRow.getCell(6).value = grandTotal; // Column F
+            totalRow.font = { bold: true, size: 10 };
+            totalRow.commit();
+
+            // ----------------- Insert Signatures Section -----------------
+            let sigRowNumber = totalRowNumber + 2; // space after total price
+
+            // SALES REPRESENTATIVE
+            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES REPRESENTATIVE";
+            worksheet.getRow(sigRowNumber).font = { bold: true };
+            sigRowNumber++;
+
+            worksheet.getRow(sigRowNumber).getCell(2).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
+            sigRowNumber++;
+
+            worksheet.getRow(sigRowNumber).getCell(2).value = `Mobile No: ${userDetails.ContactNumber || "-"}`;
+            sigRowNumber++;
+
+            worksheet.getRow(sigRowNumber).getCell(2).value = `Email: ${userDetails.Email || "-"}`;
+            sigRowNumber += 2;
+
+            // APPROVED BY
+            worksheet.getRow(sigRowNumber).getCell(2).value = "APPROVED BY:";
+            sigRowNumber += 2;
+
+            // SALES MANAGER
+            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES MANAGER";
+            worksheet.getRow(sigRowNumber).font = { bold: true };
+            sigRowNumber++;
+
+            if (headDetails) {
+                worksheet.getRow(sigRowNumber).getCell(2).value = `${headDetails.Firstname} ${headDetails.Lastname}`;
+                sigRowNumber++;
+                worksheet.getRow(sigRowNumber).getCell(2).value = `Mobile No: ${headDetails.ContactNumber || "-"}`;
+                sigRowNumber++;
+                worksheet.getRow(sigRowNumber).getCell(2).value = `Email: ${headDetails.Email || "-"}`;
+            }
+            sigRowNumber += 2;
+
+            // NOTED BY
+            worksheet.getRow(sigRowNumber).getCell(2).value = "NOTED BY:";
+            sigRowNumber += 2;
+
+            // SALES HEAD B2B
+            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES HEAD - B2B";
+            worksheet.getRow(sigRowNumber).font = { bold: true };
+            sigRowNumber++;
+
+            if (managerDetails) {
+                worksheet.getRow(sigRowNumber).getCell(2).value = `${managerDetails.Firstname} ${managerDetails.Lastname}`;
+            }
 
             // ----------------- Download Updated File -----------------
             const buffer = await workbook.xlsx.writeBuffer();
