@@ -1,3 +1,4 @@
+{/*
 "use client";
 
 import React from "react";
@@ -151,3 +152,4 @@ const Left: React.FC<LeftProps> = ({
 
 export default Left;
 
+*/}
