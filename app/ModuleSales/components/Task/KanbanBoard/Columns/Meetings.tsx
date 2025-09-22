@@ -203,6 +203,15 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 />
             )}
 
+            <div className="flex justify-between items-center">
+                <button
+                    onClick={() => setShowForm((prev) => !prev)}
+                    className="border border-blue-500 text-black text-xs px-3 py-2 w-full rounded-md hover:bg-blue-400 hover:text-white mt-2"
+                >
+                    {showForm ? "Cancel" : "+ Add Meeting"}
+                </button>
+            </div>
+
             <div className="space-y-1">
                 {meetings.length === 0 && (
                     <p className="text-xs text-gray-400 italic">No meetings scheduled for today</p>
@@ -235,15 +244,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                         </div>
                     );
                 })}
-            </div>
-
-            <div className="flex justify-between items-center">
-                <button
-                    onClick={() => setShowForm((prev) => !prev)}
-                    className="border border-blue-500 text-black text-xs px-3 py-2 w-full rounded-md hover:bg-blue-400 hover:text-white mt-2"
-                >
-                    {showForm ? "Cancel" : "+ Add Meeting"}
-                </button>
             </div>
         </div>
     );
