@@ -262,7 +262,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true); // ✅ start loading
+    setSubmitting(true);
 
     const payload: any = { ...hiddenFields, ...formData };
 
@@ -272,12 +272,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       return;
     }
 
+    // ✅ Normalize all fields to null if empty
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === "" || payload[key] === undefined) {
+        payload[key] = null;
+      }
+    });
+
+    // ✅ Special handling for numeric fields
     const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
-      payload[field] =
-        payload[field] === "" || payload[field] === undefined
-          ? null
-          : Number(payload[field]);
+      payload[field] = payload[field] !== null ? Number(payload[field]) : null;
     });
 
     if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
@@ -311,10 +316,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     } finally {
-      setSubmitting(false); // ✅ stop loading
+      setSubmitting(false);
       if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
   };
+
 
   const handleDelete = async (item: ProgressItem) => {
     dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });

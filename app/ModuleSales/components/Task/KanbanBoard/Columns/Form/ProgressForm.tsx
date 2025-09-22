@@ -143,10 +143,14 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </div>
 
           {formData.typeactivity === "FB-Marketplace" && (
-            <FBMarketPlace typecall={formData.typecall} handleFormChange={handleFormChange} />
+            <FBMarketPlace typecall={formData.typecall}
+              handleFormChange={handleFormChange}
+            />
           )}
           {formData.typeactivity === "Inbound Call" && (
-            <InboundCall typecall={formData.typecall} handleFormChange={handleFormChange} />
+            <InboundCall typecall={formData.typecall}
+              handleFormChange={handleFormChange}
+            />
           )}
           {formData.typeactivity === "Outbound calls" && (
             <OutboundCall
