@@ -268,7 +268,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
             );
           })
         ) : (
-          <p className="text-sm text-gray-400">No inquiries found.</p>
+          <p className="text-xs italic text-gray-400">No inquiries found.</p>
         )}
 
         {visibleCount < inquiries.length && (

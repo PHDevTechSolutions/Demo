@@ -310,11 +310,9 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
           totalNotifCount={totalNotifCount}
           showSidebar={showSidebar}
           setShowSidebar={setShowSidebar}
-          dropdownRef={dropdownRef}
           sidebarRef={sidebarRef}
           notifications={notifications}
           setNotifications={setNotifications}
-          userEmail={userEmail}
         />
 
       </div>
