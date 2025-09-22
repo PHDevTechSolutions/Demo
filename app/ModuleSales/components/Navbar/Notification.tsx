@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
@@ -71,6 +71,7 @@ export default function Notification({
   audioSrc?: string;
   volume?: number;
 }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activeTab, setActiveTab] = useState<"Unread" | "Read">("Unread");
   const [loadingId, setLoadingId] = useState<string | number | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -160,9 +161,11 @@ export default function Notification({
       setSelectedNotif(newInquiry);
       setShowModal(true);
 
-      const audio = new Audio(audioSrc);
-      audio.volume = volume / 100;
-      audio.play().catch(() => { });
+      if (!audioRef.current) {
+        audioRef.current = new Audio(audioSrc);
+      }
+      audioRef.current.volume = volume / 100;
+      audioRef.current.play().catch(() => { });
     }
   }, [notifications, audioSrc, volume]);
 
@@ -202,8 +205,8 @@ export default function Notification({
                 disabled={loadingId === "all"}
                 aria-label="Mark all notifications as read"
                 className={`text-[10px] font-semibold tracking-wide ${loadingId === "all"
-                    ? "cursor-not-allowed opacity-70 text-white"
-                    : "text-black hover:text-black underline"
+                  ? "cursor-not-allowed opacity-70 text-white"
+                  : "text-black hover:text-black underline"
                   }`}
               >
                 {loadingId === "all" ? (
@@ -229,8 +232,8 @@ export default function Notification({
             <button
               onClick={() => setActiveTab("Unread")}
               className={`w-full py-2 ${activeTab === "Unread"
-                  ? "border-b-2 border-orange-500 text-orange-600"
-                  : "text-gray-500"
+                ? "border-b-2 border-orange-500 text-orange-600"
+                : "text-gray-500"
                 }`}
             >
               Unread
@@ -238,8 +241,8 @@ export default function Notification({
             <button
               onClick={() => setActiveTab("Read")}
               className={`w-full py-2 ${activeTab === "Read"
-                  ? "border-b-2 border-green-500 text-green-600"
-                  : "text-gray-500"
+                ? "border-b-2 border-green-500 text-green-600"
+                : "text-gray-500"
                 }`}
             >
               Read
