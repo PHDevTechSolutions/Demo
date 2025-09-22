@@ -6,6 +6,7 @@ if (!Xchire_databaseUrl) {
   throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
 }
 
+// ✅ Reuse Neon connection
 const Xchire_sql = neon(Xchire_databaseUrl);
 
 export async function GET() {
@@ -31,24 +32,33 @@ export async function GET() {
         paymentterm,
         deliverydate,
         actualsales
-      FROM progress;
+      FROM progress
+      ORDER BY date_created DESC;
     `;
 
-    // ✅ Remove metadata + make sure it's plain JSON
-    const data = rows.map(r => ({ ...r }));
+    // ✅ Convert Neon Row objects to plain JSON
+    const data = rows.map((row) => ({ ...row }));
 
     return NextResponse.json(
-      { success: true, data, count: data.length },
+      {
+        success: true,
+        count: data.length,
+        data,
+      },
       { status: 200 }
     );
-  } catch (err: any) {
-    console.error("❌ Error fetching accounts:", err);
+  } catch (err: unknown) {
+    console.error("❌ Error fetching progress:", err);
+
     return NextResponse.json(
-      { success: false, error: err.message || "Failed to fetch accounts." },
+      {
+        success: false,
+        error: err instanceof Error ? err.message : "Failed to fetch progress.",
+      },
       { status: 500 }
     );
   }
 }
 
-// ✅ Force-dynamic to avoid Next.js caching issues
+// ✅ Force dynamic fetch (avoid Next.js caching issues)
 export const dynamic = "force-dynamic";
