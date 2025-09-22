@@ -59,6 +59,8 @@ export default function Notification({
   sidebarRef,
   notifications,
   setNotifications,
+  audioSrc,
+  volume = 100
 }: {
   totalNotifCount?: number;
   showSidebar: boolean;
@@ -66,6 +68,8 @@ export default function Notification({
   sidebarRef: React.RefObject<HTMLDivElement | null>;
   notifications: any[];
   setNotifications: React.Dispatch<React.SetStateAction<any[]>>;
+  audioSrc?: string;
+  volume?: number;
 }) {
   const [activeTab, setActiveTab] = useState<"Unread" | "Read">("Unread");
   const [loadingId, setLoadingId] = useState<string | number | null>(null);
@@ -152,12 +156,15 @@ export default function Notification({
       (notif) =>
         notif.type === "Inquiry Notification" && notif.status === "Unread"
     );
-    if (newInquiry) {
+    if (newInquiry && audioSrc) {
       setSelectedNotif(newInquiry);
       setShowModal(true);
-      new Audio("/alertmessage.mp3").play().catch(() => {});
+
+      const audio = new Audio(audioSrc);
+      audio.volume = volume / 100;
+      audio.play().catch(() => { });
     }
-  }, [notifications]);
+  }, [notifications, audioSrc, volume]);
 
   return (
     <>
@@ -194,11 +201,10 @@ export default function Notification({
                 onClick={handleMarkAllAsRead}
                 disabled={loadingId === "all"}
                 aria-label="Mark all notifications as read"
-                className={`text-[10px] font-semibold tracking-wide ${
-                  loadingId === "all"
+                className={`text-[10px] font-semibold tracking-wide ${loadingId === "all"
                     ? "cursor-not-allowed opacity-70 text-white"
                     : "text-black hover:text-black underline"
-                }`}
+                  }`}
               >
                 {loadingId === "all" ? (
                   <>
@@ -222,21 +228,19 @@ export default function Notification({
           <div className="flex justify-between px-4 pt-3 border-b text-[10px] uppercase font-bold">
             <button
               onClick={() => setActiveTab("Unread")}
-              className={`w-full py-2 ${
-                activeTab === "Unread"
+              className={`w-full py-2 ${activeTab === "Unread"
                   ? "border-b-2 border-orange-500 text-orange-600"
                   : "text-gray-500"
-              }`}
+                }`}
             >
               Unread
             </button>
             <button
               onClick={() => setActiveTab("Read")}
-              className={`w-full py-2 ${
-                activeTab === "Read"
+              className={`w-full py-2 ${activeTab === "Read"
                   ? "border-b-2 border-green-500 text-green-600"
                   : "text-gray-500"
-              }`}
+                }`}
             >
               Read
             </button>

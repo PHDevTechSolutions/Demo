@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CiBellOn, CiDark, CiSun } from "react-icons/ci";
+import { CiBellOn } from "react-icons/ci";
+import { BsSliders } from 'react-icons/bs';
 import { GrPowerShutdown } from "react-icons/gr";
 import { useRouter } from "next/navigation";
 import Notification from "./Notification";
@@ -53,7 +54,10 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedNotif, setSelectedNotif] = useState<any>(null);
-
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [volume, setVolume] = useState(50);
+  const [notificationVolume, setNotificationVolume] = useState(70); 
+  const notificationAudio = "/alertmessage.mp3";
   const router = useRouter();
 
   useEffect(() => {
@@ -281,19 +285,11 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
           </button>
 
           <button
-            onClick={onToggleTheme}
-            className="relative flex items-center bg-gray-200 dark:bg-gray-700 rounded-full w-16 h-8 p-1 transition-all duration-300"
+            onClick={() => setShowSettingsModal(prev => !prev)}
+            title="Settings"
+            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition"
           >
-            <div
-              className={`w-6 h-6 bg-white dark:bg-yellow-400 rounded-full shadow-md flex justify-center items-center transform transition-transform duration-300 ${isDarkMode ? "translate-x-8" : "translate-x-0"
-                }`}
-            >
-              {isDarkMode ? (
-                <CiDark size={16} className="text-gray-900 dark:text-gray-300" />
-              ) : (
-                <CiSun size={16} className="text-yellow-500" />
-              )}
-            </div>
+            <BsSliders size={20} />
           </button>
         </div>
 
@@ -313,7 +309,56 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
           sidebarRef={sidebarRef}
           notifications={notifications}
           setNotifications={setNotifications}
+          audioSrc={notificationAudio}
+          volume={notificationVolume}
         />
+
+        {showSettingsModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[2000]">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-80 shadow-lg flex flex-col gap-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Settings</h2>
+
+              {/* Theme Dropdown */}
+              <div>
+                <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold">Theme</label>
+                <select
+                  value={isDarkMode ? "dark" : "light"}
+                  onChange={(e) => {
+                    if ((e.target.value === "dark") !== isDarkMode) {
+                      onToggleTheme(); // zero argument
+                    }
+                  }}
+                  className="mt-1 w-full p-1 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+
+              </div>
+
+              {/* Volume Slider */}
+              <div>
+                <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold">Volume</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={volume} // state variable
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  className="w-full mt-1"
+                />
+                <span className="text-xs text-gray-500">{volume}%</span>
+              </div>
+
+              <button
+                className="mt-4 bg-orange-500 text-white py-2 rounded hover:bg-orange-600"
+                onClick={() => setShowSettingsModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
