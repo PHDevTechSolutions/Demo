@@ -289,7 +289,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
             title="Settings"
             className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition"
           >
-            <BsSliders size={20} />
+            <BsSliders size={18} />
           </button>
         </div>
 
