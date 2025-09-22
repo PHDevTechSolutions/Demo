@@ -403,21 +403,18 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             totalRow.commit();
 
             // ----------------- Insert Signatures Section -----------------
-            // ----------------- Insert Signatures Section -----------------
-
-            // Fill SALES REPRESENTATIVE section
             const repRow = findRowByKeyword("SALES REPRESENTATIVE");
             if (repRow) {
                 const nameRow = worksheet.getRow(repRow.number - 1); // 👈 above row
-                nameRow.getCell(3).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
+                nameRow.getCell(1).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
                 nameRow.commit();
 
                 const mobileRow = worksheet.getRow(repRow.number + 1);
-                mobileRow.getCell(3).value = `${userDetails.ContactNumber || "-"}`;
+                mobileRow.getCell(1).value = `${userDetails.ContactNumber || "-"}`;
                 mobileRow.commit();
 
                 const emailRow = worksheet.getRow(repRow.number + 2);
-                emailRow.getCell(3).value = `${userDetails.Email || "-"}`;
+                emailRow.getCell(1).value = `${userDetails.Email || "-"}`;
                 emailRow.commit();
             }
 
@@ -425,15 +422,15 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             const mgrRow = findRowByKeyword("SALES MANAGER");
             if (mgrRow && headDetails) {
                 const nameRow = worksheet.getRow(mgrRow.number - 1); // 👈 above row
-                nameRow.getCell(3).value = `${headDetails.Firstname ?? ""} ${headDetails.Lastname ?? ""}`;
+                nameRow.getCell(1).value = `${headDetails.Firstname ?? ""} ${headDetails.Lastname ?? ""}`;
                 nameRow.commit();
 
                 const mobileRow = worksheet.getRow(mgrRow.number + 1);
-                mobileRow.getCell(3).value = `${headDetails.ContactNumber || "-"}`;
+                mobileRow.getCell(1).value = `${headDetails.ContactNumber || "-"}`;
                 mobileRow.commit();
 
                 const emailRow = worksheet.getRow(mgrRow.number + 2);
-                emailRow.getCell(3).value = `${headDetails.Email || "-"}`;
+                emailRow.getCell(1).value = `${headDetails.Email || "-"}`;
                 emailRow.commit();
             }
 
@@ -441,7 +438,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             const headRow = findRowByKeyword("SALES HEAD-B2B");
             if (headRow && managerDetails) {
                 const nameRow = worksheet.getRow(headRow.number - 1); // 👈 above row
-                nameRow.getCell(3).value = `${managerDetails.Firstname ?? ""} ${managerDetails.Lastname ?? ""}`;
+                nameRow.getCell(1).value = `${managerDetails.Firstname ?? ""} ${managerDetails.Lastname ?? ""}`;
                 nameRow.commit();
             }
 
