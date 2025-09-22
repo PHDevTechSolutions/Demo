@@ -86,8 +86,6 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
     const [managerDetails, setManagerDetails] = useState<UserDetails | null>(null);
     const [headDetails, setHeadDetails] = useState<UserDetails | null>(null);
-    const [fileContent, setFileContent] = useState<string[][]>([]); // rows of cells
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
     // 📦 Load products from Shopify
     useEffect(() => {
@@ -186,71 +184,25 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
         })();
     }, [userDetails.Manager, userDetails.TSM]);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploadedFile(file); // ← store file for later use
-        setLoading(true);
-
-        try {
-            if (file.name.endsWith(".csv")) {
-                const text = await file.text();
-                const rows = text.split("\n").map((row) => row.split(","));
-                setFileContent(rows);
-            } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
-                const arrayBuffer = await file.arrayBuffer();
-                const workbook = new ExcelJS.Workbook();
-                await workbook.xlsx.load(arrayBuffer);
-                const worksheet = workbook.worksheets[0];
-
-                const rows: string[][] = [];
-                worksheet.eachRow((row) => {
-                    const values: string[] = [];
-                    row.eachCell({ includeEmpty: true }, (cell) => {
-                        const cellValue = cell.value;
-                        if (cellValue == null) values.push("");
-                        else if (
-                            typeof cellValue === "string" ||
-                            typeof cellValue === "number" ||
-                            typeof cellValue === "boolean"
-                        ) values.push(cellValue.toString());
-                        else if (cellValue instanceof Date) values.push(cellValue.toLocaleDateString());
-                        else if (typeof cellValue === "object" && "text" in cellValue && typeof cellValue.text === "string")
-                            values.push(cellValue.text);
-                        else values.push("");
-                    });
-                    rows.push(values);
-                });
-                setFileContent(rows);
-            } else {
-                alert("Unsupported file type. Use CSV or XLSX.");
-            }
-        } catch (err) {
-            console.error(err);
-            alert("Failed to read file.");
-        } finally {
-            setLoading(false);
-        }
+    // Helper: Format date -> "SEPTEMBER 22, 2025"
+    const formatUppercaseDate = (date: Date) => {
+        return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        }).toUpperCase();
     };
 
-    const handleTransfer = async () => {
-        if (!uploadedFile) return alert("Please upload a file first.");
 
+    const handleTransfer = async () => {
         setLoading(true);
         try {
             const workbook = new ExcelJS.Workbook();
 
-            // ----------------- Load uploaded file -----------------
-            if (uploadedFile.name.endsWith(".csv")) {
-                const text = await uploadedFile.text();
-                const rows = text.split("\n").map((r) => r.split(","));
-                const sheet = workbook.addWorksheet("Sheet1");
-                rows.forEach((r) => sheet.addRow(r));
-            } else {
-                const buffer = await uploadedFile.arrayBuffer();
-                await workbook.xlsx.load(buffer);
-            }
+            // ----------------- Load Quotation_Template.xlsx from public -----------------
+            const response = await fetch("/format/Quotation_Template.xlsx");
+            const arrayBuffer = await response.arrayBuffer();
+            await workbook.xlsx.load(arrayBuffer);
 
             const worksheet = workbook.worksheets[0];
 
@@ -274,13 +226,13 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             // ----------------- Transfer Header Info -----------------
             const headerMappings: { keyword: string; value: string }[] = [
                 { keyword: "Reference No:", value: selectedQuote.quotationnumber },
-                { keyword: "Date:", value: new Date().toLocaleDateString() },
-                { keyword: "COMPANY NAME:", value: selectedQuote.companyname },
-                { keyword: "ADDRESS:", value: selectedQuote.address },
+                { keyword: "Date:", value: formatUppercaseDate(new Date()) }, // ✅ uppercase date
+                { keyword: "COMPANY NAME:", value: (selectedQuote.companyname || "").toUpperCase() },
+                { keyword: "ADDRESS:", value: (selectedQuote.address || "").toUpperCase() },
                 { keyword: "TEL NO:", value: selectedQuote.contactnumber },
                 { keyword: "EMAIL ADDRESS:", value: selectedQuote.emailaddress },
-                { keyword: "ATTENTION:", value: selectedQuote.contactperson },
-                { keyword: "SUBJECT:", value: `${selectedQuote.companyname} - ${selectedQuote.contactperson}` },
+                { keyword: "ATTENTION:", value: (selectedQuote.contactperson || "").toUpperCase() },
+                { keyword: "SUBJECT:", value: `${(selectedQuote.companyname || "").toUpperCase()} - ${(selectedQuote.contactperson || "").toUpperCase()}` },
             ];
 
             headerMappings.forEach(({ keyword, value }) => {
@@ -404,44 +356,53 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
             // ----------------- Insert Signatures Section -----------------
             const repRow = findRowByKeyword("SALES REPRESENTATIVE");
-            if (repRow) {
-                const nameRow = worksheet.getRow(repRow.number - 1); // 👈 above row
-                nameRow.getCell(1).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
+            if (repRow && userDetails) {
+                // Pangalan sa taas ng SALES REPRESENTATIVE
+                const nameRow = worksheet.getRow(repRow.number - 1);
+                nameRow.getCell(1).value = `${(userDetails.Firstname ?? "").toUpperCase()} ${(userDetails.Lastname ?? "").toUpperCase()}`;
                 nameRow.commit();
 
+                // Mobile at Email sa baba
                 const mobileRow = worksheet.getRow(repRow.number + 1);
-                mobileRow.getCell(1).value = `${userDetails.ContactNumber || "-"}`;
+                mobileRow.getCell(1).value = `Mobile No: ${userDetails.ContactNumber || "-"}`;
                 mobileRow.commit();
 
                 const emailRow = worksheet.getRow(repRow.number + 2);
-                emailRow.getCell(1).value = `${userDetails.Email || "-"}`;
+                emailRow.getCell(1).value = `Email: ${userDetails.Email || "-"}`;
                 emailRow.commit();
             }
 
-            // Fill SALES MANAGER section
+            // ----------------- SALES MANAGER -----------------
             const mgrRow = findRowByKeyword("SALES MANAGER");
             if (mgrRow && headDetails) {
-                const nameRow = worksheet.getRow(mgrRow.number - 1); // 👈 above row
-                nameRow.getCell(1).value = `${headDetails.Firstname ?? ""} ${headDetails.Lastname ?? ""}`;
+                const nameRow = worksheet.getRow(mgrRow.number - 1);
+                nameRow.getCell(1).value = `${(headDetails.Firstname ?? "").toUpperCase()} ${(headDetails.Lastname ?? "").toUpperCase()}`;
                 nameRow.commit();
 
                 const mobileRow = worksheet.getRow(mgrRow.number + 1);
-                mobileRow.getCell(1).value = `${headDetails.ContactNumber || "-"}`;
+                mobileRow.getCell(1).value = `Mobile No: ${headDetails.ContactNumber || "-"}`;
                 mobileRow.commit();
 
                 const emailRow = worksheet.getRow(mgrRow.number + 2);
-                emailRow.getCell(1).value = `${headDetails.Email || "-"}`;
+                emailRow.getCell(1).value = `Email: ${headDetails.Email || "-"}`;
                 emailRow.commit();
             }
 
-            // Fill SALES HEAD-B2B section
+            // ----------------- SALES HEAD - B2B -----------------
             const headRow = findRowByKeyword("SALES HEAD-B2B");
             if (headRow && managerDetails) {
-                const nameRow = worksheet.getRow(headRow.number - 1); // 👈 above row
-                nameRow.getCell(1).value = `${managerDetails.Firstname ?? ""} ${managerDetails.Lastname ?? ""}`;
+                const nameRow = worksheet.getRow(headRow.number - 1);
+                nameRow.getCell(1).value = `${(managerDetails.Firstname ?? "").toUpperCase()} ${(managerDetails.Lastname ?? "").toUpperCase()}`;
                 nameRow.commit();
-            }
 
+                const mobileRow = worksheet.getRow(headRow.number + 1);
+                mobileRow.getCell(1).value = `Mobile No: ${managerDetails.ContactNumber || "-"}`;
+                mobileRow.commit();
+
+                const emailRow = worksheet.getRow(headRow.number + 2);
+                emailRow.getCell(1).value = `Email: ${managerDetails.Email || "-"}`;
+                emailRow.commit();
+            }
 
             // ----------------- Download Updated File -----------------
             const buffer = await workbook.xlsx.writeBuffer();
@@ -449,7 +410,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Transferred_${uploadedFile.name.replace(/\..+$/, "")}.xlsx`;
+            a.download = `Transferred_${selectedQuote.quotationnumber}.xlsx`; // ✅ fixed filename
             a.click();
             URL.revokeObjectURL(url);
 
@@ -464,13 +425,6 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
 
     return (
         <form className="border rounded p-4 bg-gray-50">
-            <input
-                type="file"
-                accept=".csv, .xlsx, .xls"
-                onChange={handleFileUpload}
-                disabled={loading}
-            />
-
             {/* Header Image */}
             <div>
                 <img
@@ -608,12 +562,12 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             <div className="mt-4">
                 <button
                     type="button"
-                    disabled={loading || !uploadedFile}
+                    disabled={loading}
                     onClick={handleTransfer}
                     className={`px-4 py-2 rounded text-xs font-semibold shadow ${loading ? "bg-gray-400 cursor-not-allowed text-white" : "bg-green-600 hover:bg-green-700 text-white"
                         }`}
                 >
-                    {loading ? "Processing..." : "Transfer Data"}
+                    {loading ? "The File is Creating..." : "Export Data"}
                 </button>
             </div>
 

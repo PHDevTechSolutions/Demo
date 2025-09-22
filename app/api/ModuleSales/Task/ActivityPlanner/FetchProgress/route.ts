@@ -8,10 +8,14 @@ if (!Xchire_databaseUrl) {
 
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Piliin lang ang specific fields na gusto mo
-    const Xchire_fetch = await Xchire_sql`
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get("limit") || "100", 10); // default 100 rows
+    const offset = parseInt(searchParams.get("offset") || "0", 10);
+
+    // ✅ Select only needed fields + paginate
+    const rows = await Xchire_sql`
       SELECT
         id,
         companyname,
@@ -31,19 +35,25 @@ export async function GET() {
         paymentterm,
         deliverydate,
         actualsales
-      FROM progress;
+      FROM progress
+      ORDER BY date_created DESC
+      LIMIT ${limit} OFFSET ${offset};
     `;
 
-    console.log("Fetched accounts:", Xchire_fetch); // Optional debugging
+    // ✅ Strip Neon metadata (convert to plain JSON)
+    const plainData = rows.map(r => ({ ...r }));
 
-    return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
-  } catch (Xchire_error: any) {
-    console.error("Error fetching accounts:", Xchire_error);
     return NextResponse.json(
-      { success: false, error: Xchire_error.message || "Failed to fetch accounts." },
+      { success: true, data: plainData, count: plainData.length },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error("Error fetching accounts:", err);
+    return NextResponse.json(
+      { success: false, error: err.message || "Failed to fetch accounts." },
       { status: 500 }
     );
   }
 }
 
-export const dynamic = "force-dynamic"; // Always fetch fresh data
+export const dynamic = "force-dynamic";
