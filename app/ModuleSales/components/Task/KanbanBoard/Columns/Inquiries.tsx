@@ -71,8 +71,13 @@ const Inquiries: React.FC<InquiriesProps> = ({
       else if (Array.isArray(data?.data)) inquiries = data.data;
       else if (Array.isArray(data?.inquiries)) inquiries = data.inquiries;
 
+      // 🔹 filter by referenceId + status Endorsed
       const myInquiries = inquiries
-        .filter((inq) => inq.referenceid === referenceId)
+        .filter(
+          (inq) =>
+            inq.referenceid === referenceId &&
+            inq.status?.toLowerCase() === "endorsed"
+        )
         .sort((a, b) => {
           const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
           const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
