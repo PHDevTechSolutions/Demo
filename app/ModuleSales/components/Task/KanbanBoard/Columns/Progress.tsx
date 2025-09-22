@@ -272,14 +272,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       return;
     }
 
-    // ✅ Normalize all fields to null if empty
+    // ✅ Normalize empty -> null
     Object.keys(payload).forEach((key) => {
       if (payload[key] === "" || payload[key] === undefined) {
         payload[key] = null;
       }
     });
 
-    // ✅ Special handling for numeric fields
+    // ✅ Numeric fields
     const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
       payload[field] = payload[field] !== null ? Number(payload[field]) : null;
@@ -306,12 +306,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         setProgress((prev) => {
           const exists = prev.some((p) => p.id === newItem.id);
           return exists
-            ? prev.map((p) => (p.id === newItem.id ? newItem : p))
-            : [newItem, ...prev];
+            ? prev.map((p) => (p.id === newItem.id ? newItem : p)) // update existing
+            : [newItem, ...prev]; // add new
         });
       }
-
-      fetchProgress(); // background refresh
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
@@ -320,7 +318,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
   };
-
 
   const handleDelete = async (item: ProgressItem) => {
     dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
