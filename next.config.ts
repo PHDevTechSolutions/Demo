@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true, // mas stable dev
-  swcMinify: true,       // mas maliit build size
+  reactStrictMode: true, // mas stable dev (recommended)
 
   // ✅ Cache-control headers
   async headers() {
@@ -21,7 +20,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Cache-Control",
-            value: "public, max-age=60, stale-while-revalidate=30", 
+            value: "public, max-age=60, stale-while-revalidate=30",
             // cache API responses for 1 min, allow SWR for 30s
           },
         ],

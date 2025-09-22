@@ -295,14 +295,19 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       resetForm();
       toast.success("Activity successfully added/updated!");
 
-      if (data?.id) {
+      const newItem = data?.progress; // ✅ correct key from API
+      if (newItem?.id) {
         setProgress((prev) => {
-          const exists = prev.some((p) => p.id === data.id);
+          const exists = prev.some((p) => p.id === newItem.id);
           return exists
-            ? prev.map((p) => (p.id === data.id ? data : p))
-            : [data, ...prev];
+            ? prev.map((p) => (p.id === newItem.id ? newItem : p))
+            : [newItem, ...prev];
         });
       }
+
+      // ✅ Always refetch after submit
+      await fetchProgress();
+
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
