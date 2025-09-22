@@ -403,52 +403,48 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             totalRow.commit();
 
             // ----------------- Insert Signatures Section -----------------
-            let sigRowNumber = totalRowNumber + 2; // space after total price
+            // ----------------- Insert Signatures Section -----------------
 
-            // SALES REPRESENTATIVE
-            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES REPRESENTATIVE";
-            worksheet.getRow(sigRowNumber).font = { bold: true };
-            sigRowNumber++;
+            // Fill SALES REPRESENTATIVE section
+            const repRow = findRowByKeyword("SALES REPRESENTATIVE");
+            if (repRow) {
+                const nameRow = worksheet.getRow(repRow.number - 1); // 👈 above row
+                nameRow.getCell(3).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
+                nameRow.commit();
 
-            worksheet.getRow(sigRowNumber).getCell(2).value = `${userDetails.Firstname} ${userDetails.Lastname}`;
-            sigRowNumber++;
+                const mobileRow = worksheet.getRow(repRow.number + 1);
+                mobileRow.getCell(3).value = `${userDetails.ContactNumber || "-"}`;
+                mobileRow.commit();
 
-            worksheet.getRow(sigRowNumber).getCell(2).value = `Mobile No: ${userDetails.ContactNumber || "-"}`;
-            sigRowNumber++;
-
-            worksheet.getRow(sigRowNumber).getCell(2).value = `Email: ${userDetails.Email || "-"}`;
-            sigRowNumber += 2;
-
-            // APPROVED BY
-            worksheet.getRow(sigRowNumber).getCell(2).value = "APPROVED BY:";
-            sigRowNumber += 2;
-
-            // SALES MANAGER
-            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES MANAGER";
-            worksheet.getRow(sigRowNumber).font = { bold: true };
-            sigRowNumber++;
-
-            if (headDetails) {
-                worksheet.getRow(sigRowNumber).getCell(2).value = `${headDetails.Firstname} ${headDetails.Lastname}`;
-                sigRowNumber++;
-                worksheet.getRow(sigRowNumber).getCell(2).value = `Mobile No: ${headDetails.ContactNumber || "-"}`;
-                sigRowNumber++;
-                worksheet.getRow(sigRowNumber).getCell(2).value = `Email: ${headDetails.Email || "-"}`;
+                const emailRow = worksheet.getRow(repRow.number + 2);
+                emailRow.getCell(3).value = `${userDetails.Email || "-"}`;
+                emailRow.commit();
             }
-            sigRowNumber += 2;
 
-            // NOTED BY
-            worksheet.getRow(sigRowNumber).getCell(2).value = "NOTED BY:";
-            sigRowNumber += 2;
+            // Fill SALES MANAGER section
+            const mgrRow = findRowByKeyword("SALES MANAGER");
+            if (mgrRow && headDetails) {
+                const nameRow = worksheet.getRow(mgrRow.number - 1); // 👈 above row
+                nameRow.getCell(3).value = `${headDetails.Firstname ?? ""} ${headDetails.Lastname ?? ""}`;
+                nameRow.commit();
 
-            // SALES HEAD B2B
-            worksheet.getRow(sigRowNumber).getCell(2).value = "SALES HEAD - B2B";
-            worksheet.getRow(sigRowNumber).font = { bold: true };
-            sigRowNumber++;
+                const mobileRow = worksheet.getRow(mgrRow.number + 1);
+                mobileRow.getCell(3).value = `${headDetails.ContactNumber || "-"}`;
+                mobileRow.commit();
 
-            if (managerDetails) {
-                worksheet.getRow(sigRowNumber).getCell(2).value = `${managerDetails.Firstname} ${managerDetails.Lastname}`;
+                const emailRow = worksheet.getRow(mgrRow.number + 2);
+                emailRow.getCell(3).value = `${headDetails.Email || "-"}`;
+                emailRow.commit();
             }
+
+            // Fill SALES HEAD-B2B section
+            const headRow = findRowByKeyword("SALES HEAD-B2B");
+            if (headRow && managerDetails) {
+                const nameRow = worksheet.getRow(headRow.number - 1); // 👈 above row
+                nameRow.getCell(3).value = `${managerDetails.Firstname ?? ""} ${managerDetails.Lastname ?? ""}`;
+                nameRow.commit();
+            }
+
 
             // ----------------- Download Updated File -----------------
             const buffer = await workbook.xlsx.writeBuffer();
