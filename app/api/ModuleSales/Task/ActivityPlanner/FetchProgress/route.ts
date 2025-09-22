@@ -8,13 +8,9 @@ if (!Xchire_databaseUrl) {
 
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "100", 10); // default 100 rows
-    const offset = parseInt(searchParams.get("offset") || "0", 10);
-
-    // ✅ Select only needed fields + paginate
+    // ✅ Query only needed fields from progress table
     const rows = await Xchire_sql`
       SELECT
         id,
@@ -35,20 +31,18 @@ export async function GET(request: Request) {
         paymentterm,
         deliverydate,
         actualsales
-      FROM progress
-      ORDER BY date_created DESC
-      LIMIT ${limit} OFFSET ${offset};
+      FROM progress;
     `;
 
-    // ✅ Strip Neon metadata (convert to plain JSON)
-    const plainData = rows.map(r => ({ ...r }));
+    // ✅ Remove metadata + make sure it's plain JSON
+    const data = rows.map(r => ({ ...r }));
 
     return NextResponse.json(
-      { success: true, data: plainData, count: plainData.length },
+      { success: true, data, count: data.length },
       { status: 200 }
     );
   } catch (err: any) {
-    console.error("Error fetching accounts:", err);
+    console.error("❌ Error fetching accounts:", err);
     return NextResponse.json(
       { success: false, error: err.message || "Failed to fetch accounts." },
       { status: 500 }
@@ -56,4 +50,5 @@ export async function GET(request: Request) {
   }
 }
 
+// ✅ Force-dynamic to avoid Next.js caching issues
 export const dynamic = "force-dynamic";

@@ -410,7 +410,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Transferred_${selectedQuote.quotationnumber}.xlsx`; // ✅ fixed filename
+            a.download = `Transferred_${selectedQuote.quotationnumber}.xlsx`;
             a.click();
             URL.revokeObjectURL(url);
 
