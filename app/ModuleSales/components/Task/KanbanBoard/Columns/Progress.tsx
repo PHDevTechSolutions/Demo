@@ -221,17 +221,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         setProgress(prev => {
           if (JSON.stringify(prev) === JSON.stringify(myProgress)) return prev;
           return myProgress.sort((a, b) => {
-            const dateA = Math.max(new Date(a.date_updated || a.date_created).getTime());
-            const dateB = Math.max(new Date(b.date_updated || b.date_created).getTime());
+            const dateA = new Date(a.date_updated || a.date_created).getTime();
+            const dateB = new Date(b.date_updated || b.date_created).getTime();
             return dateB - dateA;
           });
         });
-
-        // Only set visibleCount on initial load
-        if (!initialLoaded) {
-          setVisibleCount(ITEMS_PER_PAGE);
-          setInitialLoaded(true);
-        }
       } catch (err) {
         console.error("❌ Error fetching progress:", err);
       }
@@ -239,11 +233,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
     fetchProgress();
     const interval = setInterval(fetchProgress, POLL_INTERVAL);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [userDetails?.ReferenceID, refreshTrigger, initialLoaded]);
+  }, [userDetails?.ReferenceID]);
 
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
