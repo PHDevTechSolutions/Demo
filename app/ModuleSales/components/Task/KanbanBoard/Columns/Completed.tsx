@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { FaCircle, FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
+import { FaCircle, FaChevronDown, FaChevronUp, FaSearch, FaSync } from "react-icons/fa";
 
 export interface CompletedItem {
   id: string;
@@ -122,19 +122,39 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{filteredData.length}</span>
         </span>
-        <button
-          className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-          onClick={() => setSearchOpen((prev) => !prev)}
-        >
-          Search <FaSearch size={15} />
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+            onClick={() => setSearchOpen((prev) => !prev)}
+          >
+            Search <FaSearch size={15} />
+          </button>
+
+          <button
+            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+            onClick={() => {
+              lastFetchedIds.current.clear(); // reset IDs
+              fetchCompleted();
+            }}
+          >
+            {loading ? (
+              <FaSync size={14} className="animate-spin" />
+            ) : (
+              <>
+                Refresh <FaSync size={14} />
+              </>
+            )}
+          </button>
+
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row items-start md:items-center justify-end space-y-2 md:space-y-0 md:space-x-2">
         {searchOpen && (
           <input
             type="text"
-            placeholder="Search Accounts..."
+            placeholder="Search..."
             className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

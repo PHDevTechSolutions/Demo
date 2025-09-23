@@ -6,7 +6,7 @@ import SessionChecker from "../../components/Session/SessionChecker";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Developers from "../../components/Routes/Page/VI_Page"; 
+import Developers from "../../components/Routes/Page/VI_Page";
 
 const ProfilePage: React.FC = () => {
     const [userDetails, setUserDetails] = useState({
@@ -72,10 +72,8 @@ const ProfilePage: React.FC = () => {
                     draggable
                     pauseOnHover
                     theme="colored"
-                    className="text-sm z-[99999]" 
-                    toastClassName={() =>
-                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                    }
+                    className="text-xs z-[99999]"
+                    toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                     progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                 />
             </ParentLayout>

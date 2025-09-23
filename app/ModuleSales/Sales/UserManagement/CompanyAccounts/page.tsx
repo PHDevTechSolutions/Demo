@@ -372,8 +372,8 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchAccount} 
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }} 
+                                        refreshPosts={fetchAccount}
+                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}
                                         editUser={editUser}
                                     />
                                 ) : showImportForm ? (
@@ -507,7 +507,7 @@ const ListofUser: React.FC = () => {
                                                 selectedClientType={selectedClientType}
                                                 setSelectedClientType={setSelectedClientType}
                                                 selectedStatus={selectedStatus}
-                                                setSelectedStatus={setSelectedStatus} 
+                                                setSelectedStatus={setSelectedStatus}
                                                 startDate={startDate}
                                                 setStartDate={setStartDate}
                                                 endDate={endDate}
@@ -547,10 +547,8 @@ const ListofUser: React.FC = () => {
                                     draggable
                                     pauseOnHover
                                     theme="colored"
-                                    className="text-sm z-[99999]"
-                                    toastClassName={() =>
-                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                                    }
+                                    className="text-xs z-[99999]"
+                                    toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                                     progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                                 />
                             </div>

@@ -96,7 +96,7 @@ const ListofUser: React.FC = () => {
         fetchAccount();
     }, []);
 
-    const today = new Date().toISOString().split("T")[0]; 
+    const today = new Date().toISOString().split("T")[0];
     const filteredAccounts = Array.isArray(posts)
         ? posts.filter((post) => {
             const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -113,12 +113,12 @@ const ListofUser: React.FC = () => {
             const referenceID = userDetails.ReferenceID;
 
             const matchesRole =
-                userRole === "Super Admin" || 
-                userRole === "Special Access" || 
-                userRole === "Manager" || 
+                userRole === "Super Admin" ||
+                userRole === "Special Access" ||
+                userRole === "Manager" ||
                 userRole === "Territory Sales Manager" ||
-                userRole === "Territory Sales Associate" || 
-                post?.manager === referenceID; 
+                userRole === "Territory Sales Associate" ||
+                post?.manager === referenceID;
 
             return matchesSearchTerm && isWithinDateRange && matchesClientType && matchesRole;
         }).map((post) => {
@@ -181,10 +181,8 @@ const ListofUser: React.FC = () => {
                                     draggable
                                     pauseOnHover
                                     theme="colored"
-                                    className="text-sm z-[99999]"
-                                    toastClassName={() =>
-                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                                    }
+                                    className="text-xs z-[99999]"
+                                    toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                                     progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                                 />
                             </div>

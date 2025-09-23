@@ -16,7 +16,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ExcelJS from "exceljs";
 
 // Icons
-import {CiImport } from "react-icons/ci";
+import { CiImport } from "react-icons/ci";
 import Select from "react-select";
 
 const ListofUser: React.FC = () => {
@@ -324,7 +324,7 @@ const ListofUser: React.FC = () => {
             const matchesSearchTerm =
                 post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 post?.activitystatus?.toLowerCase().includes(searchTerm.toLowerCase());
-                const postDate = post.date_created ? new Date(post.date_created) : null;
+            const postDate = post.date_created ? new Date(post.date_created) : null;
 
             const isWithinDateRange =
                 (!startDate || (postDate && postDate >= new Date(startDate))) &&
@@ -370,8 +370,8 @@ const ListofUser: React.FC = () => {
                                             setShowForm(false);
                                             setEditUser(null);
                                         }}
-                                        refreshPosts={fetchAccount} 
-                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }} 
+                                        refreshPosts={fetchAccount}
+                                        userDetails={{ id: editUser ? editUser.id : userDetails.UserId }}
                                         editUser={editUser}
                                     />
                                 ) : showImportForm ? (
@@ -557,10 +557,8 @@ const ListofUser: React.FC = () => {
                                     draggable
                                     pauseOnHover
                                     theme="colored"
-                                    className="text-sm z-[99999]"
-                                    toastClassName={() =>
-                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                                    }
+                                    className="text-xs z-[99999]"
+                                    toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                                     progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                                 />
                             </div>

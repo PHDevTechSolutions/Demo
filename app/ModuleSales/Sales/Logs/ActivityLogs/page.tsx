@@ -13,7 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 const OutboundCallPage: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
-  const [totalRecords, setTotalRecords] = useState(0); 
+  const [totalRecords, setTotalRecords] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClientType, setSelectedClientType] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,10 +86,8 @@ const OutboundCallPage: React.FC = () => {
                 draggable
                 pauseOnHover
                 theme="colored"
-                className="text-sm z-[99999]" 
-                toastClassName={() =>
-                  "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                }
+                className="text-xs z-[99999]"
+                toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                 progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
               />
             </div>

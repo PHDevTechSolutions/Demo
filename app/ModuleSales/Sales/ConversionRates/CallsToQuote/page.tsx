@@ -18,7 +18,7 @@ const ListofUser: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedClientType, setSelectedClientType] = useState("");
-    const [startDate, setStartDate] = useState(""); 
+    const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
     const [userDetails, setUserDetails] = useState({
@@ -205,7 +205,7 @@ const ListofUser: React.FC = () => {
                     AgentLastname: agent ? agent.Lastname : "Unknown",
                 };
             })
-            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()) 
+            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
         : [];
 
     return (
@@ -283,6 +283,7 @@ const ListofUser: React.FC = () => {
                                         </>
                                     )}
                                 </div>
+
                                 <ToastContainer
                                     position="bottom-right"
                                     autoClose={2000}
@@ -294,10 +295,8 @@ const ListofUser: React.FC = () => {
                                     draggable
                                     pauseOnHover
                                     theme="colored"
-                                    className="text-sm z-[99999]"
-                                    toastClassName={() =>
-                                        "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-                                    }
+                                    className="text-xs z-[99999]"
+                                    toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
                                     progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                                 />
                             </div>

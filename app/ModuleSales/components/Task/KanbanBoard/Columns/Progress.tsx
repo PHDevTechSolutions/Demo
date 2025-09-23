@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaSearch } from "react-icons/fa";
+import { FaSearch, FaSync } from "react-icons/fa";
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
@@ -65,6 +65,9 @@ interface ProgressProps {
   searchQuery?: string;
 }
 
+const POLL_INTERVAL = 5000;
+const ITEMS_PER_PAGE = 10;
+
 interface CardLoadingState {
   [id: string]: boolean;
 }
@@ -81,8 +84,6 @@ const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) 
   }
 };
 
-const ITEMS_PER_PAGE = 10;
-
 const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +93,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const lastFetchedIds = React.useRef<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -233,9 +235,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       );
 
       setVisibleCount(ITEMS_PER_PAGE);
+      toast.success("Data refreshed successfully!");
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
-      setProgress([]);
+      toast.error("Failed to refresh data.");
     } finally {
       setLoading(false);
     }
@@ -340,18 +343,24 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
+  // Auto-polling
+  useEffect(() => {
+    fetchProgress(); // initial fetch
+    const interval = setInterval(fetchProgress, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchProgress, refreshTrigger]);
+
   const filteredProgress = progress.filter((item) =>
     (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
+  if (loading && progress.length === 0)
     return (
       <div className="flex justify-center items-center py-10">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
         <span className="ml-2 text-xs text-gray-500">Loading data...</span>
       </div>
     );
-  }
 
   return (
     <div className="space-y-1">
@@ -359,12 +368,29 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{progress.length}</span>
         </span>
-        <button
-          className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-          onClick={() => setSearchOpen((prev) => !prev)}
-        >
-          Search <FaSearch size={15} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+            onClick={() => setSearchOpen((prev) => !prev)}
+          >
+            Search <FaSearch size={15} />
+          </button>
+          <button
+            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+            onClick={() => {
+              lastFetchedIds.current.clear(); // reset IDs
+              fetchProgress();
+            }}
+          >
+            {loading ? (
+              <FaSync size={14} className="animate-spin" />
+            ) : (
+              <>
+                Refresh <FaSync size={14} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {searchOpen && (
@@ -430,10 +456,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm z-[99999]"
-        toastClassName={() =>
-          "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
-        }
+        className="text-xs z-[99999]"
+        toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
         progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
       />
 

@@ -186,32 +186,6 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 <span className="mr-1">📅</span>Total Meetings Today: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
-            {showForm && userDetails && (
-                <MeetingForm
-                    mode={mode}
-                    startDate={startDate}
-                    endDate={endDate}
-                    typeactivity={typeactivity}
-                    remarks={remarks}
-                    setMode={setMode}
-                    setStartDate={setStartDate}
-                    setEndDate={setEndDate}
-                    setTypeactivity={setTypeactivity}
-                    setRemarks={setRemarks}
-                    handleDurationChange={handleDurationChange}
-                    handleSubmit={handleSubmit}
-                />
-            )}
-
-            <div className="flex justify-between items-center">
-                <button
-                    onClick={() => setShowForm((prev) => !prev)}
-                    className="border border-blue-500 text-black text-xs px-3 py-2 w-full rounded-md hover:bg-blue-400 hover:text-white mt-2"
-                >
-                    {showForm ? "Cancel" : "+ Add Meeting"}
-                </button>
-            </div>
-
             <div className="space-y-1">
                 {meetings.length === 0 && (
                     <p className="text-xs text-gray-400 italic">No meetings scheduled for today</p>
@@ -244,6 +218,32 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                         </div>
                     );
                 })}
+            </div>
+
+            {showForm && userDetails && (
+                <MeetingForm
+                    mode={mode}
+                    startDate={startDate}
+                    endDate={endDate}
+                    typeactivity={typeactivity}
+                    remarks={remarks}
+                    setMode={setMode}
+                    setStartDate={setStartDate}
+                    setEndDate={setEndDate}
+                    setTypeactivity={setTypeactivity}
+                    setRemarks={setRemarks}
+                    handleDurationChange={handleDurationChange}
+                    handleSubmit={handleSubmit}
+                />
+            )}
+
+            <div className="flex justify-between items-center">
+                <button
+                    onClick={() => setShowForm((prev) => !prev)}
+                    className="border border-blue-500 text-black text-xs px-3 py-2 w-full rounded-md hover:bg-blue-400 hover:text-white mt-2"
+                >
+                    {showForm ? "Cancel" : "+ Add Meeting"}
+                </button>
             </div>
         </div>
     );

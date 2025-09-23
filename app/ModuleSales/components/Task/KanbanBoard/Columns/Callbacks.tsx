@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import CallbackCard from "./Card/CallbackCard";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Inquiry {
   id?: number;
@@ -98,6 +100,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         setCallbacks(todayCallbacks);
       } catch (error) {
         console.error("❌ Failed to fetch today's callbacks:", error);
+        toast.error("Failed to fetch today's callbacks.");
         setCallbacks([]);
       } finally {
         setLoading(false);
@@ -160,16 +163,15 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       const data = await res.json();
 
       if (res.ok) {
-        console.log("✅ Update successful:", data);
-        alert("Activity updated successfully!");
+        toast.success("Activity updated successfully!");
         closeFormDrawer();
       } else {
+        toast.error("Failed to update activity. Please try again.");
         console.error("❌ Update failed:", data);
-        alert("Failed to update activity. Please try again.");
       }
     } catch (error) {
       console.error("❌ Error updating activity:", error);
-      alert("An error occurred while updating the activity.");
+      toast.error("An error occurred while updating the activity.");
     } finally {
       setUpdating(false);
     }
