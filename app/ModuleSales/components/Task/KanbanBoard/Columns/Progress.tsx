@@ -205,47 +205,41 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setShowForm(true);
   };
 
-  const fetchProgress = async () => {
-    if (!userDetails?.ReferenceID) return;
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
-      );
-      const data = await res.json();
-      const progressData: ProgressItem[] =
-        Array.isArray(data) ? data : data?.data || data?.progress || [];
-
-      const myProgress = progressData.filter(
-        (p) => p.referenceid === userDetails.ReferenceID
-      );
-
-      setProgress(
-        myProgress.sort((a, b) => {
-          const dateA = Math.max(
-            a.date_updated ? new Date(a.date_updated).getTime() : 0,
-            a.date_created ? new Date(a.date_created).getTime() : 0
-          );
-          const dateB = Math.max(
-            b.date_updated ? new Date(b.date_updated).getTime() : 0,
-            b.date_created ? new Date(b.date_created).getTime() : 0
-          );
-          return dateB - dateA;
-        })
-      );
-
-      setVisibleCount(ITEMS_PER_PAGE);
-    } catch (err) {
-      console.error("❌ Error fetching progress:", err);
-      toast.error("Failed to refresh data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    if (!userDetails?.ReferenceID) return;
+    let isMounted = true;
+
+    const fetchProgress = async () => {
+      try {
+        const res = await fetch(`/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`);
+        const data = await res.json();
+        const progressData: ProgressItem[] = Array.isArray(data) ? data : data?.data || data?.progress || [];
+        if (!isMounted) return;
+
+        const myProgress = progressData.filter(p => p.referenceid === userDetails.ReferenceID);
+        setProgress(prev => {
+          // Only update if new data exists to avoid unnecessary re-renders
+          if (JSON.stringify(prev) === JSON.stringify(myProgress)) return prev;
+          return myProgress.sort((a, b) => {
+            const dateA = Math.max(new Date(a.date_updated || a.date_created).getTime());
+            const dateB = Math.max(new Date(b.date_updated || b.date_created).getTime());
+            return dateB - dateA;
+          });
+        });
+        setVisibleCount(ITEMS_PER_PAGE);
+      } catch (err) {
+        console.error("❌ Error fetching progress:", err);
+      }
+    };
+
     fetchProgress();
+    const interval = setInterval(fetchProgress, POLL_INTERVAL);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [userDetails?.ReferenceID, refreshTrigger]);
+
 
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -342,13 +336,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     }
   };
 
-  // Auto-polling
-  useEffect(() => {
-    fetchProgress(); // initial fetch
-    const interval = setInterval(fetchProgress, POLL_INTERVAL);
-    return () => clearInterval(interval);
-  }, [fetchProgress, refreshTrigger]);
-
   const filteredProgress = progress.filter((item) =>
     (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -378,14 +365,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => {
               lastFetchedIds.current.clear(); // reset IDs
-              fetchProgress();
             }}
           >
             {loading ? (
               <FaSync size={14} className="animate-spin" />
             ) : (
               <>
-                Refresh <FaSync size={14} />
+                <FaSync size={14} />
               </>
             )}
           </button>

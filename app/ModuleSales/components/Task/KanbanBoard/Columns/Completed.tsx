@@ -142,7 +142,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
               <FaSync size={14} className="animate-spin" />
             ) : (
               <>
-                Refresh <FaSync size={14} />
+               <FaSync size={14} />
               </>
             )}
           </button>
