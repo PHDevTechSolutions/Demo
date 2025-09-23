@@ -65,7 +65,7 @@ interface ProgressProps {
   searchQuery?: string;
 }
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 10000;
 const ITEMS_PER_PAGE = 10;
 
 interface CardLoadingState {
@@ -94,6 +94,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const lastFetchedIds = React.useRef<Set<string>>(new Set());
+  const [initialLoaded, setInitialLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -218,7 +219,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
         const myProgress = progressData.filter(p => p.referenceid === userDetails.ReferenceID);
         setProgress(prev => {
-          // Only update if new data exists to avoid unnecessary re-renders
           if (JSON.stringify(prev) === JSON.stringify(myProgress)) return prev;
           return myProgress.sort((a, b) => {
             const dateA = Math.max(new Date(a.date_updated || a.date_created).getTime());
@@ -226,7 +226,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             return dateB - dateA;
           });
         });
-        setVisibleCount(ITEMS_PER_PAGE);
+
+        // Only set visibleCount on initial load
+        if (!initialLoaded) {
+          setVisibleCount(ITEMS_PER_PAGE);
+          setInitialLoaded(true);
+        }
       } catch (err) {
         console.error("❌ Error fetching progress:", err);
       }
@@ -238,8 +243,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [userDetails?.ReferenceID, refreshTrigger]);
-
+  }, [userDetails?.ReferenceID, refreshTrigger, initialLoaded]);
 
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
