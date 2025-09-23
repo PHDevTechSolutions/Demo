@@ -12,7 +12,7 @@ export async function GET() {
     try {
         // ✅ Only select the columns you need
         const Xchire_fetch = await Xchire_sql`
-            SELECT referenceid, tsm, manager, companyname 
+            SELECT referenceid, tsm, manager, companyname, status, typeclient 
             FROM accounts;
         `;
 
