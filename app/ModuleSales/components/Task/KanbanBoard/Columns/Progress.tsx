@@ -235,7 +235,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       );
 
       setVisibleCount(ITEMS_PER_PAGE);
-      toast.success("Data refreshed successfully!");
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
       toast.error("Failed to refresh data.");

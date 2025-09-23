@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const [Password, setPassword] = useState('');
   const [Department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   const [lockUntil, setLockUntil] = useState<string | null>(null);
   const [formattedLockUntil, setFormattedLockUntil] = useState<string | null>(null);
@@ -194,6 +195,13 @@ const Login: React.FC = () => {
           />
           <div className="absolute inset-0" />
         </div>
+
+        {/* Full-page Welcome Modal */}
+        {showWelcomeModal && (
+          <div className="fixed inset-0 bg-white z-[100000] flex items-center justify-center transition-opacity duration-300">
+            <h1 className="text-3xl font-bold text-gray-800">Welcome to Taskflow</h1>
+          </div>
+        )}
       </div>
     </div>
   );
