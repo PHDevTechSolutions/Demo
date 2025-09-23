@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { FaCircle, FaChevronDown, FaChevronUp, FaSearch, FaSync } from "react-icons/fa";
+import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { IoSync, IoSearchOutline } from 'react-icons/io5';
 
 export interface CompletedItem {
   id: string;
@@ -128,7 +129,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => setSearchOpen((prev) => !prev)}
           >
-            Search <FaSearch size={15} />
+            Search <IoSearchOutline size={15} />
           </button>
 
           <button
@@ -139,10 +140,10 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             }}
           >
             {loading ? (
-              <FaSync size={14} className="animate-spin" />
+              <IoSync size={14} className="animate-spin" />
             ) : (
               <>
-               <FaSync size={14} />
+               <IoSync size={14} />
               </>
             )}
           </button>

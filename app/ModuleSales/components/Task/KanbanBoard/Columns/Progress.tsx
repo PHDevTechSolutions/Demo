@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaSearch, FaSync } from "react-icons/fa";
+import { IoSync, IoSearchOutline } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
@@ -363,7 +363,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => setSearchOpen((prev) => !prev)}
           >
-            Search <FaSearch size={15} />
+            Search <IoSearchOutline size={15} />
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
@@ -372,10 +372,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             }}
           >
             {loading ? (
-              <FaSync size={14} className="animate-spin" />
+              <IoSync size={14} className="animate-spin" />
             ) : (
               <>
-                <FaSync size={14} />
+                <IoSync size={14} />
               </>
             )}
           </button>
