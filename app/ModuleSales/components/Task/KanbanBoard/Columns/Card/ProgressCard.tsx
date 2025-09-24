@@ -169,6 +169,11 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
               {progress.typeclient} | {progress.ticketreferencenumber}
             </p>
           )}
+          {progress.activitystatus === "Quote-Done" && (
+            <p className="mt-1 font-bold text-red-600 text-[8px]">
+              {remainingTime ? `⏳ ${remainingTime}` : "Calculating..."}
+            </p>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           <button
@@ -190,12 +195,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p><span className="font-semibold">Status:</span> {progress.activitystatus}</p>
-
-          {progress.activitystatus === "Quote-Done" && (
-            <p className="mt-1 font-bold text-red-600">
-              {remainingTime ? `⏳ ${remainingTime}` : "Calculating..."}
-            </p>
-          )}
 
           <p className="text-gray-500 text-[8px]">
             {progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}

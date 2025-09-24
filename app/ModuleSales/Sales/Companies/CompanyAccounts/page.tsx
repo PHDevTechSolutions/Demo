@@ -314,17 +314,6 @@ const ActiveAccounts: React.FC = () => {
                                         ) : null}
                                     </div>
 
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex gap-2">
-                                            <button
-                                                className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-green-600 hover:text-white transition"
-                                                onClick={() => setShowImportForm(true)}
-                                            >
-                                                <CiImport size={15} /> Import Account
-                                            </button>
-                                        </div>
-                                    </div>
-
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
                                         <h2 className="text-lg font-bold mb-2">List of Accounts - Active</h2>
                                         <p className="text-xs text-gray-600 mb-4">
