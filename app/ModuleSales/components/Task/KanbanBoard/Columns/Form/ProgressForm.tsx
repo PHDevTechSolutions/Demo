@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import FBMarketPlace from "../HiddenFields/FBMarketPlace";
 import InboundCall from "../HiddenFields/InboundCall";
 import OutboundCall from "../HiddenFields/OutboundCall";
 import QuotationPreparation from "../HiddenFields/QuotationPreparation";
 import SalesOrderPreparation from "../HiddenFields/SalesOrderPreparation";
 import Delivered from "../HiddenFields/Delivered";
+import SurveyModal from "./SurveyModal";
 import { MdEdit, MdOutlineClose } from "react-icons/md";
 
 interface ProgressFormProps {
@@ -59,6 +60,8 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   handleProjectCategoryChange,
   setFormData,
 }) => {
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+
   useEffect(() => {
     if (!formData.startdate) {
       setFormData((prev: any) => ({
@@ -78,6 +81,15 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
     return () => clearInterval(interval);
   }, []);
+
+  const wrappedSubmit = (e: React.FormEvent) => {
+    handleFormSubmit(e);
+
+    // 👉 kapag Delivered, show modal
+    if (formData.activitystatus === "Delivered") {
+      setShowSurveyModal(true);
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
@@ -256,6 +268,11 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </button>
         </div>
       </form>
+      <SurveyModal
+        isOpen={showSurveyModal}
+        onClose={() => setShowSurveyModal(false)}
+        defaultEmail={formData.emailaddress || ""}
+      />
     </div>
   );
 };
