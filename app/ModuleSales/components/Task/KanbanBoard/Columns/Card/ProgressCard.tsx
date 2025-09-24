@@ -40,6 +40,7 @@ export interface ProgressItem {
   deliverydate: string;
   followup_date: string;
   ticketreferencenumber: string;
+  drnumber: string;
 }
 
 interface ProgressCardProps {

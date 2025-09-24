@@ -15,7 +15,7 @@ async function insertActivity(data: any) {
       area, activitynumber, source, typeactivity, activitystatus,
       remarks, typecall, sonumber, soamount, callback, callstatus,
       startdate, enddate, quotationnumber, quotationamount,
-      projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date
+      projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, drnumber
     } = data;
 
     const result = await sql`
@@ -25,14 +25,15 @@ async function insertActivity(data: any) {
         area, activitynumber, source, typeactivity, activitystatus,
         remarks, typecall, sonumber, soamount, callback, callstatus,
         startdate, enddate, quotationnumber, quotationamount,
-        projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, date_created
+        projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, drnumber, date_created
       ) VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
         ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
         ${area}, ${activitynumber}, ${source}, ${typeactivity}, ${activitystatus},
         ${remarks}, ${typecall}, ${sonumber}, ${soamount}, ${callback}, ${callstatus},
         ${startdate}, ${enddate}, ${quotationnumber}, ${quotationamount},
-        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, ${actualsales}, ${deliverydate}, ${followup_date}, NOW()
+        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, 
+        ${actualsales}, ${deliverydate}, ${followup_date}, ${drnumber}, NOW()
       )
       RETURNING *;
     `;
@@ -67,9 +68,7 @@ export async function POST(req: Request) {
 
     // ✅ Required fields
     const requiredFields = [
-      "referenceid", "manager", "tsm", "companyname",
-      "contactperson", "contactnumber", "emailaddress",
-      "typeclient", "address", "activitynumber",
+      "referenceid", "manager", "tsm"
     ];
 
     for (const field of requiredFields) {

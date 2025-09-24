@@ -65,8 +65,8 @@ interface KanbanBoardProps {
 
 const columns: Column[] = [
   { id: "new-task", title: "New Task" },
-  { id: "scheduled", title: "Scheduled" },
   { id: "in-progress", title: "In Progress" },
+  { id: "scheduled", title: "Scheduled" },
   { id: "completed", title: "Completed" },
 ];
 
@@ -173,6 +173,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                     />
                   </>
                 )}
+                {col.id === "in-progress" && !isCollapsed && (
+                  <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                )}
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
                     <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
@@ -180,9 +183,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                     <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
                   </>
-                )}
-                {col.id === "in-progress" && !isCollapsed && (
-                  <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
                 )}
                 {col.id === "completed" && !isCollapsed && (
                   <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} />

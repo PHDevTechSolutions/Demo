@@ -44,6 +44,7 @@ interface ProgressItem {
   deliverydate: string;
   followup_date: string;
   ticketreferencenumber: string;
+  drnumber: string;
 }
 
 interface UserDetails {
@@ -94,7 +95,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const lastFetchedIds = React.useRef<Set<string>>(new Set());
-  const [initialLoaded, setInitialLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -117,6 +117,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     actualsales: "",
     deliverydate: "",
     followup_date: "",
+    drnumber: "",
+    emailaddress: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -157,6 +159,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       actualsales: "",
       deliverydate: "",
       followup_date: "",
+      drnumber: "",
+      emailaddress: "",
     });
 
   const handleAddClick = (prog?: ProgressItem) => {
@@ -201,6 +205,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       actualsales: prog?.actualsales || "",
       deliverydate: prog?.deliverydate || "",
       followup_date: prog?.followup_date || "",
+      drnumber: prog?.drnumber || "",
+      emailaddress: prog?.emailaddress || "",
     });
 
     setShowForm(true);

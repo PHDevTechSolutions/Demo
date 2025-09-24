@@ -6,6 +6,7 @@ import InboundCall from "../HiddenFields/InboundCall";
 import OutboundCall from "../HiddenFields/OutboundCall";
 import QuotationPreparation from "../HiddenFields/QuotationPreparation";
 import SalesOrderPreparation from "../HiddenFields/SalesOrderPreparation";
+import Delivered from "../HiddenFields/Delivered";
 import { MdEdit, MdOutlineClose } from "react-icons/md";
 
 interface ProgressFormProps {
@@ -30,6 +31,8 @@ interface ProgressFormProps {
     actualsales: string;
     deliverydate: string;
     followup_date: string;
+    drnumber: string;
+    emailaddress: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<
@@ -184,58 +187,14 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           )}
 
           {formData.activitystatus === "Delivered" && (
-            <>
-              <div className="flex flex-col">
-                <label className="font-semibold">
-                  Payment Terms <span className="text-[8px] text-red-700">* Required Fields</span>
-                </label>
-                <select
-                  name="paymentterm"
-                  value={formData.paymentterm}
-                  onChange={handleFormChange}
-                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
-                >
-                  <option value="COD">COD</option>
-                  <option value="Check">Check</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Deposit">Bank Deposit</option>
-                  <option value="GCash">GCash</option>
-                  <option value="Terms">Terms</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold">
-                  SI (Actual Sales) <span className="text-[8px] text-red-700">* Required Fields</span>
-                </label>
-                <input
-                  type="number"
-                  name="actualsales"
-                  value={formData.actualsales}
-                  onChange={handleFormChange}
-                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold">
-                  Delivery Date <span className="text-[8px] text-red-700">* Required Fields</span>
-                </label>
-                <input
-                  type="date"
-                  name="deliverydate"
-                  value={formData.deliverydate}
-                  onChange={handleFormChange}
-                  className="border-b px-3 py-6 rounded text-xs resize-none h-20"
-                />
-              </div>
-            </>
+            <Delivered formData={formData} handleFormChange={handleFormChange} />
           )}
 
           <div className="flex flex-col col-span-2">
             <label className="font-semibold">
               Remarks<span className="text-[8px] text-red-700">* Required Fields</span>
             </label>
+
             <textarea
               name="remarks"
               value={formData.remarks}
