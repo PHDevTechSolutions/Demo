@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
       <section className="mb-8">
         <p>
           This Privacy Policy explains how we collect, use, and safeguard your
-          personal information when you use our application (“the App”). By
+          personal information when you use our application (“TaskFlow”). By
           continuing to use the App, you acknowledge that you have read,
           understood, and agree to the practices outlined in this Policy.
         </p>
