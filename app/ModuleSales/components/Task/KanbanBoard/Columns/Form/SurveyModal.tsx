@@ -5,9 +5,10 @@ interface SurveyModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultEmail: string;
+  onSurveySent: () => void; // ✅ callback to continue form submit
 }
 
-const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, defaultEmail }) => {
+const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, defaultEmail, onSurveySent }) => {
   const [email, setEmail] = useState(defaultEmail);
   const [sending, setSending] = useState(false);
 
@@ -24,6 +25,9 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, defaultEmail
       if (res.ok) {
         alert("Survey sent successfully!");
         onClose();
+
+        // 👉 after sending survey, continue form submit
+        onSurveySent();
       } else {
         alert("Failed: " + data.message);
       }
@@ -36,7 +40,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ isOpen, onClose, defaultEmail
   };
 
   if (!isOpen) return null;
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10000]">
       <div className="bg-white rounded-xl shadow-lg p-6 w-96">

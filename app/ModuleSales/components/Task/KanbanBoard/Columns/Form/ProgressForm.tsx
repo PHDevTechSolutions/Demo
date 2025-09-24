@@ -83,13 +83,17 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   }, []);
 
   const wrappedSubmit = (e: React.FormEvent) => {
-    handleFormSubmit(e);
+    e.preventDefault(); // prevent default always
 
-    // 👉 kapag Delivered, show modal
     if (formData.activitystatus === "Delivered") {
+      // 👉 show survey modal muna
       setShowSurveyModal(true);
+    } else {
+      // 👉 normal submit
+      handleFormSubmit(e);
     }
   };
+
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
@@ -272,6 +276,11 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
         isOpen={showSurveyModal}
         onClose={() => setShowSurveyModal(false)}
         defaultEmail={formData.emailaddress || ""}
+        onSurveySent={() => {
+          // ✅ once survey is sent, submit form for real
+          const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
+          handleFormSubmit(fakeEvent);
+        }}
       />
     </div>
   );
