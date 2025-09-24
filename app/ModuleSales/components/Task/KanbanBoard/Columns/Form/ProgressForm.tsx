@@ -93,7 +93,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
-      <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
+      <form onSubmit={wrappedSubmit} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
