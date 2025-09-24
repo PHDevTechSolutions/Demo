@@ -15,7 +15,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Ecoshift Corporation",
-  description: "Created in NextJs Developed By Leroux Y Xchire",
+  description: "Created in Next-Js Developed By Leroux Y Xchire",
   icons: {
     icon: "/ecoico.png",
   },
