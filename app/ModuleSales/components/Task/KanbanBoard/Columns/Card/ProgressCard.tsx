@@ -166,7 +166,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           </div>
           {progress.activitynumber && (
             <p className="text-[8px] text-gray-600">
-              {progress.typeclient} | {progress.ticketreferencenumber}
+              {progress.activitystatus} | {progress.ticketreferencenumber}
             </p>
           )}
           {progress.activitystatus === "Quote-Done" && (
@@ -194,8 +194,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
-          <p><span className="font-semibold">Status:</span> {progress.activitystatus}</p>
-
           <p className="text-gray-500 text-[8px]">
             {progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}
           </p>

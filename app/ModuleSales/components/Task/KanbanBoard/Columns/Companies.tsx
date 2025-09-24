@@ -219,11 +219,11 @@ const Companies: React.FC<CompaniesProps> = ({
 
               {isExpanded && (
                 <div className="p-1 space-y-1">
-                  <p><span className="font-semibold">Contact Person:</span> {comp.contactperson}</p>
+                  <p><span className="font-semibold capitalize">Contact Person:</span> {comp.contactperson}</p>
                   <p><span className="font-semibold">Contact #:</span> {comp.contactnumber}</p>
                   <p><span className="font-semibold">Email:</span> {comp.emailaddress}</p>
                   <p><span className="font-semibold">Type:</span> {comp.typeclient}</p>
-                  <p><span className="font-semibold">Address:</span> {comp.address || "N/A"}</p>
+                  <p><span className="font-semibold capitalize">Address:</span> {comp.address || "N/A"}</p>
                 </div>
               )}
 
