@@ -48,67 +48,7 @@ const ListofUser: React.FC = () => {
     []
   );
   const [selectedAgent, setSelectedAgent] = useState("");
-  const [showBanner] = useState(true);
-  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
-  const [yesterdaySummary, setYesterdaySummary] = useState<any[]>([]);
-  const [summaryType, setSummaryType] = useState<"yesterday" | "latest">(
-    "yesterday"
-  );
-  const [loadingSummary, setLoadingSummary] = useState(false);
   const loading = loadingUser || loadingAccounts;
-
-  const fetchSummary = useCallback(async () => {
-    if (!userDetails?.ReferenceID) return;
-
-    try {
-      setLoadingSummary(true);
-      setIsSummaryOpen(true);
-
-      const res = await fetch(
-        "/api/ModuleSales/Task/DailyActivity/FetchProgress"
-      );
-      const data = await res.json();
-      const activities = data.data || [];
-
-      const userActivities = activities.filter(
-        (p: any) =>
-          p.ReferenceID === userDetails.ReferenceID ||
-          p.referenceid === userDetails.ReferenceID
-      );
-
-      if (userActivities.length === 0) return;
-
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const yesterdayLogs = userActivities.filter(
-        (p: any) =>
-          new Date(p.date_created) >= yesterday &&
-          new Date(p.date_created) < today
-      );
-
-      if (yesterdayLogs.length > 0) {
-        setYesterdaySummary(yesterdayLogs);
-        setSummaryType("yesterday");
-      } else {
-        const latest = [...userActivities].sort(
-          (a, b) =>
-            new Date(b.date_created).getTime() -
-            new Date(a.date_created).getTime()
-        )[0];
-        setYesterdaySummary([latest]);
-        setSummaryType("latest");
-      }
-    } catch (err) {
-      console.error("Error fetching summary:", err);
-    } finally {
-      setLoadingSummary(false);
-    }
-  }, [userDetails]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -278,13 +218,6 @@ const ListofUser: React.FC = () => {
                             <strong>inquiries</strong>.
                           </p>
                         </div>
-
-                        <button
-                          onClick={fetchSummary}
-                          className="px-3 py-2 text-xs bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
-                        >
-                          Show Recent Summary
-                        </button>
                       </div>
 
                       {/* Agent filter */}

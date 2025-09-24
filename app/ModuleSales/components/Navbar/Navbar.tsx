@@ -55,9 +55,6 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedNotif, setSelectedNotif] = useState<any>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [volume, setVolume] = useState(50);
-  const [notificationVolume, setNotificationVolume] = useState(70); 
-  const notificationAudio = "/alertmessage.mp3";
   const router = useRouter();
 
   useEffect(() => {
@@ -309,8 +306,6 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
           sidebarRef={sidebarRef}
           notifications={notifications}
           setNotifications={setNotifications}
-          audioSrc={notificationAudio}
-          volume={notificationVolume}
         />
 
         {showSettingsModal && (
@@ -334,20 +329,6 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
                   <option value="dark">Dark</option>
                 </select>
 
-              </div>
-
-              {/* Volume Slider */}
-              <div>
-                <label className="text-sm text-gray-700 dark:text-gray-300 font-semibold">Volume</label>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={volume} // state variable
-                  onChange={(e) => setVolume(Number(e.target.value))}
-                  className="w-full mt-1"
-                />
-                <span className="text-xs text-gray-500">{volume}%</span>
               </div>
 
               <button
