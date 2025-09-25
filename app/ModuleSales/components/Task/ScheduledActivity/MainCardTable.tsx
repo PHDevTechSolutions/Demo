@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import TableView from "../../Routes/Table/SA_Table";
 import Pagination from "../../Routes/Pagination/SA_Pagination";
-import GridView from "./GridView";
 import CardView from "./CardView";
 import Form from "../../Routes/Form/SA_Form";
 import PersonalModalForm from "../../Routes/Modal/PM_Modal";
@@ -50,7 +49,7 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
     fetchAccount,
 }) => {
     const [currentPage, setCurrentPage] = useState(1);
-    const [view, setView] = useState<"table" | "grid" | "card">("table");
+    const [view, setView] = useState<"table" | "card">("table");
     const [showMainForm, setShowMainForm] = useState(false);
     const [showPersonalForm, setShowPersonalForm] = useState(false);
     const [editUser, setEditUser] = useState<Post | null>(null);
@@ -110,10 +109,6 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                         className={`flex items-center gap-1 px-3 py-1 rounded ${view === "table" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
                         <FaTable size={12} /> Table
                     </button>
-                    <button onClick={() => setView("grid")}
-                        className={`flex items-center gap-1 px-3 py-1 rounded ${view === "grid" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
-                        <FaTasks size={12} /> Logs
-                    </button>
                     <button onClick={() => setView("card")}
                         className={`flex items-center gap-1 px-3 py-1 rounded ${view === "card" ? "bg-blue-400 text-white" : "bg-gray-100"}`}>
                         <FaCalendarAlt size={12} /> Calendar
@@ -159,9 +154,6 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                             handleDelete={confirmDelete}
                             refreshPosts={fetchAccount}
                         />
-                    )}
-                    {view === "grid" && (
-                        <GridView posts={currentDatePosts} handleEdit={handleEdit} />
                     )}
                     {view === "card" && (
                         <CardView posts={posts} handleEdit={handleEdit} />
