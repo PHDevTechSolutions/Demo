@@ -63,7 +63,7 @@ interface KanbanBoardProps {
   userDetails: UserDetails | null;
 }
 
-const columns: Column[] = [
+const allColumns: Column[] = [
   { id: "new-task", title: "New Task" },
   { id: "in-progress", title: "In Progress" },
   { id: "scheduled", title: "Scheduled" },
@@ -126,10 +126,18 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     );
   };
 
+  // ✅ Filter columns based on Role
+  const filteredColumns = allColumns.filter(col => {
+    if (userDetails?.Role === "Territory Sales Manager") {
+      return col.id !== "new-task" && col.id !== "in-progress";
+    }
+    return true;
+  });
+
   return (
     <div className="w-full p-4">
       <div className="flex gap-4">
-        {columns.map(col => {
+        {filteredColumns.map(col => {
           const isCollapsed = collapsedColumns.includes(col.id);
           const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
 
