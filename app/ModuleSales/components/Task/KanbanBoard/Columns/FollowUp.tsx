@@ -88,11 +88,26 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
 
         const todayStr = new Date().toISOString().split("T")[0];
 
-        const todayFollowUps = activities
-          .filter((act) => act.referenceid === userDetails.ReferenceID)
-          .filter((act) => act.followup_date && act.typecall)
-          .filter((act) => act.followup_date?.startsWith(todayStr))
-          .sort((a, b) => (b.followup_date || "").localeCompare(a.followup_date || ""));
+        let todayFollowUps: Inquiry[] = [];
+
+        if (userDetails.Role === "Territory Sales Manager") {
+          // 🔹 TSM sees all activities where their ReferenceID matches the inquiry.tsm
+          todayFollowUps = activities
+            .filter((act) => act.tsm === userDetails.ReferenceID)
+            .filter((act) => act.followup_date && act.typecall)
+            .filter((act) => act.followup_date?.startsWith(todayStr));
+        } else {
+          // 🔹 Non-TSM sees only their own data
+          todayFollowUps = activities
+            .filter((act) => act.referenceid === userDetails.ReferenceID)
+            .filter((act) => act.followup_date && act.typecall)
+            .filter((act) => act.followup_date?.startsWith(todayStr));
+        }
+
+        // 🔹 Sort by latest followup_date
+        todayFollowUps = todayFollowUps.sort((a, b) =>
+          (b.followup_date || "").localeCompare(a.followup_date || "")
+        );
 
         setFollowUps(todayFollowUps);
       } catch (error) {
@@ -104,7 +119,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
     };
 
     fetchFollowUps();
-  }, [userDetails?.ReferenceID, refreshTrigger, localRefresh]);
+  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger, localRefresh]);
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);

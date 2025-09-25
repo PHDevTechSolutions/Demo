@@ -56,17 +56,31 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         : result.data || result.items || [];
 
       const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
-      const doneItems = list
-        .filter(
+
+      let doneItems: CompletedItem[] = [];
+
+      if (userDetails.Role === "Territory Sales Manager") {
+        // 🔹 TSM can see all items tagged to their ReferenceID as TSM
+        doneItems = list.filter(
+          (item) =>
+            allowedStatuses.includes(item.activitystatus || "") &&
+            (item as any).tsm === userDetails.ReferenceID && // <-- match by TSM
+            !lastFetchedIds.current.has(item.id)
+        );
+      } else {
+        // 🔹 Agent sees only their own items
+        doneItems = list.filter(
           (item) =>
             allowedStatuses.includes(item.activitystatus || "") &&
             item.referenceid === userDetails.ReferenceID &&
             !lastFetchedIds.current.has(item.id)
-        )
-        .sort(
-          (a, b) =>
-            new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
         );
+      }
+
+      doneItems = doneItems.sort(
+        (a, b) =>
+          new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+      );
 
       if (doneItems.length > 0) {
         doneItems.forEach((item) => lastFetchedIds.current.add(item.id));
@@ -77,7 +91,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     } finally {
       setLoading(false);
     }
-  }, [userDetails?.ReferenceID]);
+  }, [userDetails?.ReferenceID, userDetails?.Role]);
 
   useEffect(() => {
     fetchCompleted();
@@ -143,7 +157,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
               <IoSync size={14} className="animate-spin" />
             ) : (
               <>
-               <IoSync size={14} />
+                <IoSync size={14} />
               </>
             )}
           </button>
