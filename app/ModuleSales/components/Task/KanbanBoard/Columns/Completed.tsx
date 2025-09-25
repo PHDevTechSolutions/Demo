@@ -28,7 +28,7 @@ interface CompletedProps {
   refreshTrigger?: number;
 }
 
-const POLL_INTERVAL = 10000;
+const POLL_INTERVAL = 60000;
 const ITEMS_PER_PAGE = 10;
 
 const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {

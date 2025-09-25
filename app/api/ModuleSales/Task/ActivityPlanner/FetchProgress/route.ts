@@ -1,18 +1,23 @@
+// /api/ModuleSales/Task/ActivityPlanner/FetchProgress/route.ts
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL;
-if (!Xchire_databaseUrl) {
-  throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
-}
+const dbUrl = process.env.TASKFLOW_DB_URL;
+if (!dbUrl) throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
 
-// ✅ Reuse Neon connection
-const Xchire_sql = neon(Xchire_databaseUrl);
+const sql = neon(dbUrl);
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // ✅ Query only needed fields from progress table
-    const rows = await Xchire_sql`
+    const { searchParams } = new URL(req.url);
+    const referenceid = searchParams.get("referenceid");
+
+    if (!referenceid) {
+      return NextResponse.json({ success: false, error: "Missing referenceid" }, { status: 400 });
+    }
+
+    // ✅ Filter + Limit results
+    const rows = await sql`
       SELECT
         id,
         companyname,
@@ -33,32 +38,17 @@ export async function GET() {
         deliverydate,
         actualsales
       FROM progress
-      ORDER BY date_created DESC;
+      WHERE referenceid = ${referenceid}
+        AND activitystatus IN ('Done','SO-Done','Quote-Done','Delivered')
+      ORDER BY date_created DESC
+      LIMIT 50;
     `;
 
-    // ✅ Convert Neon Row objects to plain JSON
-    const data = rows.map((row) => ({ ...row }));
-
-    return NextResponse.json(
-      {
-        success: true,
-        count: data.length,
-        data,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, count: rows.length, data: rows }, { status: 200 });
   } catch (err: unknown) {
     console.error("❌ Error fetching progress:", err);
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: err instanceof Error ? err.message : "Failed to fetch progress.",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Failed to fetch progress." }, { status: 500 });
   }
 }
 
-// ✅ Force dynamic fetch (avoid Next.js caching issues)
 export const dynamic = "force-dynamic";
