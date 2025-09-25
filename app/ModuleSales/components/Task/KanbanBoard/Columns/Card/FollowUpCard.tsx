@@ -68,7 +68,7 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
         onClick={() => setExpanded((prev) => !prev)}
       >
         <img
-          src={userDetails?.profilePicture || "taskflow.png"}
+          src={userDetails?.profilePicture || "Taskflow.png"}
           alt="Profile"
           className="w-8 h-8 rounded-full object-cover"
         />
