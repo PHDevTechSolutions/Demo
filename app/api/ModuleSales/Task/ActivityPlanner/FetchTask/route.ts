@@ -8,38 +8,30 @@ if (!Xchire_databaseUrl) {
 
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
-        const Xchire_fetch = await Xchire_sql`
-            SELECT 
-                id,
-                companyname,
-                activitynumber,
-                referenceid,
-                manager,
-                tsm,
-                activitystatus,
-                typeactivity,
-                remarks,
-                startdate,
-                enddate,
-                date_created,
-                date_updated,
-                quotationnumber,
-                sonumber,
-                soamount,
-                actualsales,
-                quotationamount
-            FROM progress;
-        `;
+        const { searchParams } = new URL(req.url);
+        const referenceid = searchParams.get("referenceid");
 
-        console.log("Fetched tasks:", Xchire_fetch); // Debugging line
+        if (!referenceid) {
+            return NextResponse.json({ success: false, error: "Missing referenceid" }, { status: 400 });
+        }
 
-        return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
-    } catch (Xchire_error: any) {
-        console.error("Error fetching tasks:", Xchire_error);
+        const rows = await Xchire_sql`
+      SELECT 
+        id, companyname, activitynumber, referenceid, manager, tsm,
+        activitystatus, typeactivity, remarks, startdate, enddate,
+        date_created, date_updated, quotationnumber, sonumber,
+        soamount, actualsales, quotationamount
+      FROM progress
+      WHERE referenceid = ${referenceid}  -- 🔑 filter server-side
+      ORDER BY date_created DESC;
+    `;
+
+        return NextResponse.json({ success: true, data: rows }, { status: 200 });
+    } catch (error: any) {
         return NextResponse.json(
-            { success: false, error: Xchire_error.message || "Failed to fetch tasks." },
+            { success: false, error: error.message || "Failed to fetch tasks." },
             { status: 500 }
         );
     }
