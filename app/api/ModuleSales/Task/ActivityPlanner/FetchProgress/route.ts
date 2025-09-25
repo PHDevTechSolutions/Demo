@@ -16,7 +16,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: "Missing referenceid" }, { status: 400 });
     }
 
-    // ✅ Filter + Limit results
     const rows = await sql`
       SELECT
         id,
