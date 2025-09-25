@@ -4,17 +4,6 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-
-// ✅ Fix for missing Leaflet marker icons
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -125,12 +114,25 @@ const tsmAgentMap: Record<string, string[]> = {
   ],
 };
 
-const SiteVisit: React.FC<SiteVisitProps> = ({
-  userDetails,
-  refreshTrigger,
-}) => {
+const SiteVisit: React.FC<SiteVisitProps> = ({ userDetails, refreshTrigger }) => {
   const [siteVisits, setSiteVisits] = useState<SiteVisitItem[]>([]);
   const [selectedVisit, setSelectedVisit] = useState<SiteVisitItem | null>(null);
+
+  // ✅ Initialize Leaflet icons only on client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
+      });
+    }
+  }, []);
 
   const fetchSiteVisits = async () => {
     if (!userDetails) return;
@@ -152,9 +154,7 @@ const SiteVisit: React.FC<SiteVisitProps> = ({
         .filter((item) => {
           const itemDate = new Date(item.date_created).toLocaleDateString(
             "en-CA",
-            {
-              timeZone: "Asia/Manila",
-            }
+            { timeZone: "Asia/Manila" }
           );
           return itemDate === todayStr;
         })
