@@ -68,7 +68,11 @@ const Login: React.FC = () => {
 
         toast.success('Login successful!');
         setTimeout(() => {
-          if (result.Department === "Sales") {
+          if (result.Role === "Manager" && result.Department === "Sales") {
+            // ✅ Manager in Sales department → Sales Dashboard
+            router.push(`/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(result.userId)}`);
+          } else if (result.Department === "Sales") {
+            // ✅ Regular Sales user → Task / ScheduledActivity
             router.push(`/ModuleSales/Sales/Task/ScheduledActivity?id=${encodeURIComponent(result.userId)}`);
           } else if (result.Department === "CSR") {
             router.push(`/ModuleCSR/CSR/Dashboard?id=${encodeURIComponent(result.userId)}`);
@@ -76,6 +80,7 @@ const Login: React.FC = () => {
             router.push(`/Module${result.Department}/${result.Department}/Dashboard?id=${encodeURIComponent(result.userId)}`);
           }
         }, 1000);
+
       } else {
         if (result.lockUntil) {
           setLockUntil(result.lockUntil);
