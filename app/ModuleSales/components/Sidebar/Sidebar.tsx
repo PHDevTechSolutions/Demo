@@ -72,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
       "Super Admin": menuItems.map(m => m.title),
       "Manager": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
       "Special Access": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
-      "Territory Sales Manager": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","My Team","Reports","Help Center","What is Taskflow?"],
+      "Territory Sales Manager": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","Work Management", "My Team","Reports","Help Center","What is Taskflow?"],
       "Territory Sales Associate": ["Session Logs","Sales Performance","Conversion Rates","Customer Database","National","Work Management","Reports","Help Center","What is Taskflow?"]
     };
     return menuItems.filter(item => allowed[role]?.includes(item.title));
