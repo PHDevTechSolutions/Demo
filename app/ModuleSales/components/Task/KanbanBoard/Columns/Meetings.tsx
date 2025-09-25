@@ -188,7 +188,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
 
             <div className="space-y-1">
                 {meetings.length === 0 && (
-                    <p className="text-xs text-gray-400 italic">No meetings scheduled for today</p>
+                    <p className="text-xs text-gray-400 italic">No meeting scheduled for today</p>
                 )}
                 {meetings.map((m) => {
                     const isExpanded = expanded === m.id;
