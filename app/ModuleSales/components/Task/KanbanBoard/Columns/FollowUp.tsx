@@ -52,6 +52,7 @@ interface FollowUpsProps {
 const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) => {
   const [followUps, setFollowUps] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(3);
   const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [remarks, setRemarks] = useState("");
@@ -220,17 +221,30 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {followUps.length > 0 ? (
-        followUps.map((inq, idx) => (
-          <FollowUpCard
-            key={idx}
-            inq={inq}
-            userDetails={userDetails}
-            openFormDrawer={openFormDrawer}
-          />
-        ))
+        <>
+          {followUps.slice(0, visibleCount).map((inq, idx) => (
+            <FollowUpCard
+              key={inq.id || idx}
+              inq={inq}
+              userDetails={userDetails}
+              openFormDrawer={openFormDrawer}
+            />
+          ))}
+
+          {visibleCount < followUps.length && (
+            <div className="flex justify-center mt-2">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 5)}
+                className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+              >
+                View More
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <p className="text-xs text-gray-400 italic">
-          No follow-ups scheduled for today.
+          No callbacks scheduled for today.
         </p>
       )}
 
