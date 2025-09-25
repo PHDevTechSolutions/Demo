@@ -186,7 +186,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 <span className="mr-1">📅</span>Total Meetings Today: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
-            <div className="space-y-1">
+            <div className="space-y-1 mb-4">
                 {meetings.length === 0 && (
                     <p className="text-xs text-gray-400 italic">No meeting scheduled for today</p>
                 )}
