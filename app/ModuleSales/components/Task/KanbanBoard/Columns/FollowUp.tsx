@@ -91,9 +91,15 @@ const FollowUps: React.FC<FollowUpsProps> = ({ userDetails, refreshTrigger }) =>
         let todayFollowUps: Inquiry[] = [];
 
         if (userDetails.Role === "Territory Sales Manager") {
-          // 🔹 TSM sees all activities where their ReferenceID matches the inquiry.tsm
+          // 🔹 TSM sees only allowed typecalls for their agents
           todayFollowUps = activities
-            .filter((act) => act.tsm === userDetails.ReferenceID)
+            .filter(
+              (act) =>
+                act.tsm === userDetails.ReferenceID &&
+                ["Sent Quotation - Standard", "Sent Quotation - With Special Price", "Sent Quotation - With SPF"].includes(
+                  act.typecall || ""
+                )
+            )
             .filter((act) => act.followup_date && act.typecall)
             .filter((act) => act.followup_date?.startsWith(todayStr));
         } else {

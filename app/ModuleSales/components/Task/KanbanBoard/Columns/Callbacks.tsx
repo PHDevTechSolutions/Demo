@@ -46,6 +46,7 @@ interface CallbacksProps {
 
 const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) => {
   const [callbacks, setCallbacks] = useState<Inquiry[]>([]);
+  const [visibleCount, setVisibleCount] = useState(3);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
@@ -83,13 +84,32 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
             ? data.data
             : [];
 
-        // ✅ Define start and end of today
-        const today = new Date();
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+        // ✅ Define start and end of today (safe copy para hindi ma-mutate si today)
+        const now = new Date();
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
 
-        const todayCallbacks = inquiries
-          .filter((inq) => inq.referenceid === userDetails.ReferenceID)
+        const endOfDay = new Date(now);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // ✅ Filter depende sa role
+        let filtered: Inquiry[] = [];
+        if (userDetails.Role === "Territory Sales Manager") {
+          // lahat ng inquiries ng agents under this TSM
+          filtered = inquiries.filter(
+            (inq) =>
+              inq.tsm === userDetails.ReferenceID &&
+              ["Ringing Only", "Cannot Be Reached", "Not Connected With The Company"].includes(
+                inq.typecall || ""
+              )
+          );
+        } else {
+          // normal agent = sariling ReferenceID lang
+          filtered = inquiries.filter((inq) => inq.referenceid === userDetails.ReferenceID);
+        }
+
+        // ✅ today’s callbacks lang
+        const todayCallbacks = filtered
           .filter((inq) => {
             if (!inq.callback) return false;
             const cbDate = new Date(inq.callback);
@@ -108,7 +128,8 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     };
 
     fetchCallbacks();
-  }, [userDetails?.ReferenceID, refreshTrigger]);
+  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger]);
+
 
   const openFormDrawer = (inq: Inquiry) => {
     setSelectedInquiry(inq);
@@ -193,14 +214,27 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
       </h3>
 
       {callbacks.length > 0 ? (
-        callbacks.map((inq) => (
-          <CallbackCard
-            key={inq.activitynumber || inq.id || Math.random()}
-            inq={inq}
-            userDetails={userDetails || { ReferenceID: "" }}
-            openFormDrawer={openFormDrawer}
-          />
-        ))
+        <>
+          {callbacks.slice(0, visibleCount).map((inq) => (
+            <CallbackCard
+              key={inq.activitynumber || inq.id || Math.random()}
+              inq={inq}
+              userDetails={userDetails || { ReferenceID: "" }}
+              openFormDrawer={openFormDrawer}
+            />
+          ))}
+
+          {visibleCount < callbacks.length && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 5)}
+                className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+              >
+                View More
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <p className="text-xs text-gray-400 italic">
           No callbacks scheduled for today.
