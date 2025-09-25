@@ -201,7 +201,7 @@ const ListofUser: React.FC = () => {
               */}
 
               <div className="flex gap-4">
-                <Tools activeTab={activeTab} setActiveTab={setActiveTab} />
+                <Tools activeTab={activeTab} setActiveTab={setActiveTab} userDetails={userDetails} />
 
                 {/* Main */}
                 <div className="text-gray-900 w-full">
