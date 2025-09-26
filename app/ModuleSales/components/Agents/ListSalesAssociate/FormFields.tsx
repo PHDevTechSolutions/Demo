@@ -240,6 +240,12 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
             "Viber Replies",
             "Technical Concern",
             "Sample Request",
+            "Assisting Other Agent Clients",
+            "Coordination of SO To Warehouse",
+            "Coordination of SO to Orders",
+            "Updating Reports",
+            "Check/Read emails",
+            "Documentation",
           ]);
 
           if (validActivities.has(item.typeactivity)) {
