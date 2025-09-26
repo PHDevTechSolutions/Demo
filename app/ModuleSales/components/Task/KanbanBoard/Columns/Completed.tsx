@@ -55,7 +55,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         ? result
         : result.data || result.items || [];
 
-      const allowedStatuses = ["Done", "SO-Done", "Quote-Done", "Delivered"];
+      const allowedStatuses = ["Done", "Delivered"];
 
       let doneItems: CompletedItem[] = [];
 
