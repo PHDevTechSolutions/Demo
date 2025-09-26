@@ -53,6 +53,7 @@ interface ProductRow {
     qty: number;
     unitPrice: number;
     total: number;
+    
 }
 
 // 🔎 Helper: Convert <table> → plain text
@@ -498,6 +499,7 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
                 products={products}
                 updateProduct={updateProduct}
                 grandTotal={grandTotal}
+                quotationamount={selectedQuote.quotationamount}
             />
 
             {/* Information Section */}

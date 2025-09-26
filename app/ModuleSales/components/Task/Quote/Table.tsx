@@ -16,6 +16,7 @@ interface TableProps {
     products: ProductRow[];
     updateProduct: (index: number, field: "qty" | "unitPrice", value: number) => void;
     grandTotal: number;
+    quotationamount: string;
 }
 
 const Table: React.FC<TableProps> = ({ products, updateProduct, grandTotal }) => {
