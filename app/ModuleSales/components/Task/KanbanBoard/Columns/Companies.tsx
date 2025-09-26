@@ -170,7 +170,7 @@ const Companies: React.FC<CompaniesProps> = ({
     <div className="space-y-1 overflow-y-auto">
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
         <span className="flex items-center">
-          <span className="mr-1">🏢</span> Companies: <span className="ml-1 text-red-500">{companies.length}</span>
+          <span className="mr-1">🏢</span> OB Calls: <span className="ml-1 text-red-500">{companies.length}</span>
         </span>
       </h3>
 
