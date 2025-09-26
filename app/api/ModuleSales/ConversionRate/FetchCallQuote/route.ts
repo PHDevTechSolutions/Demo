@@ -27,6 +27,7 @@ export async function GET() {
         soamount,
         actualsales,
         typeactivity,
+        activitystatus,
         source
       FROM progress;
     `;

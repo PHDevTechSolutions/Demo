@@ -25,6 +25,7 @@ interface GroupedData {
   totalSOAmount: number;
   totalActualSales: number;
   targetQuota: number;
+  
   preparationQuoteCount: number;
   salesorderCount: number;
   siCount: number;
