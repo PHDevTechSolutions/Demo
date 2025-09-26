@@ -38,7 +38,7 @@ export async function GET(req: Request) {
         actualsales
       FROM progress
       WHERE referenceid = ${referenceid}
-        AND activitystatus IN ('Done','SO-Done','Quote-Done','Delivered')
+        AND activitystatus IN ('Done','Delivered')
       ORDER BY date_created DESC
       LIMIT 50;
     `;
