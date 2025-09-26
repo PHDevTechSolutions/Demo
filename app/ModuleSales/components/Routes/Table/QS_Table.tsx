@@ -13,6 +13,7 @@ interface Post {
   soamount: number;
   actualsales: number;
   typeactivity: string;
+  activitystatus: string;
   source: string;
 }
 
@@ -105,8 +106,8 @@ const Table: React.FC<TableProps> = ({ posts }) => {
       acc[groupKey].records.push(post);
       acc[groupKey].totalSOAmount += post.soamount;
       acc[groupKey].totalActualSales += post.actualsales;
-      acc[groupKey].preparationQuoteCount += post.typeactivity === "Quotation Preparation" ? 1 : 0;
-      acc[groupKey].salesorderCount += post.typeactivity === "Sales Order Preparation" ? 1 : 0;
+      acc[groupKey].preparationQuoteCount += post.activitystatus === "Quote-Done" ? 1 : 0;
+      acc[groupKey].salesorderCount += post.activitystatus === "SO-Done" ? 1 : 0;
       acc[groupKey].OutboundCalls += post.source === "Outbound - Touchbase" ? 1 : 0;
 
       return acc;

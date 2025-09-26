@@ -98,8 +98,8 @@ const UsersCard: React.FC<UsersCardProps> = ({ posts }) => {
       acc[groupKey].records.push(post);
       acc[groupKey].totalSOAmount += post.soamount;
       acc[groupKey].totalActualSales += post.actualsales;
-      acc[groupKey].preparationQuoteCount += post.typeactivity === "Quotation Preparation" ? 1 : 0;
-      acc[groupKey].salesorderCount += post.typeactivity === "Sales Order Preparation" ? 1 : 0;
+      acc[groupKey].preparationQuoteCount += post.activitystatus === "Quote-Done" ? 1 : 0;
+      acc[groupKey].salesorderCount += post.activitystatus === "SO-Done" ? 1 : 0;
       acc[groupKey].siCount += post.activitystatus === "Delivered" ? 1 : 0;
       acc[groupKey].OutboundCalls += post.source === "Outbound - Touchbase" ? 1 : 0;
 
