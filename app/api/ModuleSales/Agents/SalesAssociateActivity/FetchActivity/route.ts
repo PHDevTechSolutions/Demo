@@ -38,7 +38,8 @@ export async function GET() {
         callback,
         referenceid,
         tsm,
-        manager
+        manager,
+        date_created
       FROM progress;
     `;
 
