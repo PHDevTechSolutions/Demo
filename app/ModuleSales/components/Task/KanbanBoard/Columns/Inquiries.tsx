@@ -226,7 +226,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
       {showModal && <InquiryModal />}
       <div className="space-y-1 overflow-y-auto">
         <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-          <span className="mr-1">📋</span> Inquiries: <span className="ml-1 text-orange-500">{inquiries.length}</span>
+          <span className="mr-1">📋</span>CSR Inquiries: <span className="ml-1 text-orange-500">{inquiries.length}</span>
         </h3>
 
         {visibleInquiries.length > 0 ? (
