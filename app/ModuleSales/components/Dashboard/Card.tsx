@@ -112,7 +112,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
 
   if (userDetails?.Role === "Territory Sales Manager") return null;
 
-  let headerLabel = "Daily Outbound Call - Touchbase";
+  let headerLabel = "Daily Outbound Call ( MTD ) - Touchbase";
   if (filteredTouchbaseCalls.length === 0) {
     headerLabel = "Daily Outbound Call - Touchbase (All data over time, no record for today)";
   }
