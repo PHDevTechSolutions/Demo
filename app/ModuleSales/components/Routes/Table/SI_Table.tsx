@@ -194,8 +194,8 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                                     {dateSortOrder === "desc" ? "▼" : "▲"}
                                 </span>
                             </th>
-                             <th className="px-6 py-3 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Amount</th>
+                            <th className="px-6 py-3 font-semibold text-gray-700">Company Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Agent Name</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Contact Person</th>
                             <th className="px-6 py-3 font-semibold text-gray-700">Remarks</th>
