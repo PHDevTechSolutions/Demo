@@ -146,18 +146,6 @@ const FormFields: React.FC<FormFieldsProps> = ({
         </div>
 
         <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="typeclient">Type of Client</label>
-          <select id="typeclient" value={typeclient ?? ""} onChange={(e) => settypeclient(e.target.value)} className="w-full px-3 py-2 border-b bg-white text-xs capitalize" required>
-            <option value="">Select Client</option>
-            <option value="Top 50">Top 50</option>
-            <option value="Next 30">Next 30</option>
-            <option value="Balance 20">Balance 20</option>
-            <option value="CSR Client">CSR Client</option>
-            <option value="TSA Client">TSA Client</option>
-          </select>
-        </div>
-
-        <div className={fieldWidthClass}>
           <label className="block text-xs font-bold mb-2">Contact Person</label>
           {contactPersons.map((person, index) => (
             <div key={index} className="flex items-center gap-2 mb-2">
