@@ -52,6 +52,20 @@ const getFormattedTimestamp = () => {
   });
 };
 
+const formatElapsed = (start: string) => {
+  if (!start) return "0s";
+
+  const startDate = new Date(start);
+  const now = new Date();
+  const diffMs = now.getTime() - startDate.getTime();
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
 const ProgressForm: React.FC<ProgressFormProps> = ({
   formData,
   handleFormChange,
@@ -61,6 +75,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   setFormData,
 }) => {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [elapsed, setElapsed] = useState("0s");
 
   useEffect(() => {
     if (!formData.startdate) {
@@ -71,16 +86,20 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
     }
   }, []);
 
+  // ✅ update enddate every second + update elapsed badge
   useEffect(() => {
     const interval = setInterval(() => {
       setFormData((prev: any) => ({
         ...prev,
         enddate: getFormattedTimestamp(),
       }));
+      if (formData.startdate) {
+        setElapsed(formatElapsed(formData.startdate));
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [formData.startdate]);
 
   const wrappedSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // prevent default always
@@ -97,6 +116,14 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
+      {/* ⏱️ Real-time Elapsed Time Badge */}
+      {formData.startdate && (
+        <div className="absolute top-2 right-2">
+          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold shadow animate-pulse">
+            ⏱ {elapsed}
+          </span>
+        </div>
+      )}
       <form onSubmit={wrappedSubmit} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
