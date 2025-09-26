@@ -100,7 +100,6 @@ export async function POST(req: Request) {
       "companyname",
       "contactperson",
       "contactnumber",
-      "emailaddress",
       "typeclient",
       "address",
     ];
