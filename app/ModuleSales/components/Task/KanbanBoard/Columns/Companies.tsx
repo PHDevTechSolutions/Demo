@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
-import { MdCancel } from 'react-icons/md';
+import { MdCancel } from "react-icons/md";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Company {
   id?: number;
@@ -24,22 +26,21 @@ interface CompaniesProps {
 const DAILY_QUOTA = 35;
 
 const isCompanyDue = (comp: Company): boolean => {
-  const lastAddedRaw = comp.id ? localStorage.getItem(`lastAdded_${comp.id}`) : null;
+  const lastAddedRaw = comp.id
+    ? localStorage.getItem(`lastAdded_${comp.id}`)
+    : null;
   if (!lastAddedRaw) return true;
 
   const lastAdded = new Date(lastAddedRaw);
   const today = new Date();
-  const diffDays = Math.floor((+today - +lastAdded) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(
+    (+today - +lastAdded) / (1000 * 60 * 60 * 24)
+  );
 
   if (comp.typeclient === "Top 50") return diffDays >= 10;
-  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") return diffDays >= 30;
+  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20")
+    return diffDays >= 30;
   return true;
-};
-
-const getYesterdayKey = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
 };
 
 const Companies: React.FC<CompaniesProps> = ({
@@ -50,30 +51,27 @@ const Companies: React.FC<CompaniesProps> = ({
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [remainingQuota, setRemainingQuota] = useState<number>(DAILY_QUOTA);
+  const [remainingQuota, setRemainingQuota] =
+    useState<number>(DAILY_QUOTA);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
-    const todayDate = new Date().toISOString().split("T")[0];
-    const yesterdayKey = `quota_${userDetails.ReferenceID}_${getYesterdayKey()}`;
+    const today = new Date().toISOString().split("T")[0];
 
     const fetchCompanies = async () => {
       try {
         setLoading(true);
 
-        const res = await fetch(
-          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayDate}`
+        // ✅ Fetch today’s quota (server already adds leftover kahapon)
+        const quotaRes = await fetch(
+          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${today}`
         );
-        const dbData = await res.json();
+        const quotaData = await quotaRes.json();
 
-        if (dbData?.companies && dbData?.remaining_quota != null) {
-          setCompanies(dbData.companies);
-          setRemainingQuota(dbData.remaining_quota);
-          setLoading(false);
-          return;
-        }
+        let todayQuota = quotaData?.remaining_quota ?? DAILY_QUOTA;
 
+        // ✅ Fetch accounts
         const accountsRes = await fetch(
           `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
         );
@@ -82,43 +80,49 @@ const Companies: React.FC<CompaniesProps> = ({
         let companiesData: Company[] = [];
         if (Array.isArray(accounts)) companiesData = accounts;
         else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
-        else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
+        else if (Array.isArray(accounts?.companies))
+          companiesData = accounts.companies;
 
         if (!companiesData.length) {
           setCompanies([]);
-          setRemainingQuota(DAILY_QUOTA);
+          setRemainingQuota(todayQuota);
           return;
         }
 
         const eligibleCompanies = companiesData.filter(isCompanyDue);
 
-        const top50 = eligibleCompanies.filter(c => c.typeclient === "Top 50");
-        const next30 = eligibleCompanies.filter(c => c.typeclient === "Next 30");
-        const balance20 = eligibleCompanies.filter(c => c.typeclient === "Balance 20");
-        const tsa = eligibleCompanies.filter(c => c.typeclient === "TSA Client");
+        const top50 = eligibleCompanies.filter(
+          (c) => c.typeclient === "Top 50"
+        );
+        const next30 = eligibleCompanies.filter(
+          (c) => c.typeclient === "Next 30"
+        );
+        const balance20 = eligibleCompanies.filter(
+          (c) => c.typeclient === "Balance 20"
+        );
+        const tsa = eligibleCompanies.filter(
+          (c) => c.typeclient === "TSA Client"
+        );
 
         const pickRandom = (arr: Company[], count: number) => {
           const shuffled = [...arr].sort(() => 0.5 - Math.random());
           return shuffled.slice(0, count);
         };
 
-        let todayQuota = DAILY_QUOTA;
-        const leftover = localStorage.getItem(yesterdayKey);
-        if (leftover) todayQuota += parseInt(leftover, 10);
-
         const finalCompanies = [
           ...pickRandom(top50, 10),
-          ...pickRandom(next30, 15),
-          ...pickRandom(balance20, 5),
+          ...pickRandom(next30, 10),
+          ...pickRandom(balance20, 10),
           ...pickRandom(tsa, 5),
         ].slice(0, todayQuota);
 
+        // ✅ Save initial companies + quota
         await fetch("/api/ModuleSales/Companies/DailyQuota", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             referenceid: userDetails.ReferenceID,
-            date: todayDate,
+            date: today,
             companies: finalCompanies,
             remaining_quota: todayQuota,
           }),
@@ -126,10 +130,18 @@ const Companies: React.FC<CompaniesProps> = ({
 
         setCompanies(finalCompanies);
         setRemainingQuota(todayQuota);
+
+        toast.success(`Daily quota loaded: ${todayQuota}`, {
+          position: "top-right",
+          autoClose: 2000,
+        });
       } catch (error) {
         console.error("Error fetching companies:", error);
         setCompanies([]);
         setRemainingQuota(DAILY_QUOTA);
+        toast.error("Failed to load daily quota.", {
+          position: "top-right",
+        });
       } finally {
         setLoading(false);
       }
@@ -138,39 +150,49 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  const removeCompany = async (comp: Company) => {
+  // ✅ removeCompany (update server with new remaining_quota)
+  const removeCompany = async (comp: Company, action: "add" | "cancel") => {
     if (!userDetails?.ReferenceID) return;
 
-    const updated = companies.filter(c => c.id !== comp.id);
+    const updated = companies.filter((c) => c.id !== comp.id);
     const newQuota = remainingQuota - 1;
 
     setCompanies(updated);
     setRemainingQuota(newQuota);
 
-    const todayDate = new Date().toISOString().split("T")[0];
     await fetch("/api/ModuleSales/Companies/DailyQuota", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         referenceid: userDetails.ReferenceID,
-        date: todayDate,
+        date: new Date().toISOString().split("T")[0],
         companies: updated,
         remaining_quota: newQuota,
       }),
     });
+
+    toast.info(
+      `Company ${action === "add" ? "added" : "canceled"} - Remaining quota: ${newQuota}`,
+      { position: "bottom-right", autoClose: 2000 }
+    );
   };
 
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
-    removeCompany(comp);
-    if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+    removeCompany(comp, "add");
+    if (comp.id)
+      localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
   };
 
   return (
     <div className="space-y-1 overflow-y-auto">
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
         <span className="flex items-center">
-          <span className="mr-1">🏢</span> OB Calls: <span className="ml-1 text-red-500">{companies.length}</span>
+          <span className="mr-1">🏢</span> OB Calls:{" "}
+          <span className="ml-1 text-red-500">{companies.length}</span>
+        </span>
+        <span className="text-[10px] text-gray-500">
+          Remaining Quota: {remainingQuota}
         </span>
       </h3>
 
@@ -188,9 +210,13 @@ const Companies: React.FC<CompaniesProps> = ({
             >
               <div
                 className="cursor-pointer flex justify-between items-center p-1"
-                onClick={() => setExpandedIdx(isExpanded ? null : key)}
+                onClick={() =>
+                  setExpandedIdx(isExpanded ? null : key)
+                }
               >
-                <p className="font-semibold uppercase">{comp.companyname}</p>
+                <p className="font-semibold uppercase">
+                  {comp.companyname}
+                </p>
 
                 <div className="flex items-center gap-1">
                   <button
@@ -200,40 +226,82 @@ const Companies: React.FC<CompaniesProps> = ({
                     }}
                     className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600 flex items-center gap-1"
                   >
-                   <FaPlus size={10} /> Add
+                    <FaPlus size={10} /> Add
                   </button>
 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      removeCompany(comp);
+                      removeCompany(comp, "cancel");
                     }}
                     className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
                   >
-                   <MdCancel size={10} /> Cancel
+                    <MdCancel size={10} /> Cancel
                   </button>
 
-                  <span>{isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}</span>
+                  <span>
+                    {isExpanded ? (
+                      <FaChevronUp size={10} />
+                    ) : (
+                      <FaChevronDown size={10} />
+                    )}
+                  </span>
                 </div>
               </div>
 
               {isExpanded && (
                 <div className="p-1 space-y-1">
-                  <p><span className="font-semibold capitalize">Contact Person:</span> {comp.contactperson}</p>
-                  <p><span className="font-semibold">Contact #:</span> {comp.contactnumber}</p>
-                  <p><span className="font-semibold">Email:</span> {comp.emailaddress}</p>
-                  <p><span className="font-semibold">Type:</span> {comp.typeclient}</p>
-                  <p><span className="font-semibold capitalize">Address:</span> {comp.address || "N/A"}</p>
+                  <p>
+                    <span className="font-semibold capitalize">
+                      Contact Person:
+                    </span>{" "}
+                    {comp.contactperson}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Contact #:</span>{" "}
+                    {comp.contactnumber}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Email:</span>{" "}
+                    {comp.emailaddress}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Type:</span>{" "}
+                    {comp.typeclient}
+                  </p>
+                  <p>
+                    <span className="font-semibold capitalize">
+                      Address:
+                    </span>{" "}
+                    {comp.address || "N/A"}
+                  </p>
                 </div>
               )}
 
-              <div className="p-1 text-gray-500 text-[9px]">{comp.typeclient}</div>
+              <div className="p-1 text-gray-500 text-[9px]">
+                {comp.typeclient}
+              </div>
             </div>
           );
         })
       ) : (
         <p className="text-xs text-gray-400">No companies found.</p>
       )}
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        className="text-xs z-[99999]"
+        toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
+        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+      />
     </div>
   );
 };
