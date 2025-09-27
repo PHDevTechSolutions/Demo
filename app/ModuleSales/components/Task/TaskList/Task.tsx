@@ -197,6 +197,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
               userDetails={userDetails}
               limit={activeLimit}
               setLimit={setActiveLimit}
+              onRefresh={fetchTasks}
             />
           )}
           {completedTasks.length > 0 && (
@@ -206,6 +207,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
               userDetails={userDetails}
               limit={completedLimit}
               setLimit={setCompletedLimit}
+              onRefresh={fetchTasks}
             />
           )}
         </div>

@@ -33,6 +33,7 @@ interface TableProps {
   userDetails: UserDetails;
   limit: number;
   setLimit: (limit: number) => void;
+  onRefresh?: () => void;
 }
 
 interface ShopifyProduct {
@@ -54,7 +55,7 @@ const Option = (props: any) => {
 
 const ITEMS_PER_PAGE = 10;
 
-const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimit }) => {
+const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimit, onRefresh }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Note | null>(null);
   const [formData, setFormData] = useState<Partial<Note>>({});
@@ -140,6 +141,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
       toast.success("✅ Progress updated successfully!");
       setSelectedTask(null);
+
+      if (onRefresh) onRefresh();
     } catch (err) {
       console.error(err);
       toast.error("❌ Failed to update progress.");
