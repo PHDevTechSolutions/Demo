@@ -1,4 +1,3 @@
-// app/api/progress/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
@@ -12,22 +11,11 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 export const dynamic = "force-dynamic";
 
 // ✅ PUT → update existing progress record
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest) {
   try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "Missing progress ID." },
-        { status: 400 }
-      );
-    }
-
     const body = await req.json();
     const {
+      id, // 🔹 ID now comes from body
       typeactivity,
       sonumber,
       quotationnumber,
@@ -36,7 +24,13 @@ export async function PUT(
       projectcategory,
     } = body;
 
-    // 🔹 Update progress record
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Missing progress ID." },
+        { status: 400 }
+      );
+    }
+
     await Xchire_sql(
       `
       UPDATE progress

@@ -65,20 +65,25 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   };
 
   // ✅ Save handler → calls API to update progress table
+  // Save handler → calls API to update progress table
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/progress/${selectedTask.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          // backend will set date_updated = now() Manila
-        }),
-      });
+      const res = await fetch(
+        "/api/ModuleSales/Task/ActivityPlanner/UpdateTask",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: selectedTask.id, // 🔹 Pass ID in body
+            ...formData,
+            // backend will set date_updated = now() Manila
+          }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to update progress");
 
@@ -91,6 +96,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       setLoading(false);
     }
   };
+
 
   const renderTaskRow = (task: Note) => (
     <tr
