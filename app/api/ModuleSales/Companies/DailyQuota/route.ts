@@ -1,4 +1,3 @@
-// app/api/ModuleSales/Companies/DailyQuota/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -9,7 +8,7 @@ const supabase = createClient(
 
 const DAILY_QUOTA = 35;
 
-// ✅ GET → retrieve today's companies + quota
+// ✅ GET → retrieve today's companies + computed quota
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -35,32 +34,59 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(todayRow);
     }
 
-    // 🕓 If wala pa, compute base quota = DAILY_QUOTA + leftover kahapon
+    // 🕓 If wala pa → check kahapon
     const yesterday = new Date(date);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-    let todayQuota = DAILY_QUOTA;
-
-    const { data: leftoverRow } = await supabase
+    const { data: yesterdayRow } = await supabase
       .from("daily_quotas")
-      .select("remaining_quota")
+      .select("companies, remaining_quota")
       .eq("referenceid", referenceid)
       .eq("date", yesterdayStr)
       .single();
 
-    if (leftoverRow?.remaining_quota) {
-      todayQuota += leftoverRow.remaining_quota;
+    let todayQuota = DAILY_QUOTA;
+    let companies: any[] = [];
+
+    if (yesterdayRow) {
+      const leftover = yesterdayRow.remaining_quota ?? 0;
+      if (leftover > 0 && yesterdayRow.companies?.length) {
+        companies = yesterdayRow.companies;
+        todayQuota = DAILY_QUOTA + leftover;
+
+        // 👉 Transfer kahapon → ngayon
+        await supabase.from("daily_quotas").upsert(
+          {
+            referenceid,
+            date,
+            companies,
+            remaining_quota: todayQuota,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "referenceid,date" }
+        );
+
+        // 👉 Reset kahapon
+        await supabase
+          .from("daily_quotas")
+          .update({ companies: [], remaining_quota: 0 })
+          .eq("referenceid", referenceid)
+          .eq("date", yesterdayStr);
+
+        return NextResponse.json({ companies, remaining_quota: todayQuota });
+      }
     }
 
-    return NextResponse.json({ companies: [], remaining_quota: todayQuota });
+    // 👉 Fresh start (35)
+    return NextResponse.json({ companies: [], remaining_quota: DAILY_QUOTA });
   } catch (err: any) {
     console.error("❌ DailyQuota GET error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-// ✅ POST → update companies + current remaining quota
+// ✅ POST → update companies + remaining quota
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -73,7 +99,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 📝 Upsert today’s quota (use client’s remaining_quota)
+    // 📝 Upsert today’s quota
     const { data, error } = await supabase
       .from("daily_quotas")
       .upsert(

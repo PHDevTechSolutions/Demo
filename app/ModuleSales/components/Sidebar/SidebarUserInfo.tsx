@@ -96,7 +96,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       }
     }, 1000);
 
-    await new Promise((resolve) => setTimeout(resolve, 15000));
+    await new Promise((resolve) => setTimeout(resolve, 6000));
 
     try {
       await fetch("/api/log-activity", {

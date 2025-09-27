@@ -23,8 +23,6 @@ interface CompaniesProps {
   userDetails: { ReferenceID?: string } | null;
 }
 
-const DAILY_QUOTA = 35;
-
 const isCompanyDue = (comp: Company): boolean => {
   const lastAddedRaw = comp.id
     ? localStorage.getItem(`lastAdded_${comp.id}`)
@@ -51,8 +49,7 @@ const Companies: React.FC<CompaniesProps> = ({
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [remainingQuota, setRemainingQuota] =
-    useState<number>(DAILY_QUOTA);
+  const [remainingQuota, setRemainingQuota] = useState<number>(0);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -63,13 +60,27 @@ const Companies: React.FC<CompaniesProps> = ({
       try {
         setLoading(true);
 
-        // ✅ Fetch today’s quota (server already adds leftover kahapon)
+        // ✅ Fetch today’s quota from server
         const quotaRes = await fetch(
           `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${today}`
         );
         const quotaData = await quotaRes.json();
 
-        let todayQuota = quotaData?.remaining_quota ?? DAILY_QUOTA;
+        if (quotaData?.error) throw new Error(quotaData.error);
+
+        // 👉 If may existing todayRow → gamitin yun, wag na mag-generate ulit
+        if (Array.isArray(quotaData.companies) && quotaData.companies.length > 0) {
+          setCompanies(quotaData.companies);
+          setRemainingQuota(quotaData.remaining_quota ?? 35);
+          toast.info(`Loaded existing daily quota: ${quotaData.remaining_quota}`, {
+            position: "top-right",
+            autoClose: 2000,
+          });
+          return;
+        }
+
+        // ✅ Else → kailangan mag-generate ng bago
+        const todayQuota = quotaData?.remaining_quota ?? 35;
 
         // ✅ Fetch accounts
         const accountsRes = await fetch(
@@ -80,8 +91,7 @@ const Companies: React.FC<CompaniesProps> = ({
         let companiesData: Company[] = [];
         if (Array.isArray(accounts)) companiesData = accounts;
         else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
-        else if (Array.isArray(accounts?.companies))
-          companiesData = accounts.companies;
+        else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
 
         if (!companiesData.length) {
           setCompanies([]);
@@ -91,18 +101,10 @@ const Companies: React.FC<CompaniesProps> = ({
 
         const eligibleCompanies = companiesData.filter(isCompanyDue);
 
-        const top50 = eligibleCompanies.filter(
-          (c) => c.typeclient === "Top 50"
-        );
-        const next30 = eligibleCompanies.filter(
-          (c) => c.typeclient === "Next 30"
-        );
-        const balance20 = eligibleCompanies.filter(
-          (c) => c.typeclient === "Balance 20"
-        );
-        const tsa = eligibleCompanies.filter(
-          (c) => c.typeclient === "TSA Client"
-        );
+        const top50 = eligibleCompanies.filter((c) => c.typeclient === "Top 50");
+        const next30 = eligibleCompanies.filter((c) => c.typeclient === "Next 30");
+        const balance20 = eligibleCompanies.filter((c) => c.typeclient === "Balance 20");
+        const tsa = eligibleCompanies.filter((c) => c.typeclient === "TSA Client");
 
         const pickRandom = (arr: Company[], count: number) => {
           const shuffled = [...arr].sort(() => 0.5 - Math.random());
@@ -116,7 +118,7 @@ const Companies: React.FC<CompaniesProps> = ({
           ...pickRandom(tsa, 5),
         ].slice(0, todayQuota);
 
-        // ✅ Save initial companies + quota
+        // ✅ Save new daily quota to server
         await fetch("/api/ModuleSales/Companies/DailyQuota", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -131,14 +133,14 @@ const Companies: React.FC<CompaniesProps> = ({
         setCompanies(finalCompanies);
         setRemainingQuota(todayQuota);
 
-        toast.success(`Daily quota loaded: ${todayQuota}`, {
+        toast.success(`New daily quota created: ${todayQuota}`, {
           position: "top-right",
           autoClose: 2000,
         });
       } catch (error) {
         console.error("Error fetching companies:", error);
         setCompanies([]);
-        setRemainingQuota(DAILY_QUOTA);
+        setRemainingQuota(35);
         toast.error("Failed to load daily quota.", {
           position: "top-right",
         });
@@ -149,6 +151,7 @@ const Companies: React.FC<CompaniesProps> = ({
 
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
+
 
   // ✅ removeCompany (update server with new remaining_quota)
   const removeCompany = async (comp: Company, action: "add" | "cancel") => {
