@@ -71,7 +71,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
     try {
       setLoading(true);
-      const res = await fetch(`/api/ModuleSales/Task/ActivityPlanner/${selectedTask.id}`, {
+      const res = await fetch(`/api/progress/${selectedTask.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
