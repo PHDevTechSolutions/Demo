@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FiChevronRight } from "react-icons/fi";
+import Select, { components } from "react-select";
+import { toast } from "react-toastify";
 
 interface Note {
   id: number;
@@ -16,7 +18,7 @@ interface Note {
   quotationamount: string;
   sonumber: string;
   soamount: string;
-  projectcategory?: string;
+  projectcategory?: string | string[];
 }
 
 interface UserDetails {
@@ -33,6 +35,23 @@ interface TableProps {
   setLimit: (limit: number) => void;
 }
 
+interface ShopifyProduct {
+  id: number;
+  title: string;
+  sku: string;
+}
+
+const Option = (props: any) => {
+  return (
+    <components.Option {...props}>
+      <div>
+        <div>{props.data.title}</div>
+        <div style={{ fontSize: "10px", color: "#555" }}>{props.data.sku}</div>
+      </div>
+    </components.Option>
+  );
+};
+
 const ITEMS_PER_PAGE = 10;
 
 const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimit }) => {
@@ -41,6 +60,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   const [formData, setFormData] = useState<Partial<Note>>({});
   const [loading, setLoading] = useState(false);
   const toggleCollapse = () => setCollapsed(!collapsed);
+  const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
 
   const handleRowClick = (task: Note) => {
     setSelectedTask(task);
@@ -50,9 +70,14 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       quotationnumber: task.quotationnumber,
       soamount: task.soamount,
       quotationamount: task.quotationamount,
-      projectcategory: task.projectcategory,
+      projectcategory: task.projectcategory
+        ? typeof task.projectcategory === "string"
+          ? task.projectcategory.split(",").map((s) => s.trim())
+          : task.projectcategory
+        : [],
     });
   };
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -64,8 +89,31 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
     }));
   };
 
-  // ✅ Save handler → calls API to update progress table
-  // Save handler → calls API to update progress table
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/ModuleSales/Shopify/FetchProduct");
+        const json = await res.json();
+
+        if (!json.success) throw new Error(json.error);
+
+        const products: ShopifyProduct[] = json.data;
+
+        const mapped = products.map((p) => ({
+          value: p.sku,
+          title: p.title.replace(/Super Sale\s*/i, "").trim(),
+          sku: p.sku,
+          label: `${p.title} | ${p.sku}`,
+        }));
+
+        setCategoryOptions(mapped);
+      } catch (err: any) {
+        console.error(err);
+        toast.error("Failed to load product titles from Shopify");
+      }
+    })();
+  }, []);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
@@ -78,20 +126,23 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: selectedTask.id, // 🔹 Pass ID in body
+            id: selectedTask.id,
             ...formData,
-            // backend will set date_updated = now() Manila
+            // 🔹 ensure array → string bago isave
+            projectcategory: Array.isArray(formData.projectcategory)
+              ? formData.projectcategory.join(",")
+              : formData.projectcategory,
           }),
         }
       );
 
       if (!res.ok) throw new Error("Failed to update progress");
 
-      alert("✅ Progress updated successfully!");
+      toast.success("✅ Progress updated successfully!");
       setSelectedTask(null);
     } catch (err) {
       console.error(err);
-      alert("❌ Failed to update progress.");
+      toast.error("❌ Failed to update progress.");
     } finally {
       setLoading(false);
     }
@@ -228,6 +279,67 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
             </div>
 
             <div>
+              <label className="text-xs text-gray-600">
+                Product Title{" "}
+                <span className="text-[8px] text-green-700">* Required</span>
+              </label>
+
+              {/* 🔹 Dropdown for adding new category */}
+              <Select
+                options={categoryOptions}
+                closeMenuOnSelect={true}
+                components={{ Option }}
+                placeholder="Select a product to add"
+                onChange={(selected: any) => {
+                  if (!selected) return;
+                  setFormData((prev) => {
+                    const current = Array.isArray(prev.projectcategory)
+                      ? prev.projectcategory
+                      : [];
+                    // ✅ Prevent duplicate
+                    if (current.includes(selected.value)) return prev;
+                    return {
+                      ...prev,
+                      projectcategory: [...current, selected.value],
+                    };
+                  });
+                }}
+                className="text-xs mb-2"
+                isClearable
+              />
+              {/* 🔹 Fields showing selected categories */}
+              <div className="flex flex-wrap gap-2">
+                {Array.isArray(formData.projectcategory) &&
+                  formData.projectcategory.map((sku) => {
+                    const product = categoryOptions.find((opt) => opt.value === sku);
+                    return (
+                      <div
+                        key={sku}
+                        className="flex items-center gap-1 bg-gray-100 border rounded px-2 py-1 text-xs"
+                      >
+                        {/* ✅ Display title only */}
+                        <span>{product ? product.title : sku}</span>
+                        <button
+                          type="button" 
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              projectcategory: (prev.projectcategory as string[]).filter(
+                                (s) => s !== sku
+                              ),
+                            }))
+                          }
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div>
               <label className="text-xs text-gray-600">SO Number</label>
               <input
                 name="sonumber"
@@ -262,16 +374,6 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
               <input
                 name="quotationamount"
                 value={formData.quotationamount || ""}
-                onChange={handleInputChange}
-                className="w-full border p-2 rounded text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-600">Project Category</label>
-              <input
-                name="projectcategory"
-                value={formData.projectcategory || ""}
                 onChange={handleInputChange}
                 className="w-full border p-2 rounded text-xs"
               />
