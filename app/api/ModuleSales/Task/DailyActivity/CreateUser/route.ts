@@ -23,7 +23,7 @@ async function create(data: any) {
       throw new Error("Company Name and Type of Client are required.");
     }
 
-    // Check if company already exists
+    // 🔎 Check if company already exists
     const checkQuery = `
       SELECT * FROM accounts
       WHERE companyname = $1
@@ -32,7 +32,7 @@ async function create(data: any) {
     const existingAccount = await Xchire_sql(checkQuery, [companyname]);
     const accountExists = existingAccount.length > 0;
 
-    // Insert into activity table
+    // 📝 Insert into activity table
     const activityColumns = [
       "referenceid", "manager", "tsm", "companyname", "contactperson",
       "contactnumber", "emailaddress", "typeclient", "address", "deliveryaddress", "area",
@@ -47,8 +47,8 @@ async function create(data: any) {
     ];
     const activityPlaceholders = activityValues.map((_, i) => `$${i + 1}`).join(", ");
     const activityQuery = `
-      INSERT INTO activity (${activityColumns.join(", ")}, date_created)
-      VALUES (${activityPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
+      INSERT INTO activity (${activityColumns.join(", ")}, date_created, date_updated)
+      VALUES (${activityPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
       RETURNING *;
     `;
     const activityResult = await Xchire_sql(activityQuery, activityValues);
@@ -60,15 +60,17 @@ async function create(data: any) {
 
     const newActivityNumber = insertedActivity.activitynumber;
 
-    // Insert into accounts table if company is new
+    // 🏢 Insert into accounts table if company is new
     if (!accountExists) {
       const accountsQuery = `
         INSERT INTO accounts (
           referenceid, manager, tsm, companyname, contactperson,
-          contactnumber, emailaddress, typeclient, address, deliveryaddress, area, status, companygroup, date_created
+          contactnumber, emailaddress, typeclient, address, deliveryaddress, area, status, companygroup, date_created, date_updated
         ) VALUES (
           $1, $2, $3, $4, $5,
-          $6, $7, $8, $9, $10, $11, $12, $13, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
+          $6, $7, $8, $9, $10, $11, $12, $13,
+          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila',
+          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
         ) RETURNING *;
       `;
       const accountsValues = [
@@ -81,19 +83,17 @@ async function create(data: any) {
       if (!accountsResult[0]) {
         throw new Error("Failed to insert into accounts table.");
       }
-    }
-
-    // Update date_updated if callback has value
-    if (callback && accountExists) {
-      const updateCallbackQuery = `
+    } else {
+      // ✅ Always update date_updated if account exists
+      const updateDateUpdatedQuery = `
         UPDATE accounts
-        SET date_updated = $1
-        WHERE companyname = $2;
+        SET date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
+        WHERE companyname = $1;
       `;
-      await Xchire_sql(updateCallbackQuery, [callback, companyname]);
+      await Xchire_sql(updateDateUpdatedQuery, [companyname]);
     }
 
-    // Insert into progress table
+    // 📈 Insert into progress table
     const progressColumns = [
       ...activityColumns,
       "typeactivity", "callback", "callstatus", "typecall",
@@ -112,8 +112,8 @@ async function create(data: any) {
 
     const progressPlaceholders = progressValues.map((_, i) => `$${i + 1}`).join(", ");
     const progressQuery = `
-      INSERT INTO progress (${progressColumns.join(", ")}, date_created)
-      VALUES (${progressPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
+      INSERT INTO progress (${progressColumns.join(", ")}, date_created, date_updated)
+      VALUES (${progressPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
       RETURNING *;
     `;
     const progressResult = await Xchire_sql(progressQuery, progressValues);

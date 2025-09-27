@@ -296,9 +296,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                             className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
                             required>
                             <option value="">Select Client</option>
-                            <option value="Top 50">Top 50</option>
-                            <option value="Next 30">Next 30</option>
-                            <option value="Balance 20">Balance 20</option>
                             <option value="CSR Client">CSR Client</option>
                             <option value="TSA Client">TSA Client</option>
                         </select>
@@ -314,8 +311,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                             <option value="">Select Client</option>
                             <option value="Active">Active</option>
                             <option value="New Client">New Client</option>
-                            <option value="Non-Buying">Non-Buying</option>
-                            <option value="Inactive">Inactive</option>
                         </select>
                     </div>
                 </div>
