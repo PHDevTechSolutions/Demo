@@ -192,10 +192,7 @@ const Companies: React.FC<CompaniesProps> = ({
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
         <span className="flex items-center">
           <span className="mr-1">🏢</span> OB Calls:{" "}
-          <span className="ml-1 text-red-500">{companies.length}</span>
-        </span>
-        <span className="text-[10px] text-gray-500">
-          Remaining Quota: {remainingQuota}
+          <span className="ml-1 text-red-500">{remainingQuota}</span>
         </span>
       </h3>
 

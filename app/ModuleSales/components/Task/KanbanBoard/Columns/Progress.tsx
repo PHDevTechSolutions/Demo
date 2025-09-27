@@ -66,7 +66,6 @@ interface ProgressProps {
   searchQuery?: string;
 }
 
-const POLL_INTERVAL = 10000;
 const ITEMS_PER_PAGE = 10;
 
 interface CardLoadingState {
@@ -218,33 +217,43 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
 
     const fetchProgress = async () => {
       try {
-        const res = await fetch(`/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`);
+        setLoading(true);
+        const res = await fetch(
+          `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
+        );
         const data = await res.json();
-        const progressData: ProgressItem[] = Array.isArray(data) ? data : data?.data || data?.progress || [];
+        const progressData: ProgressItem[] = Array.isArray(data)
+          ? data
+          : data?.data || data?.progress || [];
+
         if (!isMounted) return;
 
-        const myProgress = progressData.filter(p => p.referenceid === userDetails.ReferenceID);
-        setProgress(prev => {
-          if (JSON.stringify(prev) === JSON.stringify(myProgress)) return prev;
-          return myProgress.sort((a, b) => {
+        const myProgress = progressData.filter(
+          (p) => p.referenceid === userDetails.ReferenceID
+        );
+
+        setProgress(
+          myProgress.sort((a, b) => {
             const dateA = new Date(a.date_updated || a.date_created).getTime();
             const dateB = new Date(b.date_updated || b.date_created).getTime();
             return dateB - dateA;
-          });
-        });
+          })
+        );
       } catch (err) {
         console.error("❌ Error fetching progress:", err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
+    // 🔑 Run on mount + whenever refreshTrigger changes
     fetchProgress();
-    const interval = setInterval(fetchProgress, POLL_INTERVAL);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
     };
-  }, [userDetails?.ReferenceID]);
+  }, [userDetails?.ReferenceID, refreshTrigger]);
+
 
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
