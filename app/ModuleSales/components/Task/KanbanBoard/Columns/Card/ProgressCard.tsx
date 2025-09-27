@@ -195,7 +195,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {progress.date_created ? new Date(progress.date_created).toLocaleString() : "N/A"}
+            {progress.date_updated ? new Date(progress.date_updated).toLocaleString() : "N/A"}
           </p>
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 

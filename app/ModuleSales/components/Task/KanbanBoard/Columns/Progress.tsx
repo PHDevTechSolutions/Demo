@@ -249,7 +249,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     // 🕒 Auto refresh every 30s
     const interval = setInterval(() => {
       fetchProgress();
-    }, 5000);
+    }, 30000);
 
     // ❌ Linisin para walang memory leak
     return () => clearInterval(interval);
