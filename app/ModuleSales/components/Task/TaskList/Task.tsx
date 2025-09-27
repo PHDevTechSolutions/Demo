@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Table from "./Table/Table";
@@ -53,9 +53,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const [activeLimit, setActiveLimit] = useState(PAGE_SIZE);
   const [completedLimit, setCompletedLimit] = useState(PAGE_SIZE);
 
-  const lastTaskCount = useRef(0);
-  const pollTimeout = useRef<NodeJS.Timeout | null>(null);
-
   const fetchTasks = async () => {
     if (!userDetails?.ReferenceID) return;
 
@@ -76,10 +73,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
           return dateB.getTime() - dateA.getTime();
         });
 
-      if (userTasks.length !== lastTaskCount.current) {
-        setTasks(userTasks);
-        lastTaskCount.current = userTasks.length;
-      }
+      setTasks(userTasks);
     } catch (error: any) {
       toast.error(error.message || "Something went wrong while fetching tasks");
     } finally {
@@ -87,36 +81,8 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
     }
   };
 
-  const startPolling = (interval: number = 5000) => {
-    if (pollTimeout.current) clearTimeout(pollTimeout.current);
-
-    const poll = async () => {
-      if (document.visibilityState === "visible") {
-        await fetchTasks();
-      }
-      const nextInterval = lastTaskCount.current === tasks.length ? Math.min(interval * 1.5, 30000) : 5000;
-      pollTimeout.current = setTimeout(poll, nextInterval);
-    };
-
-    pollTimeout.current = setTimeout(poll, interval);
-  };
-
   useEffect(() => {
     fetchTasks();
-    startPolling();
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchTasks();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      if (pollTimeout.current) clearTimeout(pollTimeout.current);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
   }, [userDetails?.ReferenceID]);
 
   const filteredTasks = tasks.filter(task => {
@@ -147,8 +113,11 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   return (
     <div className="w-full bg-white p-4">
       <h2 className="text-lg font-semibold text-black mb-2">Task List</h2>
-      <p className="text-sm text-gray-500 mb-4">Track, manage, and update your daily activities.</p>
+      <p className="text-sm text-gray-500 mb-4">
+        Track, manage, and update your daily activities.
+      </p>
 
+      {/* 🔍 Filters */}
       <div className="flex flex-wrap gap-2 mb-4 items-center">
         <input
           type="text"
@@ -163,8 +132,21 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
           onChange={e => setStatusFilter(e.target.value)}
         >
           <option value="">All Status</option>
-          {["cold", "warm", "assisted", "paid", "delivered", "collected", "quote-done", "so-done", "cancelled", "loss"].map(status => (
-            <option className="capitalize" key={status} value={status}>{status}</option>
+          {[
+            "cold",
+            "warm",
+            "assisted",
+            "paid",
+            "delivered",
+            "collected",
+            "quote-done",
+            "so-done",
+            "cancelled",
+            "loss",
+          ].map(status => (
+            <option className="capitalize" key={status} value={status}>
+              {status}
+            </option>
           ))}
         </select>
         <input
