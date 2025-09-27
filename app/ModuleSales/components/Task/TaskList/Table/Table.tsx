@@ -152,57 +152,67 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   };
 
 
-  const renderTaskRow = (task: Note) => (
-    <tr
-      key={task.id}
-      className="hover:bg-gray-50 border-b cursor-pointer"
-      onClick={() => handleRowClick(task)}
-    >
-      <td className="px-2 py-6 text-xs capitalize w-[300px] whitespace-normal break-words">
-        {task.remarks}
-      </td>
-      <td className="px-6 py-6 text-xs uppercase">
-        {task.companyname}
-        <br />
-        {task.contactnumber}
-        <span className="lowercase ml-1 text-gray-500 italic text-[10px]">
-          {task.emailaddress}
-        </span>
-      </td>
-      <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
-      <td className="px-6 py-6 text-xs">
-        <div className="flex flex-col">
-          <span>{task.quotationnumber}</span>
-          <span className="text-gray-500 text-[11px]">
-            {task.quotationamount ? `₱${task.quotationamount}` : ""}
+  const renderTaskRow = (task: Note) => {
+    const isDisabled = ["delivered", "done", "completed"].includes(
+      (task.activitystatus || "").toLowerCase()
+    );
+
+    return (
+      <tr
+        key={task.id}
+        className={`hover:bg-gray-50 border-b ${isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+          }`}
+        onClick={() => {
+          if (!isDisabled) handleRowClick(task);
+        }}
+      >
+        <td className="px-2 py-6 text-xs capitalize w-[300px] whitespace-normal break-words">
+          {task.remarks}
+        </td>
+        <td className="px-6 py-6 text-xs uppercase">
+          {task.companyname}
+          <br />
+          {task.contactnumber}
+          <span className="lowercase ml-1 text-gray-500 italic text-[10px]">
+            {task.emailaddress}
           </span>
-        </div>
-      </td>
-      <td className="px-6 py-6 text-xs">
-        <div className="flex flex-col">
-          <span>{task.sonumber}</span>
-          <span className="text-gray-500 text-[11px]">
-            {task.soamount ? `₱${task.soamount}` : ""}
-          </span>
-        </div>
-      </td>
-      <td className="px-6 py-6 text-xs">
-        {new Date(task.date_created).toLocaleString()}
-      </td>
-      <td className="px-6 py-6 text-xs">
-        <div className="flex items-center gap-2">
-          <img
-            src={userDetails.profilePicture || "/taskflow.png"}
-            alt="Responsible"
-            className="w-6 h-6 rounded-full object-cover"
-          />
-          <span className="text-xs">
-            {userDetails.Firstname} {userDetails.Lastname}
-          </span>
-        </div>
-      </td>
-    </tr>
-  );
+        </td>
+        <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
+        <td className="px-6 py-6 text-xs">
+          <div className="flex flex-col">
+            <span>{task.quotationnumber}</span>
+            <span className="text-gray-500 text-[11px]">
+              {task.quotationamount ? `₱${task.quotationamount}` : ""}
+            </span>
+          </div>
+        </td>
+        <td className="px-6 py-6 text-xs">
+          <div className="flex flex-col">
+            <span>{task.sonumber}</span>
+            <span className="text-gray-500 text-[11px]">
+              {task.soamount ? `₱${task.soamount}` : ""}
+            </span>
+          </div>
+        </td>
+        <td className="px-6 py-6 text-xs">
+          {new Date(task.date_created).toLocaleString()}
+        </td>
+        <td className="px-6 py-6 text-xs">
+          <div className="flex items-center gap-2">
+            <img
+              src={userDetails.profilePicture || "/taskflow.png"}
+              alt="Responsible"
+              className="w-6 h-6 rounded-full object-cover"
+            />
+            <span className="text-xs">
+              {userDetails.Firstname} {userDetails.Lastname}
+            </span>
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
 
   return (
     <div className="mb-4 border-b relative">
@@ -323,7 +333,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                         {/* ✅ Display title only */}
                         <span>{product ? product.title : sku}</span>
                         <button
-                          type="button" 
+                          type="button"
                           className="text-red-500 hover:text-red-700"
                           onClick={() =>
                             setFormData((prev) => ({
