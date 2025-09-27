@@ -93,6 +93,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const lastFetchedIds = React.useRef<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
@@ -255,7 +256,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     return () => clearInterval(interval);
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
-
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -364,7 +364,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     );
 
   return (
-    <div className="space-y-1">
+    <div key={refreshKey} className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{progress.length}</span>
@@ -379,8 +379,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => {
-              lastFetchedIds.current.clear(); // reset IDs
-              fetchProgress(); // 🔑 manual refresh
+              setRefreshKey((prev) => prev + 1); // 🔄 force remount
+              toast.info("Refreshing data...");
             }}
           >
             {loading ? (
@@ -389,7 +389,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
               <IoSync size={14} />
             )}
           </button>
-
         </div>
       </div>
 
