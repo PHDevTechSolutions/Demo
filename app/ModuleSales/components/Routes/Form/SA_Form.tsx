@@ -479,8 +479,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
             <HistoricalRecordsTable
               records={currentRecords}
               handleShowRemarks={handleShowRemarks}
-              handleDeleteClick={handleDeleteClick}
-              handleEditClick={handleEditClick}
             />
 
             {isEditModalOpen && selectedActivity && (

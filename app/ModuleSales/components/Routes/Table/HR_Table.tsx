@@ -1,5 +1,4 @@
 import React from "react";
-import { MdModeEdit, MdDeleteForever } from "react-icons/md";
 
 interface Activity {
   id: number | string;
@@ -22,15 +21,11 @@ interface Activity {
 interface HistoricalRecordsTableProps {
   records: Activity[];
   handleShowRemarks: (remarks: string) => void;
-  handleDeleteClick: (id: string) => void;
-  handleEditClick: (id: number | string) => void;
 }
 
 const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
   records,
   handleShowRemarks,
-  handleDeleteClick,
-  handleEditClick,
 }) => {
   const sortedRecords = [...records].sort((a, b) => {
     const dateA = new Date(a.date_created || "").getTime();
@@ -81,25 +76,6 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
           {sortedRecords.length > 0 ? (
             sortedRecords.map((activity) => (
               <tr key={activity.id} className="border-b whitespace-nowrap">
-                <td className="px-6 py-4 text-xs">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleDeleteClick(activity.id.toString())}
-                      className="hover:shadow-md bg-red-400 text-white p-2 rounded-full"
-                      aria-label="Delete activity"
-                    >
-                      <MdDeleteForever size={12} />
-                    </button>
-                    <button
-                      onClick={() => handleEditClick(activity.id)}
-                      className="hover:shadow-md bg-blue-400 text-white p-2 rounded-full"
-                      aria-label="Edit activity"
-                    >
-                      <MdModeEdit size={12} />
-                    </button>
-                  </div>
-                </td>
-
                 <td className="px-6 py-4 text-xs">
                   <span
                     className={`px-2 py-1 text-[8px] font-semibold rounded-full whitespace-nowrap ${activity.activitystatus === "Assisted"
