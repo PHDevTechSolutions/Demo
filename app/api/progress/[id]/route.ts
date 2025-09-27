@@ -1,14 +1,24 @@
+// app/api/progress/[id]/route.ts
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.TASKFLOW_DB_URL!);
 
+// ✅ Next.js App Router PUT handler
 export async function PUT(
   req: Request,
   context: { params: { id: string } }
 ) {
   try {
     const { id } = context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing progress ID" },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json();
     const {
       typeactivity,
@@ -38,13 +48,14 @@ export async function PUT(
         soamount,
         quotationamount,
         projectcategory,
-        id, // <-- correct
+        id,
       ]
     );
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("Error updating progress:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    console.error("❌ Error updating progress:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
