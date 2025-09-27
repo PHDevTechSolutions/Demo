@@ -211,47 +211,48 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     setShowForm(true);
   };
 
-  useEffect(() => {
+  // 🟢 Fetch Progress
+  const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
-    let isMounted = true;
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
+      );
+      const data = await res.json();
+      const progressData: ProgressItem[] = Array.isArray(data)
+        ? data
+        : data?.data || data?.progress || [];
 
-    const fetchProgress = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
-        );
-        const data = await res.json();
-        const progressData: ProgressItem[] = Array.isArray(data)
-          ? data
-          : data?.data || data?.progress || [];
+      const myProgress = progressData.filter(
+        (p) => p.referenceid === userDetails.ReferenceID
+      );
 
-        if (!isMounted) return;
+      setProgress(
+        myProgress.sort((a, b) => {
+          const dateA = new Date(a.date_updated || a.date_created).getTime();
+          const dateB = new Date(b.date_updated || b.date_created).getTime();
+          return dateB - dateA;
+        })
+      );
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const myProgress = progressData.filter(
-          (p) => p.referenceid === userDetails.ReferenceID
-        );
-
-        setProgress(
-          myProgress.sort((a, b) => {
-            const dateA = new Date(a.date_updated || a.date_created).getTime();
-            const dateB = new Date(b.date_updated || b.date_created).getTime();
-            return dateB - dateA;
-          })
-        );
-      } catch (err) {
-        console.error("❌ Error fetching progress:", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    // 🔑 Run on mount + whenever refreshTrigger changes
+  // 🟢 Run on mount + kapag nagbago ang refreshTrigger
+  useEffect(() => {
     fetchProgress();
 
-    return () => {
-      isMounted = false;
-    };
+    // 🕒 Auto refresh every 30s
+    const interval = setInterval(() => {
+      fetchProgress();
+    }, 30000);
+
+    // ❌ Linisin para walang memory leak
+    return () => clearInterval(interval);
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
 
@@ -379,16 +380,16 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => {
               lastFetchedIds.current.clear(); // reset IDs
+              fetchProgress(); // 🔑 manual refresh
             }}
           >
             {loading ? (
               <IoSync size={14} className="animate-spin" />
             ) : (
-              <>
-                <IoSync size={14} />
-              </>
+              <IoSync size={14} />
             )}
           </button>
+
         </div>
       </div>
 
