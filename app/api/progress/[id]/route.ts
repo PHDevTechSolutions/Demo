@@ -3,21 +3,10 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.TASKFLOW_DB_URL!);
 
-export async function PUT(
-  req: Request,
-  context: { params: { id: string } }
-) {
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const { id } = context.params;
     const body = await req.json();
-    const {
-      typeactivity,
-      sonumber,
-      quotationnumber,
-      soamount,
-      quotationamount,
-      projectcategory,
-    } = body;
+    const { typeactivity, sonumber, quotationnumber, soamount, quotationamount, projectcategory } = body;
 
     await sql(
       `
@@ -31,15 +20,7 @@ export async function PUT(
           date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
       WHERE id = $7
       `,
-      [
-        typeactivity,
-        sonumber,
-        quotationnumber,
-        soamount,
-        quotationamount,
-        projectcategory,
-        id,
-      ]
+      [typeactivity, sonumber, quotationnumber, soamount, quotationamount, projectcategory, params.id]
     );
 
     return NextResponse.json({ success: true });
