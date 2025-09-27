@@ -48,7 +48,7 @@ async function create(data: any) {
     const activityPlaceholders = activityValues.map((_, i) => `$${i + 1}`).join(", ");
     const activityQuery = `
       INSERT INTO activity (${activityColumns.join(", ")}, date_created, date_updated)
-      VALUES (${activityPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
+      VALUES (${activityPlaceholders}, NOW()', NOW()')
       RETURNING *;
     `;
     const activityResult = await Xchire_sql(activityQuery, activityValues);
@@ -69,8 +69,8 @@ async function create(data: any) {
         ) VALUES (
           $1, $2, $3, $4, $5,
           $6, $7, $8, $9, $10, $11, $12, $13,
-          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila',
-          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
+          NOW()',
+          NOW()'
         ) RETURNING *;
       `;
       const accountsValues = [
@@ -87,7 +87,7 @@ async function create(data: any) {
       // ✅ Always update date_updated if account exists
       const updateDateUpdatedQuery = `
         UPDATE accounts
-        SET date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
+        SET date_updated = NOW()'
         WHERE companyname = $1;
       `;
       await Xchire_sql(updateDateUpdatedQuery, [companyname]);
@@ -113,7 +113,7 @@ async function create(data: any) {
     const progressPlaceholders = progressValues.map((_, i) => `$${i + 1}`).join(", ");
     const progressQuery = `
       INSERT INTO progress (${progressColumns.join(", ")}, date_created, date_updated)
-      VALUES (${progressPlaceholders}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila')
+      VALUES (${progressPlaceholders}, NOW()', NOW()')
       RETURNING *;
     `;
     const progressResult = await Xchire_sql(progressQuery, progressValues);

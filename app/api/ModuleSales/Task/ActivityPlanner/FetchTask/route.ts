@@ -21,10 +21,10 @@ export async function GET(req: Request) {
       SELECT 
         id, companyname, contactnumber, emailaddress, activitynumber, referenceid, manager, tsm,
         activitystatus, typeactivity, remarks, startdate, enddate,
-        date_created, date_updated, quotationnumber, sonumber,
+        date_created, date_updated, quotationnumber, sonumber, projectcategory,
         soamount, actualsales, quotationamount
       FROM progress
-      WHERE referenceid = ${referenceid}  -- 🔑 filter server-side
+      WHERE referenceid = ${referenceid}
       ORDER BY date_created DESC;
     `;
 
