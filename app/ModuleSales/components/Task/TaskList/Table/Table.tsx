@@ -45,18 +45,24 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         {task.remarks}
       </td>
       <td className="px-6 py-6 text-xs uppercase">{task.companyname}<br />{task.contactnumber}
-      <span className="lowercase ml-1 text-gray-500 italic text-[10px]">{task.emailaddress}</span></td>
+        <span className="lowercase ml-1 text-gray-500 italic text-[10px]">{task.emailaddress}</span></td>
       <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
       <td className="px-6 py-6 text-xs">
         <div className="flex flex-col">
           <span>{task.quotationnumber}</span>
-          <span className="text-gray-500 text-[11px]">₱{task.quotationamount}</span>
+          <span className="text-gray-500 text-[11px]">
+            {task.quotationamount ? `₱${task.quotationamount}` : ""}
+          </span>
+
         </div>
       </td>
       <td className="px-6 py-6 text-xs">
         <div className="flex flex-col">
           <span>{task.sonumber}</span>
-          <span className="text-gray-500 text-[11px]">₱{task.soamount}</span>
+          <span className="text-gray-500 text-[11px]">
+            {task.soamount ? `₱${task.soamount}` : ""}
+          </span>
+
         </div>
       </td>
       <td className="px-6 py-6 text-xs">{new Date(task.date_created).toLocaleString()}</td>

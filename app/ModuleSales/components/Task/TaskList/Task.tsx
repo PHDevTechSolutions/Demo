@@ -134,7 +134,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
 
   const activeTasks = filteredTasks.filter(
     task =>
-      !["so-done", "quote-done", "delivered"].includes(
+      !["delivered"].includes(
         (task.activitystatus || "").toLowerCase()
       )
   );
