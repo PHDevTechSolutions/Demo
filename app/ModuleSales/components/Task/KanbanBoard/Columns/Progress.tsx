@@ -94,8 +94,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const lastFetchedIds = React.useRef<Set<string>>(new Set());
-
+  
   const [formData, setFormData] = useState({
     activitystatus: "",
     source: "",
@@ -250,7 +249,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     // 🕒 Auto refresh every 30s
     const interval = setInterval(() => {
       fetchProgress();
-    }, 30000);
+    }, 5000);
 
     // ❌ Linisin para walang memory leak
     return () => clearInterval(interval);

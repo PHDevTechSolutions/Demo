@@ -114,7 +114,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
       setRemainingTime("Expired");
       return;
     }
-
+    
     // else start countdown
     const interval = setInterval(() => {
       const now = Date.now();
