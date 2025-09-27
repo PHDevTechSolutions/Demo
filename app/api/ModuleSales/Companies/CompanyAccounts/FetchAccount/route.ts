@@ -28,14 +28,14 @@ export async function GET(req: Request) {
 
     if (Xchire_fetch.length === 0) {
       return NextResponse.json(
-        { success: false, companies: [], error: "No accounts found with the provided reference ID." },
+        { success: false, data: [], error: "No accounts found with the provided reference ID." },
         { status: 404 }
       );
     }
 
     // ✅ Standardized response format
     return NextResponse.json(
-      { success: true, companies: Xchire_fetch },
+      { success: true, data: Xchire_fetch },
       { status: 200 }
     );
   } catch (Xchire_error: any) {

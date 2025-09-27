@@ -8,6 +8,8 @@ import Table from "./Table/Table";
 interface Note {
   id: number;
   companyname: string;
+  contactnumber: string;
+  emailaddress: string;
   activitynumber: string;
   referenceid: string;
   manager: string;
@@ -137,7 +139,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
       )
   );
   const completedTasks = filteredTasks.filter(task =>
-    ["so-done", "quote-done", "delivered", "done", "completed"].includes(
+    ["delivered", "done", "completed"].includes(
       (task.activitystatus || "").toLowerCase()
     )
   );

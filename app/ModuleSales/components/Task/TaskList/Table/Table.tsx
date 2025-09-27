@@ -6,6 +6,8 @@ import { FiChevronRight } from "react-icons/fi";
 interface Note {
   id: number;
   companyname: string;
+  contactnumber: string;
+  emailaddress: string;
   activitystatus: string;
   typeactivity: string;
   remarks: string;
@@ -42,7 +44,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       <td className="px-2 py-6 text-xs capitalize w-[300px] whitespace-normal break-words">
         {task.remarks}
       </td>
-      <td className="px-6 py-6 text-xs uppercase">{task.companyname}</td>
+      <td className="px-6 py-6 text-xs uppercase">{task.companyname}<br />{task.contactnumber}
+      <span className="lowercase ml-1 text-gray-500 italic text-[10px]">{task.emailaddress}</span></td>
       <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
       <td className="px-6 py-6 text-xs">
         <div className="flex flex-col">

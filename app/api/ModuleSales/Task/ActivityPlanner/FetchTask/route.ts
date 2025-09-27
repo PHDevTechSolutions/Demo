@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
         const rows = await Xchire_sql`
       SELECT 
-        id, companyname, activitynumber, referenceid, manager, tsm,
+        id, companyname, contactnumber, emailaddress, activitynumber, referenceid, manager, tsm,
         activitystatus, typeactivity, remarks, startdate, enddate,
         date_created, date_updated, quotationnumber, sonumber,
         soamount, actualsales, quotationamount

@@ -209,13 +209,10 @@ const ListofUser: React.FC = () => {
                     <div className="p-4 bg-white shadow-md rounded-lg">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h2 className="text-lg font-bold">Scheduled Task</h2>
+                          <h2 className="text-lg font-bold">Manual Task</h2>
                           <p className="text-xs text-gray-600">
                             An overview of your recent and upcoming actions,
-                            including <strong>scheduled tasks</strong>,{" "}
-                            <strong>callbacks</strong>,{" "}
-                            <strong>calendar events</strong>, and{" "}
-                            <strong>inquiries</strong>.
+                            including <strong>manual tasks</strong>,{" "}
                           </p>
                         </div>
                       </div>
