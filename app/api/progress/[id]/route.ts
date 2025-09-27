@@ -1,20 +1,27 @@
 // app/api/progress/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.TASKFLOW_DB_URL!);
+const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL;
+if (!Xchire_databaseUrl) {
+  throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
+}
 
-// ✅ Next.js App Router PUT handler
+const Xchire_sql = neon(Xchire_databaseUrl);
+
+export const dynamic = "force-dynamic";
+
+// ✅ PUT → update existing progress record
 export async function PUT(
-  req: Request,
-  context: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = params;
 
     if (!id) {
       return NextResponse.json(
-        { error: "Missing progress ID" },
+        { success: false, error: "Missing progress ID." },
         { status: 400 }
       );
     }
@@ -29,7 +36,8 @@ export async function PUT(
       projectcategory,
     } = body;
 
-    await sql(
+    // 🔹 Update progress record
+    await Xchire_sql(
       `
       UPDATE progress
       SET typeactivity = $1,
@@ -39,7 +47,7 @@ export async function PUT(
           quotationamount = $5,
           projectcategory = $6,
           date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
-      WHERE id = $7
+      WHERE id = $7;
       `,
       [
         typeactivity,
@@ -52,10 +60,15 @@ export async function PUT(
       ]
     );
 
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("❌ Error updating progress:", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { success: true, message: "Progress updated successfully." },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("❌ Error updating progress:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to update progress." },
+      { status: 500 }
+    );
   }
 }
