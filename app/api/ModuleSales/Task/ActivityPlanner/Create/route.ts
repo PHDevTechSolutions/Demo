@@ -49,7 +49,8 @@ async function insertActivity(data: any) {
         address,
         activitynumber,
         activitystatus,
-        date_created
+        date_created,
+        date_updated
       ) VALUES (
         ${referenceid},
         ${manager},
@@ -62,6 +63,7 @@ async function insertActivity(data: any) {
         ${address},
         ${activitynumber},
         ${activitystatus},
+        NOW(),
         NOW()
       )
       RETURNING *;
