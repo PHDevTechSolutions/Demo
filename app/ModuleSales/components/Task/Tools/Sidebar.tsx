@@ -23,10 +23,8 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {/* Activity - always visible */}
       <button
         onClick={() => setActiveTab("activity")}
-        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-          activeTab === "activity" ? "bg-orange-400 text-white" : "bg-gray-100"
-        }`}
-      >
+        className="2 rounded-lg flex items-center justify-center gap-2 text-left"
+        >
         <BsCalendar4Week />
       </button>
 
@@ -34,9 +32,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {!isTerritoryManager && (
         <button
           onClick={() => setActiveTab("tasklist")}
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "tasklist" ? "bg-orange-400 text-white" : "bg-gray-100"
-          }`}
+          className="2 rounded-lg flex items-center justify-center gap-2 text-left"
         >
           <FaSquareCheck />
         </button>
@@ -46,9 +42,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {!isTerritoryManager && (
         <button
           onClick={() => setActiveTab("scheduled")}
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "scheduled" ? "bg-orange-400 text-white" : "bg-gray-100"
-          }`}
+          className="2 rounded-lg flex items-center justify-center gap-2 text-left"
         >
           <BsListTask />
         </button>
@@ -58,9 +52,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {!isTerritoryManager && (
         <button
           onClick={() => setActiveTab("notes")}
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "notes" ? "bg-orange-400 text-white" : "bg-gray-100"
-          }`}
+          className="2 rounded-lg flex items-center justify-center gap-2 text-left"
         >
           <LuNotebookPen />
         </button>
@@ -70,9 +62,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {!isTerritoryManager && (
         <button
           onClick={() => setActiveTab("quote")}
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "quote" ? "bg-orange-400 text-white" : "bg-gray-100"
-          }`}
+          className="2 rounded-lg flex items-center justify-center gap-2 text-left"
         >
           <BsFileEarmarkCheck />
         </button>

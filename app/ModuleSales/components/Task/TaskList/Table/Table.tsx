@@ -321,14 +321,14 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                 isClearable
               />
               {/* 🔹 Fields showing selected categories */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 shadow rounded bg-gray-50 p-2">
                 {Array.isArray(formData.projectcategory) &&
                   formData.projectcategory.map((sku) => {
                     const product = categoryOptions.find((opt) => opt.value === sku);
                     return (
                       <div
                         key={sku}
-                        className="flex items-center gap-1 bg-gray-100 border rounded px-2 py-1 text-xs"
+                        className="flex items-center gap-1 bg-white border rounded px-2 py-1 text-xs"
                       >
                         {/* ✅ Display title only */}
                         <span>{product ? product.title : sku}</span>
@@ -405,7 +405,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                 className="px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save"}
+                {loading ? "Updating..." : "Update"}
               </button>
             </div>
           </form>
