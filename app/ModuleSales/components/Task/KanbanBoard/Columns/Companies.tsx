@@ -50,11 +50,26 @@ const Companies: React.FC<CompaniesProps> = ({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(0);
+  const [isSunday, setIsSunday] = useState(false);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+    const todayStr = today.toISOString().split("T")[0];
+
+    // ✅ Skip kapag Sunday
+    if (dayOfWeek === 0) {
+      setCompanies([]);
+      setRemainingQuota(0);
+      setLoading(false);
+      toast.info("No daily quota generated on Sundays.", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+      return;
+    }
 
     const fetchCompanies = async () => {
       try {
@@ -62,7 +77,7 @@ const Companies: React.FC<CompaniesProps> = ({
 
         // ✅ Fetch today’s quota from server
         const quotaRes = await fetch(
-          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${today}`
+          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
         );
         const quotaData = await quotaRes.json();
 
@@ -124,7 +139,7 @@ const Companies: React.FC<CompaniesProps> = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             referenceid: userDetails.ReferenceID,
-            date: today,
+            date: todayStr,
             companies: finalCompanies,
             remaining_quota: todayQuota,
           }),
@@ -151,7 +166,6 @@ const Companies: React.FC<CompaniesProps> = ({
 
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
-
 
   // ✅ removeCompany (update server with new remaining_quota)
   const removeCompany = async (comp: Company, action: "add" | "cancel") => {
@@ -284,9 +298,14 @@ const Companies: React.FC<CompaniesProps> = ({
             </div>
           );
         })
+      ) : isSunday ? (
+        <p className="text-xs text-gray-400 text-center">
+          🚫 No daily quota generated on Sundays.
+        </p>
       ) : (
         <p className="text-xs text-gray-400">No companies found.</p>
       )}
+
       <ToastContainer
         position="bottom-right"
         autoClose={2000}
