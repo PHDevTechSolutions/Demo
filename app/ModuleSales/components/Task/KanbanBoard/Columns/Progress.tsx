@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { IoSync, IoSearchOutline, IoFilter } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
@@ -84,6 +84,7 @@ const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) 
 };
 
 const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
+  const stableUserDetails = useMemo(() => userDetails, [userDetails?.ReferenceID]);
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -228,8 +229,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
 
   const filteredProgress = progress
+    .filter((item) => {
+      const itemDate = item.date_created?.split("T")[0]; // extract date part
+      // Show only today if no search query
+      return searchQuery ? true : itemDate === today;
+    })
     .filter((item) =>
       (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -239,11 +246,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
-    if (!userDetails?.ReferenceID) return;
+    if (!stableUserDetails?.ReferenceID) return;
     try {
-      // Don't set loading=true here, just update data
       const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
         { cache: "no-store" }
       );
       const data = await res.json();
@@ -251,13 +257,15 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
       toast.error("Failed to fetch progress");
+    } finally {
+      setLoading(false);
     }
   };
 
   // 🟢 Run on mount lang (no refreshTrigger)
   useEffect(() => {
     fetchProgress();
-  }, [userDetails?.ReferenceID]);
+  }, [stableUserDetails?.ReferenceID, refreshTrigger]);
 
   // 🟢 Submit form
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -292,9 +300,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       toast.success("Activity successfully added/updated!");
       setShowForm(false);
       resetForm();
-
-      // ✅ Trigger re-fetch instantly
-      setRefreshTrigger((prev) => prev + 1);
+      setRefreshTrigger(prev => prev + 1);
 
     } catch (err: any) {
       console.error("❌ Submit error:", err);
@@ -321,7 +327,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete activity");
 
-      setProgress((prev) => prev.filter((p) => p.id !== item.id));
+      setProgress(prev => prev.filter(p => p.id !== item.id));
       toast.success("Activity deleted successfully!");
     } catch (err: any) {
       console.error("❌ Delete error:", err);
@@ -330,14 +336,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: false });
     }
   };
-
-  if (loading && progress.length === 0)
-    return (
-      <div className="flex justify-center items-center py-10">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-      </div>
-    );
 
   return (
     <div className="space-y-1">
