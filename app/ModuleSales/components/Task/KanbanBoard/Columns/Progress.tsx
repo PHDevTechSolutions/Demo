@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { IoSync, IoSearchOutline } from 'react-icons/io5';
+import { IoSync, IoSearchOutline, IoFilter } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer, Slide } from "react-toastify";
@@ -93,6 +93,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>(""); // currently selected filter
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -225,9 +227,15 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     }));
   };
 
-  const filteredProgress = progress.filter((item) =>
-    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
+
+  const filteredProgress = progress
+    .filter((item) =>
+      (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((item) =>
+      statusFilter ? item.activitystatus === statusFilter : true
+    );
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
@@ -346,6 +354,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+            onClick={() => setFilterOpen((prev) => !prev)}
+          >
+            Filter <IoFilter size={15} />
+          </button>
+          <button
+            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={handleRefresh} // ✅ direct call
           >
             {loading ? (
@@ -365,6 +379,21 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+      )}
+
+      {filterOpen && (
+          <select
+            className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Status</option>
+            {activityStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
       )}
 
       {filteredProgress.length > 0 ? (
