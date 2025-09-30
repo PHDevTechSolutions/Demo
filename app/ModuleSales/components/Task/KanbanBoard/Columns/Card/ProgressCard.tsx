@@ -60,12 +60,12 @@ const STATUS_PERCENT: Record<string, number> = {
 };
 
 const STATUS_BG: Record<string, string> = {
-  Assisted: "bg-blue-300",
-  Paid: "bg-green-500",
-  Delivered: "bg-cyan-500",
-  Collected: "bg-indigo-500",
-  "Quote-Done": "bg-gray-200",
-  "SO-Done": "bg-purple-200",
+  Assisted: "bg-orange-300",
+  Paid: "bg-white",
+  Delivered: "bg-green-500",
+  Collected: "bg-white",
+  "Quote-Done": "bg-blue-200",
+  "SO-Done": "bg-yellow-200",
   Cancelled: "bg-red-500",
   Loss: "bg-red-800",
 };

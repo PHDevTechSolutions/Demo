@@ -94,7 +94,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  
+
   const [formData, setFormData] = useState({
     activitystatus: "",
     source: "",
@@ -228,13 +228,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
         (p) => p.referenceid === userDetails.ReferenceID
       );
 
-      setProgress(
-        myProgress.sort((a, b) => {
-          const dateA = new Date(a.date_updated || a.date_created).getTime();
-          const dateB = new Date(b.date_updated || b.date_created).getTime();
-          return dateB - dateA;
-        })
-      );
+      // 👉 Direct set, no sorting
+      setProgress(myProgress);
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
     } finally {
@@ -246,13 +241,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   useEffect(() => {
     fetchProgress();
 
-    // 🕒 Auto refresh every 30s
-    const interval = setInterval(() => {
-      fetchProgress();
-    }, 30000);
-
-    // ❌ Linisin para walang memory leak
-    return () => clearInterval(interval);
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
   const handleFormChange = (
@@ -295,8 +283,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       payload[field] = payload[field] !== null ? Number(payload[field]) : null;
     });
 
-    if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
-
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
         method: "POST",
@@ -325,7 +311,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       toast.error("Failed to submit activity: " + err.message);
     } finally {
       setSubmitting(false);
-      if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
   };
 
