@@ -20,17 +20,20 @@ export async function GET(req: Request) {
       );
     }
 
+    // ✅ Optimized query: fetch only the latest activity per activitynumber
+    // Use DISTINCT ON + ORDER BY to get the latest update
     const Xchire_fetch = await Xchire_sql`
-      SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, referenceid,
+      SELECT DISTINCT ON (activitynumber) 
+             id, companyname, contactperson, contactnumber, emailaddress, typeclient, referenceid,
              date_created, activitynumber, address, area, deliveryaddress, ticketreferencenumber, date_updated,
              source, activitystatus
       FROM activity
       WHERE referenceid = ${referenceid}
-      ORDER BY date_updated DESC, date_created DESC
+      ORDER BY activitynumber, date_updated DESC, date_created DESC
       LIMIT 200;
     `;
 
-    console.log("Fetched accounts:", Xchire_fetch); // Debugging line
+    console.log("Fetched accounts:", Xchire_fetch);
 
     return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
   } catch (Xchire_error: any) {
@@ -42,4 +45,4 @@ export async function GET(req: Request) {
   }
 }
 
-export const dynamic = "force-dynamic"; // Ensure fresh data fetch
+export const dynamic = "force-dynamic";
