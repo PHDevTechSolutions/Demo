@@ -20,10 +20,10 @@ async function insertActivity(data: any) {
       emailaddress,
       typeclient,
       address,
-      inquiryid, // ✅ dagdag: inquiry id para sa update
+      inquiryid, // optional, used only for CSR Inquiries
     } = data;
 
-    // 🔹 Generate activitynumber
+    // 🔹 Generate unique activitynumber
     const firstLetterCompany = companyname.charAt(0).toUpperCase() || "X";
     const firstLetterContact = contactperson.charAt(0).toUpperCase() || "X";
     const lastLetterContact =
@@ -32,11 +32,10 @@ async function insertActivity(data: any) {
     const random6 = Math.floor(100000 + Math.random() * 900000); // 6 digits
     const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
 
-    // 🔹 Default activitystatus
     const activitystatus = "On Progress";
 
-    // 🔹 Insert into activity
-    const result = await sql`
+    // 🔹 Insert into activity table
+    const activityResult = await sql`
       INSERT INTO activity (
         referenceid,
         manager,
@@ -69,18 +68,55 @@ async function insertActivity(data: any) {
       RETURNING *;
     `;
 
-    // 🔹 If CSR Inquiries → Update ONLY the selected inquiry row
-    if (typeclient === "CSR Inquiries" && inquiryid) {
-      await sql`
-        UPDATE inquiries
-        SET status = 'Used'
-        WHERE id = ${inquiryid}
-          AND referenceid = ${referenceid}
-          AND status = 'Endorsed'
-      `;
+    let accountsResult = null;
+
+    // 🔹 Special handling for CSR Inquiries (case-insensitive)
+    if (typeclient?.trim().toLowerCase() === "csr inquiries") {
+      try {
+        accountsResult = await sql`
+          INSERT INTO accounts (
+            referenceid,
+            companyname,
+            contactperson,
+            contactnumber,
+            typeclient,
+            address,
+            emailaddress,
+            status,
+            date_created,
+            date_updated
+          ) VALUES (
+            ${referenceid},
+            ${companyname},
+            ${contactperson},
+            ${contactnumber},
+            'CSR Client',      -- override typeclient
+            ${address},
+            ${emailaddress},
+            'New Client',      -- set status
+            NOW(),
+            NOW()
+          )
+          RETURNING *;
+        `;
+      } catch (err: any) {
+        console.error("❌ Failed to insert into accounts:", err);
+        return { success: false, error: `Accounts insert failed: ${err.message}` };
+      }
+
+      // 🔹 Update the inquiry row to mark it as used
+      if (inquiryid) {
+        await sql`
+          UPDATE inquiries
+          SET status = 'Used'
+          WHERE id = ${inquiryid}
+            AND referenceid = ${referenceid}
+            AND status = 'Endorsed'
+        `;
+      }
     }
 
-    return { success: true, data: result[0] };
+    return { success: true, data: { activity: activityResult[0], accounts: accountsResult?.[0] || null } };
   } catch (error: any) {
     console.error("❌ Error inserting activity:", error);
     return {
@@ -90,24 +126,15 @@ async function insertActivity(data: any) {
   }
 }
 
+// ✅ API Handler
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
     // ✅ Required fields check
-    const requiredFields = [
-      "referenceid",
-      "manager",
-      "tsm",
-      "companyname",
-      "contactperson",
-      "contactnumber",
-      "typeclient",
-      "address",
-    ];
-
+    const requiredFields = ["referenceid", "companyname", "contactperson", "contactnumber", "emailaddress", "typeclient", "address"];
     for (const field of requiredFields) {
-      if (body[field] === undefined || body[field] === null) {
+      if (!body[field]) {
         return NextResponse.json(
           { success: false, error: `Missing required field: ${field}` },
           { status: 400 }
@@ -116,7 +143,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ inquiryid required if CSR Inquiries
-    if (body.typeclient === "CSR Inquiries" && !body.inquiryid) {
+    if (body.typeclient?.trim().toLowerCase() === "csr inquiries" && !body.inquiryid) {
       return NextResponse.json(
         { success: false, error: "Missing inquiryid for CSR Inquiries." },
         { status: 400 }
