@@ -96,7 +96,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>(""); // currently selected filter
-
+  const [listLoading, setListLoading] = useState(false);
   const [formData, setFormData] = useState({
     activitystatus: "",
     source: "",
@@ -229,10 +229,22 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
-  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+  // Get Manila time
+  const now = new Date();
+  const manilaOffset = 8 * 60; // Manila is UTC+8 in minutes
+  const manilaTime = new Date(now.getTime() + (manilaOffset - now.getTimezoneOffset()) * 60000);
 
+  // Get today's date in YYYY-MM-DD
+  const today = manilaTime.toISOString().split("T")[0];
+
+  // Filter progress
   const filteredProgress = progress.filter((item) => {
-    const itemDate = item.date_created?.split("T")[0]; // YYYY-MM-DD
+    if (!item.date_created) return false;
+
+    // Convert item's date_created to Manila time
+    const itemDateUTC = new Date(item.date_created);
+    const itemManilaTime = new Date(itemDateUTC.getTime() + (manilaOffset - itemDateUTC.getTimezoneOffset()) * 60000);
+    const itemDate = itemManilaTime.toISOString().split("T")[0];
 
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
@@ -242,9 +254,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return (item.companyname ?? "").includes(searchQuery);
     }
 
-    // 3️⃣ Default: only today's items
+    // 3️⃣ Default: only today's items (6AM to 11:59PM Manila time)
     return itemDate === today;
   });
+
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
@@ -314,8 +327,16 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
   // 🟢 Refresh button (manual trigger)
   const handleRefresh = async () => {
-    await fetchProgress();
-    toast.info("Refreshing data...");
+    setListLoading(true); // start loading
+    try {
+      await fetchProgress();
+      toast.info("Refreshing data...");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to refresh data");
+    } finally {
+      setListLoading(false); // stop loading
+    }
   };
 
   const handleDelete = async (item: ProgressItem) => {
@@ -361,9 +382,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={handleRefresh} // ✅ direct call
+            onClick={handleRefresh}
           >
-            {loading ? (
+            {listLoading ? (
               <IoSync size={14} className="animate-spin" />
             ) : (
               <IoSync size={14} />
@@ -397,7 +418,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         </select>
       )}
 
-      {filteredProgress.length > 0 ? (
+      {listLoading ? (
+        <div className="flex justify-center py-10">
+          <div className="w-10 h-10 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+        </div>
+      ) : filteredProgress.length > 0 ? (
         filteredProgress.slice(0, visibleCount).map((item) => (
           <div key={item.id} className="relative">
             {cardLoading[item.id] && (
@@ -416,6 +441,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       ) : (
         <p className="text-xs text-gray-400 italic">No activities for today.</p>
       )}
+
 
       {visibleCount < filteredProgress.length && (
         <div className="flex justify-center mt-2">
