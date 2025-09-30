@@ -210,31 +210,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     setShowForm(true);
   };
 
-  // 🟢 Fetch Progress
-  const fetchProgress = async () => {
-    if (!userDetails?.ReferenceID) return;
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        { cache: "no-store" }
-      );
-      const data = await res.json();
-      const progressData: ProgressItem[] = data?.data || [];
-      setProgress(progressData);
-    } catch (err) {
-      console.error("❌ Error fetching progress:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // 🟢 Run on mount lang (no refreshTrigger)
-  useEffect(() => {
-    fetchProgress();
-  }, [userDetails?.ReferenceID]);
-
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -250,6 +225,32 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     }));
   };
 
+  const filteredProgress = progress.filter((item) =>
+    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // 🟢 Fetch Progress
+  const fetchProgress = async () => {
+    if (!userDetails?.ReferenceID) return;
+    try {
+      // Don't set loading=true here, just update data
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      setProgress(data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+      toast.error("Failed to fetch progress");
+    }
+  };
+
+  // 🟢 Run on mount lang (no refreshTrigger)
+  useEffect(() => {
+    fetchProgress();
+  }, [userDetails?.ReferenceID]);
+
   // 🟢 Submit form
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,16 +264,11 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return;
     }
 
-    // ✅ Normalize empty -> null
     Object.keys(payload).forEach((key) => {
-      if (payload[key] === "" || payload[key] === undefined) {
-        payload[key] = null;
-      }
+      if (payload[key] === "" || payload[key] === undefined) payload[key] = null;
     });
 
-    // ✅ Numeric fields
-    const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
-    numericFields.forEach((field) => {
+    ["soamount", "quotationamount", "targetquota", "actualsales"].forEach((field) => {
       payload[field] = payload[field] !== null ? Number(payload[field]) : null;
     });
 
@@ -282,7 +278,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
@@ -290,8 +285,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setShowForm(false);
       resetForm();
 
-      // ✅ fetch latest data agad
-      await fetchProgress();
+      // ✅ Trigger re-fetch instantly
+      setRefreshTrigger((prev) => prev + 1);
 
     } catch (err: any) {
       console.error("❌ Submit error:", err);
@@ -327,10 +322,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: false });
     }
   };
-
-  const filteredProgress = progress.filter((item) =>
-    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (loading && progress.length === 0)
     return (
