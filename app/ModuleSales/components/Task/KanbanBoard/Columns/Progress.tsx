@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { IoSync, IoSearchOutline } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
-import { toast, ToastContainer, Slide } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +62,7 @@ interface UserDetails {
 
 interface ProgressProps {
   userDetails: UserDetails | null;
+  refreshTrigger: number;
   searchQuery?: string;
 }
 
@@ -83,7 +84,7 @@ const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) 
   }
 };
 
-const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
+const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -92,8 +93,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
-
+  const [refreshKey, setRefreshKey] = useState(0);
+  
   const [formData, setFormData] = useState({
     activitystatus: "",
     source: "",
@@ -210,6 +211,50 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     setShowForm(true);
   };
 
+  // 🟢 Fetch Progress
+  const fetchProgress = async () => {
+    if (!userDetails?.ReferenceID) return;
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`
+      );
+      const data = await res.json();
+      const progressData: ProgressItem[] = Array.isArray(data)
+        ? data
+        : data?.data || data?.progress || [];
+
+      const myProgress = progressData.filter(
+        (p) => p.referenceid === userDetails.ReferenceID
+      );
+
+      setProgress(
+        myProgress.sort((a, b) => {
+          const dateA = new Date(a.date_updated || a.date_created).getTime();
+          const dateB = new Date(b.date_updated || b.date_created).getTime();
+          return dateB - dateA;
+        })
+      );
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🟢 Run on mount + kapag nagbago ang refreshTrigger
+  useEffect(() => {
+    fetchProgress();
+
+    // 🕒 Auto refresh every 30s
+    const interval = setInterval(() => {
+      fetchProgress();
+    }, 30000);
+
+    // ❌ Linisin para walang memory leak
+    return () => clearInterval(interval);
+  }, [userDetails?.ReferenceID, refreshTrigger]);
+
   const handleFormChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -225,33 +270,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     }));
   };
 
-  const filteredProgress = progress.filter((item) =>
-    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // 🟢 Fetch Progress
-  const fetchProgress = async () => {
-    if (!userDetails?.ReferenceID) return;
-    try {
-      // Don't set loading=true here, just update data
-      const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        { cache: "no-store" }
-      );
-      const data = await res.json();
-      setProgress(data?.data || []);
-    } catch (err) {
-      console.error("❌ Error fetching progress:", err);
-      toast.error("Failed to fetch progress");
-    }
-  };
-
-  // 🟢 Run on mount lang (no refreshTrigger)
-  useEffect(() => {
-    fetchProgress();
-  }, [userDetails?.ReferenceID]);
-
-  // 🟢 Submit form
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -264,13 +282,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return;
     }
 
+    // ✅ Normalize empty -> null
     Object.keys(payload).forEach((key) => {
-      if (payload[key] === "" || payload[key] === undefined) payload[key] = null;
+      if (payload[key] === "" || payload[key] === undefined) {
+        payload[key] = null;
+      }
     });
 
-    ["soamount", "quotationamount", "targetquota", "actualsales"].forEach((field) => {
+    // ✅ Numeric fields
+    const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
+    numericFields.forEach((field) => {
       payload[field] = payload[field] !== null ? Number(payload[field]) : null;
     });
+
+    if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: true });
 
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
@@ -278,6 +303,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
@@ -285,21 +311,22 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setShowForm(false);
       resetForm();
 
-      // ✅ Trigger re-fetch instantly
-      setRefreshTrigger((prev) => prev + 1);
-
+      const newItem = data?.progress;
+      if (newItem?.id) {
+        setProgress((prev) => {
+          const exists = prev.some((p) => p.id === newItem.id);
+          return exists
+            ? prev.map((p) => (p.id === newItem.id ? newItem : p)) // update existing
+            : [newItem, ...prev]; // add new
+        });
+      }
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     } finally {
       setSubmitting(false);
+      if (payload.id) dispatchCardLoading({ type: "SET_LOADING", id: payload.id, value: false });
     }
-  };
-
-  // 🟢 Refresh button (manual trigger)
-  const handleRefresh = async () => {
-    await fetchProgress();
-    toast.info("Refreshing data...");
   };
 
   const handleDelete = async (item: ProgressItem) => {
@@ -323,6 +350,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     }
   };
 
+  const filteredProgress = progress.filter((item) =>
+    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading && progress.length === 0)
     return (
       <div className="flex justify-center items-center py-10">
@@ -332,7 +363,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     );
 
   return (
-    <div className="space-y-1">
+    <div key={refreshKey} className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{progress.length}</span>
@@ -346,7 +377,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={handleRefresh} // ✅ direct call
+            onClick={() => {
+              setRefreshKey((prev) => prev + 1); // 🔄 force remount
+              toast.info("Refreshing data...");
+            }}
           >
             {loading ? (
               <IoSync size={14} className="animate-spin" />
@@ -406,7 +440,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           onClose={() => setShowForm(false)}
           handleProjectCategoryChange={handleProjectCategoryChange}
           setFormData={setFormData}
-          companyName={hiddenFields.companyname}
         />
       )}
 

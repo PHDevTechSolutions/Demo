@@ -44,7 +44,6 @@ interface ProgressFormProps {
   onClose: () => void;
   handleProjectCategoryChange: (selected: { value: string; label: string }[] | null) => void;
   setFormData: React.Dispatch<React.SetStateAction<any>>;
-  companyName?: string;
 }
 
 const getFormattedTimestamp = () => {
@@ -74,7 +73,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   onClose,
   handleProjectCategoryChange,
   setFormData,
-  companyName,
 }) => {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [elapsed, setElapsed] = useState("0s");
@@ -126,19 +124,11 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </span>
         </div>
       )}
-
-      {companyName && (
-       <h2 className="text-xs font-bold text-left">
-          <span className="text-black">Edit:</span> {companyName}
-        </h2>
-      )}
-      
       <form onSubmit={wrappedSubmit} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
         <div className="grid grid-cols-2 gap-4">
-          
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Source <span className="text-[8px] text-red-700">* Required Fields</span>
