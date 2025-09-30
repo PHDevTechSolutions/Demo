@@ -375,7 +375,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       {searchOpen && (
         <input
           type="text"
-          placeholder="Search..."
+          placeholder="Search clients (past, present data) ..."
           className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -414,7 +414,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           </div>
         ))
       ) : (
-        <p className="text-xs text-gray-400 italic">No progress found.</p>
+        <p className="text-xs text-gray-400 italic">No activities for today.</p>
       )}
 
       {visibleCount < filteredProgress.length && (
