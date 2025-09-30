@@ -62,7 +62,6 @@ interface UserDetails {
 
 interface ProgressProps {
   userDetails: UserDetails | null;
-  refreshTrigger: number;
   searchQuery?: string;
 }
 
@@ -84,7 +83,7 @@ const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) 
   }
 };
 
-const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
+const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -93,7 +92,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -297,15 +296,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
       setShowForm(false);
       resetForm();
 
-      const newItem = data?.progress;
-      if (newItem?.id) {
-        setProgress((prev) => {
-          const exists = prev.some((p) => p.id === newItem.id);
-          return exists
-            ? prev.map((p) => (p.id === newItem.id ? newItem : p)) // update existing
-            : [newItem, ...prev]; // add new
-        });
-      }
+      setRefreshTrigger((prev) => prev + 1);
+
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
@@ -348,7 +340,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
     );
 
   return (
-    <div key={refreshKey} className="space-y-1">
+    <div className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{progress.length}</span>
@@ -363,7 +355,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, refreshTrigger }) => {
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => {
-              setRefreshKey((prev) => prev + 1); // 🔄 force remount
+              setRefreshTrigger((prev) => prev + 1); // 🔄 this triggers useEffect
               toast.info("Refreshing data...");
             }}
           >

@@ -182,7 +182,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                   </>
                 )}
                 {col.id === "in-progress" && !isCollapsed && (
-                  <Progress userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                  <Progress userDetails={userDetails} />
                 )}
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
