@@ -343,8 +343,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     <div className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
-          Total: <span className="text-orange-500">{progress.length}</span>
+          Total: <span className="text-orange-500">{filteredProgress.length}</span>
         </span>
+
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
@@ -382,18 +383,18 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       )}
 
       {filterOpen && (
-          <select
-            className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All Status</option>
-            {activityStatuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+        <select
+          className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Status</option>
+          {activityStatuses.map((status) => (
+            <option key={status} value={status}>
+              {status}
+            </option>
+          ))}
+        </select>
       )}
 
       {filteredProgress.length > 0 ? (
