@@ -16,6 +16,7 @@ interface Inquiry {
   referenceid: string;
   status: string;
   date_created?: string;
+  typeclient: string;
 }
 
 interface InquiriesProps {
@@ -59,8 +60,8 @@ const Inquiries: React.FC<InquiriesProps> = ({
       else if (Array.isArray(data?.data)) inquiries = data.data;
       else if (Array.isArray(data?.inquiries)) inquiries = data.inquiries;
 
-      // 🔹 filter by referenceId + status Endorsed
-      const myInquiries = inquiries
+      // filter by referenceId + status Endorsed
+      return inquiries
         .filter(
           (inq) =>
             inq.referenceid === referenceId &&
@@ -71,8 +72,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
           const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
           return dateB - dateA;
         });
-
-      return myInquiries;
     } catch (err) {
       console.error("Unexpected fetch error:", err);
       return [];
@@ -130,15 +129,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
     if (timerRef.current) clearTimeout(timerRef.current);
 
     if (activeInquiry && activeInquiry.status?.toLowerCase() !== "endorsed") {
-      timerRef.current = setTimeout(() => {
-        setShowModal(true);
-      }, 5 * 60 * 1000);
+      timerRef.current = setTimeout(() => setShowModal(true), 5 * 60 * 1000);
     }
   };
 
   useEffect(() => {
     if (!activeInquiry?.date_created) return;
-
     const createdDate = new Date(activeInquiry.date_created);
     const interval = setInterval(() => {
       const now = new Date();
@@ -147,7 +143,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
       const diffSecs = Math.floor((diffMs / 1000) % 60);
       setTimeSinceCreated(`${diffMins}m ${diffSecs}s`);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [activeInquiry?.date_created]);
 
@@ -167,9 +162,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
       alert("Inquiry successfully cancelled as Wrong Tagging");
 
       const refreshed = await fetchInquiries(userDetails.ReferenceID);
-      setInquiries(
-        refreshed.filter((i) => i.referenceid === userDetails.ReferenceID)
-      );
+      setInquiries(refreshed);
     } catch (error) {
       console.error("❌ Error cancelling inquiry:", error);
       alert("Failed to cancel inquiry");
@@ -183,6 +176,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
         <div className="bg-white rounded-lg shadow-lg p-6 w-96">
           <h2 className="text-lg font-bold mb-2">📩 New Inquiry</h2>
           <p className="text-sm mb-1"><span className="font-semibold">Company:</span> {activeInquiry.companyname}</p>
+          <p className="text-sm mb-1"><span className="font-semibold">Type:</span> {activeInquiry.typeclient}</p>
           <p className="text-sm mb-1"><span className="font-semibold">Contact:</span> {activeInquiry.contactperson} ({activeInquiry.contactnumber})</p>
           <p className="text-sm mb-1"><span className="font-semibold">Email:</span> {activeInquiry.emailaddress}</p>
           <p className="text-sm mb-1"><span className="font-semibold">Inquiry:</span> {activeInquiry.inquiries}</p>
@@ -227,7 +221,10 @@ const Inquiries: React.FC<InquiriesProps> = ({
                   className="cursor-pointer flex justify-between items-center p-3"
                   onClick={() => setExpandedIdx(isExpanded ? null : key)}
                 >
-                  <p className="font-semibold uppercase">{inq.companyname}</p>
+                  <div>
+                    <p className="font-semibold uppercase">{inq.companyname}</p>
+                    <p className="text-[8px] text-gray-600">{inq.typeclient}</p>
+                  </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleSubmit(inq, true); }}
@@ -240,8 +237,10 @@ const Inquiries: React.FC<InquiriesProps> = ({
                     <span>{isExpanded ? <FaChevronUp /> : <FaChevronDown />}</span>
                   </div>
                 </div>
+
                 {isExpanded && (
                   <div className="p-3 space-y-1">
+                    <p><span className="font-semibold">Type:</span> {inq.typeclient}</p>
                     <p><span className="font-semibold">Contact Person:</span> {inq.contactperson}</p>
                     <p><span className="font-semibold">Contact #:</span> {inq.contactnumber}</p>
                     <p><span className="font-semibold">Email:</span> {inq.emailaddress}</p>
@@ -264,7 +263,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
                     })
                     : "No date"}
                 </div>
-
               </div>
             );
           })

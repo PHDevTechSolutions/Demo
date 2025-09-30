@@ -78,7 +78,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
 
-    const payload: any = {
+    const payload = {
       referenceid: userDetails.ReferenceID,
       manager: userDetails.Manager,
       tsm: userDetails.TSM,
@@ -86,13 +86,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       contactperson: data.contactperson,
       contactnumber: data.contactnumber,
       emailaddress: data.emailaddress,
-      typeclient: isInquiry ? "CSR Inquiries" : (data as Company).typeclient,
+      typeclient: isInquiry ? "CSR Client" : (data as Company).typeclient,
       address: data.address || "",
     };
-
-    if (isInquiry && "ticketreferencenumber" in data) {
-      payload.inquiryid = data.ticketreferencenumber;
-    }
 
     try {
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/Create", {
@@ -102,11 +98,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       });
 
       if (!res.ok) throw new Error("Failed to submit activity");
+      await res.json();
 
-      const result = await res.json();
-      console.log("Activity submission result:", result);
-
-      // Optional: mark inquiry as used
       if (isInquiry && "ticketreferencenumber" in data) {
         await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateStatus", {
           method: "POST",
@@ -119,13 +112,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       }
 
       setRefreshTrigger(prev => prev + 1);
+
       toast.success("Activity successfully added!", { autoClose: 2000 });
     } catch (error) {
       console.error("❌ Error submitting activity:", error);
       toast.error("Failed to add activity", { autoClose: 2000 });
     }
   };
-
 
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>

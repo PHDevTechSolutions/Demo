@@ -20,22 +20,23 @@ async function insertActivity(data: any) {
       emailaddress,
       typeclient,
       address,
-      inquiryid,
+      inquiryid, // ✅ dagdag: inquiry id para sa update
     } = data;
 
-    // 🔹 Generate unique activitynumber
-    const firstLetterCompany = companyname?.charAt(0).toUpperCase() || "X";
-    const firstLetterContact = contactperson?.charAt(0).toUpperCase() || "X";
+    // 🔹 Generate activitynumber
+    const firstLetterCompany = companyname.charAt(0).toUpperCase() || "X";
+    const firstLetterContact = contactperson.charAt(0).toUpperCase() || "X";
     const lastLetterContact =
-      contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
-    const random4 = Math.floor(1000 + Math.random() * 9000);
-    const random6 = Math.floor(100000 + Math.random() * 900000);
+      contactperson.charAt(contactperson.length - 1).toUpperCase() || "X";
+    const random4 = Math.floor(1000 + Math.random() * 9000); // 4 digits
+    const random6 = Math.floor(100000 + Math.random() * 900000); // 6 digits
     const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
 
+    // 🔹 Default activitystatus
     const activitystatus = "On Progress";
 
-    // 🔹 Insert into activity table
-    const activityResult = await sql`
+    // 🔹 Insert into activity
+    const result = await sql`
       INSERT INTO activity (
         referenceid,
         manager,
@@ -68,56 +69,18 @@ async function insertActivity(data: any) {
       RETURNING *;
     `;
 
-    let accountsResult = null;
-
-    // 🔹 Special handling for CSR Inquiries
-    if (typeclient?.trim().toLowerCase() === "csr inquiries") {
-      try {
-        console.log("Inserting into accounts for CSR inquiry:", companyname);
-        accountsResult = await sql`
-          INSERT INTO accounts (
-            referenceid,
-            companyname,
-            contactperson,
-            contactnumber,
-            typeclient,
-            address,
-            emailaddress,
-            status,
-            date_created,
-            date_updated
-          ) VALUES (
-            ${referenceid},
-            ${companyname},
-            ${contactperson},
-            ${contactnumber},
-            'CSR Client',
-            ${address},
-            ${emailaddress},
-            'New Client',
-            NOW(),
-            NOW()
-          )
-          RETURNING *;
-        `;
-      } catch (err: any) {
-        console.error("❌ Failed to insert into accounts:", err);
-        return { success: false, error: `Accounts insert failed: ${err.message}` };
-      }
-
-      // 🔹 Update the inquiry row to mark it as used
-      if (inquiryid) {
-        await sql`
-          UPDATE inquiries
-          SET status = 'Used'
-          WHERE id = ${inquiryid}
-            AND referenceid = ${referenceid}
-            AND status = 'Endorsed'
-        `;
-      }
+    // 🔹 If CSR Inquiries → Update ONLY the selected inquiry row
+    if (typeclient === "CSR Inquiries" && inquiryid) {
+      await sql`
+        UPDATE inquiries
+        SET status = 'Used'
+        WHERE id = ${inquiryid}
+          AND referenceid = ${referenceid}
+          AND status = 'Endorsed'
+      `;
     }
 
-    return { success: true, data: { activity: activityResult[0], accounts: accountsResult?.[0] || null } };
+    return { success: true, data: result[0] };
   } catch (error: any) {
     console.error("❌ Error inserting activity:", error);
     return {
@@ -127,14 +90,24 @@ async function insertActivity(data: any) {
   }
 }
 
-// ✅ API Handler
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const requiredFields = ["referenceid", "companyname", "contactperson", "contactnumber", "emailaddress", "typeclient", "address"];
+    // ✅ Required fields check
+    const requiredFields = [
+      "referenceid",
+      "manager",
+      "tsm",
+      "companyname",
+      "contactperson",
+      "contactnumber",
+      "typeclient",
+      "address",
+    ];
+
     for (const field of requiredFields) {
-      if (!body[field]) {
+      if (body[field] === undefined || body[field] === null) {
         return NextResponse.json(
           { success: false, error: `Missing required field: ${field}` },
           { status: 400 }
@@ -142,7 +115,8 @@ export async function POST(req: Request) {
       }
     }
 
-    if (body.typeclient?.trim().toLowerCase() === "csr inquiries" && !body.inquiryid) {
+    // ✅ inquiryid required if CSR Inquiries
+    if (body.typeclient === "CSR Inquiries" && !body.inquiryid) {
       return NextResponse.json(
         { success: false, error: "Missing inquiryid for CSR Inquiries." },
         { status: 400 }
