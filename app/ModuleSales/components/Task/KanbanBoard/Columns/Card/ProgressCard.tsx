@@ -66,8 +66,8 @@ const STATUS_BG: Record<string, string> = {
   Collected: "bg-white",
   "Quote-Done": "bg-blue-200",
   "SO-Done": "bg-yellow-200",
-  Cancelled: "bg-red-500",
-  Loss: "bg-red-800",
+  Cancelled: "bg-red-300",
+  Loss: "bg-red-300",
 };
 
 // Helper: format ms -> HH:MM:SS

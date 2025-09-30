@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import { IoSync, IoSearchOutline } from "react-icons/io5";
+import React, { useEffect, useState } from "react";
+import { IoSync, IoSearchOutline } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
-import { toast, ToastContainer } from "react-toastify";
+import { toast, ToastContainer, Slide } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +62,7 @@ interface UserDetails {
 
 interface ProgressProps {
   userDetails: UserDetails | null;
+  searchQuery?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -70,12 +71,10 @@ interface CardLoadingState {
   [id: string]: boolean;
 }
 
-type CardLoadingAction = { type: "SET_LOADING"; id: string; value: boolean };
+type CardLoadingAction =
+  | { type: "SET_LOADING"; id: string; value: boolean };
 
-const cardLoadingReducer = (
-  state: CardLoadingState,
-  action: CardLoadingAction
-) => {
+const cardLoadingReducer = (state: CardLoadingState, action: CardLoadingAction) => {
   switch (action.type) {
     case "SET_LOADING":
       return { ...state, [action.id]: action.value };
@@ -88,17 +87,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [cardLoading, dispatchCardLoading] = React.useReducer(
-    cardLoadingReducer,
-    {}
-  );
+  const [cardLoading, dispatchCardLoading] = React.useReducer(cardLoadingReducer, {});
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchInput, setSearchInput] = useState(""); // raw input
-  const [searchQuery, setSearchQuery] = useState(""); // debounced query
+  const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
 
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -216,22 +210,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     setShowForm(true);
   };
 
-  // 🟢 Fetch Progress with AbortController
+  // 🟢 Fetch Progress
   const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
-
-    // cancel ongoing fetch
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
     try {
       setLoading(true);
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        { cache: "no-store", signal: controller.signal }
+        { cache: "no-store" } // ✅ always fetch fresh data
       );
       const data = await res.json();
       const progressData: ProgressItem[] = Array.isArray(data)
@@ -243,32 +229,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       );
 
       setProgress(myProgress);
-    } catch (err: any) {
-      if (err.name !== "AbortError") {
-        console.error("❌ Error fetching progress:", err);
-      }
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟢 Initial fetch
+  // 🟢 Run on mount lang (no refreshTrigger)
   useEffect(() => {
     fetchProgress();
   }, [userDetails?.ReferenceID]);
 
-  // 🟢 Debounce search input
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      setSearchQuery(searchInput.trim());
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [searchInput]);
-
   const handleFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -295,31 +269,25 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return;
     }
 
+    // ✅ Normalize empty -> null
     Object.keys(payload).forEach((key) => {
       if (payload[key] === "" || payload[key] === undefined) {
         payload[key] = null;
       }
     });
 
-    const numericFields = [
-      "soamount",
-      "quotationamount",
-      "targetquota",
-      "actualsales",
-    ];
+    // ✅ Numeric fields
+    const numericFields = ["soamount", "quotationamount", "targetquota", "actualsales"];
     numericFields.forEach((field) => {
       payload[field] = payload[field] !== null ? Number(payload[field]) : null;
     });
 
     try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
@@ -328,7 +296,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setShowForm(false);
       resetForm();
 
+      // ✅ fetch latest data agad
       await fetchProgress();
+
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
@@ -337,23 +307,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     }
   };
 
-  // 🟢 Refresh button
+  // 🟢 Refresh button (manual trigger)
   const handleRefresh = async () => {
-    toast.info("Refreshing data...");
     await fetchProgress();
+    toast.info("Refreshing data...");
   };
 
   const handleDelete = async (item: ProgressItem) => {
     dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
     try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/DeleteProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: item.id }),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete activity");
 
@@ -394,7 +361,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={handleRefresh}
+            onClick={handleRefresh} // ✅ direct call
           >
             {loading ? (
               <IoSync size={14} className="animate-spin" />
@@ -410,8 +377,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           type="text"
           placeholder="Search..."
           className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       )}
 
@@ -454,12 +421,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
           onClose={() => setShowForm(false)}
           handleProjectCategoryChange={handleProjectCategoryChange}
           setFormData={setFormData}
+          companyName={hiddenFields.companyname}
         />
       )}
 
       <ToastContainer
         position="bottom-right"
-        autoClose={2000}
+        autoClose={2500}
         hideProgressBar={false}
         newestOnTop
         closeOnClick
@@ -467,11 +435,12 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
-        className="text-xs z-[99999]"
-        toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
-        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+        transition={Slide}
+        className="z-[99999] text-xs"
+        toastClassName="relative flex items-center px-3 py-1 mb-3 rounded-md shadow-[0_0_12px_rgba(0,255,255,0.6)] bg-black/80 text-cyan-300 border border-cyan-400/40 overflow-hidden animate-slideDownSciFi max-w-[220px] min-h-[35px]"
+        progressClassName="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full animate-progressGlow"
       />
+
     </div>
   );
 };

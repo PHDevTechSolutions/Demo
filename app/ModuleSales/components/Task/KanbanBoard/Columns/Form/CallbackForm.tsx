@@ -50,7 +50,7 @@ const CallbackForm: React.FC<CallbackFormProps> = ({
       }`}
     >
       <div className="flex justify-between items-center mb-4 border-b pb-2">
-        <h3 className="text-lg font-semibold">Update Activity</h3>
+        <h3 className="text-xs font-semibold">Update Activity</h3>
         <button
           type="button"
           onClick={onClose}
