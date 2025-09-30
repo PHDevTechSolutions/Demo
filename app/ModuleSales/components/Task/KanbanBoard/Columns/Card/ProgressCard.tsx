@@ -159,7 +159,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         />
         <div className="flex flex-col flex-grow">
           <div className="flex items-center space-x-1">
-            <FaCircle className="text-orange-500 w-2 h-2" />
             <p className="font-semibold text-[10px] uppercase">
               {progress.companyname}
             </p>
