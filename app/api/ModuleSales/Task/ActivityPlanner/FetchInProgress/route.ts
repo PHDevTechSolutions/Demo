@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       FROM activity
       WHERE referenceid = ${referenceid}
       ORDER BY activitynumber, date_updated DESC, date_created DESC
-      LIMIT 500;
+      ;
     `;
 
     console.log("Fetched accounts:", Xchire_fetch);

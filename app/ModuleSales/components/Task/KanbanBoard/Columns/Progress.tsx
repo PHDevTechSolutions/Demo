@@ -231,18 +231,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
   const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
 
-  const filteredProgress = progress
-    .filter((item) => {
-      const itemDate = item.date_created?.split("T")[0]; // extract date part
-      // Show only today if no search query
-      return searchQuery ? true : itemDate === today;
-    })
-    .filter((item) =>
-      (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .filter((item) =>
-      statusFilter ? item.activitystatus === statusFilter : true
-    );
+  const filteredProgress = progress.filter((item) => {
+    const itemDate = item.date_created?.split("T")[0]; // YYYY-MM-DD
+
+    // 1️⃣ Status filter
+    if (statusFilter && item.activitystatus !== statusFilter) return false;
+
+    // 2️⃣ Search filter
+    if (searchQuery && searchQuery.trim() !== "") {
+      return (item.companyname ?? "").includes(searchQuery);
+    }
+
+    // 3️⃣ Default: only today's items
+    return itemDate === today;
+  });
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
