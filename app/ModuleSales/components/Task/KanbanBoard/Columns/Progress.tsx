@@ -427,7 +427,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
       <ToastContainer
         position="bottom-right"
-        autoClose={2500}
+        autoClose={2000}
         hideProgressBar={false}
         newestOnTop
         closeOnClick
@@ -435,10 +435,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        transition={Slide}
-        className="z-[99999] text-xs"
-        toastClassName="relative flex items-center px-3 py-1 mb-3 rounded-md shadow-[0_0_12px_rgba(0,255,255,0.6)] bg-black/80 text-cyan-300 border border-cyan-400/40 overflow-hidden animate-slideDownSciFi max-w-[220px] min-h-[35px]"
-        progressClassName="h-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-full animate-progressGlow"
+        theme="colored"
+        className="text-xs z-[99999]"
+        toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
+        progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
       />
 
     </div>
