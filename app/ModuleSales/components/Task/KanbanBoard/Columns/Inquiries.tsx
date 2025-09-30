@@ -44,18 +44,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const formatPHDate = (dateStr?: string) => {
-    if (!dateStr) return "N/A";
-    try {
-      return new Date(dateStr).toLocaleString("en-PH", {
-        timeZone: "Asia/Manila",
-        hour12: false,
-      });
-    } catch {
-      return "Invalid date";
-    }
-  };
-
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
     try {

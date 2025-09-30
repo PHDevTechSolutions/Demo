@@ -20,16 +20,16 @@ async function insertActivity(data: any) {
       emailaddress,
       typeclient,
       address,
-      inquiryid, // optional, used only for CSR Inquiries
+      inquiryid,
     } = data;
 
     // 🔹 Generate unique activitynumber
-    const firstLetterCompany = companyname.charAt(0).toUpperCase() || "X";
-    const firstLetterContact = contactperson.charAt(0).toUpperCase() || "X";
+    const firstLetterCompany = companyname?.charAt(0).toUpperCase() || "X";
+    const firstLetterContact = contactperson?.charAt(0).toUpperCase() || "X";
     const lastLetterContact =
-      contactperson.charAt(contactperson.length - 1).toUpperCase() || "X";
-    const random4 = Math.floor(1000 + Math.random() * 9000); // 4 digits
-    const random6 = Math.floor(100000 + Math.random() * 900000); // 6 digits
+      contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
+    const random4 = Math.floor(1000 + Math.random() * 9000);
+    const random6 = Math.floor(100000 + Math.random() * 900000);
     const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
 
     const activitystatus = "On Progress";
@@ -70,9 +70,10 @@ async function insertActivity(data: any) {
 
     let accountsResult = null;
 
-    // 🔹 Special handling for CSR Inquiries (case-insensitive)
+    // 🔹 Special handling for CSR Inquiries
     if (typeclient?.trim().toLowerCase() === "csr inquiries") {
       try {
+        console.log("Inserting into accounts for CSR inquiry:", companyname);
         accountsResult = await sql`
           INSERT INTO accounts (
             referenceid,
@@ -90,10 +91,10 @@ async function insertActivity(data: any) {
             ${companyname},
             ${contactperson},
             ${contactnumber},
-            'CSR Client',      -- override typeclient
+            'CSR Client',
             ${address},
             ${emailaddress},
-            'New Client',      -- set status
+            'New Client',
             NOW(),
             NOW()
           )
@@ -131,7 +132,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ Required fields check
     const requiredFields = ["referenceid", "companyname", "contactperson", "contactnumber", "emailaddress", "typeclient", "address"];
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -142,7 +142,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ inquiryid required if CSR Inquiries
     if (body.typeclient?.trim().toLowerCase() === "csr inquiries" && !body.inquiryid) {
       return NextResponse.json(
         { success: false, error: "Missing inquiryid for CSR Inquiries." },
