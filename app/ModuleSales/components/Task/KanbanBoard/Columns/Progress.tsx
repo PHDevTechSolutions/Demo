@@ -296,7 +296,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setShowForm(false);
       resetForm();
 
-      setRefreshTrigger((prev) => prev + 1);
+      // 🔄 Fetch latest data immediately
+      await fetchProgress();
 
     } catch (err: any) {
       console.error("❌ Submit error:", err);
@@ -305,6 +306,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setSubmitting(false);
     }
   };
+
 
   const handleDelete = async (item: ProgressItem) => {
     dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
