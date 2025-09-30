@@ -61,6 +61,7 @@ const Companies: React.FC<CompaniesProps> = ({
 
     // ✅ Skip kapag Sunday
     if (dayOfWeek === 0) {
+      setIsSunday(true);
       setCompanies([]);
       setRemainingQuota(0);
       setLoading(false);
@@ -120,18 +121,41 @@ const Companies: React.FC<CompaniesProps> = ({
         const next30 = eligibleCompanies.filter((c) => c.typeclient === "Next 30");
         const balance20 = eligibleCompanies.filter((c) => c.typeclient === "Balance 20");
         const tsa = eligibleCompanies.filter((c) => c.typeclient === "TSA Client");
+        const csr = eligibleCompanies.filter((c) => c.typeclient === "CSR Client");
 
         const pickRandom = (arr: Company[], count: number) => {
           const shuffled = [...arr].sort(() => 0.5 - Math.random());
           return shuffled.slice(0, count);
         };
 
-        const finalCompanies = [
-          ...pickRandom(top50, 10),
-          ...pickRandom(next30, 10),
-          ...pickRandom(balance20, 10),
-          ...pickRandom(tsa, 5),
-        ].slice(0, todayQuota);
+        // 🎯 Priority allocation
+        let finalCompanies: Company[] = [];
+        let remaining = todayQuota;
+
+        const allocate = (source: Company[], count: number) => {
+          const needed = Math.min(count, remaining, source.length);
+          const picked = pickRandom(source, needed);
+          finalCompanies = [...finalCompanies, ...picked];
+          remaining -= picked.length;
+        };
+
+        // Fixed distribution (with fallback)
+        allocate(top50, 15);
+        if (remaining > 0) allocate(next30, 10);
+        if (remaining > 0) allocate(balance20, 5);
+        if (remaining > 0) allocate(csr, 5); // bago: CSR Client fallback
+        if (remaining > 0) allocate(tsa, 5);
+
+        // 🧮 Kung kulang pa rin → fill mula sa lahat ng natira
+        if (remaining > 0) {
+          const pickedIds = new Set(finalCompanies.map((c) => c.id));
+          const fillers = eligibleCompanies
+            .filter((c) => !pickedIds.has(c.id))
+            .sort(() => 0.5 - Math.random())
+            .slice(0, remaining);
+          finalCompanies = [...finalCompanies, ...fillers];
+          remaining -= fillers.length;
+        }
 
         // ✅ Save new daily quota to server
         await fetch("/api/ModuleSales/Companies/DailyQuota", {
@@ -167,32 +191,82 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  // ✅ removeCompany (update server with new remaining_quota)
+  useEffect(() => {
+    if (!loading && companies.length !== remainingQuota) {
+      toast.warning(
+        `⚠️ Mismatch detected: companies = ${companies.length}, quota = ${remainingQuota}`,
+        { position: "top-center", autoClose: 3000 }
+      );
+    }
+  }, [loading, companies, remainingQuota]);
+
   const removeCompany = async (comp: Company, action: "add" | "cancel") => {
     if (!userDetails?.ReferenceID) return;
 
+    // 1. tanggalin muna yung pinili
     const updated = companies.filter((c) => c.id !== comp.id);
-    const newQuota = remainingQuota - 1;
 
-    setCompanies(updated);
+    // 2. fetch eligible companies
+    const accountsRes = await fetch(
+      `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
+    );
+    const accounts = await accountsRes.json();
+
+    let companiesData: Company[] = [];
+    if (Array.isArray(accounts)) companiesData = accounts;
+    else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
+    else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
+
+    const eligibleCompanies = companiesData.filter(isCompanyDue);
+    const usedIds = new Set(updated.map((c) => c.id));
+
+    // 3. replacement search (priority: same typeclient)
+    let replacements = eligibleCompanies.filter(
+      (c) => c.typeclient === comp.typeclient && !usedIds.has(c.id)
+    );
+
+    // 4. fallback kung wala na sa same type
+    if (replacements.length === 0) {
+      replacements = eligibleCompanies.filter((c) => !usedIds.has(c.id));
+    }
+
+    // 5. build final companies
+    let finalCompanies = [...updated];
+    if (action === "cancel" && replacements.length > 0) {
+      // only replace if cancel
+      const randomPick =
+        replacements[Math.floor(Math.random() * replacements.length)];
+      finalCompanies.push(randomPick);
+    }
+
+    // 6. update quota
+    const newQuota =
+      action === "add" ? Math.max(remainingQuota - 1, 0) : remainingQuota;
+
+    setCompanies(finalCompanies);
     setRemainingQuota(newQuota);
 
+    // 7. save to server
     await fetch("/api/ModuleSales/Companies/DailyQuota", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         referenceid: userDetails.ReferenceID,
         date: new Date().toISOString().split("T")[0],
-        companies: updated,
+        companies: finalCompanies,
         remaining_quota: newQuota,
       }),
     });
 
     toast.info(
-      `Company ${action === "add" ? "added" : "canceled"} - Remaining quota: ${newQuota}`,
+      `Company ${action === "add"
+        ? "added - Remaining quota: " + newQuota
+        : "canceled & replaced - Remaining quota: " + newQuota
+      }`,
       { position: "bottom-right", autoClose: 2000 }
     );
   };
+
 
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
@@ -243,16 +317,6 @@ const Companies: React.FC<CompaniesProps> = ({
                     <FaPlus size={10} /> Add
                   </button>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeCompany(comp, "cancel");
-                    }}
-                    className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
-                  >
-                    <MdCancel size={10} /> Cancel
-                  </button>
-
                   <span>
                     {isExpanded ? (
                       <FaChevronUp size={10} />
@@ -289,6 +353,15 @@ const Companies: React.FC<CompaniesProps> = ({
                     </span>{" "}
                     {comp.address || "N/A"}
                   </p>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeCompany(comp, "cancel");
+                    }}
+                    className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
+                  >
+                    <MdCancel size={10} /> Cancel
+                  </button>
                 </div>
               )}
 
