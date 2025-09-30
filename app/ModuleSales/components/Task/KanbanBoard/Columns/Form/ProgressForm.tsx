@@ -7,7 +7,7 @@ import OutboundCall from "../HiddenFields/OutboundCall";
 import QuotationPreparation from "../HiddenFields/QuotationPreparation";
 import SalesOrderPreparation from "../HiddenFields/SalesOrderPreparation";
 import Delivered from "../HiddenFields/Delivered";
-import SurveyModal from "./SurveyModal";
+//import SurveyModal from "./SurveyModal";
 import { MdEdit, MdOutlineClose } from "react-icons/md";
 
 interface ProgressFormProps {
@@ -106,15 +106,19 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   const wrappedSubmit = (e: React.FormEvent) => {
     e.preventDefault(); // prevent default always
 
-    if (formData.activitystatus === "Delivered") {
-      // 👉 show survey modal muna
-      setShowSurveyModal(true);
-    } else {
-      // 👉 normal submit
-      handleFormSubmit(e);
-    }
+    // Only offer survey optionally for Delivered
+    //if (formData.activitystatus === "Delivered") {
+    // Ask user: send survey? (optional)
+    //const wantsSurvey = window.confirm(
+    //"Do you want to send a survey? Click 'Cancel' to skip."
+    //);
+    //if (wantsSurvey) {
+    //setShowSurveyModal(true);
+    //return; // wait for survey modal
+    //}
+    //}
+    handleFormSubmit(e);
   };
-
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
@@ -128,17 +132,17 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
       )}
 
       {companyName && (
-       <h2 className="text-xs font-bold text-left">
+        <h2 className="text-xs font-bold text-left">
           <span className="text-black">Edit:</span> {companyName}
         </h2>
       )}
-      
+
       <form onSubmit={wrappedSubmit} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
         <div className="grid grid-cols-2 gap-4">
-          
+
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Source <span className="text-[8px] text-red-700">* Required Fields</span>
@@ -309,6 +313,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </button>
         </div>
       </form>
+      {/* 
       <SurveyModal
         isOpen={showSurveyModal}
         onClose={() => setShowSurveyModal(false)}
@@ -318,7 +323,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           const fakeEvent = { preventDefault: () => { } } as React.FormEvent;
           handleFormSubmit(fakeEvent);
         }}
-      />
+      />*/}
     </div>
   );
 };
