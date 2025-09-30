@@ -217,24 +217,18 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setLoading(true);
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        { cache: "no-store" } // ✅ always fetch fresh data
+        { cache: "no-store" }
       );
       const data = await res.json();
-      const progressData: ProgressItem[] = Array.isArray(data)
-        ? data
-        : data?.data || data?.progress || [];
-
-      const myProgress = progressData.filter(
-        (p) => p.referenceid === userDetails.ReferenceID
-      );
-
-      setProgress(myProgress);
+      const progressData: ProgressItem[] = data?.data || [];
+      setProgress(progressData);
     } catch (err) {
       console.error("❌ Error fetching progress:", err);
     } finally {
       setLoading(false);
     }
   };
+
 
   // 🟢 Run on mount lang (no refreshTrigger)
   useEffect(() => {
