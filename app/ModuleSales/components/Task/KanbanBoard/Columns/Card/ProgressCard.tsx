@@ -70,18 +70,6 @@ const STATUS_BG: Record<string, string> = {
   Loss: "bg-red-300",
 };
 
-// Helper: format ms -> HH:MM:SS
-const formatTime = (ms: number) => {
-  if (ms <= 0) return "Expired";
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-};
-
 const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   progress,
   profilePicture,
@@ -91,39 +79,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFinalModal, setShowFinalModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [remainingTime, setRemainingTime] = useState<string>("");
-
-  // Setup countdown timer only for "Quote-Done"
-  useEffect(() => {
-    if (progress.activitystatus !== "Quote-Done" || !progress.date_updated) return;
-
-    const updatedDate = new Date(progress.date_updated);
-    const today = new Date();
-
-    // check if same day
-    const isSameDay =
-      updatedDate.getFullYear() === today.getFullYear() &&
-      updatedDate.getMonth() === today.getMonth() &&
-      updatedDate.getDate() === today.getDate();
-
-    const updatedTime = updatedDate.getTime();
-    const deadline = updatedTime + 4 * 60 * 60 * 1000; // +4 hours
-
-    if (!isSameDay || Date.now() > deadline) {
-      // past date or lumampas na
-      setRemainingTime("Expired");
-      return;
-    }
-    
-    // else start countdown
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const diff = deadline - now;
-      setRemainingTime(formatTime(diff));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [progress.activitystatus, progress.date_updated]);
 
   if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
 
@@ -168,11 +123,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
               {progress.activitystatus} | {progress.ticketreferencenumber}
             </p>
           )}
-          {progress.activitystatus === "Quote-Done" && (
-            <p className="mt-1 font-bold text-red-600 text-[8px]">
-              {remainingTime ? `⏳ ${remainingTime}` : "Calculating..."}
-            </p>
-          )}
         </div>
         <div className="flex items-center space-x-2">
           <button
@@ -194,7 +144,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {progress.date_updated ? new Date(progress.date_updated).toLocaleString() : "N/A"}
+            {new Date(progress.date_updated).toLocaleString()}
           </p>
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 

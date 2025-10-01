@@ -151,7 +151,6 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
     }
   };
 
-
   const renderTaskRow = (task: Note) => {
     const isDisabled = ["delivered", "done", "completed"].includes(
       (task.activitystatus || "").toLowerCase()
