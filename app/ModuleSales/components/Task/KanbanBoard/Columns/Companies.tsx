@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 interface Company {
@@ -88,10 +88,6 @@ const Companies: React.FC<CompaniesProps> = ({
         if (Array.isArray(quotaData.companies) && quotaData.companies.length > 0) {
           setCompanies(quotaData.companies);
           setRemainingQuota(quotaData.remaining_quota ?? 35);
-          toast.info(`Loaded existing daily quota: ${quotaData.remaining_quota}`, {
-            position: "top-right",
-            autoClose: 2000,
-          });
           return;
         }
 
@@ -171,11 +167,6 @@ const Companies: React.FC<CompaniesProps> = ({
 
         setCompanies(finalCompanies);
         setRemainingQuota(todayQuota);
-
-        toast.success(`New daily quota created: ${todayQuota}`, {
-          position: "top-right",
-          autoClose: 2000,
-        });
       } catch (error) {
         console.error("Error fetching companies:", error);
         setCompanies([]);
@@ -193,10 +184,6 @@ const Companies: React.FC<CompaniesProps> = ({
 
   useEffect(() => {
     if (!loading && companies.length !== remainingQuota) {
-      toast.warning(
-        `⚠️ Mismatch detected: companies = ${companies.length}, quota = ${remainingQuota}`,
-        { position: "top-center", autoClose: 3000 }
-      );
     }
   }, [loading, companies, remainingQuota]);
 
@@ -257,14 +244,6 @@ const Companies: React.FC<CompaniesProps> = ({
         remaining_quota: newQuota,
       }),
     });
-
-    toast.info(
-      `Company ${action === "add"
-        ? "added - Remaining quota: " + newQuota
-        : "canceled & replaced - Remaining quota: " + newQuota
-      }`,
-      { position: "bottom-right", autoClose: 2000 }
-    );
   };
 
 

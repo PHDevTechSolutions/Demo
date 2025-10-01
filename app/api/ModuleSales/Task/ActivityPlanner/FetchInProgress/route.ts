@@ -29,7 +29,7 @@ export async function GET(req: Request) {
              source, activitystatus
       FROM activity
       WHERE referenceid = ${referenceid}
-      ORDER BY activitynumber, date_updated DESC, date_created DESC
+      ORDER BY activitynumber, date_updated DESC
       ;
     `;
 
