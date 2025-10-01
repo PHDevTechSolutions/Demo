@@ -258,7 +258,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     return itemDate === today;
   });
 
-
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
     if (!stableUserDetails?.ReferenceID) return;
