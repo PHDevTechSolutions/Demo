@@ -243,9 +243,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
 
-    // 2️⃣ Search filter
     if (searchQuery && searchQuery.trim() !== "") {
-      return (item.companyname ?? "").includes(searchQuery);
+      const normalizedQuery = searchQuery.toLowerCase().trim();
+      return (item.companyname ?? "").toLowerCase().includes(normalizedQuery);
     }
 
     // 3️⃣ Default: only today's items (based on system/server time)
