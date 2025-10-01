@@ -33,7 +33,7 @@ async function insertActivity(data: any) {
         ${remarks}, ${typecall}, ${sonumber}, ${soamount}, ${callback}, ${callstatus},
         ${startdate}, ${enddate}, ${quotationnumber}, ${quotationamount},
         ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, 
-        ${actualsales}, ${deliverydate}, ${followup_date}, ${drnumber}, NOW()
+        ${actualsales}, ${deliverydate}, ${followup_date}, ${drnumber}, NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;
     `;
@@ -50,7 +50,7 @@ async function updateActivityStatus(activitynumber: string, activitystatus: stri
     const result = await sql`
       UPDATE activity
       SET activitystatus = ${activitystatus},
-          date_updated = NOW()
+          date_updated = NOW() AT TIME ZONE 'UTC'
       WHERE activitynumber = ${activitynumber}
       RETURNING *;
     `;

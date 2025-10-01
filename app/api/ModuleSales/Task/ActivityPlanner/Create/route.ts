@@ -40,7 +40,7 @@ async function insertActivity(data: any) {
         typeclient, address, activitynumber, activitystatus, date_created, date_updated
       ) VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber}, ${emailaddress},
-        ${typeclient}, ${address}, ${activitynumber}, ${activitystatus}, NOW(), NOW()
+        ${typeclient}, ${address}, ${activitynumber}, ${activitystatus}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC',
       )
       RETURNING *;
     `;
@@ -54,7 +54,7 @@ async function insertActivity(data: any) {
             emailaddress, typeclient, address, status, date_created, date_updated
           ) VALUES (
             ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
-            ${emailaddress}, 'CSR Client', ${address}, 'Active', NOW(), NOW()
+            ${emailaddress}, 'CSR Client', ${address}, 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
           )
           RETURNING *;
         `;
