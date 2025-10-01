@@ -15,7 +15,8 @@ async function insertActivity(data: any) {
       area, activitynumber, source, typeactivity, activitystatus,
       remarks, typecall, sonumber, soamount, callback, callstatus,
       startdate, enddate, quotationnumber, quotationamount,
-      projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, drnumber
+      projectname, projectcategory, projecttype, targetquota,
+      paymentterm, actualsales, deliverydate, followup_date, drnumber
     } = data;
 
     const result = await sql`
@@ -25,21 +26,24 @@ async function insertActivity(data: any) {
         area, activitynumber, source, typeactivity, activitystatus,
         remarks, typecall, sonumber, soamount, callback, callstatus,
         startdate, enddate, quotationnumber, quotationamount,
-        projectname, projectcategory, projecttype, targetquota, paymentterm, actualsales, deliverydate, followup_date, drnumber, date_created
+        projectname, projectcategory, projecttype, targetquota,
+        paymentterm, actualsales, deliverydate, followup_date,
+        drnumber, date_created, date_updated
       ) VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
         ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
         ${area}, ${activitynumber}, ${source}, ${typeactivity}, ${activitystatus},
         ${remarks}, ${typecall}, ${sonumber}, ${soamount}, ${callback}, ${callstatus},
         ${startdate}, ${enddate}, ${quotationnumber}, ${quotationamount},
-        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota}, ${paymentterm}, 
-        ${actualsales}, ${deliverydate}, ${followup_date}, ${drnumber}, NOW() AT TIME ZONE 'UTC'
+        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota},
+        ${paymentterm}, ${actualsales}, ${deliverydate}, ${followup_date},
+        ${drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;
     `;
     return { success: true, data: result[0] };
   } catch (error: any) {
-    console.error("❌ Error inserting activity:", error);
+    console.error("❌ Error inserting into progress:", error);
     return { success: false, error: error.message || "Failed to insert activity." };
   }
 }
@@ -54,7 +58,7 @@ async function updateActivityStatus(activitynumber: string, activitystatus: stri
       WHERE activitynumber = ${activitynumber}
       RETURNING *;
     `;
-    return { success: true, data: result };
+    return { success: true, data: result[0] || null };
   } catch (error: any) {
     console.error("❌ Error updating activity status:", error);
     return { success: false, error: error.message || "Failed to update activity status." };
@@ -66,11 +70,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ Required fields
-    const requiredFields = [
-      "referenceid", "manager", "tsm"
-    ];
-
+    // ✅ Required fields validation
+    const requiredFields = ["referenceid", "manager", "tsm"];
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -80,21 +81,33 @@ export async function POST(req: Request) {
       }
     }
 
-    // Insert into progress
+    // ✅ Insert into progress
     const insertResult = await insertActivity(body);
-    if (!insertResult.success) return NextResponse.json(insertResult, { status: 500 });
+    if (!insertResult.success) {
+      return NextResponse.json(insertResult, { status: 500 });
+    }
 
-    // Update activity table if activitystatus exists
-    if (body.activitystatus) {
-      const updateResult = await updateActivityStatus(body.activitynumber, body.activitystatus);
+    // ✅ Update activity table if activitystatus provided
+    let activityUpdate = null;
+    if (body.activitystatus && body.activitynumber) {
+      const updateResult = await updateActivityStatus(
+        body.activitynumber,
+        body.activitystatus
+      );
       if (!updateResult.success) {
         console.warn("⚠️ Failed to update activity table:", updateResult.error);
+      } else {
+        activityUpdate = updateResult.data;
       }
     }
 
-    return NextResponse.json({ success: true, progress: insertResult.data });
+    return NextResponse.json({
+      success: true,
+      progress: insertResult.data,
+      activityUpdate,
+    });
   } catch (error: any) {
-    console.error("❌ POST error:", error);
+    console.error("❌ POST /api/ModuleSales/Progress error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Internal server error" },
       { status: 500 }

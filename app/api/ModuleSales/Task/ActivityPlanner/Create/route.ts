@@ -26,7 +26,8 @@ async function insertActivity(data: any) {
     // 🏷️ Generate unique activity number
     const firstLetterCompany = companyname?.charAt(0).toUpperCase() || "X";
     const firstLetterContact = contactperson?.charAt(0).toUpperCase() || "X";
-    const lastLetterContact = contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
+    const lastLetterContact =
+      contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
     const random4 = Math.floor(1000 + Math.random() * 9000);
     const random6 = Math.floor(100000 + Math.random() * 900000);
     const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
@@ -40,12 +41,14 @@ async function insertActivity(data: any) {
         typeclient, address, activitynumber, activitystatus, date_created, date_updated
       ) VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber}, ${emailaddress},
-        ${typeclient}, ${address}, ${activitynumber}, ${activitystatus}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC',
+        ${typeclient}, ${address}, ${activitynumber}, ${activitystatus}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;
     `;
 
     let insertedAccount = null;
+
+    // ✅ Insert into accounts ONLY if CSR Inquiries
     if (typeclient === "CSR Inquiries") {
       try {
         insertedAccount = await sql`
@@ -54,17 +57,20 @@ async function insertActivity(data: any) {
             emailaddress, typeclient, address, status, date_created, date_updated
           ) VALUES (
             ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
-            ${emailaddress}, 'CSR Client', ${address}, 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+            ${emailaddress}, ${typeclient}, ${address}, 'Active',
+            NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
           )
           RETURNING *;
         `;
       } catch (accountErr: any) {
         console.error("❌ Error inserting into accounts:", accountErr);
-        throw new Error(`Accounts insert failed → ${accountErr.message || accountErr}`);
+        throw new Error(
+          `Accounts insert failed → ${accountErr.message || accountErr}`
+        );
       }
     }
 
-    // ✅ Update inquiries if needed
+    // ✅ Update inquiries if CSR Inquiries
     if (typeclient === "CSR Inquiries" && inquiryid) {
       await sql`
         UPDATE inquiries
@@ -95,12 +101,14 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ⚡ No more required fields validation
     const result = await insertActivity(body);
 
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
   } catch (error: any) {
-    console.error("❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/Create:", error);
+    console.error(
+      "❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/Create:",
+      error
+    );
     return NextResponse.json(
       { success: false, error: error.message || "Internal server error" },
       { status: 500 }
