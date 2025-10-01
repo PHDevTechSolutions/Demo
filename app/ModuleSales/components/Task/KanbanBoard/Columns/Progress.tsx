@@ -229,21 +229,22 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
+  // Get Manila time
+  const now = new Date();
+  const manilaOffset = 8 * 60; // Manila is UTC+8 in minutes
+  const manilaTime = new Date(now.getTime() + (manilaOffset - now.getTimezoneOffset()) * 60000);
 
-  // Get today's date in YYYY-MM-DD based on Asia/Manila
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const today = formatter.format(new Date());
+  // Get today's date in YYYY-MM-DD
+  const today = manilaTime.toISOString().split("T")[0];
 
   // Filter progress
   const filteredProgress = progress.filter((item) => {
     if (!item.date_created) return false;
 
-    const itemDate = formatter.format(new Date(item.date_created));
+    // Convert item's date_created to Manila time
+    const itemDateUTC = new Date(item.date_created);
+    const itemManilaTime = new Date(itemDateUTC.getTime() + (manilaOffset - itemDateUTC.getTimezoneOffset()) * 60000);
+    const itemDate = itemManilaTime.toISOString().split("T")[0];
 
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
@@ -253,7 +254,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return (item.companyname ?? "").includes(searchQuery);
     }
 
-    // 3️⃣ Default: only today's items (based on Asia/Manila time)
+    // 3️⃣ Default: only today's items (6AM to 11:59PM Manila time)
     return itemDate === today;
   });
 

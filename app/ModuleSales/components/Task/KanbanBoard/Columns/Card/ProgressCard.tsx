@@ -114,7 +114,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
       setRemainingTime("Expired");
       return;
     }
-
+    
     // else start countdown
     const interval = setInterval(() => {
       const now = Date.now();
@@ -194,19 +194,8 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {progress.date_updated
-              ? new Date(progress.date_updated).toLocaleString("en-PH", {
-                timeZone: "Asia/Manila",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })
-              : "N/A"}
+            {progress.date_updated ? new Date(progress.date_updated).toLocaleString() : "N/A"}
           </p>
-
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
           <div className="flex justify-end mt-2 space-x-1">
