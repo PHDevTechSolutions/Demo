@@ -230,16 +230,20 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
 
-  // Get today's date in YYYY-MM-DD
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
+  // Get today's date in YYYY-MM-DD based on Asia/Manila
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const today = formatter.format(new Date());
 
   // Filter progress
   const filteredProgress = progress.filter((item) => {
     if (!item.date_created) return false;
 
-    // Convert item's date_created (diretso na lang)
-    const itemDate = new Date(item.date_created).toISOString().split("T")[0];
+    const itemDate = formatter.format(new Date(item.date_created));
 
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
@@ -249,9 +253,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return (item.companyname ?? "").includes(searchQuery);
     }
 
-    // 3️⃣ Default: only today's items (based on local/server time)
+    // 3️⃣ Default: only today's items (based on Asia/Manila time)
     return itemDate === today;
   });
+
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
