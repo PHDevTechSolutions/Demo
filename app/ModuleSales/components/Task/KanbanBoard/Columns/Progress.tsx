@@ -229,22 +229,16 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
-  // Get Manila time
+  // Get today's date in YYYY-MM-DD (based on system/server time)
   const now = new Date();
-  const manilaOffset = 8 * 60; // Manila is UTC+8 in minutes
-  const manilaTime = new Date(now.getTime() + (manilaOffset - now.getTimezoneOffset()) * 60000);
-
-  // Get today's date in YYYY-MM-DD
-  const today = manilaTime.toISOString().split("T")[0];
+  const today = now.toISOString().split("T")[0];
 
   // Filter progress
   const filteredProgress = progress.filter((item) => {
     if (!item.date_updated) return false;
 
-    // Convert item's date_created to Manila time
-    const itemDateUTC = new Date(item.date_updated);
-    const itemManilaTime = new Date(itemDateUTC.getTime() + (manilaOffset - itemDateUTC.getTimezoneOffset()) * 60000);
-    const itemDate = itemManilaTime.toISOString().split("T")[0];
+    // Convert item's date_updated
+    const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
 
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
@@ -254,9 +248,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return (item.companyname ?? "").includes(searchQuery);
     }
 
-    // 3️⃣ Default: only today's items (6AM to 11:59PM Manila time)
+    // 3️⃣ Default: only today's items (based on system/server time)
     return itemDate === today;
   });
+
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
