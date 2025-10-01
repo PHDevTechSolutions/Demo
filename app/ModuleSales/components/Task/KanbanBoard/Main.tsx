@@ -202,7 +202,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       </div>
 
       <ToastContainer
-        position="bottom-right"
+        position="top-right"
         autoClose={2000}
         hideProgressBar={false}
         newestOnTop

@@ -20,12 +20,13 @@ export async function GET(req: Request) {
       );
     }
 
-    // ✅ Optimized query: fetch only the latest activity per activitynumber
-    // Use DISTINCT ON + ORDER BY to get the latest update
+    // ✅ Force timezone to Asia/Manila
     const Xchire_fetch = await Xchire_sql`
       SELECT DISTINCT ON (activitynumber) 
              id, companyname, contactperson, contactnumber, emailaddress, typeclient, referenceid,
-             date_created, activitynumber, address, area, deliveryaddress, ticketreferencenumber, date_updated,
+             (date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila') AS date_created,
+             activitynumber, address, area, deliveryaddress, ticketreferencenumber, 
+             (date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila') AS date_updated,
              source, activitystatus
       FROM activity
       WHERE referenceid = ${referenceid}
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
       ;
     `;
 
-    console.log("Fetched accounts:", Xchire_fetch);
+    console.log("Fetched accounts (Manila time):", Xchire_fetch);
 
     return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
   } catch (Xchire_error: any) {

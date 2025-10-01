@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { IoSync, IoSearchOutline, IoFilter } from 'react-icons/io5';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
-import { toast, ToastContainer, Slide } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export const dynamic = "force-dynamic";
@@ -93,9 +93,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState<number>(0); // 🔑 ito lang gagamitin for re-fetch
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>(""); // currently selected filter
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [listLoading, setListLoading] = useState(false);
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -229,22 +229,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const activityStatuses = ["Quote-Done", "SO-Done", "Assisted", "Paid", "Collected", "On Progress"];
-  // Get Manila time
-  const now = new Date();
-  const manilaOffset = 8 * 60; // Manila is UTC+8 in minutes
-  const manilaTime = new Date(now.getTime() + (manilaOffset - now.getTimezoneOffset()) * 60000);
 
   // Get today's date in YYYY-MM-DD
-  const today = manilaTime.toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
 
   // Filter progress
   const filteredProgress = progress.filter((item) => {
     if (!item.date_created) return false;
 
-    // Convert item's date_created to Manila time
-    const itemDateUTC = new Date(item.date_created);
-    const itemManilaTime = new Date(itemDateUTC.getTime() + (manilaOffset - itemDateUTC.getTimezoneOffset()) * 60000);
-    const itemDate = itemManilaTime.toISOString().split("T")[0];
+    // Convert item's date_created (diretso na lang)
+    const itemDate = new Date(item.date_created).toISOString().split("T")[0];
 
     // 1️⃣ Status filter
     if (statusFilter && item.activitystatus !== statusFilter) return false;
@@ -254,10 +249,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       return (item.companyname ?? "").includes(searchQuery);
     }
 
-    // 3️⃣ Default: only today's items (6AM to 11:59PM Manila time)
+    // 3️⃣ Default: only today's items (based on local/server time)
     return itemDate === today;
   });
-
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {

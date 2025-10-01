@@ -171,9 +171,6 @@ const Companies: React.FC<CompaniesProps> = ({
         console.error("Error fetching companies:", error);
         setCompanies([]);
         setRemainingQuota(35);
-        toast.error("Failed to load daily quota.", {
-          position: "top-right",
-        });
       } finally {
         setLoading(false);
       }
@@ -245,7 +242,6 @@ const Companies: React.FC<CompaniesProps> = ({
       }),
     });
   };
-
 
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
