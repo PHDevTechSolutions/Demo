@@ -86,7 +86,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       contactperson: data.contactperson,
       contactnumber: data.contactnumber,
       emailaddress: data.emailaddress,
-      typeclient: isInquiry ? "CSR Client" : (data as Company).typeclient,
+      typeclient: data.typeclient,
       address: data.address || "",
     };
 

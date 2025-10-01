@@ -3,9 +3,6 @@
 import React, {
   useState,
   useEffect,
-  useRef,
-  createContext,
-  useContext,
   ReactNode,
 } from "react";
 import Sidebar from "../Sidebar/Sidebar";
@@ -14,126 +11,11 @@ import Footer from "../Footer/Footer";
 import AIRightbar from "../AI/Rightbar/AIRightbar";
 import GPTRightbar from "../AI/Rightbar/GPTRightbar";
 
-// 🎵 Songs List
-const songs = [
-  "a-perfect-christmas.mp3",
-  "christmas-in-our-hearts.mp3",
-  "marys-boy-child.mp3",
-  "what-do-you-want-to-do-with.mp3",
-];
-
-// ----------------------
-// 🎵 Music Context Setup
-// ----------------------
-interface MusicContextProps {
-  isPlaying: boolean;
-  currentSongIndex: number;
-  isHovered: boolean;
-  handlePlay: () => void;
-  handleStop: () => void;
-  handleNext: () => void;
-  handlePrev: () => void;
-  setIsHovered: (val: boolean) => void;
-  songs: string[];
-}
-
-const MusicPlayerContext = createContext<MusicContextProps | null>(null);
-
-const MusicPlayerProvider = ({ children }: { children: ReactNode }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSongIndex, setCurrentSongIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // auto next song
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleEnded = () => {
-      setCurrentSongIndex((prev) => (prev + 1) % songs.length);
-    };
-
-    audio.addEventListener("ended", handleEnded);
-    return () => {
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, []);
-
-  // update source kapag nagbago index
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.src = `/music/${songs[currentSongIndex]}`;
-      if (isPlaying) {
-        audioRef.current.play().catch(() => { });
-      }
-    }
-  }, [currentSongIndex]);
-
-  // Controls
-  const handlePlay = () => {
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => { });
-      setIsPlaying(true);
-    }
-  };
-
-  const handleStop = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
-  };
-
-  const handleNext = () => {
-    setCurrentSongIndex((prev) => (prev + 1) % songs.length);
-    setIsPlaying(true);
-  };
-
-  const handlePrev = () => {
-    setCurrentSongIndex((prev) =>
-      prev === 0 ? songs.length - 1 : prev - 1
-    );
-    setIsPlaying(true);
-  };
-
-  return (
-    <MusicPlayerContext.Provider
-      value={{
-        isPlaying,
-        currentSongIndex,
-        isHovered,
-        handlePlay,
-        handleStop,
-        handleNext,
-        handlePrev,
-        setIsHovered,
-        songs,
-      }}
-    >
-      {/* Hidden audio tag na persisted */}
-      <audio ref={audioRef} src={`/music/${songs[currentSongIndex]}`} />
-      {children}
-    </MusicPlayerContext.Provider>
-  );
-};
-
-export const useMusicPlayer = () => {
-  const ctx = useContext(MusicPlayerContext);
-  if (!ctx) throw new Error("useMusicPlayer must be used within MusicPlayerProvider");
-  return ctx;
-};
-
-// ----------------------
-// 🎵 Parent Layout
-// ----------------------
 interface ParentLayoutProps {
   children: ReactNode;
 }
 
 const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isRightbarOpen, setRightbarOpen] = useState(false);
   const [isGPTRightbarOpen, setGPTRightbarOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -152,19 +34,6 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
-
-  // 🎵 get music context
-  const {
-    isPlaying,
-    currentSongIndex,
-    isHovered,
-    handlePlay,
-    handleStop,
-    handleNext,
-    handlePrev,
-    setIsHovered,
-    songs,
-  } = useMusicPlayer();
 
   return (
     <div
@@ -234,12 +103,3 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     </div>
   );
 };
-
-// Wrap layout with MusicPlayerProvider para hindi nagrereset per page
-export default function LayoutWrapper({ children }: { children: ReactNode }) {
-  return (
-    <MusicPlayerProvider>
-      <ParentLayout>{children}</ParentLayout>
-    </MusicPlayerProvider>
-  );
-}

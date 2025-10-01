@@ -23,49 +23,48 @@ async function insertActivity(data: any) {
       inquiryid,
     } = data;
 
+    // 🏷️ Generate unique activity number
     const firstLetterCompany = companyname?.charAt(0).toUpperCase() || "X";
     const firstLetterContact = contactperson?.charAt(0).toUpperCase() || "X";
-    const lastLetterContact =
-      contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
-    const random4 = Math.floor(1000 + Math.random() * 9000); // 4 digits
-    const random6 = Math.floor(100000 + Math.random() * 900000); // 6 digits
+    const lastLetterContact = contactperson?.charAt(contactperson.length - 1).toUpperCase() || "X";
+    const random4 = Math.floor(1000 + Math.random() * 9000);
+    const random6 = Math.floor(100000 + Math.random() * 900000);
     const activitynumber = `${firstLetterCompany}-${firstLetterContact}${lastLetterContact}-${random4}-${random6}`;
 
     const activitystatus = "On Progress";
-    const result = await sql`
+
+    // ✅ Insert into activity
+    const insertedActivity = await sql`
       INSERT INTO activity (
-        referenceid,
-        manager,
-        tsm,
-        companyname,
-        contactperson,
-        contactnumber,
-        emailaddress,
-        typeclient,
-        address,
-        activitynumber,
-        activitystatus,
-        date_created,
-        date_updated
+        referenceid, manager, tsm, companyname, contactperson, contactnumber, emailaddress,
+        typeclient, address, activitynumber, activitystatus, date_created, date_updated
       ) VALUES (
-        ${referenceid},
-        ${manager},
-        ${tsm},
-        ${companyname},
-        ${contactperson},
-        ${contactnumber},
-        ${emailaddress},
-        ${typeclient},
-        ${address},
-        ${activitynumber},
-        ${activitystatus},
-        NOW(),
-        NOW()
+        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber}, ${emailaddress},
+        ${typeclient}, ${address}, ${activitynumber}, ${activitystatus}, NOW(), NOW()
       )
       RETURNING *;
     `;
 
-    // Optional: update inquiry if present
+    let insertedAccount = null;
+    if (typeclient === "CSR Inquiries") {
+      try {
+        insertedAccount = await sql`
+          INSERT INTO accounts (
+            referenceid, tsm, companyname, contactperson, contactnumber,
+            emailaddress, typeclient, address, status, date_created, date_updated
+          ) VALUES (
+            ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
+            ${emailaddress}, 'CSR Client', ${address}, 'Active', NOW(), NOW()
+          )
+          RETURNING *;
+        `;
+      } catch (accountErr: any) {
+        console.error("❌ Error inserting into accounts:", accountErr);
+        throw new Error(`Accounts insert failed → ${accountErr.message || accountErr}`);
+      }
+    }
+
+    // ✅ Update inquiries if needed
     if (typeclient === "CSR Inquiries" && inquiryid) {
       await sql`
         UPDATE inquiries
@@ -76,9 +75,15 @@ async function insertActivity(data: any) {
       `;
     }
 
-    return { success: true, data: result[0] };
+    return {
+      success: true,
+      data: {
+        activity: insertedActivity[0],
+        account: insertedAccount ? insertedAccount[0] : null,
+      },
+    };
   } catch (error: any) {
-    console.error("❌ Error inserting activity:", error);
+    console.error("❌ Error inserting activity flow:", error);
     return {
       success: false,
       error: error.message || "Failed to insert activity.",

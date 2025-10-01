@@ -215,9 +215,9 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
 
       {callbacks.length > 0 ? (
         <>
-          {callbacks.slice(0, visibleCount).map((inq) => (
+          {callbacks.slice(0, visibleCount).map((inq, index) => (
             <CallbackCard
-              key={inq.activitynumber || inq.id || Math.random()}
+              key={inq.id ?? `${inq.activitynumber}-${inq.referenceid}-${index}`}
               inq={inq}
               userDetails={userDetails || { ReferenceID: "" }}
               openFormDrawer={openFormDrawer}
