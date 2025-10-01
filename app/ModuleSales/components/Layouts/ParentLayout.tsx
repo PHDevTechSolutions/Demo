@@ -1,10 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Navbar from "../Navbar/Navbar";
 import Footer from "../Footer/Footer";
@@ -25,11 +21,9 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
   );
 
-  // detect mobile
+  // ✅ Detect if mobile
   useEffect(() => {
-    const checkScreen = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    const checkScreen = () => setIsMobile(window.innerWidth < 768);
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
@@ -37,26 +31,30 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
 
   return (
     <div
-      className={`flex relative font-[Comic_Sans_MS] min-h-screen ${isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
-        }`}
+      className={`flex relative font-[Comic_Sans_MS] min-h-screen ${
+        isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
+      }`}
     >
-
-      {/* Sidebar Desktop - always fixed */}
+      {/* Sidebar Desktop */}
       {!isMobile && (
         <div className="fixed top-0 left-0 h-screen z-50">
-          <Sidebar isOpen={true} onClose={() => { }} isDarkMode={isDarkMode} />
+          <Sidebar isOpen={true} onClose={() => {}} isDarkMode={isDarkMode} />
         </div>
       )}
 
-
       {/* Main Content */}
       <div
-        className={`flex-grow transition-all duration-300 ${!isMobile ? "ml-64" : ""
-          }`}
+        className={`flex-grow transition-all duration-300 ${
+          !isMobile ? "ml-64" : ""
+        }`}
       >
         <Navbar
-          onToggleSidebar={() => { }}
-          onToggleTheme={() => setDarkMode(!isDarkMode)}
+          onToggleSidebar={() => {}}
+          onToggleTheme={() => {
+            const newTheme = !isDarkMode ? "dark" : "light";
+            localStorage.setItem("theme", newTheme);
+            setDarkMode(!isDarkMode);
+          }}
           isDarkMode={isDarkMode}
         />
         <main className="p-4">{children}</main>
@@ -66,7 +64,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       {/* Sidebar Mobile */}
       {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 z-[999] border-t shadow-lg">
-          <Sidebar isOpen={true} onClose={() => { }} isDarkMode={isDarkMode} />
+          <Sidebar isOpen={true} onClose={() => {}} isDarkMode={isDarkMode} />
         </div>
       )}
 
@@ -92,14 +90,13 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       </div>
 
       {/* Tasky Sidebars */}
-      <AIRightbar
-        isOpen={isRightbarOpen}
-        onClose={() => setRightbarOpen(false)}
-      />
-      <GPTRightbar
-        isOpen={isGPTRightbarOpen}
-        onClose={() => setGPTRightbarOpen(false)}
-      />
+      <AIRightbar isOpen={isRightbarOpen} onClose={() => setRightbarOpen(false)} />
+      <GPTRightbar isOpen={isGPTRightbarOpen} onClose={() => setGPTRightbarOpen(false)} />
     </div>
   );
 };
+
+// ✅ Proper Layout Wrapper
+export default function LayoutWrapper({ children }: { children: ReactNode }) {
+  return <ParentLayout>{children}</ParentLayout>;
+}
