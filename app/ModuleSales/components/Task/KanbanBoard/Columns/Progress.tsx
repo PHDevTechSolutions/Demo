@@ -239,10 +239,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
   // Filter progress
   const filteredProgress = progress.filter((item) => {
-    if (!item.date_created) return false;
+    if (!item.date_updated) return false;
 
     // Convert item's date_created to Manila time
-    const itemDateUTC = new Date(item.date_created);
+    const itemDateUTC = new Date(item.date_updated);
     const itemManilaTime = new Date(itemDateUTC.getTime() + (manilaOffset - itemDateUTC.getTimezoneOffset()) * 60000);
     const itemDate = itemManilaTime.toISOString().split("T")[0];
 
