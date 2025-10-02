@@ -44,10 +44,11 @@ const ListofUser: React.FC = () => {
     ImapPass: "",
   });
 
-  const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>(
-    []
-  );
+  const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
+  const [tsmOptions, setTSMOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedTSM, setSelectedTSM] = useState("");
+
   const loading = loadingUser || loadingAccounts;
 
   useEffect(() => {
@@ -107,16 +108,16 @@ const ListofUser: React.FC = () => {
     fetchAccount();
   }, [fetchAccount]);
 
+  // 🔹 Fetch TSA Options
   useEffect(() => {
     const fetchTSA = async () => {
       try {
         let url = "";
 
-        if (
-          userDetails.Role === "Territory Sales Manager" &&
-          userDetails.ReferenceID
-        ) {
+        if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
+        } else if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Super Admin") {
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
         } else {
@@ -141,6 +142,71 @@ const ListofUser: React.FC = () => {
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
+  // 🔹 Fetch TSM Options
+  useEffect(() => {
+    const fetchTSM = async () => {
+      try {
+        let url = "";
+
+        if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Manager&manager=${userDetails.ReferenceID}`;
+        } else if (userDetails.Role === "Super Admin") {
+          url = `/api/fetchtsadata?Role=Territory Sales Manager`;
+        } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
+        } else {
+          return;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch TSM");
+
+        const data = await response.json();
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
+
+        setTSMOptions(options);
+      } catch (error) {
+        console.error("Error fetching TSM:", error);
+      }
+    };
+
+    fetchTSM();
+  }, [userDetails.ReferenceID, userDetails.Role]);
+
+  // 🔹 Auto-refetch TSA kapag nagpalit ng TSM (Manager & Super Admin)
+  useEffect(() => {
+    const fetchTSAUnderTSM = async () => {
+      if (!selectedTSM) {
+        // reset TSA kung walang piniling TSM
+        setSelectedAgent("");
+        return;
+      }
+
+      try {
+        const url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${selectedTSM}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch TSA under TSM");
+
+        const data = await response.json();
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
+
+        setTSAOptions(options);
+        setSelectedAgent(""); // reset TSA filter kapag nagpalit ng TSM
+      } catch (error) {
+        console.error("Error fetching TSA under TSM:", error);
+      }
+    };
+
+    fetchTSAUnderTSM();
+  }, [selectedTSM]);
+
+  // 🔹 Filtered Accounts
   const filteredAccounts = useMemo(() => {
     return posts
       .filter((post) => {
@@ -154,34 +220,22 @@ const ListofUser: React.FC = () => {
           (!startDate || (postDate && postDate >= new Date(startDate))) &&
           (!endDate || (postDate && postDate <= new Date(endDate)));
 
-        const matchesAgentFilter =
-          !selectedAgent || post?.referenceid === selectedAgent;
+        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
 
-        if (userDetails.Role === "Super Admin") {
+        if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
           return matchesCompany && matchesDate && matchesAgentFilter;
         } else {
           const matchesRefId =
             post?.referenceid === userDetails.ReferenceID ||
             post?.ReferenceID === userDetails.ReferenceID;
-          return (
-            matchesCompany && matchesDate && matchesRefId && matchesAgentFilter
-          );
+          return matchesCompany && matchesDate && matchesRefId && matchesAgentFilter;
         }
       })
       .sort(
-        (a, b) =>
-          new Date(b.date_created).getTime() -
-          new Date(a.date_created).getTime()
+        (a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
       );
-  }, [
-    posts,
-    searchTerm,
-    startDate,
-    endDate,
-    userDetails.ReferenceID,
-    userDetails.Role,
-    selectedAgent,
-  ]);
+  }, [posts, searchTerm, startDate, endDate, userDetails.ReferenceID, userDetails.Role, selectedAgent]);
+
 
   return (
     <SessionChecker>
@@ -208,22 +262,35 @@ const ListofUser: React.FC = () => {
                   <button className="p-2 text-xs underline">View Dashboard</button>
                   {activeTab === "scheduled" && (
                     <div className="p-4 bg-white shadow-md rounded-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h2 className="text-lg font-bold">Manual Task</h2>
-                          <p className="text-xs text-gray-600">
-                            An overview of your recent and upcoming actions,
-                            including <strong>manual tasks</strong>,{" "}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Agent filter */}
-                      {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Manager" ||
+                      {/* Agent & TSM filter */}
+                      {(userDetails.Role === "Territory Sales Manager" ||
+                        userDetails.Role === "Manager" ||
                         userDetails.Role === "Super Admin") && (
                           <div className="mb-4 flex flex-wrap items-center space-x-4">
+                            {/* Show TSM filter for Manager & Super Admin */}
+                            {(userDetails.Role === "Manager" || userDetails.Role === "Super Admin") && (
+                              <>
+                                <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
+                                  Filter by TSM
+                                </label>
+                                <select
+                                  className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                                  value={selectedTSM}
+                                  onChange={(e) => setSelectedTSM(e.target.value)}
+                                >
+                                  <option value="">All TSM</option>
+                                  {tsmOptions.map((tsm) => (
+                                    <option key={tsm.value} value={tsm.value}>
+                                      {tsm.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </>
+                            )}
+
+                            {/* TSA filter */}
                             <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                              Filter by Agent
+                              Filter by TSA
                             </label>
                             <select
                               className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
@@ -237,11 +304,9 @@ const ListofUser: React.FC = () => {
                                 </option>
                               ))}
                             </select>
+
                             <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">
-                              Total Activities:{" "}
-                              <span className="font-bold">
-                                {filteredAccounts.length}
-                              </span>
+                              Total Activities: <span className="font-bold">{filteredAccounts.length}</span>
                             </h1>
                           </div>
                         )}
