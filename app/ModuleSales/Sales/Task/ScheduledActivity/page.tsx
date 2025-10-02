@@ -14,7 +14,7 @@ import Quote from "../../../components/Task/Quote/Main";
 import Tools from "../../../components/Task/Tools/Sidebar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { BsArrowLeft } from 'react-icons/bs';
 const ListofUser: React.FC = () => {
   const router = useRouter();
 
@@ -208,7 +208,7 @@ const ListofUser: React.FC = () => {
 
               <div className="text-gray-900 w-full">
                 <button
-                  className="p-2 text-xs underline"
+                  className="p-2 text-xs border rounded shadow-xs bg-gray-100 flex items-center mb-4 gap-1"
                   onClick={() => {
                     const url = userId
                       ? `/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(userId)}`
@@ -216,7 +216,19 @@ const ListofUser: React.FC = () => {
                     router.push(url);
                   }}
                 >
-                  View Dashboard
+                 <BsArrowLeft /> View Dashboard
+                </button>
+
+                <button
+                  className="p-2 text-xs border rounded shadow-xs bg-gray-100 flex items-center mb-4 gap-1"
+                  onClick={() => {
+                    const url = userId
+                      ? `/ModuleSales/Sales/Companies/CompanyAccounts?id=${encodeURIComponent(userId)}`
+                      : "/ModuleSales/Sales/Companies/CompanyAccounts";
+                    router.push(url);
+                  }}
+                >
+                 <BsArrowLeft /> View Clients
                 </button>
 
                 {activeTab === "scheduled" && (
