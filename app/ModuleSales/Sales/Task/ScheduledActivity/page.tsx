@@ -1,5 +1,7 @@
-"use client";
+"use client"; // 🔹 Dapat pinakauna
+
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation"; // 🔹 App Router
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
@@ -9,14 +11,13 @@ import TaskList from "../../../components/Task/TaskList/Task";
 import Notes from "../../../components/Task/Notes/Note";
 import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
 import Quote from "../../../components/Task/Quote/Main";
-//import XendMail from "../../../components/Task/XendMail/Main";
-// Tools
 import Tools from "../../../components/Task/Tools/Sidebar";
-// Toast
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const ListofUser: React.FC = () => {
+  const router = useRouter();
+
   const [activeTab, setActiveTab] = useState<string>("activity");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,7 +27,7 @@ const ListofUser: React.FC = () => {
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
 
-  const [userDetails, setUserDetails] = useState({
+  const [userDetails, setUserDetails] = useState<any>({
     UserId: "",
     Firstname: "",
     Lastname: "",
@@ -50,14 +51,16 @@ const ListofUser: React.FC = () => {
   const [selectedTSM, setSelectedTSM] = useState("");
 
   const loading = loadingUser || loadingAccounts;
+  const userId = userDetails?.UserId;
 
+  // 🔹 Fetch user details
   useEffect(() => {
     const fetchUserData = async () => {
-      const userId = new URLSearchParams(window.location.search).get("id");
-      if (!userId) return setError("Missing User ID."), setLoadingUser(false);
+      const userIdParam = new URLSearchParams(window.location.search).get("id");
+      if (!userIdParam) return setError("Missing User ID."), setLoadingUser(false);
 
       try {
-        const res = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
+        const res = await fetch(`/api/user?id=${encodeURIComponent(userIdParam)}`);
         if (!res.ok) throw new Error("Failed to fetch user data.");
         const data = await res.json();
         setUserDetails({
@@ -88,12 +91,11 @@ const ListofUser: React.FC = () => {
     fetchUserData();
   }, []);
 
+  // 🔹 Fetch activities
   const fetchAccount = useCallback(async () => {
     setLoadingAccounts(true);
     try {
-      const res = await fetch(
-        "/api/ModuleSales/Reports/AccountManagement/FetchActivity"
-      );
+      const res = await fetch("/api/ModuleSales/Reports/AccountManagement/FetchActivity");
       const data = await res.json();
       setPosts(data.data || []);
     } catch (err) {
@@ -113,32 +115,23 @@ const ListofUser: React.FC = () => {
     const fetchTSA = async () => {
       try {
         let url = "";
-
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Super Admin") {
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
-        } else {
-          return;
-        }
+        } else return;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch agents");
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch agents");
 
-        const data = await response.json();
-        const options = data.map((user: any) => ({
-          value: user.ReferenceID,
-          label: `${user.Firstname} ${user.Lastname}`,
-        }));
-
-        setTSAOptions(options);
-      } catch (error) {
-        console.error("Error fetching agents:", error);
+        const data = await res.json();
+        setTSAOptions(data.map((user: any) => ({ value: user.ReferenceID, label: `${user.Firstname} ${user.Lastname}` })));
+      } catch (err) {
+        console.error(err);
       }
     };
-
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
@@ -147,222 +140,152 @@ const ListofUser: React.FC = () => {
     const fetchTSM = async () => {
       try {
         let url = "";
-
         if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Manager&manager=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Super Admin") {
           url = `/api/fetchtsadata?Role=Territory Sales Manager`;
-        } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
-          url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
-        } else {
-          return;
-        }
+        } else return;
 
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch TSM");
-
-        const data = await response.json();
-        const options = data.map((user: any) => ({
-          value: user.ReferenceID,
-          label: `${user.Firstname} ${user.Lastname}`,
-        }));
-
-        setTSMOptions(options);
-      } catch (error) {
-        console.error("Error fetching TSM:", error);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch TSM");
+        const data = await res.json();
+        setTSMOptions(data.map((user: any) => ({ value: user.ReferenceID, label: `${user.Firstname} ${user.Lastname}` })));
+      } catch (err) {
+        console.error(err);
       }
     };
-
     fetchTSM();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
-  // 🔹 Auto-refetch TSA kapag nagpalit ng TSM (Manager & Super Admin)
+  // 🔹 Auto-refetch TSA kapag nagpalit ng TSM
   useEffect(() => {
     const fetchTSAUnderTSM = async () => {
-      if (!selectedTSM) {
-        // reset TSA kung walang piniling TSM
-        setSelectedAgent("");
-        return;
-      }
+      if (!selectedTSM) return setSelectedAgent("");
 
       try {
-        const url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${selectedTSM}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch TSA under TSM");
-
-        const data = await response.json();
-        const options = data.map((user: any) => ({
-          value: user.ReferenceID,
-          label: `${user.Firstname} ${user.Lastname}`,
-        }));
-
-        setTSAOptions(options);
-        setSelectedAgent(""); // reset TSA filter kapag nagpalit ng TSM
-      } catch (error) {
-        console.error("Error fetching TSA under TSM:", error);
+        const res = await fetch(`/api/fetchtsadata?Role=Territory Sales Associate&tsm=${selectedTSM}`);
+        if (!res.ok) throw new Error("Failed to fetch TSA under TSM");
+        const data = await res.json();
+        setTSAOptions(data.map((user: any) => ({ value: user.ReferenceID, label: `${user.Firstname} ${user.Lastname}` })));
+        setSelectedAgent("");
+      } catch (err) {
+        console.error(err);
       }
     };
-
     fetchTSAUnderTSM();
   }, [selectedTSM]);
 
-  // 🔹 Filtered Accounts
+  // 🔹 Filtered accounts
   const filteredAccounts = useMemo(() => {
     return posts
-      .filter((post) => {
+      .filter(post => {
         if (post.activitystatus === "Deleted") return false;
 
-        const companyName = post?.companyname?.toLowerCase() || "";
-        const matchesCompany = companyName.includes(searchTerm.toLowerCase());
-
+        const matchesCompany = (post.companyname || "").toLowerCase().includes(searchTerm.toLowerCase());
         const postDate = post.date_created ? new Date(post.date_created) : null;
-        const matchesDate =
-          (!startDate || (postDate && postDate >= new Date(startDate))) &&
+        const matchesDate = (!startDate || (postDate && postDate >= new Date(startDate))) &&
           (!endDate || (postDate && postDate <= new Date(endDate)));
 
-        const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+        const matchesAgent = !selectedAgent || post.referenceid === selectedAgent;
 
         if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
-          return matchesCompany && matchesDate && matchesAgentFilter;
+          // 🔹 Manager can see all posts under their TSMs/Agents
+          return matchesCompany && matchesDate && matchesAgent;
         } else {
-          const matchesRefId =
-            post?.referenceid === userDetails.ReferenceID ||
-            post?.ReferenceID === userDetails.ReferenceID;
-          return matchesCompany && matchesDate && matchesRefId && matchesAgentFilter;
+          return matchesCompany && matchesDate && matchesAgent && post.referenceid === userDetails.ReferenceID;
         }
       })
-      .sort(
-        (a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-      );
-  }, [posts, searchTerm, startDate, endDate, userDetails.ReferenceID, userDetails.Role, selectedAgent]);
-
+      .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
+  }, [posts, searchTerm, startDate, endDate, selectedAgent, userDetails]);
 
   return (
     <SessionChecker>
       <ParentLayout>
         <UserFetcher>
-          {(user) => (
-            <>
-              {/*
-              <Banner show={showBanner} />
-              <AnnouncementModal
-                isOpen={isSummaryOpen}
-                onClose={() => setIsSummaryOpen(false)}
-                summary={yesterdaySummary}
-                summaryType={summaryType}
-                loadingSummary={loadingSummary} // ✅ added
-              />
-              */}
+          {() => (
+            <div className="flex gap-4">
+              <Tools activeTab={activeTab} setActiveTab={setActiveTab} userDetails={userDetails} />
 
-              <div className="flex gap-4">
-                <Tools activeTab={activeTab} setActiveTab={setActiveTab} userDetails={userDetails} />
+              <div className="text-gray-900 w-full">
+                <button
+                  className="p-2 text-xs underline"
+                  onClick={() => {
+                    const url = userId
+                      ? `/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(userId)}`
+                      : "/ModuleSales/Sales/Dashboard";
+                    router.push(url);
+                  }}
+                >
+                  View Dashboard
+                </button>
 
-                {/* Main */}
-                <div className="text-gray-900 w-full">
-                  <button className="p-2 text-xs underline">View Dashboard</button>
-                  {activeTab === "scheduled" && (
-                    <div className="p-4 bg-white shadow-md rounded-lg">
-                      {/* Agent & TSM filter */}
-                      {(userDetails.Role === "Territory Sales Manager" ||
-                        userDetails.Role === "Manager" ||
-                        userDetails.Role === "Super Admin") && (
-                          <div className="mb-4 flex flex-wrap items-center space-x-4">
-                            {/* Show TSM filter for Manager & Super Admin */}
-                            {(userDetails.Role === "Manager" || userDetails.Role === "Super Admin") && (
-                              <>
-                                <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                                  Filter by TSM
-                                </label>
-                                <select
-                                  className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                                  value={selectedTSM}
-                                  onChange={(e) => setSelectedTSM(e.target.value)}
-                                >
-                                  <option value="">All TSM</option>
-                                  {tsmOptions.map((tsm) => (
-                                    <option key={tsm.value} value={tsm.value}>
-                                      {tsm.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </>
-                            )}
+                {activeTab === "scheduled" && (
+                  <div className="p-4 bg-white shadow-md rounded-lg">
+                    {(userDetails.Role === "Territory Sales Manager" ||
+                      userDetails.Role === "Manager" ||
+                      userDetails.Role === "Super Admin") && (
+                        <div className="mb-4 flex flex-wrap items-center space-x-4">
+                          {(userDetails.Role === "Manager" || userDetails.Role === "Super Admin") && (
+                            <>
+                              <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Filter by TSM</label>
+                              <select
+                                className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                                value={selectedTSM}
+                                onChange={(e) => setSelectedTSM(e.target.value)}
+                              >
+                                <option value="">All TSM</option>
+                                {tsmOptions.map(tsm => (
+                                  <option key={tsm.value} value={tsm.value}>{tsm.label}</option>
+                                ))}
+                              </select>
+                            </>
+                          )}
 
-                            {/* TSA filter */}
-                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">
-                              Filter by TSA
-                            </label>
-                            <select
-                              className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                              value={selectedAgent}
-                              onChange={(e) => setSelectedAgent(e.target.value)}
-                            >
-                              <option value="">All Agents</option>
-                              {tsaOptions.map((agent) => (
-                                <option key={agent.value} value={agent.value}>
-                                  {agent.label}
-                                </option>
-                              ))}
-                            </select>
+                          <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Filter by TSA</label>
+                          <select
+                            className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
+                            value={selectedAgent}
+                            onChange={(e) => setSelectedAgent(e.target.value)}
+                          >
+                            <option value="">All Agents</option>
+                            {tsaOptions.map(agent => (
+                              <option key={agent.value} value={agent.value}>{agent.label}</option>
+                            ))}
+                          </select>
 
-                            <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">
-                              Total Activities: <span className="font-bold">{filteredAccounts.length}</span>
-                            </h1>
-                          </div>
-                        )}
+                          <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">
+                            Total Activities: <span className="font-bold">{filteredAccounts.length}</span>
+                          </h1>
+                        </div>
+                      )}
 
-                      <Filters
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        startDate={startDate}
-                        setStartDate={setStartDate}
-                        endDate={endDate}
-                        setEndDate={setEndDate}
-                      />
+                    <Filters
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      startDate={startDate}
+                      setStartDate={setStartDate}
+                      endDate={endDate}
+                      setEndDate={setEndDate}
+                    />
 
-                      <Main
-                        posts={filteredAccounts}
-                        userDetails={userDetails}
-                        fetchAccount={fetchAccount}
-                      />
-                    </div>
-                  )}
-
-                  <div
-                    className={`${activeTab === "tasklist" ? "block" : "hidden"
-                      } bg-white shadow-md rounded-lg flex`}
-                  >
-                    <TaskList userDetails={userDetails} />
+                    <Main posts={filteredAccounts} userDetails={userDetails} fetchAccount={fetchAccount} />
                   </div>
+                )}
 
-                  <div
-                    className={`${activeTab === "notes" ? "block" : "hidden"
-                      } bg-white shadow-md rounded-lg flex`}
-                  >
-                    <Notes userDetails={userDetails} />
-                  </div>
+                <div className={`${activeTab === "tasklist" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                  <TaskList userDetails={userDetails} />
+                </div>
 
-                  <div
-                    className={`${activeTab === "activity" ? "block" : "hidden"
-                      } bg-white shadow-md rounded-lg flex`}
-                  >
-                    <KanbanBoard userDetails={userDetails} />
-                  </div>
+                <div className={`${activeTab === "notes" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                  <Notes userDetails={userDetails} />
+                </div>
 
-                  <div
-                    className={`${activeTab === "quote" ? "block" : "hidden"
-                      } bg-white shadow-md rounded-lg flex`}
-                  >
-                    <Quote userDetails={userDetails} />
-                  </div>
+                <div className={`${activeTab === "activity" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                  <KanbanBoard userDetails={userDetails} />
+                </div>
 
-                  {/* Xendmail
-                  <div
-                    className={`${activeTab === "xendmail" ? "block" : "hidden"
-                      } bg-white shadow-md rounded-lg flex`}
-                  >
-                    <XendMail userDetails={userDetails} />
-                  </div> */}
+                <div className={`${activeTab === "quote" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
+                  <Quote userDetails={userDetails} />
                 </div>
 
                 <ToastContainer
@@ -381,7 +304,7 @@ const ListofUser: React.FC = () => {
                   progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
                 />
               </div>
-            </>
+            </div>
           )}
         </UserFetcher>
       </ParentLayout>
