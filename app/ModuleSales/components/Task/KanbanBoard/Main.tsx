@@ -111,6 +111,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         });
       }
 
+      // 🚀 Ito lang ang kailangan para mag-refresh lahat ng children
       setRefreshTrigger(prev => prev + 1);
 
       toast.success("Activity successfully added!", { autoClose: 2000 });
@@ -119,6 +120,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       toast.error("Failed to add activity", { autoClose: 2000 });
     }
   };
+
 
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>

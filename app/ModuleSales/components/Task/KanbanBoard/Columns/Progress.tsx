@@ -308,13 +308,22 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       toast.success("Activity successfully added/updated!");
       setShowForm(false);
       resetForm();
-      setRefreshTrigger(prev => prev + 1);
+
+      // 🔥 Show loading state
+      setListLoading(true);
+
+      // 🔄 Force refresh
+      await fetchProgress();
+
+      // Reset pagination
+      setVisibleCount(ITEMS_PER_PAGE);
 
     } catch (err: any) {
       console.error("❌ Submit error:", err);
       toast.error("Failed to submit activity: " + err.message);
     } finally {
       setSubmitting(false);
+      setListLoading(false);
     }
   };
 

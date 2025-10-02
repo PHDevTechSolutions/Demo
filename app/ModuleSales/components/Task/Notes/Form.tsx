@@ -126,6 +126,7 @@ const Form: React.FC<FormProps> = ({
                     value={activitystatus}
                     onChange={(e) => setActivityStatus(e.target.value)}
                     className="flex-1 p-2 text-xs focus:outline-none focus:ring focus:ring-blue-300"
+                    required
                 >
                     <option value="">Select Status</option>
                     <option value="Pending">Pending</option>
@@ -137,6 +138,7 @@ const Form: React.FC<FormProps> = ({
                     value={typeactivity}
                     onChange={(e) => setTypeActivity(e.target.value)}
                     className="flex-1 p-2 text-xs focus:outline-none focus:ring focus:ring-blue-300"
+                    required
                 >
                     <option value="">Select Activity</option>
                     {activityTypes.map((type) => (
