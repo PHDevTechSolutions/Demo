@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, memo } from "react";
-import { FaCircle, FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 import { formatToPHTime } from "../../../../../../utils/date";
@@ -145,8 +145,8 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {formatToPHTime(progress.date_created)} {/* 🔹 gamit na yung PH formatter */}
-          </p>
+  {progress.date_updated}
+</p>
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
