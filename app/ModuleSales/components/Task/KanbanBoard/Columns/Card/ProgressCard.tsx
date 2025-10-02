@@ -4,6 +4,7 @@ import React, { useState, useCallback, memo } from "react";
 import { FaCircle, FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
+import { formatToPHTime } from "../../../../../../utils/date";
 
 export interface ProgressItem {
   id: string;
@@ -144,8 +145,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {/* ✅ Local browser time (same as Table) */}
-            { progress.date_updated ? new Date(progress.date_updated).toLocaleString() : undefined }
+            {formatToPHTime(progress.date_created)} {/* 🔹 gamit na yung PH formatter */}
           </p>
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
