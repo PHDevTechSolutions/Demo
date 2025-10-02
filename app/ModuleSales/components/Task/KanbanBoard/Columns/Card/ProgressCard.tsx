@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, memo } from "react";
-import { FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
+import { FaCircle, FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 
@@ -69,27 +69,6 @@ const STATUS_BG: Record<string, string> = {
   Cancelled: "bg-red-300",
   Loss: "bg-red-300",
 };
-
-// 🕒 Helper to always format dates to Asia/Manila timezone
-function formatToManila(dateString: string) {
-  if (!dateString) return "N/A";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleString("en-US", {
-      timeZone: "Asia/Manila",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  } catch (e) {
-    console.error("Date formatting error:", e);
-    return dateString;
-  }
-}
 
 const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   progress,
@@ -165,7 +144,8 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
           <p className="text-gray-500 text-[8px]">
-            {formatToManila(progress.date_updated)}
+            {/* ✅ Local browser time (same as Table) */}
+            { progress.date_updated ? new Date(progress.date_updated).toLocaleString() : undefined }
           </p>
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
