@@ -69,25 +69,6 @@ const InformationCard: React.FC<InformationCardProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-sm">
         <div>
-          <label className="block text-xs font-bold mb-1" htmlFor="Status">
-            Update Account Status
-          </label>
-          <select
-            id="Status"
-            value={Status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full px-3 py-2 border-b bg-gray-50 text-xs"
-          >
-            <option value="">Select Status</option>
-            <option value="Resigned">Resigned</option>
-            <option value="Terminated">Terminated</option>
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            Modify the agent's current account status.
-          </p>
-        </div>
-
-        <div>
           <label className="block text-xs font-bold mb-1" htmlFor="TargetQuota">
             Sales Target Quota
           </label>
