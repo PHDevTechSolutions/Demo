@@ -28,28 +28,6 @@ const DashboardPage: React.FC = () => {
   const [tsmOptions, setTSMOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
 
-  const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
-  const [showVersionBanner, setShowVersionBanner] = useState(true);
-
-  useEffect(() => {
-    if (localStorage.getItem("hideWelcomeBanner") === "true") {
-      setShowWelcomeBanner(false);
-    }
-    if (localStorage.getItem("hideVersionBanner") === "true") {
-      setShowVersionBanner(false);
-    }
-  }, []);
-
-  const handleCloseWelcomeBanner = () => {
-    setShowWelcomeBanner(false);
-    localStorage.setItem("hideWelcomeBanner", "true");
-  };
-
-  const handleCloseVersionBanner = () => {
-    setShowVersionBanner(false);
-    localStorage.setItem("hideVersionBanner", "true");
-  };
-
   const fetchData = async () => {
     try {
       const response = await fetch("/api/ModuleSales/Dashboard/FetchProgress");
@@ -65,6 +43,7 @@ const DashboardPage: React.FC = () => {
     fetchData();
   }, []);
 
+  // 🔹 Fetch TSA list
   useEffect(() => {
     const fetchTSA = async () => {
       try {
@@ -72,7 +51,9 @@ const DashboardPage: React.FC = () => {
 
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
+        } else if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
+        } else if (userDetails.Role === "Super Admin") {
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
         } else {
           return;
@@ -82,10 +63,14 @@ const DashboardPage: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch agents");
 
         const data = await response.json();
-        const options = data.map((user: any) => ({
-          value: user.ReferenceID,
-          label: `${user.Firstname} ${user.Lastname}`,
-        }));
+
+        // ✅ filter out Resigned users
+        const options = data
+          .filter((user: any) => user.Status !== "Resigned")
+          .map((user: any) => ({
+            value: user.ReferenceID,
+            label: `${user.Firstname} ${user.Lastname}`,
+          }));
 
         setTSAOptions(options);
       } catch (error) {
@@ -96,36 +81,45 @@ const DashboardPage: React.FC = () => {
     fetchTSA();
   }, [userDetails.ReferenceID, userDetails.Role]);
 
+  // 🔹 Fetch TSM list
   useEffect(() => {
     const fetchTSM = async () => {
       try {
         let url = "";
 
-        if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+        if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          url = `/api/fetchtsadata?Role=Territory Sales Manager&manager=${userDetails.ReferenceID}`;
+        } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+          // 👇 optional, pero kung gusto mong makita lang ng TSM sarili niya:
           url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
+        } else if (userDetails.Role === "Super Admin") {
           url = `/api/fetchtsadata?Role=Territory Sales Manager`;
         } else {
           return;
         }
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch agents");
+        if (!response.ok) throw new Error("Failed to fetch TSMs");
 
         const data = await response.json();
-        const options = data.map((user: any) => ({
-          value: user.ReferenceID,
-          label: `${user.Firstname} ${user.Lastname}`,
-        }));
+
+        // ✅ filter out Resigned users
+        const options = data
+          .filter((user: any) => user.Status !== "Resigned")
+          .map((user: any) => ({
+            value: user.ReferenceID,
+            label: `${user.Firstname} ${user.Lastname}`,
+          }));
 
         setTSMOptions(options);
       } catch (error) {
-        console.error("Error fetching agents:", error);
+        console.error("Error fetching TSM:", error);
       }
     };
 
     fetchTSM();
   }, [userDetails.ReferenceID, userDetails.Role]);
+
 
   const filteredAccounts = Array.isArray(posts)
     ? posts

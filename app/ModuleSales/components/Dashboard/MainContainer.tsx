@@ -76,7 +76,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch { }
+        } catch {}
       }
     }
     return presets.today();
@@ -90,18 +90,45 @@ const MainContainer: React.FC<MainContainerProps> = ({
     }
   }, [dateRange]);
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setDateRange((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (val && val in presets) {
-      setDateRange(presets[val as keyof typeof presets]());
+  // 🔹 Filter TSM options by role
+  const filteredTSMOptions = useMemo(() => {
+    if (userDetails.Role === "Manager") {
+      return tsmOptions.filter((tsm) =>
+        filteredAccounts.some(
+          (acc) => acc.manager === userDetails.ReferenceID && acc.tsm === tsm.value
+        )
+      );
     }
-  };
+    return tsmOptions;
+  }, [tsmOptions, userDetails.Role, userDetails.ReferenceID, filteredAccounts]);
 
+  // 🔹 Filter TSA options by role
+  const filteredTSAOptions = useMemo(() => {
+    if (userDetails.Role === "Manager") {
+      return tsaOptions.filter((agent) =>
+        filteredAccounts.some(
+          (acc) => acc.manager === userDetails.ReferenceID && acc.referenceid === agent.value
+        )
+      );
+    }
+    if (userDetails.Role === "Territory Sales Manager") {
+      return tsaOptions.filter((agent) =>
+        filteredAccounts.some(
+          (acc) => acc.tsm === userDetails.ReferenceID && acc.referenceid === agent.value
+        )
+      );
+    }
+    return tsaOptions;
+  }, [tsaOptions, userDetails.Role, userDetails.ReferenceID, filteredAccounts]);
+
+  // 🔹 Auto-select first TSM for Manager
+  useEffect(() => {
+    if (userDetails.Role === "Manager" && filteredTSMOptions.length > 0 && !selectedTSM) {
+      setSelectedTSM(filteredTSMOptions[0].value);
+    }
+  }, [userDetails.Role, filteredTSMOptions, selectedTSM]);
+
+  // 🔹 Date filtering
   const filteredByDate = useMemo(() => {
     if (!dateRange.start && !dateRange.end) return filteredAccounts;
 
@@ -118,6 +145,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
     });
   }, [filteredAccounts, dateRange]);
 
+  // 🔹 Role-based filtering
   const canFilterByTSM = ["Super Admin", "Manager"].includes(userDetails.Role);
   const canFilterByAgent = ["Super Admin", "Manager", "Territory Sales Manager"].includes(userDetails.Role);
 
@@ -128,28 +156,24 @@ const MainContainer: React.FC<MainContainerProps> = ({
 
   const filteredByAgent = useMemo(() => {
     if (!canFilterByAgent) return filteredByTSM;
-
-    if (userDetails.Role === "Manager" && selectedTSM) {
-      return filteredByTSM; 
-    }
-
     if (selectedAgent) {
       return filteredByTSM.filter((acc) => acc.referenceid === selectedAgent);
     }
-
     return filteredByTSM;
-  }, [filteredByTSM, selectedAgent, userDetails.Role, selectedTSM, canFilterByAgent]);
+  }, [filteredByTSM, selectedAgent, canFilterByAgent]);
 
-  const filteredTSAOptions = useMemo(() => {
-    if (userDetails.Role === "Manager" && selectedTSM) {
-      return tsaOptions.filter((agent) =>
-        filteredAccounts.some(
-          (acc) => acc.tsm === selectedTSM && acc.referenceid === agent.value
-        )
-      );
+  // 🔹 Handlers
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setDateRange((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val && val in presets) {
+      setDateRange(presets[val as keyof typeof presets]());
     }
-    return tsaOptions;
-  }, [tsaOptions, userDetails.Role, selectedTSM, filteredAccounts]);
+  };
 
   return (
     <div className="mx-auto p-4">
@@ -165,7 +189,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
               onChange={(e) => setSelectedTSM(e.target.value)}
             >
               <option value="">All TSM</option>
-              {tsmOptions.map((tsm) => (
+              {filteredTSMOptions.map((tsm) => (
                 <option key={tsm.value} value={tsm.value}>
                   {tsm.label}
                 </option>
@@ -193,9 +217,9 @@ const MainContainer: React.FC<MainContainerProps> = ({
             </select>
           </div>
         )}
-
       </div>
 
+      {/* 🔹 Date Filters */}
       <div className="mb-4 flex flex-wrap gap-4 items-center">
         <div>
           <label htmlFor="datePreset" className="block text-xs font-medium">
@@ -250,6 +274,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
         </div>
       </div>
 
+      {/* 🔹 Dashboard Widgets */}
       <div className="space-y-4">
         <CompaniesCard filteredAccounts={filteredByAgent} userDetails={userDetails} />
       </div>

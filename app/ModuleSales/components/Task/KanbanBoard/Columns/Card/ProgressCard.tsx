@@ -4,7 +4,6 @@ import React, { useState, useCallback, memo } from "react";
 import { FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
-import { formatToPHTime } from "../../../../../../utils/date";
 
 export interface ProgressItem {
   id: string;
