@@ -22,18 +22,28 @@ export async function GET(req: Request) {
 
     // ✅ Force timezone to Asia/Manila
     const Xchire_fetch = await Xchire_sql`
-      SELECT DISTINCT ON (date_updated) 
-             id, companyname, contactperson, contactnumber, emailaddress, typeclient, referenceid,
-             (date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila') AS date_created,
-             activitynumber, address, area, deliveryaddress, ticketreferencenumber, 
-             (date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila') AS date_updated,
-             source, activitystatus
-      FROM activity
-      WHERE referenceid = ${referenceid}
-      ORDER BY date_updated DESC
-      ;
-    `;
-
+  SELECT DISTINCT ON (date_updated) 
+         id,
+         companyname,
+         contactperson,
+         contactnumber,
+         emailaddress,
+         typeclient,
+         referenceid,
+         to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
+         activitynumber,
+         address,
+         area,
+         deliveryaddress,
+         ticketreferencenumber,
+         to_char(date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_updated,
+         source,
+         activitystatus
+  FROM activity
+  WHERE referenceid = ${referenceid}
+  ORDER BY date_updated DESC
+  ;
+`;
     console.log("Fetched accounts (Manila time):", Xchire_fetch);
 
     return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });

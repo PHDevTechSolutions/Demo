@@ -144,9 +144,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
-          <p className="text-gray-500 text-[8px]">
-  {progress.date_updated}
-</p>
+          <p className="text-gray-500 text-[8px]">{progress.date_updated}</p>
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
