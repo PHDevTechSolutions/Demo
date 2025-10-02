@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
@@ -75,6 +75,33 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
 
+  // ✅ States for Progress
+  const [progress, setProgress] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // ✅ Fetch Progress directly here
+  const fetchProgress = async () => {
+    if (!userDetails?.ReferenceID) return;
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      setProgress(data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+      toast.error("Failed to fetch progress");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProgress();
+  }, [userDetails?.ReferenceID]);
+
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
 
@@ -111,7 +138,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         });
       }
 
-      // 🚀 Ito lang ang kailangan para mag-refresh lahat ng children
+      // 🚀 Refresh progress directly
+      await fetchProgress();
+
+      // 🚀 Update other columns
       setRefreshTrigger(prev => prev + 1);
 
       toast.success("Activity successfully added!", { autoClose: 2000 });
@@ -120,7 +150,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       toast.error("Failed to add activity", { autoClose: 2000 });
     }
   };
-
 
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
@@ -183,9 +212,16 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                     />
                   </>
                 )}
+
                 {col.id === "in-progress" && !isCollapsed && (
-                  <Progress userDetails={userDetails} />
+                  <Progress
+                    userDetails={userDetails}
+                    progress={progress}
+                    loading={loading}
+                  />
                 )}
+
+
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
                     <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />

@@ -63,6 +63,8 @@ interface UserDetails {
 interface ProgressProps {
   userDetails: UserDetails | null;
   searchQuery?: string;
+  progress: any[];
+  loading: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
