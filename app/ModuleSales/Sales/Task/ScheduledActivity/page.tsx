@@ -205,6 +205,7 @@ const ListofUser: React.FC = () => {
 
                 {/* Main */}
                 <div className="text-gray-900 w-full">
+                  <button className="p-2 text-xs underline">View Dashboard</button>
                   {activeTab === "scheduled" && (
                     <div className="p-4 bg-white shadow-md rounded-lg">
                       <div className="flex items-center justify-between mb-4">
@@ -218,7 +219,7 @@ const ListofUser: React.FC = () => {
                       </div>
 
                       {/* Agent filter */}
-                      {(userDetails.Role === "Territory Sales Manager" ||
+                      {(userDetails.Role === "Territory Sales Manager" || userDetails.Role === "Manager" ||
                         userDetails.Role === "Super Admin") && (
                           <div className="mb-4 flex flex-wrap items-center space-x-4">
                             <label className="text-xs font-medium text-gray-700 whitespace-nowrap">

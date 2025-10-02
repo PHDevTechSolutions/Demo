@@ -120,21 +120,27 @@ const ActiveAccounts: React.FC = () => {
         fetchAccount();
     }, []);
 
+    // 🔹 Fetch TSA list
     useEffect(() => {
         const fetchTSA = async () => {
             try {
                 let url = "";
 
                 if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+                    // TSM → fetch TSA under this TSM
                     url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
-                } else if (userDetails.Role === "Super Admin" || userDetails.Role === "Manager") {
+                } else if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+                    // Manager → fetch TSA under this Manager only
+                    url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
+                } else if (userDetails.Role === "Super Admin") {
+                    // Super Admin → fetch all TSA
                     url = `/api/fetchtsadata?Role=Territory Sales Associate`;
                 } else {
                     return;
                 }
 
                 const response = await fetch(url);
-                if (!response.ok) throw new Error("Failed to fetch agents");
+                if (!response.ok) throw new Error("Failed to fetch TSA");
 
                 const data = await response.json();
 
@@ -145,22 +151,34 @@ const ActiveAccounts: React.FC = () => {
 
                 setTSAOptions(options);
             } catch (error) {
-                console.error("Error fetching agents:", error);
+                console.error("Error fetching TSA:", error);
             }
         };
 
         fetchTSA();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
+    // 🔹 Fetch TSM list
     useEffect(() => {
         const fetchTSM = async () => {
             try {
-                if (userDetails.Role !== "Manager") return;
+                let url = "";
 
-                const url = `/api/fetchtsadata?Role=Territory Sales Manager`;
+                if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+                    // Manager → fetch TSM under this Manager only
+                    url = `/api/fetchtsadata?Role=Territory Sales Manager&manager=${userDetails.ReferenceID}`;
+                } else if (userDetails.Role === "Super Admin") {
+                    // Super Admin → fetch all TSM
+                    url = `/api/fetchtsadata?Role=Territory Sales Manager`;
+                } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+                    // TSM → fetch self (optional depende sa gusto mo)
+                    url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
+                } else {
+                    return;
+                }
+
                 const response = await fetch(url);
-
-                if (!response.ok) throw new Error("Failed to fetch TSMs");
+                if (!response.ok) throw new Error("Failed to fetch TSM");
 
                 const data = await response.json();
 
@@ -171,12 +189,13 @@ const ActiveAccounts: React.FC = () => {
 
                 setTSMOptions(options);
             } catch (error) {
-                console.error("Error fetching TSMs:", error);
+                console.error("Error fetching TSM:", error);
             }
         };
 
         fetchTSM();
-    }, [userDetails.Role]);
+    }, [userDetails.ReferenceID, userDetails.Role]);
+
 
     const filteredAccounts = Array.isArray(posts)
         ? posts

@@ -44,37 +44,38 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   // 🔹 Fetch TSA list
+  // 🔹 Fetch TSA list
   useEffect(() => {
     const fetchTSA = async () => {
       try {
         let url = "";
 
         if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+          // TSM → fetch TSA under this TSM
           url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          // Manager → fetch TSA under this Manager only
           url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Super Admin") {
+          // Super Admin → fetch all TSA
           url = `/api/fetchtsadata?Role=Territory Sales Associate`;
         } else {
           return;
         }
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch agents");
+        if (!response.ok) throw new Error("Failed to fetch TSA");
 
         const data = await response.json();
 
-        // ✅ filter out Resigned users
-        const options = data
-          .filter((user: any) => user.Status !== "Resigned")
-          .map((user: any) => ({
-            value: user.ReferenceID,
-            label: `${user.Firstname} ${user.Lastname}`,
-          }));
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
 
         setTSAOptions(options);
       } catch (error) {
-        console.error("Error fetching agents:", error);
+        console.error("Error fetching TSA:", error);
       }
     };
 
@@ -88,28 +89,27 @@ const DashboardPage: React.FC = () => {
         let url = "";
 
         if (userDetails.Role === "Manager" && userDetails.ReferenceID) {
+          // Manager → fetch TSM under this Manager only
           url = `/api/fetchtsadata?Role=Territory Sales Manager&manager=${userDetails.ReferenceID}`;
-        } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
-          // 👇 optional, pero kung gusto mong makita lang ng TSM sarili niya:
-          url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
         } else if (userDetails.Role === "Super Admin") {
+          // Super Admin → fetch all TSM
           url = `/api/fetchtsadata?Role=Territory Sales Manager`;
+        } else if (userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID) {
+          // TSM → fetch self (optional depende sa gusto mo)
+          url = `/api/fetchtsadata?Role=Territory Sales Manager&tsm=${userDetails.ReferenceID}`;
         } else {
           return;
         }
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Failed to fetch TSMs");
+        if (!response.ok) throw new Error("Failed to fetch TSM");
 
         const data = await response.json();
 
-        // ✅ filter out Resigned users
-        const options = data
-          .filter((user: any) => user.Status !== "Resigned")
-          .map((user: any) => ({
-            value: user.ReferenceID,
-            label: `${user.Firstname} ${user.Lastname}`,
-          }));
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
 
         setTSMOptions(options);
       } catch (error) {

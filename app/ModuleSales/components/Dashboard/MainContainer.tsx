@@ -76,7 +76,7 @@ const MainContainer: React.FC<MainContainerProps> = ({
       if (saved) {
         try {
           return JSON.parse(saved);
-        } catch {}
+        } catch { }
       }
     }
     return presets.today();
@@ -102,15 +102,27 @@ const MainContainer: React.FC<MainContainerProps> = ({
     return tsmOptions;
   }, [tsmOptions, userDetails.Role, userDetails.ReferenceID, filteredAccounts]);
 
-  // 🔹 Filter TSA options by role
+  // 🔹 Filter TSA options depende sa napiling TSM
   const filteredTSAOptions = useMemo(() => {
-    if (userDetails.Role === "Manager") {
+    // Kung Manager, pwede pumili ng TSM → TSA list lalabas lang yung under sa TSM na yun
+    if (userDetails.Role === "Manager" && selectedTSM) {
+      return tsaOptions.filter((agent) =>
+        filteredAccounts.some(
+          (acc) => acc.tsm === selectedTSM && acc.referenceid === agent.value
+        )
+      );
+    }
+
+    // Kung Manager pero walang piniling TSM → lahat ng TSA under sa kanya
+    if (userDetails.Role === "Manager" && !selectedTSM) {
       return tsaOptions.filter((agent) =>
         filteredAccounts.some(
           (acc) => acc.manager === userDetails.ReferenceID && acc.referenceid === agent.value
         )
       );
     }
+
+    // Kung TSM user mismo → lalabas lang TSA under sa kanya
     if (userDetails.Role === "Territory Sales Manager") {
       return tsaOptions.filter((agent) =>
         filteredAccounts.some(
@@ -118,8 +130,11 @@ const MainContainer: React.FC<MainContainerProps> = ({
         )
       );
     }
+
+    // Kung Super Admin → lahat ng TSA makikita
     return tsaOptions;
-  }, [tsaOptions, userDetails.Role, userDetails.ReferenceID, filteredAccounts]);
+  }, [tsaOptions, userDetails.Role, userDetails.ReferenceID, selectedTSM, filteredAccounts]);
+
 
   // 🔹 Auto-select first TSM for Manager
   useEffect(() => {

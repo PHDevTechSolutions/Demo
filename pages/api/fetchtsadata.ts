@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const db = await connectToDatabase();
 
   try {
-    const { Role, tsm } = req.query;
+    const { Role, tsm, manager } = req.query;
 
     if (!Role) {
       return res.status(400).json({ error: "Role is required" });
@@ -26,6 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       filter.TSM = tsm;
     }
 
+    if (manager) {
+      filter.Manager = manager;
+    }
+
     const users = await db.collection("users")
       .find(filter)
       .project({
@@ -33,13 +37,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Lastname: 1,
         ReferenceID: 1,
         TSM: 1,
+        Manager: 1,
         _id: 0,
       })
       .toArray();
 
     return res.status(200).json(users);
   } catch (error) {
-    console.error("Error fetching TSA:", error);
+    console.error("Error fetching user data:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
