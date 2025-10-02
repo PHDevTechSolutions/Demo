@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) { // ✅ NextRequest here
         status,
         wrapup,
         inquiries,
-        date_created
+        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
       FROM inquiries
       WHERE referenceid = ${referenceid};
     `;

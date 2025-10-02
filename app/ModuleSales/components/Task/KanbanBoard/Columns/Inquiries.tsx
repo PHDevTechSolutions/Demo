@@ -251,17 +251,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
                   </div>
                 )}
                 <div className="p-2 text-gray-500 text-[9px]">
-                  {inq.date_created
-                    ? new Date(inq.date_created).toLocaleString("en-PH", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                      timeZone: "Asia/Manila",
-                    })
-                    : "No date"}
+                  {inq.date_created}
                 </div>
               </div>
             );
