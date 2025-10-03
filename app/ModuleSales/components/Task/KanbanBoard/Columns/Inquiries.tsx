@@ -39,7 +39,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-  // 🔹 Fetch inquiries from backend (already filtered to Endorsed via route.ts)
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
     try {
@@ -162,7 +161,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
               )}
 
               <div className="p-2 text-gray-500 text-[9px]">
-                {/* Diretso display galing backend (already PH-time string) */}
                 {inq.date_created}
               </div>
             </div>
