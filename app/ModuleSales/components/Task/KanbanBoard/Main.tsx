@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
@@ -74,6 +74,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
+  // ✅ State for modal
+  const [showRecentModal, setShowRecentModal] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
 
   // ✅ States for Progress
   const [progress, setProgress] = useState<any[]>([]);
@@ -101,6 +104,51 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   useEffect(() => {
     fetchProgress();
   }, [userDetails?.ReferenceID]);
+
+  const fetchProgressData = useCallback(async () => {
+    if (!userDetails?.ReferenceID) return;
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
+      );
+      if (!res.ok) return;
+
+      const result = await res.json();
+      let activities = result?.data || [];
+
+      // ✅ compute kahapon range
+      const today = new Date();
+      const yesterdayStart = new Date(today);
+      yesterdayStart.setDate(today.getDate() - 1);
+      yesterdayStart.setHours(0, 0, 0, 0);
+
+      const yesterdayEnd = new Date(today);
+      yesterdayEnd.setDate(today.getDate() - 1);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+
+      // ✅ filter by date_updated
+      activities = activities.filter((act: any) => {
+        if (!act.date_created) return false;
+        const updated = new Date(act.date_created);
+        return updated >= yesterdayStart && updated <= yesterdayEnd;
+      });
+
+      setRecentActivities(activities);
+    } catch (err) {
+      console.error("❌ Error fetchProgressData:", err);
+    }
+  }, [userDetails?.ReferenceID]);
+
+  useEffect(() => {
+    const hasSeenRecent = localStorage.getItem("hasSeenRecentActivities");
+    if (!hasSeenRecent && userDetails?.ReferenceID) {
+      // auto-open modal one-time
+      fetchProgressData();
+      setShowRecentModal(true);
+      localStorage.setItem("hasSeenRecentActivities", "true");
+    }
+  }, [userDetails?.ReferenceID, fetchProgressData]);
+
 
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
@@ -161,7 +209,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
@@ -178,6 +225,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   return (
     <div className="w-full p-4">
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => {
+            fetchProgressData();
+            setShowRecentModal(true);
+          }}
+          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          📌 View Recent Activities
+        </button>
+      </div>
       <div className="flex gap-4">
         {filteredColumns.map(col => {
           const isCollapsed = collapsedColumns.includes(col.id);
@@ -255,6 +313,84 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           );
         })}
       </div>
+      {showRecentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative overflow-hidden">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-blue-600 to-indigo-600">
+              <h3 className="text-white font-semibold text-lg flex items-center gap-2">
+                🕒 Yesterday’s Activities
+              </h3>
+              <button
+                onClick={() => setShowRecentModal(false)}
+                className="text-white hover:text-gray-200 transition"
+              >
+                ✖
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
+              {recentActivities.length > 0 ? (
+                recentActivities.map((act, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold text-gray-800">
+                        {act.companyname}
+                      </h4>
+                      <span className="text-[11px] text-gray-500">
+                        {new Date(act.date_created).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-700 space-y-1">
+                      <p>
+                        📌 <span className="font-medium">Activity:</span>{" "}
+                        {act.typeactivity || "N/A"}
+                      </p>
+                      <p>
+                        📝 <span className="font-medium">Remarks:</span>{" "}
+                        {act.remarks || "None"}
+                      </p>
+                      <p>
+                        💼 <span className="font-medium">Status:</span>{" "}
+                        {act.activitystatus}
+                      </p>
+                      <div className="border-t border-gray-200 my-2"></div>
+                      <p>
+                        💰 <span className="font-medium">Quote:</span>{" "}
+                        {act.quotationnumber || "-"} | {act.quotationamount || "-"}
+                      </p>
+                      <p>
+                        📦 <span className="font-medium">SO:</span>{" "}
+                        {act.sonumber || "-"} | {act.soamount || "-"}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-center py-6 text-sm">
+                  No recent activities found.
+                </p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
+              <button
+                onClick={() => setShowRecentModal(false)}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

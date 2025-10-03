@@ -313,8 +313,11 @@ const Companies: React.FC<CompaniesProps> = ({
 
       toast.success("❌ Skip period cancelled!");
       setActiveSkip(null);
-      await fetchCompanies(); // 🔄 Refresh div
+
+      // 🔄 Refresh companies list
+      await fetchCompanies();
     } catch (err: any) {
+      console.error("❌ Cancel skip error:", err);
       toast.error(err.message || "Failed to cancel skip");
     }
   };
@@ -332,7 +335,7 @@ const Companies: React.FC<CompaniesProps> = ({
           onClick={() => setShowSkipModal(true)}
           className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] hover:bg-yellow-600 flex items-center gap-1"
         >
-         <GoSkip size={15} /> Skip Generate
+          <GoSkip size={15} /> Skip Generate
         </button>
       </h3>
 
