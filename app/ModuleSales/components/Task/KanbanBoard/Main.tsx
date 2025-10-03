@@ -129,7 +129,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       try {
         result = await res.json();
       } catch {
-        // fallback kung walang JSON ang response
         result = { error: "No response body from server" };
       }
 
@@ -138,7 +137,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         throw new Error(result.error || "Failed to submit activity");
       }
 
-      // ✅ proceed kung success
+      // ✅ update status kung inquiry
       if (isInquiry && "ticketreferencenumber" in data) {
         await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateStatus", {
           method: "POST",
@@ -150,6 +149,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         });
       }
 
+      // ✅ trigger reloading state bago mag-fetchProgress
+      setLoading(true);
       await fetchProgress();
       setRefreshTrigger(prev => prev + 1);
 
@@ -159,6 +160,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       toast.error(error.message || "Failed to add activity", { autoClose: 2000 });
     }
   };
+
 
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
@@ -223,13 +225,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                 )}
 
                 {col.id === "in-progress" && !isCollapsed && (
-                  <Progress
-                    userDetails={userDetails}
-                    progress={progress}
-                    loading={loading}
-                  />
+                  loading ? (
+                    <div className="flex justify-center items-center py-10">
+                      <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                      <span className="ml-2 text-xs text-gray-500">Loading in-progress tasks...</span>
+                    </div>
+                  ) : (
+                    <Progress
+                      userDetails={userDetails}
+                      progress={progress}
+                      loading={loading}
+                    />
+                  )
                 )}
-
 
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
