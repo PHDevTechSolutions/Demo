@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CompaniesCard from "./Card/CompaniesCard";
+import { GoSkip } from 'react-icons/go';
 
 interface Company {
   id?: number;
@@ -308,9 +309,9 @@ const Companies: React.FC<CompaniesProps> = ({
         {/* 🆕 Skip Button */}
         <button
           onClick={() => setShowSkipModal(true)}
-          className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] hover:bg-yellow-600"
+          className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] hover:bg-yellow-600 flex items-center gap-1"
         >
-          Skip
+         <GoSkip size={15} /> Skip Generate
         </button>
       </h3>
 

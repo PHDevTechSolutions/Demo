@@ -170,6 +170,7 @@ const ListofUser: React.FC = () => {
             const isWithinDateRange =
                 (!startDate || (postDate && postDate >= new Date(startDate))) &&
                 (!endDate || (postDate && postDate <= new Date(endDate)));
+
             const referenceID = userDetails.ReferenceID;
             const matchesRole =
                 userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
@@ -185,15 +186,32 @@ const ListofUser: React.FC = () => {
             const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
             const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
 
+            // ✅ Check kung may Delivered sa activitynumber na ito
+            const hasDelivered = posts.some(
+                (p) =>
+                    p.activitynumber === post.activitynumber &&
+                    p.activitystatus?.toLowerCase() === "delivered"
+            );
+
+            // ❌ Kung may delivered → skip lahat ng rows na may parehong activitynumber
+            if (hasDelivered) {
+                return false;
+            }
+
+            // ✅ Kung wala namang delivered, saka lang i-check overdue
             const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
             const isOverdue =
                 isSoDone &&
                 postDate &&
                 (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
+
+            if (!isOverdue) {
+                return false; // hindi overdue → skip
+            }
+
             return (
                 matchesSearchTerm &&
                 isWithinDateRange &&
-                isOverdue &&
                 matchesRole &&
                 matchesAgentFilter &&
                 matchesTSMFilter
