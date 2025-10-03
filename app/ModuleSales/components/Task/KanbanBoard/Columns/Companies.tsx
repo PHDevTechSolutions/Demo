@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
-import { MdCancel } from "react-icons/md";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import CompaniesCard from "./Card/CompaniesCard";
 
 interface Company {
   id?: number;
@@ -51,6 +50,10 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [remainingQuota, setRemainingQuota] = useState<number>(0);
   const [isSunday, setIsSunday] = useState(false);
+  // 🆕 Skip modal state
+  const [showSkipModal, setShowSkipModal] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -244,11 +247,55 @@ const Companies: React.FC<CompaniesProps> = ({
   };
 
   const handleAddCompany = (comp: Company) => {
+    if (showSkipModal) {
+      toast.warn("🚫 Skip period is active. Cannot add companies.");
+      return;
+    }
     handleSubmit(comp, false);
     removeCompany(comp, "add");
     if (comp.id)
       localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
   };
+
+
+  const handleSkipSubmit = async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+
+    try {
+      const payload = {
+        startdate: startDate,
+        enddate: endDate,
+        status: "skip",
+        referenceid: userDetails?.ReferenceID,
+      };
+
+      const res = await fetch("/api/ModuleSales/Companies/SkipQuota", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Failed to submit skip period");
+      }
+
+      toast.success("✅ Skip period submitted!");
+      setShowSkipModal(false);
+      setStartDate("");
+      setEndDate("");
+    } catch (err: any) {
+      console.error("❌ Skip submit error:", err);
+      toast.error(err.message || "Failed to submit skip period");
+    }
+  };
+
 
   return (
     <div className="space-y-1 overflow-y-auto">
@@ -257,6 +304,14 @@ const Companies: React.FC<CompaniesProps> = ({
           <span className="mr-1">🏢</span> OB Calls:{" "}
           <span className="ml-1 text-red-500">{remainingQuota}</span>
         </span>
+
+        {/* 🆕 Skip Button */}
+        <button
+          onClick={() => setShowSkipModal(true)}
+          className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] hover:bg-yellow-600"
+        >
+          Skip
+        </button>
       </h3>
 
       {loading ? (
@@ -267,83 +322,14 @@ const Companies: React.FC<CompaniesProps> = ({
           const isExpanded = expandedIdx === key;
 
           return (
-            <div
+            <CompaniesCard
               key={key}
-              className="rounded-lg border bg-blue-100 shadow transition text-[10px] mb-2 px-2 py-2"
-            >
-              <div
-                className="cursor-pointer flex justify-between items-center p-1"
-                onClick={() =>
-                  setExpandedIdx(isExpanded ? null : key)
-                }
-              >
-                <p className="font-semibold uppercase">
-                  {comp.companyname}
-                </p>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddCompany(comp);
-                    }}
-                    className="bg-blue-500 text-white py-1 px-2 rounded text-[10px] hover:bg-blue-600 flex items-center gap-1"
-                  >
-                    <FaPlus size={10} /> Add
-                  </button>
-
-                  <span>
-                    {isExpanded ? (
-                      <FaChevronUp size={10} />
-                    ) : (
-                      <FaChevronDown size={10} />
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div className="p-1 space-y-1">
-                  <p>
-                    <span className="font-semibold capitalize">
-                      Contact Person:
-                    </span>{" "}
-                    {comp.contactperson}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Contact #:</span>{" "}
-                    {comp.contactnumber}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Email:</span>{" "}
-                    {comp.emailaddress}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Type:</span>{" "}
-                    {comp.typeclient}
-                  </p>
-                  <p>
-                    <span className="font-semibold capitalize">
-                      Address:
-                    </span>{" "}
-                    {comp.address || "N/A"}
-                  </p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeCompany(comp, "cancel");
-                    }}
-                    className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
-                  >
-                    <MdCancel size={10} /> Cancel
-                  </button>
-                </div>
-              )}
-
-              <div className="p-1 text-gray-500 text-[9px]">
-                {comp.typeclient}
-              </div>
-            </div>
+              comp={comp}
+              isExpanded={isExpanded}
+              onToggle={() => setExpandedIdx(isExpanded ? null : key)}
+              onAdd={handleAddCompany}
+              onCancel={(c) => removeCompany(c, "cancel")}
+            />
           );
         })
       ) : isSunday ? (
@@ -352,6 +338,48 @@ const Companies: React.FC<CompaniesProps> = ({
         </p>
       ) : (
         <p className="text-xs text-gray-400">No companies found.</p>
+      )}
+
+      {showSkipModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-4 w-[350px] relative">
+            <button
+              onClick={() => setShowSkipModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              ✖
+            </button>
+            <h3 className="text-sm font-bold mb-3">Set Skip Period</h3>
+
+            <div className="space-y-2 text-xs">
+              <div>
+                <label className="font-semibold">Start Date:</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full border px-2 py-1 rounded"
+                />
+              </div>
+              <div>
+                <label className="font-semibold">End Date:</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full border px-2 py-1 rounded"
+                />
+              </div>
+              <button
+                type="button" // ✅ prevents form default submit
+                onClick={handleSkipSubmit}
+                className="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600"
+              >
+                Submit Skip
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

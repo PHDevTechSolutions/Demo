@@ -1,4 +1,3 @@
-// app/api/ModuleSales/Companies/DailyQuota/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -23,7 +22,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 🔎 Check if today already exists
+    // 🔎 1. Check if today is inside skip period
+    const { data: skipRows, error: skipError } = await supabase
+      .from("skips")
+      .select("id, startdate, enddate, status")
+      .eq("referenceid", referenceid)
+      .eq("status", "skip")
+      .lte("startdate", date) // start <= today
+      .gte("enddate", date);  // end >= today
+
+    if (skipError) throw skipError;
+
+    if (skipRows && skipRows.length > 0) {
+      // ✅ If skipped → return empty
+      return NextResponse.json({
+        companies: [],
+        remaining_quota: 0,
+        skipped: true,
+        message: "Daily quota skipped due to active skip period",
+      });
+    }
+
+    // 🔎 2. Check if today already exists in daily_quotas
     const { data: todayRow } = await supabase
       .from("daily_quotas")
       .select("companies, remaining_quota")
@@ -35,7 +55,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(todayRow);
     }
 
-    // 🕓 If wala pa → check kahapon
+    // 🕓 3. If wala pa → check kahapon
     const yesterday = new Date(date);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -56,7 +76,7 @@ export async function GET(req: NextRequest) {
       if (leftover > 0 && Array.isArray(yesterdayRow.companies)) {
         // ✅ Start with leftover companies
         companies = [...yesterdayRow.companies];
-        todayQuota = DAILY_QUOTA + leftover; // ex. 35 + 15 = 50
+        todayQuota = DAILY_QUOTA + leftover;
 
         // 🔎 Fetch fresh accounts (para magdagdag ng bago)
         const { data: accounts } = await supabase
@@ -65,14 +85,13 @@ export async function GET(req: NextRequest) {
           .eq("referenceid", referenceid);
 
         if (accounts && accounts.length > 0) {
-          const additionalNeeded = DAILY_QUOTA; // fixed 35 fresh daily
+          const additionalNeeded = DAILY_QUOTA;
 
           const newCompanies = accounts
-            .filter((acc) => !companies.find((c) => c.id === acc.id)) // iwas duplicate
+            .filter((acc) => !companies.find((c) => c.id === acc.id))
             .sort(() => 0.5 - Math.random())
             .slice(0, additionalNeeded);
 
-          // ✅ Combine leftover + 35 new
           companies = [...companies, ...newCompanies];
         }
 
@@ -100,7 +119,11 @@ export async function GET(req: NextRequest) {
     }
 
     // 👉 Fresh start (35)
-    return NextResponse.json({ companies: [], remaining_quota: DAILY_QUOTA });
+    return NextResponse.json({
+      companies: [],
+      remaining_quota: DAILY_QUOTA,
+      skipped: false,
+    });
   } catch (err: any) {
     console.error("❌ DailyQuota GET error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -118,6 +141,27 @@ export async function POST(req: NextRequest) {
         { error: "Invalid payload" },
         { status: 400 }
       );
+    }
+
+    // 🔎 1. Check if date is inside skip range before saving
+    const { data: skips, error: skipError } = await supabase
+      .from("skips")
+      .select("startdate, enddate")
+      .eq("referenceid", referenceid);
+
+    if (skipError) throw skipError;
+
+    const isSkipped = skips?.some((s) => {
+      return date >= s.startdate && date <= s.enddate;
+    });
+
+    if (isSkipped) {
+      return NextResponse.json({
+        companies: [],
+        remaining_quota: 0,
+        skipped: true,
+        message: "Cannot update quota, date is inside skip period",
+      });
     }
 
     // 📝 Upsert today’s quota
@@ -138,7 +182,7 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data, skipped: false });
   } catch (err: any) {
     console.error("❌ DailyQuota POST error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
