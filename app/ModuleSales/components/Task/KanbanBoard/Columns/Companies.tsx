@@ -55,8 +55,10 @@ const Companies: React.FC<CompaniesProps> = ({
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [activeSkip, setActiveSkip] = useState<{ startdate: string; enddate: string } | null>(null);
 
-  useEffect(() => {
+  // Move fetchCompanies outside useEffect so it can be called elsewhere
+  const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) return;
 
     const today = new Date();
@@ -76,110 +78,110 @@ const Companies: React.FC<CompaniesProps> = ({
       return;
     }
 
-    const fetchCompanies = async () => {
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-        // ✅ Fetch today’s quota from server
-        const quotaRes = await fetch(
-          `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
-        );
-        const quotaData = await quotaRes.json();
+      // ✅ Fetch today’s quota from server
+      const quotaRes = await fetch(
+        `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
+      );
+      const quotaData = await quotaRes.json();
 
-        if (quotaData?.error) throw new Error(quotaData.error);
+      if (quotaData?.error) throw new Error(quotaData.error);
 
-        // 👉 If may existing todayRow → gamitin yun, wag na mag-generate ulit
-        if (Array.isArray(quotaData.companies) && quotaData.companies.length > 0) {
-          setCompanies(quotaData.companies);
-          setRemainingQuota(quotaData.remaining_quota ?? 35);
-          return;
-        }
-
-        // ✅ Else → kailangan mag-generate ng bago
-        const todayQuota = quotaData?.remaining_quota ?? 35;
-
-        // ✅ Fetch accounts
-        const accountsRes = await fetch(
-          `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
-        );
-        const accounts = await accountsRes.json();
-
-        let companiesData: Company[] = [];
-        if (Array.isArray(accounts)) companiesData = accounts;
-        else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
-        else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
-
-        if (!companiesData.length) {
-          setCompanies([]);
-          setRemainingQuota(todayQuota);
-          return;
-        }
-
-        const eligibleCompanies = companiesData.filter(isCompanyDue);
-
-        const top50 = eligibleCompanies.filter((c) => c.typeclient === "Top 50");
-        const next30 = eligibleCompanies.filter((c) => c.typeclient === "Next 30");
-        const balance20 = eligibleCompanies.filter((c) => c.typeclient === "Balance 20");
-        const tsa = eligibleCompanies.filter((c) => c.typeclient === "TSA Client");
-        const csr = eligibleCompanies.filter((c) => c.typeclient === "CSR Client");
-
-        const pickRandom = (arr: Company[], count: number) => {
-          const shuffled = [...arr].sort(() => 0.5 - Math.random());
-          return shuffled.slice(0, count);
-        };
-
-        // 🎯 Priority allocation
-        let finalCompanies: Company[] = [];
-        let remaining = todayQuota;
-
-        const allocate = (source: Company[], count: number) => {
-          const needed = Math.min(count, remaining, source.length);
-          const picked = pickRandom(source, needed);
-          finalCompanies = [...finalCompanies, ...picked];
-          remaining -= picked.length;
-        };
-
-        // Fixed distribution (with fallback)
-        allocate(top50, 15);
-        if (remaining > 0) allocate(next30, 10);
-        if (remaining > 0) allocate(balance20, 5);
-        if (remaining > 0) allocate(csr, 5); // bago: CSR Client fallback
-        if (remaining > 0) allocate(tsa, 5);
-
-        // 🧮 Kung kulang pa rin → fill mula sa lahat ng natira
-        if (remaining > 0) {
-          const pickedIds = new Set(finalCompanies.map((c) => c.id));
-          const fillers = eligibleCompanies
-            .filter((c) => !pickedIds.has(c.id))
-            .sort(() => 0.5 - Math.random())
-            .slice(0, remaining);
-          finalCompanies = [...finalCompanies, ...fillers];
-          remaining -= fillers.length;
-        }
-
-        // ✅ Save new daily quota to server
-        await fetch("/api/ModuleSales/Companies/DailyQuota", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            referenceid: userDetails.ReferenceID,
-            date: todayStr,
-            companies: finalCompanies,
-            remaining_quota: todayQuota,
-          }),
-        });
-
-        setCompanies(finalCompanies);
-        setRemainingQuota(todayQuota);
-      } catch (error) {
-        console.error("Error fetching companies:", error);
-        setCompanies([]);
-        setRemainingQuota(35);
-      } finally {
-        setLoading(false);
+      // 👉 If may existing todayRow → gamitin yun, wag na mag-generate ulit
+      if (Array.isArray(quotaData.companies) && quotaData.companies.length > 0) {
+        setCompanies(quotaData.companies);
+        setRemainingQuota(quotaData.remaining_quota ?? 35);
+        return;
       }
-    };
 
+      // ✅ Else → kailangan mag-generate ng bago
+      const todayQuota = quotaData?.remaining_quota ?? 35;
+
+      // ✅ Fetch accounts
+      const accountsRes = await fetch(
+        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
+      );
+      const accounts = await accountsRes.json();
+
+      let companiesData: Company[] = [];
+      if (Array.isArray(accounts)) companiesData = accounts;
+      else if (Array.isArray(accounts?.data)) companiesData = accounts.data;
+      else if (Array.isArray(accounts?.companies)) companiesData = accounts.companies;
+
+      if (!companiesData.length) {
+        setCompanies([]);
+        setRemainingQuota(todayQuota);
+        return;
+      }
+
+      const eligibleCompanies = companiesData.filter(isCompanyDue);
+
+      const top50 = eligibleCompanies.filter((c) => c.typeclient === "Top 50");
+      const next30 = eligibleCompanies.filter((c) => c.typeclient === "Next 30");
+      const balance20 = eligibleCompanies.filter((c) => c.typeclient === "Balance 20");
+      const tsa = eligibleCompanies.filter((c) => c.typeclient === "TSA Client");
+      const csr = eligibleCompanies.filter((c) => c.typeclient === "CSR Client");
+
+      const pickRandom = (arr: Company[], count: number) => {
+        const shuffled = [...arr].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, count);
+      };
+
+      // 🎯 Priority allocation
+      let finalCompanies: Company[] = [];
+      let remaining = todayQuota;
+
+      const allocate = (source: Company[], count: number) => {
+        const needed = Math.min(count, remaining, source.length);
+        const picked = pickRandom(source, needed);
+        finalCompanies = [...finalCompanies, ...picked];
+        remaining -= picked.length;
+      };
+
+      // Fixed distribution (with fallback)
+      allocate(top50, 15);
+      if (remaining > 0) allocate(next30, 10);
+      if (remaining > 0) allocate(balance20, 5);
+      if (remaining > 0) allocate(csr, 5); // bago: CSR Client fallback
+      if (remaining > 0) allocate(tsa, 5);
+
+      // 🧮 Kung kulang pa rin → fill mula sa lahat ng natira
+      if (remaining > 0) {
+        const pickedIds = new Set(finalCompanies.map((c) => c.id));
+        const fillers = eligibleCompanies
+          .filter((c) => !pickedIds.has(c.id))
+          .sort(() => 0.5 - Math.random())
+          .slice(0, remaining);
+        finalCompanies = [...finalCompanies, ...fillers];
+        remaining -= fillers.length;
+      }
+
+      // ✅ Save new daily quota to server
+      await fetch("/api/ModuleSales/Companies/DailyQuota", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referenceid: userDetails.ReferenceID,
+          date: todayStr,
+          companies: finalCompanies,
+          remaining_quota: todayQuota,
+        }),
+      });
+
+      setCompanies(finalCompanies);
+      setRemainingQuota(todayQuota);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      setCompanies([]);
+      setRemainingQuota(35);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
@@ -258,10 +260,7 @@ const Companies: React.FC<CompaniesProps> = ({
       localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
   };
 
-
-  const handleSkipSubmit = async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-
+  const handleSkipSubmit = async () => {
     if (!startDate || !endDate) {
       toast.error("Please select both start and end dates");
       return;
@@ -282,21 +281,43 @@ const Companies: React.FC<CompaniesProps> = ({
       });
 
       const result = await res.json();
-
-      if (!res.ok || result.error) {
-        throw new Error(result.error || "Failed to submit skip period");
-      }
+      if (!res.ok || result.error) throw new Error(result.error);
 
       toast.success("✅ Skip period submitted!");
       setShowSkipModal(false);
       setStartDate("");
       setEndDate("");
+      await fetchCompanies(); // 🔄 Refresh div
     } catch (err: any) {
-      console.error("❌ Skip submit error:", err);
       toast.error(err.message || "Failed to submit skip period");
     }
   };
 
+  // ---------------- HANDLE CANCEL SKIP ----------------
+  const handleCancelSkip = async () => {
+    if (!activeSkip) return;
+
+    try {
+      const res = await fetch("/api/ModuleSales/Companies/SkipQuota", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referenceid: userDetails?.ReferenceID,
+          startdate: activeSkip.startdate,
+          enddate: activeSkip.enddate,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || result.error) throw new Error(result.error);
+
+      toast.success("❌ Skip period cancelled!");
+      setActiveSkip(null);
+      await fetchCompanies(); // 🔄 Refresh div
+    } catch (err: any) {
+      toast.error(err.message || "Failed to cancel skip");
+    }
+  };
 
   return (
     <div className="space-y-1 overflow-y-auto">
@@ -314,6 +335,21 @@ const Companies: React.FC<CompaniesProps> = ({
          <GoSkip size={15} /> Skip Generate
         </button>
       </h3>
+
+      {/* 🆕 Active Skip Display (10px margin below button) */}
+      {activeSkip && (
+        <div className="text-[10px] text-red-600 mt-1 flex items-center justify-between">
+          <span>
+            🚫 Skipping from {activeSkip.startdate} → {activeSkip.enddate}
+          </span>
+          <button
+            onClick={handleCancelSkip}
+            className="ml-2 text-blue-600 underline hover:text-blue-800"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-xs text-gray-400">Loading...</p>
