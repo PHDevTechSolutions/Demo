@@ -160,8 +160,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-
-
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
