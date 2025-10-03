@@ -39,6 +39,17 @@ const Inquiries: React.FC<InquiriesProps> = ({
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
+  // ⏱ elapsed time refresh
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 📌 modal state
+  const [showModal, setShowModal] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+
   const fetchInquiries = async (referenceId?: string): Promise<Inquiry[]> => {
     if (!referenceId) return [];
     try {
@@ -73,6 +84,20 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
     load();
   }, [userDetails?.ReferenceID, refreshTrigger]);
+
+  // ⏱ elapsed time computation
+  const getElapsedTime = (dateStr?: string) => {
+    if (!dateStr) return "";
+    const created = new Date(dateStr);
+    if (isNaN(created.getTime())) return "";
+
+    const diffMs = Date.now() - created.getTime();
+    const sec = Math.floor(diffMs / 1000) % 60;
+    const min = Math.floor(diffMs / (1000 * 60)) % 60;
+    const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+
+    return `${hrs}h ${min}m ${sec}s`;
+  };
 
   if (loading) {
     return (
@@ -160,8 +185,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
                 </div>
               )}
 
-              <div className="p-2 text-gray-500 text-[9px]">
-                {inq.date_created}
+              <div
+                className="p-2 text-gray-500 text-[9px] cursor-pointer hover:text-gray-700"
+                onClick={() => {
+                  setSelectedInquiry(inq);
+                  setShowModal(true);
+                }}
+              >
+                📅 {inq.date_created} | ⏱ {getElapsedTime(inq.date_created)}
               </div>
             </div>
           );
@@ -178,6 +209,31 @@ const Inquiries: React.FC<InquiriesProps> = ({
           >
             View More
           </button>
+        </div>
+      )}
+
+      {/* 📌 Modal */}
+      {showModal && selectedInquiry && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-md p-4 text-xs relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black"
+            >
+              ✖
+            </button>
+            <h4 className="text-sm font-bold mb-2">Inquiry Details</h4>
+            <p><b>Company:</b> {selectedInquiry.companyname}</p>
+            <p><b>Contact:</b> {selectedInquiry.contactperson}</p>
+            <p><b>Number:</b> {selectedInquiry.contactnumber}</p>
+            <p><b>Email:</b> {selectedInquiry.emailaddress}</p>
+            <p><b>Inquiry:</b> {selectedInquiry.inquiries}</p>
+            <p><b>Wrap-up:</b> {selectedInquiry.wrapup || "N/A"}</p>
+            <p><b>Address:</b> {selectedInquiry.address || "N/A"}</p>
+            <p><b>Status:</b> {selectedInquiry.status}</p>
+            <p><b>Date Created:</b> {selectedInquiry.date_created}</p>
+            <p><b>Elapsed:</b> {getElapsedTime(selectedInquiry.date_created)}</p>
+          </div>
         </div>
       )}
     </div>

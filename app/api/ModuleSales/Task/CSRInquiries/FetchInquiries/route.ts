@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from "next/server"; 
+import { NextResponse, NextRequest } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL;
@@ -8,7 +8,7 @@ if (!Xchire_databaseUrl) {
 
 const Xchire_sql = neon(Xchire_databaseUrl);
 
-export async function GET(req: NextRequest) { 
+export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
     const referenceid = searchParams.get("referenceid");
@@ -22,25 +22,26 @@ export async function GET(req: NextRequest) {
 
     // 🔹 Fetch ONLY inquiries with status = 'Endorsed'
     const Xchire_fetch = await Xchire_sql`
-      SELECT 
-        referenceid,
-        tsm,
-        ticketreferencenumber,
-        companyname,
-        contactperson,
-        contactnumber,
-        emailaddress,
-        typeclient,
-        address,
-        status,
-        wrapup,
-        inquiries,
-        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
-      FROM inquiries
-      WHERE referenceid = ${referenceid}
-        AND status = 'Endorsed'
-      ORDER BY date_created DESC;
-    `;
+  SELECT 
+    referenceid,
+    tsm,
+    ticketreferencenumber,
+    companyname,
+    contactperson,
+    contactnumber,
+    emailaddress,
+    typeclient,
+    address,
+    status,
+    wrapup,
+    inquiries,
+    to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
+  FROM inquiries
+  WHERE referenceid = ${referenceid}
+    AND status = 'Endorsed'
+  ORDER BY date_created DESC;
+`;
+
 
     return NextResponse.json(
       { success: true, data: Xchire_fetch || [] },
