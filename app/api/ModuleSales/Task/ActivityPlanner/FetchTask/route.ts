@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       SELECT 
         id, companyname, contactnumber, emailaddress, activitynumber, referenceid, manager, tsm,
         activitystatus, typeactivity, remarks, startdate, enddate,
-        date_created, date_updated, quotationnumber, sonumber, projectcategory,
+        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created, date_updated, quotationnumber, sonumber, projectcategory,
         soamount, actualsales, quotationamount
       FROM progress
       WHERE referenceid = ${referenceid}
