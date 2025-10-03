@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
 // Routes
@@ -124,9 +124,21 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("Failed to submit activity");
-      await res.json();
+      // ✅ basahin body kahit error status
+      let result: any = {};
+      try {
+        result = await res.json();
+      } catch {
+        // fallback kung walang JSON ang response
+        result = { error: "No response body from server" };
+      }
 
+      if (!res.ok) {
+        console.error("❌ Backend error:", result);
+        throw new Error(result.error || "Failed to submit activity");
+      }
+
+      // ✅ proceed kung success
       if (isInquiry && "ticketreferencenumber" in data) {
         await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateStatus", {
           method: "POST",
@@ -138,18 +150,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         });
       }
 
-      // 🚀 Refresh progress directly
       await fetchProgress();
-
-      // 🚀 Update other columns
       setRefreshTrigger(prev => prev + 1);
 
       toast.success("Activity successfully added!", { autoClose: 2000 });
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error submitting activity:", error);
-      toast.error("Failed to add activity", { autoClose: 2000 });
+      toast.error(error.message || "Failed to add activity", { autoClose: 2000 });
     }
   };
+
+
 
   const toggleCollapse = (id: string) => {
     setCollapsedColumns(prev =>

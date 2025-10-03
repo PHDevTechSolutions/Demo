@@ -48,7 +48,7 @@ async function insertActivity(data: any) {
 
     let insertedAccount = null;
 
-    // ✅ Insert into accounts ONLY if CSR Inquiries
+    // ✅ Insert into accounts ONLY if typeclient = CSR Inquiries
     if (typeclient === "CSR Inquiries") {
       try {
         insertedAccount = await sql`
@@ -57,7 +57,7 @@ async function insertActivity(data: any) {
             emailaddress, typeclient, address, status, date_created, date_updated
           ) VALUES (
             ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
-            ${emailaddress}, ${typeclient}, ${address}, 'Active',
+            ${emailaddress}, 'CSR Client', ${address}, 'Active',
             NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
           )
           RETURNING *;
@@ -65,13 +65,13 @@ async function insertActivity(data: any) {
       } catch (accountErr: any) {
         console.error("❌ Error inserting into accounts:", accountErr);
         throw new Error(
-          `Accounts insert failed → ${accountErr.message || accountErr}`
+          `Accounts insert failed → ${accountErr.message || JSON.stringify(accountErr)}`
         );
       }
     }
 
-    // ✅ Update inquiries if CSR Inquiries
-    if (typeclient === "CSR Inquiries" && inquiryid) {
+    // ✅ Update inquiries ONLY if inquiryid is provided
+    if (inquiryid) {
       await sql`
         UPDATE inquiries
         SET status = 'Used'
@@ -93,6 +93,7 @@ async function insertActivity(data: any) {
     return {
       success: false,
       error: error.message || "Failed to insert activity.",
+      details: error.stack || error,
     };
   }
 }
@@ -100,7 +101,6 @@ async function insertActivity(data: any) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
     const result = await insertActivity(body);
 
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
@@ -110,7 +110,11 @@ export async function POST(req: Request) {
       error
     );
     return NextResponse.json(
-      { success: false, error: error.message || "Internal server error" },
+      {
+        success: false,
+        error: error.message || "Internal server error",
+        details: error.stack || error,
+      },
       { status: 500 }
     );
   }
