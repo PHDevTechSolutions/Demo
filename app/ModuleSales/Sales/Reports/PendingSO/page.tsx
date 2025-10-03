@@ -163,61 +163,58 @@ const ListofUser: React.FC = () => {
         fetchTSM();
     }, [userDetails.ReferenceID, userDetails.Role]);
 
+    // ✅ Simplified — API already excludes Delivered activitynumbers
     const filteredAccounts = Array.isArray(posts)
-        ? posts.filter((post) => {
-            const matchesSearchTerm = post?.companyname?.toLowerCase().includes(searchTerm.toLowerCase());
-            const postDate = post.date_created ? new Date(post.date_created) : null;
-            const isWithinDateRange =
-                (!startDate || (postDate && postDate >= new Date(startDate))) &&
-                (!endDate || (postDate && postDate <= new Date(endDate)));
+        ? posts
+            .filter((post) => {
+                const matchesSearchTerm = post?.companyname
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase());
 
-            const referenceID = userDetails.ReferenceID;
-            const matchesRole =
-                userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
-                    ? true
-                    : userDetails.Role === "Territory Sales Associate"
-                        ? post?.referenceid === referenceID
-                        : userDetails.Role === "Territory Sales Manager"
-                            ? post?.tsm === referenceID
-                            : userDetails.Role === "Manager"
-                                ? post?.manager === referenceID
-                                : false;
+                const postDate = post.date_created ? new Date(post.date_created) : null;
+                const isWithinDateRange =
+                    (!startDate || (postDate && postDate >= new Date(startDate))) &&
+                    (!endDate || (postDate && postDate <= new Date(endDate)));
 
-            const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
-            const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
+                const referenceID = userDetails.ReferenceID;
+                const matchesRole =
+                    userDetails.Role === "Super Admin" || userDetails.Role === "Special Access"
+                        ? true
+                        : userDetails.Role === "Territory Sales Associate"
+                            ? post?.referenceid === referenceID
+                            : userDetails.Role === "Territory Sales Manager"
+                                ? post?.tsm === referenceID
+                                : userDetails.Role === "Manager"
+                                    ? post?.manager === referenceID
+                                    : false;
 
-            // ✅ Check kung may Delivered sa activitynumber na ito
-            const hasDelivered = posts.some(
-                (p) =>
-                    p.activitynumber === post.activitynumber &&
-                    p.activitystatus?.toLowerCase() === "delivered"
-            );
+                const matchesAgentFilter = !selectedAgent || post?.referenceid === selectedAgent;
+                const matchesTSMFilter = !selectedTSM || post?.tsm === selectedTSM;
 
-            // ❌ Kung may delivered → skip lahat ng rows na may parehong activitynumber
-            if (hasDelivered) {
-                return false;
-            }
+                // ✅ Overdue check (keep only SO-Done older than 15 days)
+                const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
+                const isOverdue =
+                    isSoDone &&
+                    postDate &&
+                    (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
 
-            // ✅ Kung wala namang delivered, saka lang i-check overdue
-            const isSoDone = post?.activitystatus?.toLowerCase() === "so-done";
-            const isOverdue =
-                isSoDone &&
-                postDate &&
-                (new Date().getTime() - postDate.getTime()) / (1000 * 60 * 60 * 24) > 15;
+                if (!isOverdue) return false;
 
-            if (!isOverdue) {
-                return false; // hindi overdue → skip
-            }
-
-            return (
-                matchesSearchTerm &&
-                isWithinDateRange &&
-                matchesRole &&
-                matchesAgentFilter &&
-                matchesTSMFilter
-            );
-        }).sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
+                return (
+                    matchesSearchTerm &&
+                    isWithinDateRange &&
+                    matchesRole &&
+                    matchesAgentFilter &&
+                    matchesTSMFilter
+                );
+            })
+            .sort(
+                (a, b) =>
+                    new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+            )
         : [];
+
+
 
     const exportToExcel = async () => {
         const workbook = new ExcelJS.Workbook();

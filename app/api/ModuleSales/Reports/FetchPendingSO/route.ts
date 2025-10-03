@@ -11,6 +11,7 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 /**
  * GET /api/ModuleSales/UserManagement/CompanyAccounts
  * Fetch all accounts from the database
+ * ✅ Exclude records with the same activitynumber if one of them is already Delivered
  */
 export async function GET() {
     try {
@@ -20,6 +21,7 @@ export async function GET() {
                 referenceid,
                 tsm,
                 manager,
+                activitynumber,
                 date_created,
                 companyname,
                 contactperson,
@@ -27,7 +29,14 @@ export async function GET() {
                 soamount,
                 activitystatus,
                 remarks
-            FROM progress;
+            FROM progress p
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM progress d
+                WHERE d.activitynumber = p.activitynumber
+                AND LOWER(d.activitystatus) = 'delivered'
+            )
+            ORDER BY date_created DESC;
         `;
 
         console.log("Xchire fetched accounts:", Xchire_fetch);
