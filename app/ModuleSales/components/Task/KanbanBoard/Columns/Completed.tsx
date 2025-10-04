@@ -218,10 +218,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
                   {renderField("Remarks", item.remarks)}
                   {renderField("Payment Term", item.paymentterm)}
                   {renderField("Delivery Date", item.deliverydate)}
-                  {renderField(
-                    "Date Created",
-                    item.date_created ? new Date(item.date_created).toLocaleString() : undefined
-                  )}
+                  {renderField("Date Created", item.date_created)}
                 </div>
               )}
             </div>

@@ -26,6 +26,14 @@ const Login: React.FC = () => {
     }
   }, [lockUntil]);
 
+  // 🔊 Function to play sound
+  const playSound = (file: string) => {
+    const audio = new Audio(file);
+    audio.play().catch((err) => {
+      console.warn("Audio play prevented by browser:", err);
+    });
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!Email || !Password || !Department) return toast.error('All fields are required!');
@@ -44,12 +52,14 @@ const Login: React.FC = () => {
         // 🔹 Block login if Status is Resigned or Terminated
         if (result.Status === "Resigned" || result.Status === "Terminated") {
           toast.error(`Your account is ${result.Status}. Login not allowed.`);
+          playSound('/login-failed.mp3');
           setLoading(false);
           return;
         }
 
         if (result.Department !== Department) {
           toast.error('Department mismatch!');
+          playSound('/login-failed.mp3');
           setLoading(false);
           return;
         }
@@ -67,12 +77,12 @@ const Login: React.FC = () => {
         });
 
         toast.success('Login successful!');
+        playSound('/login.mp3'); // 🔊 Success sound
+
         setTimeout(() => {
           if (result.Role === "Manager" && result.Department === "Sales") {
-            // ✅ Manager in Sales department → Sales Dashboard
             router.push(`/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(result.userId)}`);
           } else if (result.Department === "Sales") {
-            // ✅ Regular Sales user → Task / ScheduledActivity
             router.push(`/ModuleSales/Sales/Task/ScheduledActivity?id=${encodeURIComponent(result.userId)}`);
           } else if (result.Department === "CSR") {
             router.push(`/ModuleCSR/CSR/Dashboard?id=${encodeURIComponent(result.userId)}`);
@@ -85,13 +95,16 @@ const Login: React.FC = () => {
         if (result.lockUntil) {
           setLockUntil(result.lockUntil);
           toast.error(`Account locked! Try again after ${new Date(result.lockUntil).toLocaleString()}.`);
+          playSound('/login-failed.mp3'); // 🔊 Failed sound
         } else {
           toast.error(result.message || 'Login failed!');
+          playSound('/login-failed.mp3'); // 🔊 Failed sound
         }
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred while logging in!');
+      playSound('/login-failed.mp3'); // 🔊 Failed sound
     } finally {
       setLoading(false);
     }

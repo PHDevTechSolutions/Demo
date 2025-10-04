@@ -23,8 +23,8 @@ export async function GET(req: Request) {
         referenceid,
         tsm,
         manager,
-        date_created,
-        date_updated,
+        to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
+        to_char(date_updated, 'MM/DD/YYYY HH12:MI:SS AM') AS date_updated
         activitystatus,
         activitynumber,
         quotationnumber,

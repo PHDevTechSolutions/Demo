@@ -32,8 +32,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [sessionInfo, setSessionInfo] = useState<SessionData | null>(null);
 
-  const audioTaskflowRef = useRef<HTMLAudioElement>(null);
-  const audioBinaryRef = useRef<HTMLAudioElement>(null);
+  const audioLogoutRef = useRef<HTMLAudioElement>(null);
 
   const router = useRouter();
 
@@ -84,19 +83,13 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    if (audioTaskflowRef.current) {
-      audioTaskflowRef.current.currentTime = 0;
-      await audioTaskflowRef.current.play().catch(() => { });
+    // 🔊 Play logout sound
+    if (audioLogoutRef.current) {
+      audioLogoutRef.current.currentTime = 0;
+      await audioLogoutRef.current.play().catch(() => { });
     }
 
-    setTimeout(() => {
-      if (audioBinaryRef.current) {
-        audioBinaryRef.current.currentTime = 0;
-        audioBinaryRef.current.play().catch(() => { });
-      }
-    }, 1000);
-
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for sound to play
 
     try {
       await fetch("/api/log-activity", {
@@ -124,8 +117,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       className="relative p-2 dark:bg-gray-900 dark:border-gray-700 flex items-center justify-between flex-shrink-0 overflow-hidden"
       style={{ position: "sticky", bottom: 0, zIndex: 10 }}
     >
-      <audio src="/taskflow-logout.mp3" ref={audioTaskflowRef} />
-      <audio src="/binary-logout-sfx.mp3" ref={audioBinaryRef} />
+      <audio src="/logout.mp3" ref={audioLogoutRef} />
 
       {isLoggingOut && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-900 backdrop-blur-sm">
