@@ -122,6 +122,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     followup_date: "",
     drnumber: "",
     emailaddress: "",
+    contactnumber: "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
@@ -164,6 +165,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       followup_date: "",
       drnumber: "",
       emailaddress: "",
+      contactnumber: "",
     });
 
   const handleAddClick = (prog?: ProgressItem) => {
@@ -210,6 +212,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       followup_date: prog?.followup_date || "",
       drnumber: prog?.drnumber || "",
       emailaddress: prog?.emailaddress || "",
+      contactnumber: prog?.contactnumber || "",
     });
 
     setShowForm(true);

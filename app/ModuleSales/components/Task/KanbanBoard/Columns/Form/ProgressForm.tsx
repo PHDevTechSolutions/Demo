@@ -34,6 +34,7 @@ interface ProgressFormProps {
     followup_date: string;
     drnumber: string;
     emailaddress: string;
+    contactnumber?: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<
@@ -78,6 +79,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 }) => {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [elapsed, setElapsed] = useState("0s");
+  const [showOutboundModal, setShowOutboundModal] = useState(false);
 
   useEffect(() => {
     if (!formData.startdate) {
@@ -119,6 +121,13 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
     //}
     handleFormSubmit(e);
   };
+
+  // ➕ detect kapag Outbound Calls napili, buksan ang modal
+  useEffect(() => {
+    if (formData.typeactivity === "Outbound calls") {
+      setShowOutboundModal(true);
+    }
+  }, [formData.typeactivity]);
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
@@ -313,6 +322,71 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </button>
         </div>
       </form>
+      {showOutboundModal && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[10000]">
+    <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center relative animate-fadeIn">
+      {/* User Icon */}
+      <div className="flex justify-center mb-3">
+        <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-lg">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-8 h-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5.121 17.804A9 9 0 1117.804 5.121M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Title */}
+      <h3 className="text-lg font-bold text-gray-800 mb-2">
+        Please Call Your Client on Actual Phone or Mobile
+      </h3>
+
+      {/* Phone + Number */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping"></div>
+          <div className="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M3 5h2l3 7-1.34 2.68a1 1 0 00.27 1.32l3.2 2.4a11 11 0 005.1-5.1l-2.4-3.2a1 1 0 011.32-.27L19 9h2"
+              />
+            </svg>
+          </div>
+        </div>
+        <span className="font-bold text-blue-600 text-lg">
+          {formData.contactnumber || "No number provided"}
+        </span>
+      </div>
+
+      {/* Close Button */}
+      <button
+        onClick={() => setShowOutboundModal(false)}
+        className="mt-2 px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-all shadow-md"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
       {/* 
       <SurveyModal
         isOpen={showSurveyModal}
