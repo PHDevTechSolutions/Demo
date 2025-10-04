@@ -75,25 +75,27 @@ export async function GET(req: NextRequest) {
 
       if (leftover > 0 && Array.isArray(yesterdayRow.companies)) {
         // ✅ Start with leftover companies
-        companies = [...yesterdayRow.companies];
+        const leftoverCompanies = yesterdayRow.companies;
+
         todayQuota = DAILY_QUOTA + leftover;
 
-        // 🔎 Fetch fresh accounts (para magdagdag ng bago)
+        // 🔎 Fetch fresh accounts
         const { data: accounts } = await supabase
           .from("companies")
           .select("*")
           .eq("referenceid", referenceid);
 
+        let newCompanies: any[] = [];
         if (accounts && accounts.length > 0) {
-          const additionalNeeded = DAILY_QUOTA;
-
-          const newCompanies = accounts
-            .filter((acc) => !companies.find((c) => c.id === acc.id))
+          // 🟢 pick 35 bagong companies (not in leftover)
+          newCompanies = accounts
+            .filter((acc) => !leftoverCompanies.find((c) => c.id === acc.id))
             .sort(() => 0.5 - Math.random())
-            .slice(0, additionalNeeded);
-
-          companies = [...companies, ...newCompanies];
+            .slice(0, DAILY_QUOTA);
         }
+
+        // 👉 Final list = kahapon + bago
+        companies = [...leftoverCompanies, ...newCompanies];
 
         // 👉 Save today
         await supabase.from("daily_quotas").upsert(
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
           { onConflict: "referenceid,date" }
         );
 
-        // 👉 Reset kahapon
+        // 👉 Reset kahapon (leftover cleared)
         await supabase
           .from("daily_quotas")
           .update({ companies: [], remaining_quota: 0 })
@@ -164,15 +166,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 📝 Upsert today’s quota
+    // 🟢 2. Deduplicate companies list
+    const uniqueCompanies = companies.filter(
+      (comp, index, self) =>
+        index === self.findIndex((c) => c.id === comp.id)
+    );
+
+    // 🟢 3. Compute new remaining quota based on actual companies
+    const safeRemaining =
+      typeof remaining_quota === "number"
+        ? remaining_quota
+        : Math.max(DAILY_QUOTA - uniqueCompanies.length, 0);
+
+    // 📝 4. Upsert today’s quota
     const { data, error } = await supabase
       .from("daily_quotas")
       .upsert(
         {
           referenceid,
           date,
-          companies,
-          remaining_quota,
+          companies: uniqueCompanies,
+          remaining_quota: safeRemaining,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "referenceid,date" }
@@ -182,9 +196,14 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, data, skipped: false });
+    return NextResponse.json({
+      success: true,
+      data,
+      skipped: false,
+    });
   } catch (err: any) {
     console.error("❌ DailyQuota POST error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

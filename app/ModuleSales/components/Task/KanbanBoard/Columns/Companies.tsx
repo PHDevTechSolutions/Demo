@@ -97,8 +97,25 @@ const Companies: React.FC<CompaniesProps> = ({
         return;
       }
 
-      // ✅ Else → kailangan mag-generate ng bago
-      const todayQuota = quotaData?.remaining_quota ?? 35;
+      // ✅ Compute today's quota: kahapon naiwan + bagong 35
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+      let carryOver = 0;
+
+      // Fetch kahapon’s quota para malaman kung ilan naiwan
+      const yestRes = await fetch(
+        `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${yesterdayStr}`
+      );
+      const yestData = await yestRes.json();
+      if (yestData && typeof yestData.remaining_quota === "number") {
+        carryOver = yestData.remaining_quota;
+      }
+
+      // Today’s total = bagong 35 + carryover
+      const todayQuota = 35 + carryOver;
+
 
       // ✅ Fetch accounts
       const accountsRes = await fetch(
@@ -195,9 +212,9 @@ const Companies: React.FC<CompaniesProps> = ({
     if (!userDetails?.ReferenceID) return;
 
     // 1. tanggalin muna yung pinili
-    const updated = companies.filter((c) => c.id !== comp.id);
+    let updated = companies.filter((c) => c.id !== comp.id);
 
-    // 2. fetch eligible companies
+    // 2. fetch eligible companies (fresh list)
     const accountsRes = await fetch(
       `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
     );
@@ -211,55 +228,67 @@ const Companies: React.FC<CompaniesProps> = ({
     const eligibleCompanies = companiesData.filter(isCompanyDue);
     const usedIds = new Set(updated.map((c) => c.id));
 
-    // 3. replacement search (priority: same typeclient)
-    let replacements = eligibleCompanies.filter(
-      (c) => c.typeclient === comp.typeclient && !usedIds.has(c.id)
+    // 3. replacement (only if action = cancel)
+    if (action === "cancel") {
+      let replacements = eligibleCompanies.filter(
+        (c) => c.typeclient === comp.typeclient && !usedIds.has(c.id)
+      );
+
+      if (replacements.length === 0) {
+        replacements = eligibleCompanies.filter((c) => !usedIds.has(c.id));
+      }
+
+      if (replacements.length > 0) {
+        const randomPick =
+          replacements[Math.floor(Math.random() * replacements.length)];
+        updated.push(randomPick);
+      }
+    }
+
+    // 4. deduplicate just in case
+    const uniqueCompanies = updated.filter(
+      (c, idx, self) => idx === self.findIndex((x) => x.id === c.id)
     );
 
-    // 4. fallback kung wala na sa same type
-    if (replacements.length === 0) {
-      replacements = eligibleCompanies.filter((c) => !usedIds.has(c.id));
-    }
-
-    // 5. build final companies
-    let finalCompanies = [...updated];
-    if (action === "cancel" && replacements.length > 0) {
-      // only replace if cancel
-      const randomPick =
-        replacements[Math.floor(Math.random() * replacements.length)];
-      finalCompanies.push(randomPick);
-    }
-
-    // 6. update quota
+    // 5. compute new quota (if add = subtract, if cancel = same quota)
     const newQuota =
-      action === "add" ? Math.max(remainingQuota - 1, 0) : remainingQuota;
+      action === "add"
+        ? Math.max(remainingQuota - 1, 0)
+        : remainingQuota;
 
-    setCompanies(finalCompanies);
+    setCompanies(uniqueCompanies);
     setRemainingQuota(newQuota);
 
-    // 7. save to server
+    // 6. sync to server
     await fetch("/api/ModuleSales/Companies/DailyQuota", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         referenceid: userDetails.ReferenceID,
         date: new Date().toISOString().split("T")[0],
-        companies: finalCompanies,
+        companies: uniqueCompanies,
         remaining_quota: newQuota,
       }),
     });
   };
+
 
   const handleAddCompany = (comp: Company) => {
     if (showSkipModal) {
       toast.warn("🚫 Skip period is active. Cannot add companies.");
       return;
     }
+
     handleSubmit(comp, false);
+
+    // sync with backend
     removeCompany(comp, "add");
-    if (comp.id)
+
+    if (comp.id) {
       localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+    }
   };
+
 
   const handleSkipSubmit = async () => {
     if (!startDate || !endDate) {
