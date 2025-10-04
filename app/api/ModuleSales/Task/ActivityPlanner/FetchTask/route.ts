@@ -25,7 +25,7 @@ export async function GET(req: Request) {
         soamount, actualsales, quotationamount
       FROM progress
       WHERE referenceid = ${referenceid}
-      ORDER BY date_created DESC;
+      ORDER BY date_updated DESC;
     `;
 
         return NextResponse.json({ success: true, data: rows }, { status: 200 });
