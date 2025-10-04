@@ -14,8 +14,6 @@ import Pagination from "../../../components/Routes/Pagination/CA_Pagination";
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// Icons
-import { CiImport } from "react-icons/ci";
 
 const ActiveAccounts: React.FC = () => {
     const [showForm, setShowForm] = useState(false);

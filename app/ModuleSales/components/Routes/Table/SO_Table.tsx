@@ -208,7 +208,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                                             {post.activitystatus}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-3">{formatDate(post.date_created)}</td>
+                                    <td className="px-6 py-3">{post.date_created}</td>
                                     <td className="px-6 py-3 uppercase">{post.sonumber}</td>
                                     <td className="px-6 py-3">{formatCurrency(post.soamount)}</td>
                                     <td className="px-6 py-3 uppercase">{post.companyname}</td>

@@ -20,7 +20,7 @@ export async function GET() {
         referenceid,
         tsm,
         manager,
-        date_created,
+        to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
         companyname,
         contactperson,
         actualsales,

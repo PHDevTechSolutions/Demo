@@ -143,7 +143,7 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                         ) : (
                             paginatedData.map((post) => (
                                 <tr key={post.id} className="border-b whitespace-nowrap">
-                                    <td className="px-6 py-4 text-xs">{formatDate(post.date_created)}</td>
+                                    <td className="px-6 py-4 text-xs">{post.date_created}</td>
                                     <td className="px-6 py-4 text-xs">{formatCurrency(post.quotationamount)}</td>
                                     <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
                                     <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
