@@ -11,6 +11,8 @@ import {
   isWithinInterval,
 } from "date-fns";
 
+import Tools from "../Modal/AC_Modal";
+
 interface Post {
   companyname: string;
   contactperson: string;
@@ -233,28 +235,12 @@ const Table: React.FC<TableProps> = ({ posts }) => {
       </div>
 
       {selectedDate && (
-        <Modal onClose={() => setSelectedDate(null)}>
-          <h3 className="font-semibold mb-2">
-            Posts on {format(selectedDate, "MMMM dd, yyyy")} ({selectedPosts.length})
-          </h3>
-          {selectedPosts.length === 0 && <p>No posts on this day.</p>}
-          {selectedPosts.length > 0 && (
-            <ul className="text-xs max-h-60 overflow-auto">
-              {selectedPosts.map((post, i) => (
-                <li key={i} className="mb-2 border-b border-gray-300 pb-1">
-                  <div>
-                    <strong className="uppercase">{post.companyname}</strong> - {post.typeactivity}
-                  </div>
-                  <div>
-                    Contact: {post.contactperson} ({post.contactnumber})
-                  </div>
-                  <div className="capitalize">Remarks: {post.remarks}</div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Modal>
-      )}
+  <Tools
+    selectedDate={selectedDate}
+    selectedPosts={selectedPosts}
+    onClose={() => setSelectedDate(null)}
+  />
+)}
     </div>
   );
 };

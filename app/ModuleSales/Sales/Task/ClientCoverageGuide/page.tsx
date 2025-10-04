@@ -70,7 +70,7 @@ const ListofUser: React.FC = () => {
     const fetchAccount = async () => {
         setLoadingAccounts(true);
         try {
-            const response = await fetch("/api/ModuleSales/Task/Callback/FetchProgress");
+            const response = await fetch("/api/ModuleSales/Task/CCG");
             const data = await response.json();
             console.log("Fetched data:", data);
             setPosts(data.data);
@@ -87,52 +87,51 @@ const ListofUser: React.FC = () => {
     }, []);
 
     const filteredAccounts = Array.isArray(posts)
-        ? posts
-            .filter((post) => {
-                const hasCompanyName = !!post?.companyname;
+  ? posts
+      .filter((post) => {
+        // 🔹 Ensure companyname exists
+        if (!post?.companyname) return false;
 
-                const matchesSearchTerm =
-                    hasCompanyName &&
-                    post.companyname.toLowerCase().includes(searchTerm.toLowerCase());
+        // 🔹 Search term filter
+        const matchesSearchTerm = post.companyname
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
-                const postDate = post.date_created ? new Date(post.date_created) : null;
-                const isWithinDateRange =
-                    (!startDate || (postDate && postDate >= new Date(startDate))) &&
-                    (!endDate || (postDate && postDate <= new Date(endDate)));
+        // 🔹 Date range filter
+        const postDate = post.date_created ? new Date(post.date_created) : null;
+        const isWithinDateRange =
+          (!startDate || (postDate && postDate >= new Date(startDate))) &&
+          (!endDate || (postDate && postDate <= new Date(endDate)));
 
-                const matchesClientType = selectedClientType
-                    ? post?.typeclient === selectedClientType
-                    : true;
+        // 🔹 Client type filter (if typeclient exists in your data)
+        const matchesClientType = selectedClientType
+          ? post.typeclient === selectedClientType
+          : true;
 
-                const userReferenceID = userDetails.ReferenceID;
-                const isSuperOrSpecial =
-                    userDetails.Role === "Super Admin" ||
-                    userDetails.Role === "Special Access";
-                const allowedRoles = [
-                    "Super Admin",
-                    "Special Access",
-                    "Territory Sales Associate",
-                    "Territory Sales Manager",
-                    "Manager",
-                ];
+        // 🔹 Role-based filtering
+        const role = userDetails.Role;
+        const refID = String(userDetails.ReferenceID || "");
+        let roleMatch = false;
 
-                const matchesRole = allowedRoles.includes(userDetails.Role);
-                const matchesReferenceID = isSuperOrSpecial
-                    ? true
-                    : post?.referenceid === userReferenceID || post?.ReferenceID === userReferenceID;
+        if (role === "Super Admin" || role === "Special Access") {
+          roleMatch = true; // lahat pwede
+        } else if (role === "Manager") {
+          roleMatch = String(post.manager) === refID;
+        } else if (role === "Territory Sales Manager") {
+          roleMatch = String(post.tsm) === refID;
+        } else if (role === "Territory Sales Associate") {
+          roleMatch = String(post.referenceid) === refID;
+        }
 
-                return (
-                    hasCompanyName &&
-                    matchesSearchTerm &&
-                    isWithinDateRange &&
-                    matchesClientType &&
-                    matchesReferenceID &&
-                    matchesRole
-                );
-            })
-            .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
-        : [];
-
+        return matchesSearchTerm && isWithinDateRange && matchesClientType && roleMatch;
+      })
+      .sort((a, b) => {
+        // 🔹 Sort by date_created descending
+        const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
+        const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
+        return dateB - dateA;
+      })
+  : [];
 
     return (
         <SessionChecker>
