@@ -32,7 +32,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       </button>
 
       {/* Tasklist */}
-      {!isTerritoryManager || !isManager && (
+      {!(isTerritoryManager || isManager) && (
         <button
           onClick={() => setActiveTab("tasklist")}
           title="Tasklist"
@@ -45,7 +45,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       )}
 
       {/* Scheduled */}
-      {!isTerritoryManager || !isManager && (
+      {!(isTerritoryManager || isManager) && (
         <button
           onClick={() => setActiveTab("scheduled")}
           title="Scheduled"
@@ -58,7 +58,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       )}
 
       {/* Notes */}
-      {!isTerritoryManager || !isManager && (
+      {!(isTerritoryManager || isManager) && (
         <button
           onClick={() => setActiveTab("notes")}
           title="Notes"
@@ -71,7 +71,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       )}
 
       {/* Quote */}
-      {!isTerritoryManager || !isManager && (
+      {!(isTerritoryManager || isManager) && (
         <button
           onClick={() => setActiveTab("quote")}
           title="Quote"

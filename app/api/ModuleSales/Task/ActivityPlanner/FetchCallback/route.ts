@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL;
-if (!Xchire_databaseUrl) {
+const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
+if (!TASKFLOW_DB_URL) {
   throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
 }
 
-const Xchire_sql = neon(Xchire_databaseUrl);
+const db = neon(TASKFLOW_DB_URL);
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    // Fetch only the columns you want
-    const Xchire_fetch = await Xchire_sql`
+    const { searchParams } = new URL(req.url);
+    const referenceid = searchParams.get("referenceid");
+
+    if (!referenceid) {
+      return NextResponse.json(
+        { success: false, error: "Missing referenceid parameter" },
+        { status: 400 }
+      );
+    }
+
+    const results = await db`
       SELECT 
         id,
         tsm,
@@ -32,19 +41,20 @@ export async function GET() {
         typecall,
         callback,
         typeactivity
-      FROM progress;
+      FROM progress
+      WHERE referenceid = ${referenceid}
+         OR tsm = ${referenceid}
+         OR manager = ${referenceid};
     `;
 
-    console.log("Fetched progress data:", Xchire_fetch); // Debugging line
-
-    return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
-  } catch (Xchire_error: any) {
-    console.error("Error fetching progress data:", Xchire_error);
+    return NextResponse.json({ success: true, data: results }, { status: 200 });
+  } catch (error: any) {
+    console.error("❌ Error fetching progress data:", error);
     return NextResponse.json(
-      { success: false, error: Xchire_error.message || "Failed to fetch progress data." },
+      { success: false, error: error.message || "Failed to fetch progress data" },
       { status: 500 }
     );
   }
 }
 
-export const dynamic = "force-dynamic"; // Always fetch fresh data
+export const dynamic = "force-dynamic";

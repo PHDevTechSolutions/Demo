@@ -84,10 +84,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   const welcomeAudioRef = useRef<HTMLAudioElement>(null);
 
+  // ✅ State for TSA filter
+  const [TSAOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedTSA, setSelectedTSA] = useState<string>(""); // ReferenceID of selected TSA
+
+
   useEffect(() => {
     const played = localStorage.getItem("welcomePlayed");
     if (!played && welcomeAudioRef.current) {
-      welcomeAudioRef.current.play().catch(() => {});
+      welcomeAudioRef.current.play().catch(() => { });
       localStorage.setItem("welcomePlayed", "true");
     }
   }, []);
@@ -96,7 +101,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const handlePlayMessage = () => {
     if (welcomeAudioRef.current) {
       welcomeAudioRef.current.currentTime = 0;
-      welcomeAudioRef.current.play().catch(() => {});
+      welcomeAudioRef.current.play().catch(() => { });
     }
   };
 
@@ -235,11 +240,42 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   // ✅ Filter columns based on Role
   const filteredColumns = allColumns.filter(col => {
-    if (userDetails?.Role === "Territory Sales Manager") {
+    if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
       return col.id !== "new-task" && col.id !== "in-progress";
     }
     return true;
   });
+
+  useEffect(() => {
+    const fetchTSA = async () => {
+      if (!userDetails?.ReferenceID) return;
+
+      let url = "";
+      if (userDetails.Role === "Territory Sales Manager") {
+        url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
+      } else if (userDetails.Role === "Manager") {
+        url = `/api/fetchtsadata?Role=Territory Sales Associate&manager=${userDetails.ReferenceID}`;
+      } else if (userDetails.Role === "Super Admin") {
+        url = `/api/fetchtsadata?Role=Territory Sales Associate`;
+      } else return;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch TSA");
+
+        const data = await response.json();
+        const options = data.map((user: any) => ({
+          value: user.ReferenceID,
+          label: `${user.Firstname} ${user.Lastname}`,
+        }));
+        setTSAOptions(options);
+      } catch (err) {
+        console.error("❌ Error fetching TSA:", err);
+      }
+    };
+
+    fetchTSA();
+  }, [userDetails?.ReferenceID, userDetails?.Role]);
 
   return (
     <div className="w-full p-4">
@@ -261,6 +297,22 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           ▶ Play Message
         </button>
       </div>
+      <div className="flex gap-2 items-center">
+          <label className="text-xs font-semibold">Filter TSA:</label>
+          <select
+            value={selectedTSA}
+            onChange={(e) => setSelectedTSA(e.target.value)}
+            className="shadow-sm border px-3 py-2 rounded text-xs capitalize"
+          >
+            <option value="">All</option>
+            {TSAOptions.map((tsa) => (
+              <option key={tsa.value} value={tsa.value}>
+                {tsa.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
       <div className="flex gap-4">
         {filteredColumns.map(col => {
           const isCollapsed = collapsedColumns.includes(col.id);
@@ -324,14 +376,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
-                    <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                    <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                    <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
+                    <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
                     <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
                   </>
                 )}
+
                 {col.id === "completed" && !isCollapsed && (
-                  <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                  <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
                 )}
               </div>
             </div>

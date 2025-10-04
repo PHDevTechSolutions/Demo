@@ -27,20 +27,19 @@ export interface CompletedItem {
 interface CompletedProps {
   userDetails: any;
   refreshTrigger?: number;
+  selectedTSA?: string;
 }
 
 const POLL_INTERVAL = 60000;
 const ITEMS_PER_PAGE = 10;
 
-const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) => {
+const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, selectedTSA }) => {
   const [data, setData] = useState<CompletedItem[]>([]);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const lastFetchedIds = React.useRef<Set<string>>(new Set());
 
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
@@ -51,24 +50,20 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch completed tasks");
-      }
+      if (!res.ok) throw new Error("Failed to fetch completed tasks");
 
       const result = await res.json();
       const list: CompletedItem[] = Array.isArray(result)
         ? result
         : result.data || result.items || [];
 
-      setData(list); // directly update state
+      setData(list);
     } catch (err) {
       console.error("❌ Error fetching completed:", err);
     } finally {
       setLoading(false);
     }
   }, [userDetails?.ReferenceID]);
-
-
 
   useEffect(() => {
     fetchCompleted();
@@ -77,7 +72,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   }, [fetchCompleted, refreshTrigger]);
 
   const toggleExpand = (id: string) => {
-    setExpandedItems((prev) => {
+    setExpandedItems(prev => {
       const newSet = new Set(prev);
       newSet.has(id) ? newSet.delete(id) : newSet.add(id);
       return newSet;
@@ -93,11 +88,17 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
     );
   };
 
-  const filteredData = data.filter((item) =>
+  // Step 1: Filter by search query
+  const filteredData = data.filter(item =>
     (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading && data.length === 0)
+  // Step 2: Apply TSA filter if selected
+  const finalFiltered = selectedTSA
+    ? filteredData.filter(item => item.referenceid === selectedTSA)
+    : filteredData;
+
+  if (loading && finalFiltered.length === 0)
     return (
       <div className="flex justify-center items-center py-10">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -105,20 +106,20 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
       </div>
     );
 
-  if (data.length === 0)
+  if (finalFiltered.length === 0)
     return <div className="text-center text-gray-400 italic text-xs">No completed tasks yet</div>;
 
   return (
     <div className="space-y-1">
-      {/* 🔝 Header with search + refresh */}
+      {/* Header with search + refresh */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <span className="text-xs text-gray-600 font-bold">
-          Total: <span className="text-orange-500">{filteredData.length}</span>
+          Total: <span className="text-orange-500">{finalFiltered.length}</span>
         </span>
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={() => setSearchOpen((prev) => !prev)}
+            onClick={() => setSearchOpen(prev => !prev)}
           >
             Search <IoSearchOutline size={15} />
           </button>
@@ -126,11 +127,7 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={fetchCompleted}
           >
-            {loading ? (
-              <IoSync size={14} className="animate-spin" />
-            ) : (
-              <IoSync size={14} />
-            )}
+            {loading ? <IoSync size={14} className="animate-spin" /> : <IoSync size={14} />}
           </button>
         </div>
       </div>
@@ -142,19 +139,19 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             placeholder="Search..."
             className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
       )}
 
-      {/* 🔽 Render Items */}
-      {filteredData.slice(0, visibleCount).map((item) => {
+      {/* Render Items */}
+      {finalFiltered.slice(0, visibleCount).map(item => {
         const isExpanded = expandedItems.has(item.id);
         return (
           <div
-            key={item.id}
+            key={item.id || `${item.referenceid}-${item.activitynumber}`}
             className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
-            onClick={() => toggleExpand(item.id)}
+            onClick={() => toggleExpand(item.id || `${item.referenceid}-${item.activitynumber}`)}
           >
             <div className="flex items-center">
               <img
@@ -195,11 +192,11 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
         );
       })}
 
-      {visibleCount < filteredData.length && (
+      {visibleCount < finalFiltered.length && (
         <div className="flex justify-center mt-2">
           <button
             className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+            onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
           >
             View More
           </button>

@@ -166,7 +166,6 @@ const Login: React.FC = () => {
               <option value="">Select Department</option>
               <option value="CSR">CSR</option>
               <option value="Sales">Sales</option>
-              <option value="BD">Business Development</option>
             </select>
             <button
               type="submit"

@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import CallbackCard from "./Card/CallbackCard";
-import { toast, ToastContainer } from "react-toastify";
+import CallbackForm from "./Form/Callback";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 interface Inquiry {
@@ -42,16 +43,16 @@ interface UserDetails {
 interface CallbacksProps {
   userDetails: UserDetails | null;
   refreshTrigger: number;
+  selectedTSA?: string;
 }
 
-const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) => {
+const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, selectedTSA }) => {
   const [callbacks, setCallbacks] = useState<Inquiry[]>([]);
   const [visibleCount, setVisibleCount] = useState(3);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
+  
   const [activitynumber, setActivityNumber] = useState("");
   const [companyname, setCompanyName] = useState("");
   const [contactperson, setContactPerson] = useState("");
@@ -76,40 +77,47 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         const res = await fetch(
           `/api/ModuleSales/Task/ActivityPlanner/FetchCallback?referenceid=${userDetails.ReferenceID}`
         );
+        const result = await res.json();
 
-        const data = await res.json();
-        const inquiries: Inquiry[] = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.data)
-            ? data.data
+        const inquiries: Inquiry[] = Array.isArray(result.data)
+          ? result.data
+          : Array.isArray(result)
+            ? result
             : [];
 
-        // ✅ Define start and end of today (safe copy para hindi ma-mutate si today)
         const now = new Date();
-        const startOfDay = new Date(now);
-        startOfDay.setHours(0, 0, 0, 0);
+        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
-        const endOfDay = new Date(now);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        // ✅ Filter depende sa role
+        // Filter by role
         let filtered: Inquiry[] = [];
-        if (userDetails.Role === "Territory Sales Manager") {
-          // lahat ng inquiries ng agents under this TSM
-          filtered = inquiries.filter(
-            (inq) =>
-              inq.tsm === userDetails.ReferenceID &&
-              ["Ringing Only", "Cannot Be Reached", "Not Connected With The Company"].includes(
-                inq.typecall || ""
-              )
-          );
-        } else {
-          // normal agent = sariling ReferenceID lang
-          filtered = inquiries.filter((inq) => inq.referenceid === userDetails.ReferenceID);
+
+        switch (userDetails.Role) {
+          case "Territory Sales Manager":
+            filtered = inquiries.filter(
+              (inq) =>
+                inq.tsm === userDetails.ReferenceID &&
+                ["Ringing Only", "Cannot Be Reached", "Not Connected With The Company"].includes(
+                  inq.typecall || ""
+                )
+            );
+            break;
+
+          case "Manager":
+            filtered = inquiries.filter((inq) => inq.manager === userDetails.ReferenceID);
+            break;
+
+          default:
+            filtered = inquiries.filter((inq) => inq.referenceid === userDetails.ReferenceID);
         }
 
-        // ✅ today’s callbacks lang
-        const todayCallbacks = filtered
+        // ✅ Apply selectedTSA filter if provided
+        const tsaFiltered = selectedTSA
+          ? filtered.filter((inq) => inq.referenceid === selectedTSA)
+          : filtered;
+
+        // Callbacks for today
+        const todayCallbacks = tsaFiltered
           .filter((inq) => {
             if (!inq.callback) return false;
             const cbDate = new Date(inq.callback);
@@ -128,7 +136,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
     };
 
     fetchCallbacks();
-  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger]);
+  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger, selectedTSA]);
 
 
   const openFormDrawer = (inq: Inquiry) => {
@@ -241,106 +249,40 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger }) =>
         </p>
       )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleUpdate();
-        }}
-        className={`fixed bottom-0 left-0 w-full z-[9999] bg-white shadow-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto transform transition-transform duration-300 ${selectedInquiry ? "translate-y-0" : "translate-y-full"
-          }`}
-      >
-        {selectedInquiry && (
-          <>
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h3 className="text-lg font-semibold">Update Activity</h3>
-              <button
-                type="button"
-                onClick={closeFormDrawer}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-              >
-                &times;
-              </button>
-            </div>
+      {selectedInquiry && (
+        <CallbackForm
+          selectedInquiry={selectedInquiry}
+          handleUpdate={handleUpdate}
+          closeFormDrawer={closeFormDrawer}
+          activitynumber={activitynumber}
+          companyname={companyname}
+          contactperson={contactperson}
+          typeclient={typeclient}
+          typeactivity={typeactivity}
+          referenceid={referenceid}
+          tsm={tsm}
+          manager={manager}
+          remarks={remarks}
+          startdate={startdate}
+          enddate={enddate}
+          activitystatus={activitystatus}
+          typecall={typecall}
+          setActivityNumber={setActivityNumber}
+          setCompanyName={setCompanyName}
+          setContactPerson={setContactPerson}
+          setTypeClient={setTypeClient}
+          setTypeActivity={setTypeActivity}
+          setReferenceid={setReferenceid}
+          setTsm={setTsm}
+          setManager={setManager}
+          setRemarks={setRemarks}
+          setStartDate={setStartDate}
+          setEndDate={setEndDate}
+          setActivityStatus={setActivityStatus}
+          setTypeCall={setTypeCall}
+        />
+      )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <input type="hidden" value={activitynumber} onChange={(e) => setActivityNumber(e.target.value)} />
-              <input type="hidden" value={companyname} onChange={(e) => setCompanyName(e.target.value)} />
-              <input type="hidden" value={contactperson} onChange={(e) => setContactPerson(e.target.value)} />
-              <input type="hidden" value={typeclient} onChange={(e) => setTypeClient(e.target.value)} />
-              <input type="hidden" value={typeactivity} onChange={(e) => setTypeActivity(e.target.value)} />
-              <input type="hidden" value={referenceid} onChange={(e) => setReferenceid(e.target.value)} />
-              <input type="hidden" value={tsm} onChange={(e) => setTsm(e.target.value)} />
-              <input type="hidden" value={manager} onChange={(e) => setManager(e.target.value)} />
-
-              <div className="flex flex-col sm:col-span-2">
-                <label className="font-semibold text-xs mb-1">Remarks</label>
-                <textarea
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  rows={3}
-                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold text-xs mb-1">Start Date</label>
-                <input
-                  type="datetime-local"
-                  value={startdate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold text-xs mb-1">End Date</label>
-                <input
-                  type="datetime-local"
-                  value={enddate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold text-xs mb-1">Status</label>
-                <select
-                  value={activitystatus}
-                  onChange={(e) => setActivityStatus(e.target.value)}
-                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                >
-                  <option value="">Select Status</option>
-                  <option value="Ongoing">Ongoing</option>
-                  <option value="Done">Done</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col">
-                <label className="font-semibold text-xs mb-1">Call Status</label>
-                <select
-                  value={typecall}
-                  onChange={(e) => setTypeCall(e.target.value as "Successful" | "Unsucessful")}
-                  className="border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-xs"
-                >
-                  <option value="">Select Call Status</option>
-                  <option value="Successful">Successful</option>
-                  <option value="Unsucessful">Unsucessful</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <button
-                type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-xs font-semibold shadow"
-              >
-                Save Update
-              </button>
-            </div>
-          </>
-        )}
-      </form>
     </div>
   );
 };
