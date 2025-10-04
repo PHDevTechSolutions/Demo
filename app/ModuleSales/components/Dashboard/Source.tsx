@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
+import SourceModal from "./Modal/Source";
 interface Post {
   companyname: string;
   source: string;
@@ -154,41 +154,11 @@ const Source: React.FC<SourceProps> = ({ filteredAccounts }) => {
 
       {/* Modal */}
       {showModal && selectedSource && (
-        <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50"
-          onClick={closeModal} // 🔹 Close kapag click sa backdrop
-        >
-          <div
-            className="bg-white rounded-lg p-6 w-11/12 max-w-lg max-h-[80vh] overflow-y-auto relative"
-            onClick={(e) => e.stopPropagation()} // 🔹 Prevent close kapag click sa loob
-          >
-            {/* X button (top-right) */}
-            <button
-              onClick={closeModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-lg"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-sm font-bold text-gray-800 mb-4">
-              Companies for {selectedSource} ({sourceGroups[selectedSource].length})
-            </h3>
-
-            <ul className="list-disc list-inside text-xs text-gray-700 space-y-1">
-              {sourceGroups[selectedSource].map((item, idx) => (
-                <li key={idx}>
-                  <span className="font-semibold">{item.companyname}</span>{" "}
-                  <span className="text-gray-400 italic">
-                    |{" "}
-                    {item.date_created
-                      ? new Date(item.date_created).toLocaleDateString()
-                      : "No Date"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <SourceModal
+          selectedSource={selectedSource}
+          sourceGroups={sourceGroups}
+          onClose={closeModal}
+        />
       )}
     </section>
   );

@@ -381,46 +381,57 @@ const Companies: React.FC<CompaniesProps> = ({
       )}
 
       {showSkipModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-lg p-4 w-[350px] relative">
-            <button
-              onClick={() => setShowSkipModal(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-            >
-              ✖
-            </button>
-            <h3 className="text-sm font-bold mb-3">Set Skip Period</h3>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
 
-            <div className="space-y-2 text-xs">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-yellow-500 to-yellow-600">
+              <h3 className="text-white font-semibold text-lg">Set Skip Period</h3>
+              <button
+                onClick={() => setShowSkipModal(false)}
+                className="text-white hover:text-gray-200 transition text-lg"
+              >
+                ✖
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 text-xs text-gray-700 max-h-[400px] overflow-y-auto">
               <div>
-                <label className="font-semibold">Start Date:</label>
+                <label className="block font-semibold mb-1">Start Date:</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border px-2 py-1 rounded"
+                  className="w-full border px-2 py-1 rounded text-xs"
                 />
               </div>
               <div>
-                <label className="font-semibold">End Date:</label>
+                <label className="block font-semibold mb-1">End Date:</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border px-2 py-1 rounded"
+                  className="w-full border px-2 py-1 rounded text-xs"
                 />
               </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
               <button
-                type="button" // ✅ prevents form default submit
+                type="button"
                 onClick={handleSkipSubmit}
-                className="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600"
+                className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 text-xs"
               >
                 Submit Skip
               </button>
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 };

@@ -186,33 +186,46 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                 <span className="mr-1">📅</span>Total Meetings Today: <span className="ml-1 text-red-500">{meetings.length}</span>
             </h3>
 
-            <div className="space-y-1 mb-4">
+            <div className="space-y-2 mb-4">
                 {meetings.length === 0 && (
-                    <p className="text-xs text-gray-400 italic">No meeting scheduled for today</p>
+                    <p className="text-xs text-gray-400 italic text-center py-4">
+                        No meetings scheduled for today
+                    </p>
                 )}
+
                 {meetings.map((m) => {
                     const isExpanded = expanded === m.id;
                     return (
-                        <div key={m.id} className="rounded-lg shadow bg-stone-200">
+                        <div
+                            key={m.id}
+                            className="rounded-2xl border border-gray-200 shadow-sm bg-gray-50 hover:shadow-md transition overflow-hidden"
+                        >
+                            {/* Header */}
                             <div
-                                className="flex justify-between items-center px-4 py-4 cursor-pointer bg-gray-50"
+                                className="flex justify-between items-center px-4 py-3 cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50 hover:bg-blue-100 transition"
                                 onClick={() => setExpanded(isExpanded ? null : m.id)}
                             >
                                 <div>
                                     <p className="text-xs font-semibold text-gray-700">{m.typeactivity}</p>
                                     <p className="text-[10px] text-gray-500">
-                                        {m.startdate} → {m.enddate}
+                                        {m.startdate || "-"} → {m.enddate || "-"}
                                     </p>
                                 </div>
-                                <span className="ml-2 text-[10px]">
+                                <span className="ml-2 text-[12px] text-gray-500">
                                     {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
                                 </span>
                             </div>
 
+                            {/* Expanded Body */}
                             {isExpanded && (
-                                <div className="p-3 space-y-1 text-[10px]">
-                                    <p><span className="font-semibold">Remarks:</span> {m.remarks || "-"}</p>
-                                    <p><span className="font-semibold">Created:</span> {m.date_created}</p>
+                                <div className="p-4 space-y-2 bg-white border-t border-gray-200 text-xs text-gray-700">
+                                    <p>
+                                        📌 <span className="font-semibold">Remarks:</span> {m.remarks || "-"}
+                                    </p>
+                                    <p>
+                                        🕒 <span className="font-semibold">Created:</span>{" "}
+                                       {m.date_created || "-"}
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -234,6 +247,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                     setRemarks={setRemarks}
                     handleDurationChange={handleDurationChange}
                     handleSubmit={handleSubmit}
+                    onClose={() => setShowForm(false)} // ✅ Close button works now
                 />
             )}
 

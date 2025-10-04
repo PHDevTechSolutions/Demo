@@ -23,9 +23,9 @@ export async function GET(req: Request) {
     referenceid,
     tsm,
     manager,
-    to_char(startdate, 'MM/DD/YYYY HH12:MI:SS AM') AS startdate,
-    to_char(enddate, 'MM/DD/YYYY HH12:MI:SS AM') AS enddate,
-    to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
+    to_char(startdate AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS startdate,
+    to_char(enddate AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS enddate,
+    to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
     typeactivity,
     remarks
   FROM progress
