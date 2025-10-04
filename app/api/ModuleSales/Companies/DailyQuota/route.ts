@@ -22,14 +22,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 🗓 Normalize date to YYYY-MM-DD (for Supabase date columns)
+    const currentDate = new Date(date).toISOString().split("T")[0];
+
     // 🔎 1. Check if today is inside skip period
     const { data: skipRows, error: skipError } = await supabase
       .from("skips")
       .select("id, startdate, enddate, status")
       .eq("referenceid", referenceid)
       .eq("status", "skip")
-      .lte("startdate", date) // start <= today
-      .gte("enddate", date);  // end >= today
+      .lte("startdate", currentDate) // start <= current
+      .gte("enddate", currentDate);  // end >= current
 
     if (skipError) throw skipError;
 
@@ -48,7 +51,7 @@ export async function GET(req: NextRequest) {
       .from("daily_quotas")
       .select("companies, remaining_quota")
       .eq("referenceid", referenceid)
-      .eq("date", date)
+      .eq("date", currentDate)
       .single();
 
     if (todayRow) {
@@ -56,7 +59,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 🕓 3. If wala pa → check kahapon
-    const yesterday = new Date(date);
+    const yesterday = new Date(currentDate);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
@@ -101,7 +104,7 @@ export async function GET(req: NextRequest) {
         await supabase.from("daily_quotas").upsert(
           {
             referenceid,
-            date,
+            date: currentDate,
             companies,
             remaining_quota: todayQuota,
             updated_at: new Date().toISOString(),
@@ -145,16 +148,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 🗓 Normalize date
+    const currentDate = new Date(date).toISOString().split("T")[0];
+
     // 🔎 1. Check if date is inside skip range before saving
     const { data: skips, error: skipError } = await supabase
       .from("skips")
-      .select("startdate, enddate")
-      .eq("referenceid", referenceid);
+      .select("startdate, enddate, status")
+      .eq("referenceid", referenceid)
+      .eq("status", "skip");
 
     if (skipError) throw skipError;
 
     const isSkipped = skips?.some((s) => {
-      return date >= s.startdate && date <= s.enddate;
+      return currentDate >= s.startdate && currentDate <= s.enddate;
     });
 
     if (isSkipped) {
@@ -184,7 +191,7 @@ export async function POST(req: NextRequest) {
       .upsert(
         {
           referenceid,
-          date,
+          date: currentDate,
           companies: uniqueCompanies,
           remaining_quota: safeRemaining,
           updated_at: new Date().toISOString(),
@@ -206,4 +213,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-
