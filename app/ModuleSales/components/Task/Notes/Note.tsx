@@ -311,7 +311,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                 </div>
             </div>
             <ToastContainer
-                position="bottom-right"
+                position="top-right"
                 autoClose={2000}
                 hideProgressBar={false}
                 newestOnTop

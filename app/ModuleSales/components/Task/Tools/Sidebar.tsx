@@ -13,86 +13,46 @@ interface ToolsProps {
 }
 
 const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) => {
-  const isTerritoryManager = userDetails?.Role === "Territory Sales Manager";
-  const isManager = userDetails?.Role === "Manager";
+  const role = userDetails?.Role;
+
+  const isAssociate = role === "Territory Sales Associate";
+  const isManagerOrTSM = role === "Manager" || role === "Territory Sales Manager";
+
+  const renderButton = (title: string, icon: React.ReactNode, tabName: string) => (
+    <button
+      onClick={() => setActiveTab(tabName)}
+      title={title}
+      className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
+        activeTab === tabName ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
+      }`}
+    >
+      {icon}
+    </button>
+  );
 
   return (
     <div className="flex flex-col space-y-2">
       <h3 className="font-bold text-xs">Tools</h3>
 
-      {/* Activity */}
-      <button
-        onClick={() => setActiveTab("activity")}
-        title="Activity"
-        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-          activeTab === "activity" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-        }`}
-      >
-        <BsCalendar4Week />
-      </button>
-
-      {/* Tasklist */}
-      {!(isTerritoryManager || isManager) && (
-        <button
-          onClick={() => setActiveTab("tasklist")}
-          title="Tasklist"
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "tasklist" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-          }`}
-        >
-          <FaSquareCheck />
-        </button>
+      {/* Territory Sales Associate sees everything */}
+      {isAssociate && (
+        <>
+          {renderButton("Activity", <BsCalendar4Week />, "activity")}
+          {renderButton("Tasklist", <FaSquareCheck />, "tasklist")}
+          {renderButton("Scheduled", <BsListTask />, "scheduled")}
+          {renderButton("Notes", <LuNotebookPen />, "notes")}
+          {renderButton("Quote", <BsFileEarmarkCheck />, "quote")}
+          {renderButton("Xend-Mail", <SiMinutemailer />, "xendmail")}
+        </>
       )}
 
-      {/* Scheduled */}
-      {!(isTerritoryManager || isManager) && (
-        <button
-          onClick={() => setActiveTab("scheduled")}
-          title="Scheduled"
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "scheduled" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-          }`}
-        >
-          <BsListTask />
-        </button>
+      {/* Manager or TSM sees only Tasklist and Xend-Mail */}
+      {isManagerOrTSM && (
+        <>
+          {renderButton("Tasklist", <FaSquareCheck />, "tasklist")}
+          {renderButton("Xend-Mail", <SiMinutemailer />, "xendmail")}
+        </>
       )}
-
-      {/* Notes */}
-      {!(isTerritoryManager || isManager) && (
-        <button
-          onClick={() => setActiveTab("notes")}
-          title="Notes"
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "notes" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-          }`}
-        >
-          <LuNotebookPen />
-        </button>
-      )}
-
-      {/* Quote */}
-      {!(isTerritoryManager || isManager) && (
-        <button
-          onClick={() => setActiveTab("quote")}
-          title="Quote"
-          className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-            activeTab === "quote" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-          }`}
-        >
-          <BsFileEarmarkCheck />
-        </button>
-      )}
-
-      {/* XendMail */}
-      <button
-        onClick={() => setActiveTab("xendmail")}
-        title="Xend-Mail"
-        className={`p-2 rounded-lg flex items-center justify-center gap-2 text-left ${
-          activeTab === "xendmail" ? "bg-orange-400 text-white" : "bg-white text-black border shadow"
-        }`}
-      >
-        <SiMinutemailer />
-      </button>
     </div>
   );
 };

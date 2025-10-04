@@ -145,7 +145,7 @@ const Quote: React.FC<QuoteProps> = ({ userDetails }) => {
                 />}
 
             <ToastContainer
-                position="bottom-right"
+                position="top-right"
                 autoClose={2000}
                 hideProgressBar={false}
                 newestOnTop

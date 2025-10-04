@@ -297,7 +297,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           ▶ Play Message
         </button>
       </div>
-      <div className="flex gap-2 items-center">
+
+      {(userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") && (
+        <div className="flex gap-2 items-center">
           <label className="text-xs font-semibold">Filter TSA:</label>
           <select
             value={selectedTSA}
@@ -312,6 +314,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
             ))}
           </select>
         </div>
+      )}
 
       <div className="flex gap-4">
         {filteredColumns.map(col => {
