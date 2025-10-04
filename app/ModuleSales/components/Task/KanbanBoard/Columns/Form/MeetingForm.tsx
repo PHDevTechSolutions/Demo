@@ -15,7 +15,7 @@ interface MeetingFormProps {
   setRemarks: (value: string) => void;
   handleDurationChange: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
-  onClose?: () => void; // optional close handler
+  onClose?: () => void;
 }
 
 const MeetingForm: React.FC<MeetingFormProps> = ({
@@ -32,6 +32,13 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
   handleSubmit,
   onClose,
 }) => {
+  // Get current datetime in the format for datetime-local: YYYY-MM-DDTHH:mm
+  const now = new Date();
+  const pad = (n: number) => (n < 10 ? `0${n}` : n);
+  const minDateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+    now.getDate()
+  )}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
@@ -76,6 +83,7 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
               className="w-full border px-2 py-1 rounded text-xs"
               required
               disabled={mode !== "pick"}
+              min={minDateTime} // disable past dates
             />
           </div>
 
@@ -88,6 +96,7 @@ const MeetingForm: React.FC<MeetingFormProps> = ({
               className="w-full border px-2 py-1 rounded text-xs"
               required
               disabled={mode !== "pick"}
+              min={minDateTime} // disable past dates
             />
           </div>
 
