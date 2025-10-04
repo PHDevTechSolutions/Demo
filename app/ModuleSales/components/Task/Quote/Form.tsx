@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import ExcelJS from "exceljs";
 import Table from "./Table";
+import ClientSection from "./ClientSection";
 import InformationSection from "./InformationSection";
+import SignatureSection from "./SignatureSection";
 
 interface QuoteItem {
     id: number;
@@ -53,7 +55,7 @@ interface ProductRow {
     qty: number;
     unitPrice: number;
     total: number;
-    
+
 }
 
 // 🔎 Helper: Convert <table> → plain text
@@ -424,141 +426,67 @@ const Form: React.FC<FormProps> = ({ selectedQuote, userDetails }) => {
         }
     };
 
+    // 🔄 Update quotationamount in database
+    const updateQuotationAmount = async (amount: number) => {
+        try {
+            if (!selectedQuote.referenceid || !selectedQuote.quotationnumber) {
+                throw new Error("Missing reference or quotation number");
+            }
+
+            const payload = {
+                referenceid: selectedQuote.referenceid,
+                quotationnumber: selectedQuote.quotationnumber,
+                activitynumber: selectedQuote.id,
+                quotationamount: amount,
+            };
+
+            const res = await fetch("/api/ModuleSales/Task/Quotation/UpdateAmount", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to update quotation amount");
+
+            toast.success(`Quotation amount updated to ${amount.toFixed(2)}`);
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || "Error updating quotation amount");
+        }
+    };
+
+    // ✅ Auto-update on grandTotal change
+    // ✅ Debounced auto-update quotation amount
+    useEffect(() => {
+        if (grandTotal >= 0) {
+            const timeout = setTimeout(() => {
+                updateQuotationAmount(grandTotal);
+            }, 500); // wait 500ms bago mag-request
+
+            return () => clearTimeout(timeout); // cancel kapag nagbago ulit bago lumipas yung 500ms
+        }
+    }, [grandTotal]);
+
+
     return (
         <form className="border rounded p-4 bg-gray-50">
-            {/* Header Image */}
-            <div>
-                <img
-                    src="/quote-header.png"
-                    alt="Quote Header"
-                    className="w-full object-cover"
-                />
-            </div>
-
-            {/* Reference No & Date */}
-            <div className="mt-2 text-right text-xs space-y-1">
-                <div>
-                    Reference No:{" "}
-                    <span className="font-semibold">
-                        {selectedQuote.quotationnumber}
-                    </span>
-                </div>
-                <div>
-                    Date:{" "}
-                    <span className="font-semibold">
-                        {today}
-                    </span>
-                </div>
-            </div>
-
-            {/* Company Info */}
-            <div className="mt-4 text-xs space-y-1 border-t border-b pb-2 mt-4">
-                <div>
-                    Company Name:{" "}
-                    <span className="font-semibold text-center inline-block w-full">
-                        {selectedQuote.companyname}
-                    </span>
-                </div>
-                <div>
-                    Address:{" "}
-                    <span className="font-semibold text-center inline-block w-full uppercase">
-                        {selectedQuote.address}
-                    </span>
-                </div>
-                <div>
-                    Tel No:{" "}
-                    <span className="font-semibold text-center inline-block w-full">
-                        {selectedQuote.contactnumber}
-                    </span>
-                </div>
-                <div>
-                    Email Address:{" "}
-                    <span className="font-semibold text-center inline-block w-full">
-                        {selectedQuote.emailaddress}
-                    </span>
-                </div>
-            </div>
-
-            {/* Attention & Subject */}
-            <div className="mt-2 text-xs border-b pb-2">
-                <div>
-                    Attention:{" "}
-                    <span className="font-semibold text-center inline-block w-full uppercase">
-                        {selectedQuote.contactperson}
-                    </span>
-                </div>
-                <div>
-                    Subject:{" "}
-                    <span className="font-semibold text-center inline-block w-full uppercase">
-                        {selectedQuote.companyname} - {selectedQuote.contactperson}
-                    </span>
-                </div>
-            </div>
-
+            {/* Client Section */}
+            <ClientSection selectedQuote={selectedQuote} today={today} />
+            {/* Products Table */}
             <Table
                 products={products}
                 updateProduct={updateProduct}
                 grandTotal={grandTotal}
-                quotationamount={selectedQuote.quotationamount}
             />
-
             {/* Information Section */}
             <InformationSection />
 
-            {/* ✅ Two Column Signatures Section */}
-            <div className="mt-4 grid grid-cols-4 gap-4 text-xs">
-                {/* Left Column */}
-                <div className="col-span-2 w-full pr-4 space-y-6">
-                    <p className="italic font-semibold">Ecoshift Corporation</p>
-                    <div>
-                        <p className="font-semibold capitalize">
-                            {userDetails.Firstname} {userDetails.Lastname}
-                        </p>
-                        <div className="border-t border-black w-full max-w-xs my-1"></div>
-                        <p className="font-semibold">SALES REPRESENTATIVE</p>
-                        <p>Mobile No: {userDetails.ContactNumber || "-"}</p>
-                        <p>Email: {userDetails.Email || "-"}</p>
-                    </div>
-
-                    <div>
-                        <p>Approved By:</p>
-                        <p className="font-semibold mt-8 capitalize">
-                            {headDetails
-                                ? `${headDetails.Firstname} ${headDetails.Lastname}`
-                                : ""}
-                        </p>
-                        <div className="border-t border-black w-full max-w-xs my-1"></div>
-                        <p className="font-semibold">SALES MANAGER</p>
-                        <p>Mobile No: {headDetails ? `${headDetails.ContactNumber}` : ""}</p>
-                        <p>Email: {headDetails ? `${headDetails.Email}` : ""}</p>
-                    </div>
-
-                    <div>
-                        <p>Noted By:</p>
-                        <p className="font-semibold mt-8 capitalize">
-                            {managerDetails
-                                ? `${managerDetails.Firstname} ${managerDetails.Lastname}`
-                                : ""}
-                        </p>
-                        <div className="border-t border-black w-full max-w-xs my-1"></div>
-                        <p className="font-semibold">SALES HEAD B2B</p>
-                    </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="col-span-2 w-full pl-4 space-y-12 mt-8">
-                    <div className="mt-8">
-                        <div className="border-t border-black w-full max-w-sm my-1"></div>
-                        <p>COMPANY AUTHORIZED REPRESENTATIVE</p>
-                        <p>(PLEASE SIGN OVER PRINTED NAME)</p>
-                    </div>
-
-                    <div>
-                        <div className="border-t border-black w-full max-w-sm my-1"></div>
-                        <p>PAYMENT RELEASE DATE</p>
-                    </div>
-                </div>
-            </div>
+            <SignatureSection
+                userDetails={userDetails}
+                headDetails={headDetails}
+                managerDetails={managerDetails}
+            />
 
             {/* Submit */}
             <div className="mt-4">
