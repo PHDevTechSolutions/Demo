@@ -83,6 +83,7 @@ async function insertActivity(data: any) {
 
     return {
       success: true,
+      insertedId: insertedActivity[0].id, // 🔥 direct ID return
       data: {
         activity: insertedActivity[0],
         account: insertedAccount ? insertedAccount[0] : null,

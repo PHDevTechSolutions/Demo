@@ -292,55 +292,57 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
 
   // 🟢 Submit form
   const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  e.preventDefault();
+  setSubmitting(true);
 
-    const payload: any = { ...hiddenFields, ...formData };
+  const payload: any = { ...hiddenFields, ...formData };
 
-    if (!payload.activitynumber) {
-      toast.error("Activity number is missing!");
-      setSubmitting(false);
-      return;
-    }
+  if (!payload.activitynumber) {
+    toast.error("Activity number is missing!");
+    setSubmitting(false);
+    return;
+  }
 
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === "" || payload[key] === undefined) payload[key] = null;
+  Object.keys(payload).forEach((key) => {
+    if (payload[key] === "" || payload[key] === undefined) payload[key] = null;
+  });
+
+  ["soamount", "quotationamount", "targetquota", "actualsales"].forEach((field) => {
+    payload[field] = payload[field] !== null ? Number(payload[field]) : null;
+  });
+
+  try {
+    const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
-    ["soamount", "quotationamount", "targetquota", "actualsales"].forEach((field) => {
-      payload[field] = payload[field] !== null ? Number(payload[field]) : null;
-    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
-    try {
-      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit activity");
+    toast.success("Activity successfully added/updated!");
+    setShowForm(false);
+    resetForm();
 
-      toast.success("Activity successfully added/updated!");
-      setShowForm(false);
-      resetForm();
-
-      // 🔥 Show loading state
-      setListLoading(true);
-
-      // 🔄 Force refresh
-      await fetchProgress();
-
-      // Reset pagination
-      setVisibleCount(ITEMS_PER_PAGE);
-
-    } catch (err: any) {
-      console.error("❌ Submit error:", err);
-      toast.error("Failed to submit activity: " + err.message);
-    } finally {
-      setSubmitting(false);
-      setListLoading(false);
+    // 🟢 Prepend new activity directly from backend
+    if (data?.data?.activity) {
+      setProgress((prev) => [data.data.activity, ...prev]);
     }
-  };
+
+    // 🔄 Sync with DB to keep list fresh & sorted
+    await fetchProgress();
+
+    setVisibleCount(ITEMS_PER_PAGE);
+  } catch (err: any) {
+    console.error("❌ Submit error:", err);
+    toast.error("Failed to submit activity: " + err.message);
+  } finally {
+    setSubmitting(false);
+    setListLoading(false);
+  }
+};
+
 
   // 🟢 Refresh button (manual trigger)
   const handleRefresh = async () => {
