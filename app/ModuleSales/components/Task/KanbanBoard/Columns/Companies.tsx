@@ -403,7 +403,7 @@ const Companies: React.FC<CompaniesProps> = ({
         })
       ) : isSunday ? (
         <p className="text-xs text-gray-400 text-center">
-          🚫 No daily quota generated on Sundays.
+          🚫 No daily quota generated on Sundays
         </p>
       ) : (
         <p className="text-xs text-gray-400">No companies found</p>
