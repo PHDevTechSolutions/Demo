@@ -239,23 +239,33 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   const today = now.toISOString().split("T")[0];
 
   // Filter progress
-  const filteredProgress = progress.filter((item) => {
-    if (!item.date_updated) return false;
+  const filteredProgress = useMemo(() => {
+    let items = progress.filter((item) => {
+      if (!item.date_updated) return false;
 
-    // Convert item's date_updated
-    const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
+      const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
 
-    // 1️⃣ Status filter
-    if (statusFilter && item.activitystatus !== statusFilter) return false;
+      // Status filter
+      if (statusFilter && item.activitystatus !== statusFilter) return false;
 
-    if (searchQuery && searchQuery.trim() !== "") {
-      const normalizedQuery = searchQuery.toLowerCase().trim();
-      return (item.companyname ?? "").toLowerCase().includes(normalizedQuery);
-    }
+      // Search filter
+      if (searchQuery && searchQuery.trim() !== "") {
+        const normalizedQuery = searchQuery.toLowerCase().trim();
+        return (item.companyname ?? "").toLowerCase().includes(normalizedQuery);
+      }
 
-    // 3️⃣ Default: only today's items (based on system/server time)
-    return itemDate === today;
-  });
+      // Default: show all (kung gusto mo "today only", palitan to)
+      return true;
+      // return itemDate === today; // <- only if gusto mo today's data
+    });
+
+    // ✅ Ensure sorted by latest date_updated desc
+    return items.sort(
+      (a, b) =>
+        new Date(b.date_updated).getTime() - new Date(a.date_updated).getTime()
+    );
+  }, [progress, statusFilter, searchQuery, today]);
+
 
   // 🟢 Fetch Progress
   const fetchProgress = async () => {
