@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import { IoSync } from "react-icons/io5";
 import "react-toastify/dist/ReactToastify.css";
 import Table from "./Table/Table";
 
@@ -46,6 +47,8 @@ const PAGE_SIZE = 5;
 const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const [tasks, setTasks] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -53,10 +56,26 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const [activeLimit, setActiveLimit] = useState(PAGE_SIZE);
   const [completedLimit, setCompletedLimit] = useState(PAGE_SIZE);
 
-  const fetchTasks = async () => {
+  const STORAGE_KEY = `tasks_${userDetails?.ReferenceID}`;
+
+  const fetchTasks = async (forceRefresh = false) => {
     if (!userDetails?.ReferenceID) return;
 
+    setLoading(true);
+
     try {
+      // 1️⃣ Try from localStorage if not forced refresh
+      if (!forceRefresh) {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed: Note[] = JSON.parse(stored);
+          setTasks(parsed);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2️⃣ Fetch from API
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
       );
@@ -74,16 +93,26 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
         });
 
       setTasks(userTasks);
+
+      // 3️⃣ Save to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userTasks));
     } catch (error: any) {
       toast.error(error.message || "Something went wrong while fetching tasks");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchTasks();
   }, [userDetails?.ReferenceID]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    toast.info("Refreshing data...");
+    await fetchTasks(true); // force API refresh
+  };
 
   const filteredTasks = tasks.filter(task => {
     const term = searchTerm.toLowerCase();
@@ -99,20 +128,24 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   });
 
   const activeTasks = filteredTasks.filter(
-    task =>
-      !["delivered"].includes(
-        (task.activitystatus || "").toLowerCase()
-      )
+    task => !["delivered"].includes((task.activitystatus || "").toLowerCase())
   );
   const completedTasks = filteredTasks.filter(task =>
-    ["delivered", "done", "completed"].includes(
-      (task.activitystatus || "").toLowerCase()
-    )
+    ["delivered", "done", "completed"].includes((task.activitystatus || "").toLowerCase())
   );
 
   return (
     <div className="w-full bg-white p-4">
-      <h2 className="text-lg font-semibold text-black mb-2">Task List</h2>
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-lg font-semibold text-black">Task List</h2>
+        <button
+          onClick={handleRefresh}
+          className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 transition"
+          title="Refresh"
+        >
+          <IoSync size={18} className={refreshing ? "animate-spin text-blue-500" : "text-white"} />
+        </button>
+      </div>
       <p className="text-sm text-gray-500 mb-4">
         Track, manage, and update your daily activities.
       </p>
@@ -179,7 +212,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
               userDetails={userDetails}
               limit={activeLimit}
               setLimit={setActiveLimit}
-              onRefresh={fetchTasks}
+              onRefresh={handleRefresh}
             />
           )}
           {completedTasks.length > 0 && (
@@ -189,7 +222,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
               userDetails={userDetails}
               limit={completedLimit}
               setLimit={setCompletedLimit}
-              onRefresh={fetchTasks}
+              onRefresh={handleRefresh}
             />
           )}
         </div>

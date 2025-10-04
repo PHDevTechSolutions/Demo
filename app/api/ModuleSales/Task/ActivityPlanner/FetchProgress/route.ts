@@ -17,31 +17,36 @@ export async function GET(req: Request) {
     }
 
     const rows = await sql`
-      SELECT
-        id,
-        companyname,
-        referenceid,
-        tsm,
-        manager,
-        to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
-        to_char(date_updated, 'MM/DD/YYYY HH12:MI:SS AM') AS date_updated
-        activitystatus,
-        activitynumber,
-        quotationnumber,
-        quotationamount,
-        soamount,
-        sonumber,
-        typeactivity,
-        remarks,
-        paymentterm,
-        deliverydate,
-        actualsales
-      FROM progress
-      WHERE referenceid = ${referenceid}
-        AND activitystatus IN ('Done','Delivered')
-      ORDER BY date_created DESC
-      LIMIT 50;
-    `;
+  SELECT
+    id,
+    companyname,
+    referenceid,
+    tsm,
+    manager,
+    to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
+    to_char(date_updated, 'MM/DD/YYYY HH12:MI:SS AM') AS date_updated,
+    activitystatus,
+    activitynumber,
+    quotationnumber,
+    quotationamount,
+    soamount,
+    sonumber,
+    typeactivity,
+    remarks,
+    paymentterm,
+    deliverydate,
+    actualsales
+  FROM progress
+  WHERE (
+      referenceid = ${referenceid}
+      OR tsm = ${referenceid}
+      OR manager = ${referenceid}
+    )
+    AND activitystatus IN ('Done','Delivered')
+  ORDER BY date_created DESC
+  LIMIT 200;
+`;
+
 
     return NextResponse.json({ success: true, count: rows.length, data: rows }, { status: 200 });
   } catch (err: unknown) {

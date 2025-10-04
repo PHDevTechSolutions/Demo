@@ -201,7 +201,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                                 <div>
                                     <p className="text-xs font-semibold text-gray-700">{m.typeactivity}</p>
                                     <p className="text-[10px] text-gray-500">
-                                        {new Date(m.startdate).toLocaleString("en-PH")} → {new Date(m.enddate).toLocaleString("en-PH")}
+                                        {m.startdate} → {m.enddate}
                                     </p>
                                 </div>
                                 <span className="ml-2 text-[10px]">
@@ -212,7 +212,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                             {isExpanded && (
                                 <div className="p-3 space-y-1 text-[10px]">
                                     <p><span className="font-semibold">Remarks:</span> {m.remarks || "-"}</p>
-                                    <p><span className="font-semibold">Created:</span> {new Date(m.date_created).toLocaleString("en-PH")}</p>
+                                    <p><span className="font-semibold">Created:</span> {m.date_created}</p>
                                 </div>
                             )}
                         </div>

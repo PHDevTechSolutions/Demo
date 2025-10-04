@@ -8,6 +8,7 @@ export interface CompletedItem {
   id: string;
   companyname: string;
   referenceid: string;
+  tsm?: string;
   date_created: string;
   date_updated?: string;
   activitystatus?: string;
@@ -44,54 +45,30 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
+
     try {
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
       );
-      if (!res.ok) return;
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch completed tasks");
+      }
 
       const result = await res.json();
       const list: CompletedItem[] = Array.isArray(result)
         ? result
         : result.data || result.items || [];
 
-      const allowedStatuses = ["Done", "Delivered"];
-
-      let doneItems: CompletedItem[] = [];
-
-      if (userDetails.Role === "Territory Sales Manager") {
-        // 🔹 TSM can see all items tagged to their ReferenceID as TSM
-        doneItems = list.filter(
-          (item) =>
-            allowedStatuses.includes(item.activitystatus || "") &&
-            (item as any).tsm === userDetails.ReferenceID && // <-- match by TSM
-            !lastFetchedIds.current.has(item.id)
-        );
-      } else {
-        // 🔹 Agent sees only their own items
-        doneItems = list.filter(
-          (item) =>
-            allowedStatuses.includes(item.activitystatus || "") &&
-            item.referenceid === userDetails.ReferenceID &&
-            !lastFetchedIds.current.has(item.id)
-        );
-      }
-
-      doneItems = doneItems.sort(
-        (a, b) =>
-          new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
-      );
-
-      if (doneItems.length > 0) {
-        doneItems.forEach((item) => lastFetchedIds.current.add(item.id));
-        setData((prev) => [...doneItems, ...prev]);
-      }
+      setData(list); // directly update state
     } catch (err) {
-      console.error(err);
+      console.error("❌ Error fetching completed:", err);
     } finally {
       setLoading(false);
     }
-  }, [userDetails?.ReferenceID, userDetails?.Role]);
+  }, [userDetails?.ReferenceID]);
+
+
 
   useEffect(() => {
     fetchCompleted();
@@ -133,11 +110,11 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
 
   return (
     <div className="space-y-1">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+      {/* 🔝 Header with search + refresh */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{filteredData.length}</span>
         </span>
-
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
@@ -145,28 +122,21 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
           >
             Search <IoSearchOutline size={15} />
           </button>
-
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={() => {
-              lastFetchedIds.current.clear(); // reset IDs
-              fetchCompleted();
-            }}
+            onClick={fetchCompleted}
           >
             {loading ? (
               <IoSync size={14} className="animate-spin" />
             ) : (
-              <>
-                <IoSync size={14} />
-              </>
+              <IoSync size={14} />
             )}
           </button>
-
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-end space-y-2 md:space-y-0 md:space-x-2">
-        {searchOpen && (
+      {searchOpen && (
+        <div className="mt-2">
           <input
             type="text"
             placeholder="Search..."
@@ -174,59 +144,56 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger }) =>
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        )}
-      </div>
-
-      {filteredData.length > 0 ? (
-        filteredData.slice(0, visibleCount).map((item) => {
-          const isExpanded = expandedItems.has(item.id);
-          return (
-            <div
-              key={item.id}
-              className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
-              onClick={() => toggleExpand(item.id)}
-            >
-              <div className="flex items-center">
-                <img
-                  src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
-                  alt="Profile"
-                  className="w-8 rounded-full object-cover mr-3"
-                />
-                <div className="flex flex-col flex-1">
-                  <div className="flex items-center space-x-1">
-                    <FaCircle className="text-green-500 w-2 h-2" />
-                    <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
-                  </div>
-                  {item.activitynumber && (
-                    <p className="text-[8px] text-gray-600">
-                      Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2">
-                  {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
-                </div>
-              </div>
-
-              {isExpanded && (
-                <div className="pl-2 mt-2 text-[10px] space-y-1">
-                  {renderField("Quotation Number", item.quotationnumber)}
-                  {renderField("Quotation Amount", item.quotationamount)}
-                  {renderField("SO Amount", item.soamount)}
-                  {renderField("SO Number", item.sonumber)}
-                  {renderField("Status", item.activitystatus)}
-                  {renderField("Remarks", item.remarks)}
-                  {renderField("Payment Term", item.paymentterm)}
-                  {renderField("Delivery Date", item.deliverydate)}
-                  {renderField("Date Created", item.date_created)}
-                </div>
-              )}
-            </div>
-          );
-        })
-      ) : (
-        <p className="text-xs text-gray-400 italic">No completed tasks found.</p>
+        </div>
       )}
+
+      {/* 🔽 Render Items */}
+      {filteredData.slice(0, visibleCount).map((item) => {
+        const isExpanded = expandedItems.has(item.id);
+        return (
+          <div
+            key={item.id}
+            className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
+            onClick={() => toggleExpand(item.id)}
+          >
+            <div className="flex items-center">
+              <img
+                src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
+                alt="Profile"
+                className="w-8 rounded-full object-cover mr-3"
+              />
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center space-x-1">
+                  <FaCircle className="text-green-500 w-2 h-2" />
+                  <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
+                </div>
+                {item.activitynumber && (
+                  <p className="text-[8px] text-gray-600">
+                    Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+              </div>
+            </div>
+
+            {isExpanded && (
+              <div className="pl-2 mt-2 text-[10px] space-y-1">
+                {renderField("Quotation Number", item.quotationnumber)}
+                {renderField("Quotation Amount", item.quotationamount)}
+                {renderField("SO Amount", item.soamount)}
+                {renderField("SO Number", item.sonumber)}
+                {renderField("Status", item.activitystatus)}
+                {renderField("Remarks", item.remarks)}
+                {renderField("Payment Term", item.paymentterm)}
+                {renderField("Delivery Date", item.deliverydate)}
+                {renderField("Date Created", item.date_created)}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {visibleCount < filteredData.length && (
         <div className="flex justify-center mt-2">

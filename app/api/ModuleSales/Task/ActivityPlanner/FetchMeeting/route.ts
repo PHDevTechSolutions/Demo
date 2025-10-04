@@ -18,20 +18,20 @@ export async function GET(req: Request) {
     }
 
     const meetings = await sql`
-      SELECT 
-        id,
-        referenceid,
-        tsm,
-        manager,
-        startdate,
-        enddate,
-        typeactivity,
-        remarks,
-        date_created
-      FROM progress
-      WHERE referenceid = ${referenceid}
-      ORDER BY date_created DESC;
-    `;
+  SELECT 
+    id,
+    referenceid,
+    tsm,
+    manager,
+    to_char(startdate, 'MM/DD/YYYY HH12:MI:SS AM') AS startdate,
+    to_char(enddate, 'MM/DD/YYYY HH12:MI:SS AM') AS enddate,
+    to_char(date_created, 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
+    typeactivity,
+    remarks
+  FROM progress
+  WHERE referenceid = ${referenceid}
+  ORDER BY date_created DESC;
+`;
 
     return NextResponse.json({ success: true, meetings });
   } catch (error: any) {
