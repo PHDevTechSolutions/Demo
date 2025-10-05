@@ -478,35 +478,34 @@ if ("skeleton" in item) return false;
         </select>
       )}
 
-      {listLoading ? (
-        <div className="flex justify-center py-10">
-          <div className="w-10 h-10 border-4 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+       {loading || submitting ? (
+      // show skeletons only while loading/submitting
+      Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
+    ) : filteredProgress.length > 0 ? (
+      filteredProgress.slice(0, visibleCount).map((item) => (
+        <div key={item.id} className="relative">
+          {"skeleton" in item && item.skeleton ? (
+            <ActivitySkeleton />
+          ) : (
+            <>
+              {cardLoading[item.id] && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                </div>
+              )}
+              <ProgressCard
+                progress={item as ProgressItem}
+                profilePicture={userDetails?.profilePicture || "/taskflow.png"}
+                onAddClick={() => handleAddClick(item as ProgressItem)}
+                onDeleteClick={handleDelete}
+              />
+            </>
+          )}
         </div>
-      ) : filteredProgress.length > 0 ? (
-        filteredProgress.slice(0, visibleCount).map((item) => (
-          <div key={item.id} className="relative">
-            {"skeleton" in item && item.skeleton ? (
-              <ActivitySkeleton />
-            ) : (
-              <>
-                {cardLoading[item.id] && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
-                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                  </div>
-                )}
-                <ProgressCard
-                  progress={item as ProgressItem}
-                  profilePicture={userDetails?.profilePicture || "/taskflow.png"}
-                  onAddClick={() => handleAddClick(item as ProgressItem)}
-                  onDeleteClick={handleDelete}
-                />
-              </>
-            )}
-          </div>
-        ))
-      ) : (
-        <p className="text-xs text-gray-400 italic">No activities found.</p>
-      )}
+      ))
+    ) : (
+      <p className="text-xs text-gray-400 italic">No activities found.</p>
+    )}
 
       {visibleCount < filteredProgress.length && (
         <div className="flex justify-center mt-2">
