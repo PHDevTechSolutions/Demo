@@ -445,25 +445,19 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         />
 
         <div className="flex justify-end gap-2">
-          <button
-            type="submit"
-            disabled={
-              !companyname.trim() ||
-              !contactperson.trim() ||
-              !typeclient.trim()
-            }
-            className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
-              ${companyname.trim() &&
-                contactperson.trim() &&
-                typeclient.trim()
-                ? "bg-green-600 hover:bg-green-700 cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-              }`}
-          >
-            {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
-            {editUser ? "Save" : "Submit"}
-          </button>
-        </div>
+  <button
+    type="submit"
+    disabled={!typeclient.trim()}
+    className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
+      ${typeclient.trim()
+        ? "bg-green-600 hover:bg-green-700 cursor-pointer"
+        : "bg-gray-400 cursor-not-allowed"
+      }`}
+  >
+    {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
+    {editUser ? "Save" : "Submit"}
+  </button>
+</div>
 
         <div className="border-t border-gray-200 my-4"></div>
 
