@@ -233,14 +233,14 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                     </div>
 
                     <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                        <label className="block text-xs font-bold mb-2">Contact Person <span className="text-red-500">*</span></label>
+                        <label className="block text-xs font-bold mb-2">Contact Person </label>
                         <input
                             type="text"
                             value={contactperson ?? ""}
                             onChange={handleContactpersonChange}
                             className={`w-full px-3 py-2 border-b text-xs capitalize ${contactpersonError ? "border-red-500" : ""
                                 }`}
-                            required
+                            
                             placeholder="Lastname, Firstname"
                         />
                         {contactpersonError && (
