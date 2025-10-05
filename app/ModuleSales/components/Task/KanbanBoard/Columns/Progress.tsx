@@ -254,12 +254,37 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     "On Progress",
   ];
 
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
+const fetchProgress = async () => {
+    if (!stableUserDetails?.ReferenceID) return;
+    setLoading(true);
+    try {
+      // Always remove skeletons before fetching
+      setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
+
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) throw new Error("Failed to fetch progress");
+
+      const data = await res.json();
+      setProgress(data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+      toast.error("Failed to fetch progress");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProgress();
+  }, [stableUserDetails?.ReferenceID, refreshTrigger]);
 
   const filteredProgress = useMemo(() => {
     let items = progress.filter((item) => {
-      if ("skeleton" in item) return true; // show skeletons
+      if ("skeleton" in item && (loading || submitting)) return true;
+if ("skeleton" in item) return false;
       if (!item.date_updated) return false;
 
       const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
@@ -281,28 +306,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         new Date((a as ProgressItem).date_updated).getTime()
       );
     });
-  }, [progress, statusFilter, searchQuery, today]);
-
-  const fetchProgress = async () => {
-    if (!stableUserDetails?.ReferenceID) return;
-    try {
-      const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
-        { cache: "no-store" }
-      );
-      const data = await res.json();
-      setProgress(data?.data || []);
-    } catch (err) {
-      console.error("❌ Error fetching progress:", err);
-      toast.error("Failed to fetch progress");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProgress();
-  }, [stableUserDetails?.ReferenceID, refreshTrigger]);
+  }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,6 +331,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       }
     );
 
+    // temporary skeleton
     const tempId = "temp-" + Date.now();
     setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
 
@@ -348,14 +353,14 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       resetForm();
 
       if (data?.data?.activity) {
-        setProgress((prev) => {
-          const filtered = prev.filter((item) => item.id !== tempId);
-          return [data.data.activity, ...filtered];
-        });
-
-        fetchProgress();
+        // remove temporary skeleton
+        setProgress((prev) => prev.filter((item) => item.id !== tempId));
+        // add the new real item
+        setProgress((prev) => [data.data.activity, ...prev]);
       }
 
+      // refresh full list to ensure latest sort order
+      fetchProgress();
       setVisibleCount(ITEMS_PER_PAGE);
     } catch (err: any) {
       console.error("❌ Submit error:", err);
@@ -363,7 +368,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       setProgress((prev) => prev.filter((item) => item.id !== tempId));
     } finally {
       setSubmitting(false);
-      setListLoading(false);
+      setLoading(false);
     }
   };
 
