@@ -307,12 +307,12 @@ const Companies: React.FC<CompaniesProps> = ({
           <span>
             🚫 Active Skip: {activeSkip.startdate} → {activeSkip.enddate}
           </span>
-          <button
+          {/*<button
             onClick={handleCancelSkip}
             className="ml-2 text-blue-600 underline hover:text-blue-800"
           >
             Cancel
-          </button>
+          </button>*/}
         </div>
       )}
 
