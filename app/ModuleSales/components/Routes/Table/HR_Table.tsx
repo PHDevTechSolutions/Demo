@@ -1,7 +1,12 @@
-import React from "react";
+"use client";
+
+import React, { useRef } from "react";
+import { motion } from "framer-motion";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 interface Activity {
-  id: number | string;
+  id?: number | string;
+  activitynumber: string;
   date_created?: string;
   startdate: string;
   enddate: string;
@@ -18,15 +23,27 @@ interface Activity {
   activitystatus: string;
 }
 
-interface HistoricalRecordsTableProps {
+interface HistoricalRecordsCarouselProps {
   records: Activity[];
   handleShowRemarks: (remarks: string) => void;
 }
 
-const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
+const HistoricalRecordsCarousel: React.FC<HistoricalRecordsCarouselProps> = ({
   records,
   handleShowRemarks,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (containerRef.current) {
+      const cardWidth = containerRef.current.clientWidth / 3; // show 3 cards
+      containerRef.current.scrollBy({
+        left: direction === "left" ? -cardWidth : cardWidth,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const sortedRecords = [...records].sort((a, b) => {
     const dateA = new Date(a.date_created || "").getTime();
     const dateB = new Date(b.date_created || "").getTime();
@@ -37,125 +54,163 @@ const HistoricalRecordsTable: React.FC<HistoricalRecordsTableProps> = ({
     const date = new Date(timestamp);
     let hours = date.getUTCHours();
     const minutes = date.getUTCMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
     hours = hours ? hours : 12;
-    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-    const formattedDateStr = date.toLocaleDateString('en-US', {
-      timeZone: 'UTC',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+    const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+    const formattedDateStr = date.toLocaleDateString("en-US", {
+      timeZone: "UTC",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
-
     return `${formattedDateStr} ${hours}:${minutesStr} ${ampm}`;
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Assisted":
+        return "bg-blue-400 text-white";
+      case "Paid":
+        return "bg-green-500 text-white";
+      case "Delivered":
+        return "bg-cyan-400 text-white";
+      case "Collected":
+        return "bg-indigo-500 text-white";
+      case "Quote-Done":
+        return "bg-slate-500 text-white";
+      case "SO-Done":
+        return "bg-purple-500 text-white";
+      case "Cancelled":
+        return "bg-red-500 text-white";
+      case "Loss":
+        return "bg-red-800 text-white";
+      default:
+        return "bg-slate-200 text-blue-700";
+    }
+  };
+
+  if (sortedRecords.length === 0) {
+    return (
+      <div className="text-center py-6 border rounded-lg text-gray-500 bg-gray-50">
+        No activities found.
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full table-auto">
-        <thead className="bg-gray-100">
-          <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-            <th className="px-6 py-4 font-semibold text-gray-700">Actions</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Status</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Time Spent</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Type of Activity</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Callback</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Call Status</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Type</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Q# Number</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Q-Amount</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">SO-Amount</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">SO-Number</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Remarks</th>
-            <th className="px-6 py-4 font-semibold text-gray-700">Date Created</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {sortedRecords.length > 0 ? (
-            sortedRecords.map((activity) => (
-              <tr key={activity.id} className="border-b whitespace-nowrap">
-                <td className="px-6 py-4 text-xs">
-                  <span
-                    className={`px-2 py-1 text-[8px] font-semibold rounded-full whitespace-nowrap ${activity.activitystatus === "Assisted"
-                      ? "bg-blue-400 text-white"
-                      : activity.activitystatus === "Paid"
-                        ? "bg-green-500 text-white"
-                        : activity.activitystatus === "Delivered"
-                          ? "bg-cyan-400 text-white"
-                          : activity.activitystatus === "Collected"
-                            ? "bg-indigo-500 text-white"
-                            : activity.activitystatus === "Quote-Done"
-                              ? "bg-slate-500 text-white"
-                              : activity.activitystatus === "SO-Done"
-                                ? "bg-purple-500 text-white"
-                                : activity.activitystatus === "Cancelled"
-                                  ? "bg-red-500 text-white"
-                                  : activity.activitystatus === "Loss"
-                                    ? "bg-red-800 text-white"
-                                    : "bg-slate-200 text-blue-700"
-                      }`}
-                  >
-                    {activity.activitystatus}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-xs">
-                  {(() => {
-                    const start = new Date(activity.startdate);
-                    const end = new Date(activity.enddate);
-                    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-                      const diffMs = end.getTime() - start.getTime();
-                      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-                      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-                      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-                      return `${hours}h ${minutes}m ${seconds}s`;
-                    }
-                    return "Invalid date";
-                  })()}
-                </td>
-                <td className="px-6 py-4 text-xs">{activity.typeactivity}</td>
-                <td className="px-6 py-4 text-xs">
+    <div className="relative mt-3 w-full">
+      {/* Left Button */}
+      <button
+        onClick={() => scroll("left")}
+        className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow rounded-full p-2"
+      >
+        <FiChevronLeft className="w-5 h-5 text-gray-700" />
+      </button>
+
+      {/* Carousel Container */}
+      <div
+        ref={containerRef}
+        className="flex gap-4 overflow-x-hidden scroll-smooth px-10"
+      >
+        {sortedRecords.map((activity, index) => {
+          const start = new Date(activity.startdate);
+          const end = new Date(activity.enddate);
+          let timeSpent = "Invalid date";
+          if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+            const diffMs = end.getTime() - start.getTime();
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor(
+              (diffMs % (1000 * 60 * 60)) / (1000 * 60)
+            );
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            timeSpent = `${hours}h ${minutes}m ${seconds}s`;
+          }
+
+          return (
+            <motion.div
+              key={`${activity.activitynumber}-${index}`}
+              className="flex-shrink-0 w-1/3 min-w-[300px] border rounded-2xl shadow-sm p-4 bg-white hover:shadow-md transition duration-200"
+              whileHover={{ scale: 1.03 }}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span
+                  className={`text-[10px] font-bold px-2 py-1 rounded-full ${getStatusColor(
+                    activity.activitystatus
+                  )}`}
+                >
+                  {activity.activitystatus}
+                </span>
+                <span className="text-[10px] text-gray-500">
+                  {activity.date_created
+                    ? formatDate(new Date(activity.date_created).getTime())
+                    : "—"}
+                </span>
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <p>
+                  <span className="font-semibold">Activity:</span>{" "}
+                  {activity.typeactivity}
+                </p>
+                <p>
+                  <span className="font-semibold">Type:</span>{" "}
+                  {activity.typecall}
+                </p>
+                <p>
+                  <span className="font-semibold">Callback:</span>{" "}
                   {activity.callback
                     ? new Date(activity.callback).toLocaleString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })
-                    : ""}
-                </td>
-                <td className="px-6 py-4 text-xs">{activity.callstatus}</td>
-                <td className="px-6 py-4 text-xs">{activity.typecall}</td>
-                <td className="px-6 py-4 text-xs uppercase">{activity.quotationnumber}</td>
-                <td className="px-6 py-4 text-xs">{activity.quotationamount}</td>
-                <td className="px-6 py-4 text-xs">{activity.soamount}</td>
-                <td className="px-6 py-4 text-xs uppercase">{activity.sonumber}</td>
-                <td className="px-6 py-4 text-xs">{activity.actualsales}</td>
-                <td
-                  className="px-6 py-4 border break-words truncate max-w-xs cursor-pointer capitalize"
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })
+                    : "—"}
+                </p>
+                <p>
+                  <span className="font-semibold">Call Status:</span>{" "}
+                  {activity.callstatus}
+                </p>
+                <p>
+                  <span className="font-semibold">Q#:</span>{" "}
+                  {activity.quotationnumber || "—"}
+                </p>
+                <p>
+                  <span className="font-semibold">SO#:</span>{" "}
+                  {activity.sonumber || "—"}
+                </p>
+                <p>
+                  <span className="font-semibold">Actual Sales:</span>{" "}
+                  {activity.actualsales || "—"}
+                </p>
+                <p>
+                  <span className="font-semibold">Time Spent:</span>{" "}
+                  {timeSpent}
+                </p>
+                <p
+                  className="text-gray-700 mt-1 italic cursor-pointer line-clamp-2 hover:line-clamp-none transition-all"
                   onClick={() => handleShowRemarks(activity.remarks)}
                 >
-                  {activity.remarks}
-                </td>
-                <td className="px-4 py-2">
-                  {activity.date_created ? formatDate(new Date(activity.date_created).getTime()) : "—"}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={13} className="text-center py-2 border">
-                No activities found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                  “{activity.remarks || "No remarks"}”
+                </p>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Right Button */}
+      <button
+        onClick={() => scroll("right")}
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow rounded-full p-2"
+      >
+        <FiChevronRight className="w-5 h-5 text-gray-700" />
+      </button>
     </div>
   );
 };
 
-export default HistoricalRecordsTable;
+export default HistoricalRecordsCarousel;

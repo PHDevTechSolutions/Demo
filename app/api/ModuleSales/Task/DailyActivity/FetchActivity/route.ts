@@ -10,7 +10,6 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 
 export async function GET(req: Request) {
   try {
-    // ✅ Extract query parameters from the request URL
     const url = new URL(req.url);
     const activitynumber = url.searchParams.get("activitynumber");
 
@@ -21,7 +20,6 @@ export async function GET(req: Request) {
       );
     }
 
-    // ✅ Fetch progress data filtered by activitynumber
     const Xchire_fetch = await Xchire_sql`
       SELECT
         startdate,
@@ -38,28 +36,31 @@ export async function GET(req: Request) {
         remarks,
         activitystatus,
         activitynumber,
-        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created
+        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 
+        'MM/DD/YYYY HH12:MI:SS AM') AS date_created
       FROM progress
       WHERE activitynumber = ${activitynumber};
     `;
 
+    // 🟩 Spread to ensure plain JS array
     return NextResponse.json(
-      { success: true, data: Xchire_fetch },
+      { success: true, data: [...Xchire_fetch] },
       { status: 200 }
     );
-  } catch (Xchire_error: any) {
-    console.error("Error fetching progress data:", Xchire_error);
+
+  } catch (error: any) {
+    console.error("Error fetching progress data:", error);
     return NextResponse.json(
       {
         success: false,
-        error: Xchire_error.message || "Failed to fetch progress data.",
+        error: error.message || "Failed to fetch progress data.",
       },
       { status: 500 }
     );
   }
 }
 
-// ✅ Always fetch fresh data — no cache
+// Always fetch fresh data
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";

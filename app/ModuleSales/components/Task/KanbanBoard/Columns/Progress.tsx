@@ -252,7 +252,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     "On Progress",
   ];
 
-const fetchProgress = async () => {
+  const fetchProgress = async () => {
     if (!stableUserDetails?.ReferenceID) return;
     setLoading(true);
     try {
@@ -282,7 +282,7 @@ const fetchProgress = async () => {
   const filteredProgress = useMemo(() => {
     let items = progress.filter((item) => {
       if ("skeleton" in item && (loading || submitting)) return true;
-if ("skeleton" in item) return false;
+      if ("skeleton" in item) return false;
       if (!item.date_updated) return false;
 
       const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
@@ -307,53 +307,53 @@ if ("skeleton" in item) return false;
   }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSubmitting(true);
-  const payload = { ...hiddenFields, ...formData };
+    e.preventDefault();
+    setSubmitting(true);
+    const payload = { ...hiddenFields, ...formData };
 
-  if (!payload.activitynumber) {
-    toast.error("Activity number is missing!");
-    setSubmitting(false);
-    return;
-  }
+    if (!payload.activitynumber) {
+      toast.error("Activity number is missing!");
+      setSubmitting(false);
+      return;
+    }
 
-  (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
-  if (payload[key] === "" || payload[key] === undefined) {
-    payload[key] = null as any;
-  }
-});
-
-  const tempId = "temp-" + Date.now();
-  setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
-
-  try {
-    const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
+    (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
+      if (payload[key] === "" || payload[key] === undefined) {
+        payload[key] = null as any;
+      }
     });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to submit activity");
+    const tempId = "temp-" + Date.now();
+    setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
 
-    toast.success("Activity successfully added/updated!");
-    setShowForm(false);
-    resetForm();
+    try {
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
 
-    // wait a bit for Neon to replicate the change
-    await new Promise((r) => setTimeout(r, 500));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
-    await fetchProgress(); // refresh after confirmed commit
-  } catch (err: any) {
-    console.error("❌ Submit error:", err);
-    toast.error("Failed to submit activity: " + err.message);
-    setProgress((prev) => prev.filter((i) => i.id !== tempId));
-  } finally {
-    setSubmitting(false);
-    setLoading(false);
-  }
-};
+      toast.success("Activity successfully added/updated!");
+      setShowForm(false);
+      resetForm();
+
+      // wait a bit for Neon to replicate the change
+      await new Promise((r) => setTimeout(r, 500));
+
+      await fetchProgress(); // refresh after confirmed commit
+    } catch (err: any) {
+      console.error("❌ Submit error:", err);
+      toast.error("Failed to submit activity: " + err.message);
+      setProgress((prev) => prev.filter((i) => i.id !== tempId));
+    } finally {
+      setSubmitting(false);
+      setLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setListLoading(true);
@@ -461,34 +461,34 @@ if ("skeleton" in item) return false;
         </select>
       )}
 
-       {loading || submitting ? (
-      // show skeletons only while loading/submitting
-      Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
-    ) : filteredProgress.length > 0 ? (
-      filteredProgress.slice(0, visibleCount).map((item) => (
-        <div key={item.id} className="relative">
-          {"skeleton" in item && item.skeleton ? (
-            <ActivitySkeleton />
-          ) : (
-            <>
-              {cardLoading[item.id] && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
-                  <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                </div>
-              )}
-              <ProgressCard
-                progress={item as ProgressItem}
-                profilePicture={userDetails?.profilePicture || "/taskflow.png"}
-                onAddClick={() => handleAddClick(item as ProgressItem)}
-                onDeleteClick={handleDelete}
-              />
-            </>
-          )}
-        </div>
-      ))
-    ) : (
-      <p className="text-xs text-gray-400 italic">No activities found.</p>
-    )}
+      {loading || submitting ? (
+        // show skeletons only while loading/submitting
+        Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
+      ) : filteredProgress.length > 0 ? (
+        filteredProgress.slice(0, visibleCount).map((item) => (
+          <div key={item.id} className="relative">
+            {"skeleton" in item && item.skeleton ? (
+              <ActivitySkeleton />
+            ) : (
+              <>
+                {cardLoading[item.id] && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
+                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
+                <ProgressCard
+                  progress={item as ProgressItem}
+                  profilePicture={userDetails?.profilePicture || "/taskflow.png"}
+                  onAddClick={() => handleAddClick(item as ProgressItem)}
+                  onDeleteClick={handleDelete}
+                />
+              </>
+            )}
+          </div>
+        ))
+      ) : (
+        <p className="text-xs text-gray-400 italic">No activities found.</p>
+      )}
 
       {visibleCount < filteredProgress.length && (
         <div className="flex justify-center mt-2">

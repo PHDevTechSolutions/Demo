@@ -184,19 +184,25 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       fetch(`/api/ModuleSales/Task/DailyActivity/FetchActivity?activitynumber=${editUser.activitynumber}`)
         .then((res) => res.json())
         .then((data) => {
-          if (Array.isArray(data.data)) {
+          console.log("Fetched Activity Data:", data); // 🟨 add this for debugging
+
+          if (data.success && Array.isArray(data.data)) {
             const sortedData = data.data.sort((a: Activity, b: Activity) =>
               new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
             );
             setActivityList(sortedData);
-            setCurrentPage(1); // Reset pagination when new data loads
           } else {
             setActivityList([]);
           }
+          setCurrentPage(1);
         })
-        .catch(() => setActivityList([]));
+        .catch((err) => {
+          console.error("Fetch error:", err);
+          setActivityList([]);
+        });
     }
   }, [editUser?.activitynumber]);
+
 
   const totalPages = Math.ceil(activityList.length / PAGE_SIZE);
   const currentRecords = activityList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -215,7 +221,13 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         address, deliveryaddress, area, projectname, projectcategory, projecttype, source, typeactivity, startdate, enddate, activitynumber, activitystatus, status, remarks,
         callback, typecall, quotationnumber, quotationamount, sonumber, soamount, actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent, paymentterm, deliverydate,
       }),
+      cache: "no-store",
     });
+
+    // wait a bit for Neon to replicate the change
+    await new Promise((r) => setTimeout(r, 500));
+
+    await refreshPosts(); // refresh after confirmed commit
 
     if (response.ok) {
       toast.success(editUser ? "User updated successfully" : "User added successfully", {
@@ -444,19 +456,19 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         />
 
         <div className="flex justify-end gap-2">
-  <button
-    type="submit"
-    disabled={!typeclient.trim()}
-    className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
+          <button
+            type="submit"
+            disabled={!typeclient.trim()}
+            className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
       ${typeclient.trim()
-        ? "bg-green-600 hover:bg-green-700 cursor-pointer"
-        : "bg-gray-400 cursor-not-allowed"
-      }`}
-  >
-    {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
-    {editUser ? "Save" : "Submit"}
-  </button>
-</div>
+                ? "bg-green-600 hover:bg-green-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+              }`}
+          >
+            {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
+            {editUser ? "Save" : "Submit"}
+          </button>
+        </div>
 
         <div className="border-t border-gray-200 my-4"></div>
 
@@ -468,7 +480,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
           </p>
 
           {/* Desktop View */}
-          <div className="overflow-x-auto">
+          <div>
             <HistoricalRecordsTable
               records={currentRecords}
               handleShowRemarks={handleShowRemarks}

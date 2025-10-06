@@ -50,7 +50,6 @@ const Completed: React.FC<CompletedProps> = ({
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
-
     try {
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
@@ -97,7 +96,7 @@ const Completed: React.FC<CompletedProps> = ({
     setAgentData(map);
   }, []);
 
-  // 🔁 Re-fetch data and agent info
+  // 🔁 Re-fetch data every POLL_INTERVAL
   useEffect(() => {
     fetchCompleted();
     const interval = setInterval(fetchCompleted, POLL_INTERVAL);
@@ -134,20 +133,14 @@ const Completed: React.FC<CompletedProps> = ({
     )
     .filter((item) => (selectedTSA ? item.referenceid === selectedTSA : true));
 
-  if (loading && filteredData.length === 0)
-    return (
-      <div className="flex justify-center items-center py-10">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
-      </div>
-    );
-
-  if (filteredData.length === 0)
-    return (
-      <div className="text-center text-gray-400 italic text-xs">
-        No completed tasks yet
-      </div>
-    );
+  // 🔹 Skeleton for loading
+  const ActivitySkeleton = () => (
+    <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+      <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+      <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+      <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+    </div>
+  );
 
   return (
     <div className="space-y-1">
@@ -167,11 +160,7 @@ const Completed: React.FC<CompletedProps> = ({
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={fetchCompleted}
           >
-            {loading ? (
-              <IoSync size={14} className="animate-spin" />
-            ) : (
-              <IoSync size={14} />
-            )}
+            {loading ? <IoSync size={14} className="animate-spin" /> : <IoSync size={14} />}
           </button>
         </div>
       </div>
@@ -189,62 +178,68 @@ const Completed: React.FC<CompletedProps> = ({
       )}
 
       {/* List */}
-      {filteredData.slice(0, visibleCount).map((item) => {
-        const isExpanded = expandedItems.has(item.id);
-        const agent = agentData[item.referenceid];
+      {loading
+        ? Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
+        : filteredData.length === 0
+        ? (
+          <div className="text-center text-gray-400 italic text-xs">
+            No completed tasks yet
+          </div>
+        )
+        : filteredData.slice(0, visibleCount).map((item) => {
+            const isExpanded = expandedItems.has(item.id);
+            const agent = agentData[item.referenceid];
 
-        return (
-          <div
-            key={item.id}
-            className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
-            onClick={() => toggleExpand(item.id)}
-          >
-            <div className="flex items-center">
-              <img
-                src={agent?.profilePicture || "/taskflow.png"}
-                alt="Agent"
-                className="w-8 h-8 rounded-full object-cover mr-3 border border-gray-300"
-              />
-              <div className="flex flex-col flex-1">
-                <div className="flex items-center space-x-1">
-                  <FaCircle className="text-green-500 w-2 h-2" />
-                  <p className="font-semibold text-[10px] uppercase">
-                    {item.companyname}
-                  </p>
+            return (
+              <div
+                key={item.id}
+                className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
+                onClick={() => toggleExpand(item.id)}
+              >
+                <div className="flex items-center">
+                  <img
+                    src={agent?.profilePicture || "/taskflow.png"}
+                    alt="Agent"
+                    className="w-8 h-8 rounded-full object-cover mr-3 border border-gray-300"
+                  />
+                  <div className="flex flex-col flex-1">
+                    <div className="flex items-center space-x-1">
+                      <FaCircle className="text-green-500 w-2 h-2" />
+                      <p className="font-semibold text-[10px] uppercase">
+                        {item.companyname}
+                      </p>
+                    </div>
+                    <p className="text-[8px] text-gray-600">
+                      {agent ? `${agent.Firstname} ${agent.Lastname}` : "Loading agent..."}
+                    </p>
+                    {item.activitynumber && (
+                      <p className="text-[8px] text-gray-600">
+                        Activity: <span className="text-black">{item.typeactivity}</span> |{" "}
+                        {item.activitynumber}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+                  </div>
                 </div>
-                <p className="text-[8px] text-gray-600">
-                  {agent
-                    ? `${agent.Firstname} ${agent.Lastname}`
-                    : "Loading agent..."}
-                </p>
-                {item.activitynumber && (
-                  <p className="text-[8px] text-gray-600">
-                    Activity: <span className="text-black">{item.typeactivity}</span> |{" "}
-                    {item.activitynumber}
-                  </p>
+
+                {isExpanded && (
+                  <div className="pl-2 mt-2 text-[10px] space-y-1">
+                    {renderField("Quotation Number", item.quotationnumber)}
+                    {renderField("Quotation Amount", item.quotationamount)}
+                    {renderField("SO Amount", item.soamount)}
+                    {renderField("SO Number", item.sonumber)}
+                    {renderField("Status", item.activitystatus)}
+                    {renderField("Remarks", item.remarks)}
+                    {renderField("Payment Term", item.paymentterm)}
+                    {renderField("Delivery Date", item.deliverydate)}
+                    {renderField("Date Created", item.date_created)}
+                  </div>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                {isExpanded ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
-              </div>
-            </div>
-
-            {isExpanded && (
-              <div className="pl-2 mt-2 text-[10px] space-y-1">
-                {renderField("Quotation Number", item.quotationnumber)}
-                {renderField("Quotation Amount", item.quotationamount)}
-                {renderField("SO Amount", item.soamount)}
-                {renderField("SO Number", item.sonumber)}
-                {renderField("Status", item.activitystatus)}
-                {renderField("Remarks", item.remarks)}
-                {renderField("Payment Term", item.paymentterm)}
-                {renderField("Delivery Date", item.deliverydate)}
-                {renderField("Date Created", item.date_created)}
-              </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
 
       {visibleCount < filteredData.length && (
         <div className="flex justify-center mt-2">
