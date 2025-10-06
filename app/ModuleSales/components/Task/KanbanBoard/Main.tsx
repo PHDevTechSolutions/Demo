@@ -379,8 +379,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                   ) : (
                     <Progress
                       userDetails={userDetails}
-                      progress={progress}
-                      loading={loading}
                     />
                   )
                 )}
