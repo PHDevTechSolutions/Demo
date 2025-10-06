@@ -41,7 +41,7 @@ export async function GET(req: Request) {
 FROM activity
 WHERE referenceid = ${referenceid}
 ORDER BY date_updated DESC
-LIMIT 200;
+LIMIT 50;
 
 `;
     console.log("Fetched accounts (Manila time):", Xchire_fetch);
