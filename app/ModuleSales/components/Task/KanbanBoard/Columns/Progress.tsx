@@ -252,28 +252,30 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     "On Progress",
   ];
 
-  const fetchProgress = async () => {
-    if (!stableUserDetails?.ReferenceID) return;
-    setLoading(true);
-    try {
-      // Always remove skeletons before fetching
-      setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
+  const fetchProgress = async (showSkeleton = true) => {
+  if (!stableUserDetails?.ReferenceID) return;
+  if (showSkeleton) setLoading(true);
 
-      const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) throw new Error("Failed to fetch progress");
+  try {
+    // Remove skeletons before fetching
+    setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
 
-      const data = await res.json();
-      setProgress(data?.data || []);
-    } catch (err) {
-      console.error("❌ Error fetching progress:", err);
-      toast.error("Failed to fetch progress");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const res = await fetch(
+      `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
+      { cache: "no-store" }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch progress");
+
+    const data = await res.json();
+    setProgress(data?.data || []);
+  } catch (err) {
+    console.error("❌ Error fetching progress:", err);
+    toast.error("Failed to fetch progress");
+  } finally {
+    if (showSkeleton) setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchProgress();
