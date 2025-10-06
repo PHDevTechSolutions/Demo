@@ -6,11 +6,15 @@ export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL!;
+if (!TASKFLOW_DB_URL) throw new Error("❌ TASKFLOW_DB_URL is not set in environment variables.");
+
 const sql = neon(TASKFLOW_DB_URL);
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    // ✅ Required field validation
     const requiredFields = ["referenceid", "manager", "tsm"];
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -21,7 +25,9 @@ export async function POST(req: Request) {
       }
     }
 
+    // ✅ Transaction: Insert into progress + Update activity (sabay commit)
     const result = await sql.begin(async (tx) => {
+      // Insert into progress table
       const progressInsert = await tx`
         INSERT INTO progress (
           referenceid, manager, tsm, companyname, contactperson,
@@ -45,6 +51,7 @@ export async function POST(req: Request) {
         RETURNING *;
       `;
 
+      // Update activity status (optional)
       const activityUpdate =
         body.activitystatus && body.activitynumber
           ? await tx`
@@ -56,12 +63,17 @@ export async function POST(req: Request) {
             `
           : null;
 
-      return { progressInsert: progressInsert[0], activityUpdate: activityUpdate?.[0] || null };
+      return {
+        progressInsert: progressInsert[0],
+        activityUpdate: activityUpdate?.[0] || null,
+      };
     });
 
+    // ✅ Response
     return NextResponse.json(
       {
         success: true,
+        message: "Progress and activity updated successfully.",
         progress: result.progressInsert,
         activityUpdate: result.activityUpdate,
       },
@@ -75,9 +87,12 @@ export async function POST(req: Request) {
       }
     );
   } catch (error: any) {
-    console.error("❌ POST /api/ModuleSales/Progress error:", error);
+    console.error("❌ POST /CreateProgress error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Internal server error" },
+      {
+        success: false,
+        error: error.message || "Internal server error",
+      },
       { status: 500 }
     );
   }
