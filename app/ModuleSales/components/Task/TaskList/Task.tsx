@@ -77,8 +77,9 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
 
       // 2️⃣ Fetch from API
       const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
-      );
+  `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`,
+  { cache: "no-store" } // ✅ always fresh
+);
       if (!res.ok) throw new Error("Failed to fetch tasks");
 
       const data = await res.json();
