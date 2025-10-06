@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { IoSync, IoSearchOutline, IoFilter } from "react-icons/io5";
+import { IoSync, IoSearchOutline } from "react-icons/io5";
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
@@ -47,7 +47,7 @@ interface ProgressItem {
   drnumber: string;
 }
 
-type ProgressEntry = ProgressItem | { id: string; skeleton: true };
+type ProgressEntry = ProgressItem;
 
 interface UserDetails {
   ReferenceID: string;
@@ -64,34 +64,24 @@ interface UserDetails {
 
 interface ProgressProps {
   userDetails: UserDetails | null;
-  searchQuery?: string;
-  progress?: any[];
-  loading?: boolean;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-interface CardLoadingState {
-  [id: string]: boolean;
-}
-
 const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
-  const stableUserDetails = useMemo(
-    () => userDetails,
-    [userDetails?.ReferenceID]
-  );
+  const stableUserDetails = useMemo(() => userDetails, [userDetails?.ReferenceID]);
+
   const [progress, setProgress] = useState<ProgressEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [showForm, setShowForm] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("");
   const [listLoading, setListLoading] = useState(false);
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<any>({
     activitystatus: "",
     source: "",
     typeactivity: "",
@@ -117,7 +107,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     contactnumber: "",
   });
 
-  const [hiddenFields, setHiddenFields] = useState({
+  const [hiddenFields, setHiddenFields] = useState<any>({
     referenceid: userDetails?.ReferenceID || "",
     tsm: userDetails?.TSM || "",
     manager: userDetails?.Manager || "",
@@ -178,71 +168,32 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     });
 
     setFormData({
-      activitystatus: prog?.activitystatus || "",
-      source: prog?.source || "",
-      typeactivity: prog?.typeactivity || "",
-      remarks: prog?.remarks || "",
-      typecall: prog?.typecall || "",
-      sonumber: prog?.sonumber || "",
-      soamount: prog?.soamount || "",
-      callback: prog?.callback || "",
-      callstatus: prog?.callstatus || "",
-      startdate: prog?.startdate || "",
-      enddate: prog?.enddate || "",
-      quotationnumber: prog?.quotationnumber || "",
-      quotationamount: prog?.quotationamount || "",
-      projectname: prog?.projectname || "",
+      ...prog,
       projectcategory: prog?.projectcategory
         ? Array.isArray(prog.projectcategory)
           ? prog.projectcategory
           : [prog.projectcategory]
         : [],
-      projecttype: prog?.projecttype || "",
-      paymentterm: prog?.paymentterm || "",
-      actualsales: prog?.actualsales || "",
-      deliverydate: prog?.deliverydate || "",
-      followup_date: prog?.followup_date || "",
-      drnumber: prog?.drnumber || "",
-      emailaddress: prog?.emailaddress || "",
-      contactnumber: prog?.contactnumber || "",
     });
 
     setShowForm(true);
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleFormChange = (e: React.ChangeEvent<any>) => {
+    setFormData((prev: any) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleProjectCategoryChange = (
-    selected: { value: string; label: string }[] | null
-  ) => {
-    setFormData((prev) => ({
+  const handleProjectCategoryChange = (selected: { value: string }[] | null) => {
+    setFormData((prev: any) => ({
       ...prev,
       projectcategory: selected ? selected.map((s) => s.value) : [],
     }));
   };
 
-  const activityStatuses = [
-    "Quote-Done",
-    "SO-Done",
-    "Assisted",
-    "Paid",
-    "Collected",
-    "On Progress",
-  ];
-
-const fetchProgress = async () => {
+  const fetchProgress = async () => {
     if (!stableUserDetails?.ReferenceID) return;
     setLoading(true);
     try {
-      // Always remove skeletons before fetching
-      setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
-
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
         { cache: "no-store" }
@@ -262,97 +213,6 @@ const fetchProgress = async () => {
   useEffect(() => {
     fetchProgress();
   }, [stableUserDetails?.ReferenceID, refreshTrigger]);
-
-  const filteredProgress = useMemo(() => {
-    let items = progress.filter((item) => {
-      if ("skeleton" in item && (loading || submitting)) return true;
-if ("skeleton" in item) return false;
-      if (!item.date_updated) return false;
-
-      const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
-
-      if (statusFilter && item.activitystatus !== statusFilter) return false;
-
-      if (searchQuery && searchQuery.trim() !== "") {
-        const normalizedQuery = searchQuery.toLowerCase().trim();
-        return (item.companyname ?? "").toLowerCase().includes(normalizedQuery);
-      }
-
-      return true;
-    });
-
-    return items.sort((a, b) => {
-      if ("skeleton" in a || "skeleton" in b) return 0;
-      return (
-        new Date((b as ProgressItem).date_updated).getTime() -
-        new Date((a as ProgressItem).date_updated).getTime()
-      );
-    });
-  }, [progress, statusFilter, searchQuery, loading, submitting]);
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    const payload: any = { ...hiddenFields, ...formData };
-
-    if (!payload.activitynumber) {
-      toast.error("Activity number is missing!");
-      setSubmitting(false);
-      return;
-    }
-
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === "" || payload[key] === undefined)
-        payload[key] = null;
-    });
-
-    ["soamount", "quotationamount", "targetquota", "actualsales"].forEach(
-      (field) => {
-        payload[field] = payload[field] !== null ? Number(payload[field]) : null;
-      }
-    );
-
-    // temporary skeleton
-    const tempId = "temp-" + Date.now();
-    setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
-
-    try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit activity");
-
-      toast.success("Activity successfully added/updated!");
-      setShowForm(false);
-      resetForm();
-
-      if (data?.data?.activity) {
-        // remove temporary skeleton
-        setProgress((prev) => prev.filter((item) => item.id !== tempId));
-        // add the new real item
-        setProgress((prev) => [data.data.activity, ...prev]);
-      }
-
-      // refresh full list to ensure latest sort order
-      fetchProgress();
-      setVisibleCount(ITEMS_PER_PAGE);
-    } catch (err: any) {
-      console.error("❌ Submit error:", err);
-      toast.error("Failed to submit activity: " + err.message);
-      setProgress((prev) => prev.filter((item) => item.id !== tempId));
-    } finally {
-      setSubmitting(false);
-      setLoading(false);
-    }
-  };
 
   const handleRefresh = async () => {
     setListLoading(true);
@@ -385,40 +245,18 @@ if ("skeleton" in item) return false;
     } catch (err: any) {
       console.error("❌ Delete error:", err);
       toast.error("Failed to delete activity: " + err.message);
-    } finally {
     }
-  };
-
-  const ActivitySkeleton = () => {
-    return (
-      <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
-        <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-        <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-        <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-      </div>
-    );
   };
 
   return (
     <div className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
-        <span className="text-xs text-gray-600 font-bold">
-          Total:{" "}
-          <span className="text-orange-500">{filteredProgress.length}</span>
-        </span>
-
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => setSearchOpen((prev) => !prev)}
           >
             Search <IoSearchOutline size={15} />
-          </button>
-          <button
-            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={() => setFilterOpen((prev) => !prev)}
-          >
-            Filter <IoFilter size={15} />
           </button>
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
@@ -443,61 +281,27 @@ if ("skeleton" in item) return false;
         />
       )}
 
-      {filterOpen && (
-        <select
-          className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Status</option>
-          {activityStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      )}
-
-       {loading || submitting ? (
-      // show skeletons only while loading/submitting
-      Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
-    ) : filteredProgress.length > 0 ? (
-      filteredProgress.slice(0, visibleCount).map((item) => (
-        <div key={item.id} className="relative">
-          {"skeleton" in item && item.skeleton ? (
-            <ActivitySkeleton />
-          ) : (
-            <>
-              <ProgressCard
-                progress={item as ProgressItem}
-                profilePicture={userDetails?.profilePicture || "/taskflow.png"}
-                onAddClick={() => handleAddClick(item as ProgressItem)}
-                onDeleteClick={handleDelete}
-              />
-            </>
-          )}
-        </div>
-      ))
-    ) : (
-      <p className="text-xs text-gray-400 italic">No activities found.</p>
-    )}
-
-      {visibleCount < filteredProgress.length && (
-        <div className="flex justify-center mt-2">
-          <button
-            className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
-          >
-            View More
-          </button>
-        </div>
+      {loading ? (
+        <p className="text-xs text-gray-400">Loading...</p>
+      ) : progress.length > 0 ? (
+        progress.map((item) => (
+          <ProgressCard
+            key={item.id}
+            progress={item}
+            profilePicture={userDetails?.profilePicture || "/taskflow.png"}
+            onAddClick={() => handleAddClick(item)}
+            onDeleteClick={handleDelete}
+          />
+        ))
+      ) : (
+        <p className="text-xs text-gray-400 italic">No activities found.</p>
       )}
 
       {showForm && (
         <ProgressForm
           formData={formData}
           handleFormChange={handleFormChange}
-          handleFormSubmit={handleFormSubmit}
+          handleFormSubmit={(e) => {}}
           onClose={() => setShowForm(false)}
           handleProjectCategoryChange={handleProjectCategoryChange}
           setFormData={setFormData}
