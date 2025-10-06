@@ -328,14 +328,17 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   });
 
   // ✅ Optimistic UI update (instant feedback)
-  const tempId = "temp-" + Date.now();
-  const optimisticItem = {
-    ...payload,
-    id: tempId,
-    date_updated: new Date().toISOString(),
-    skeleton: true,
-  };
-  setProgress((prev) => [optimisticItem, ...prev]);
+  // ✅ Optimistic UI update (instant feedback)
+const tempId = "temp-" + Date.now();
+const optimisticItem: ProgressEntry = {
+  ...(payload as ProgressItem),
+  id: tempId,
+  date_created: new Date().toISOString(),
+  date_updated: new Date().toISOString(),
+  ticketreferencenumber: payload.ticketreferencenumber ?? "",
+  skeleton: true,
+};
+setProgress((prev) => [optimisticItem, ...prev]);
 
   try {
     const res = await fetch(
