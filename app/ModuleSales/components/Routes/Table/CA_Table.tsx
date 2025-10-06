@@ -41,27 +41,39 @@ const Table: React.FC<TableProps> = ({
   handleEdit,
   formatDate,
 }) => {
-  const [agentNames, setAgentNames] = useState<Record<string, string>>({});
+  const [agentData, setAgentData] = useState<
+    Record<string, { name: string; profilePicture: string }>
+  >({});
 
+  // ✅ FIXED: use updatedUser instead of posts
   useEffect(() => {
     const fetchAgents = async () => {
-      const uniqueIds = Array.from(new Set(updatedUser.map((p) => p.referenceid)));
-      const nameMap: Record<string, string> = {};
+      const uniqueReferenceIds = Array.from(
+        new Set(updatedUser.map((p) => p.referenceid))
+      );
+      const dataMap: Record<string, { name: string; profilePicture: string }> =
+        {};
 
       await Promise.all(
-        uniqueIds.map(async (id) => {
+        uniqueReferenceIds.map(async (id) => {
           try {
-            const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+            const res = await fetch(
+              `/api/fetchagent?id=${encodeURIComponent(id)}`
+            );
             const data = await res.json();
-            nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+
+            dataMap[id] = {
+              name: `${data.Lastname || ""}, ${data.Firstname || ""}`.trim(),
+              profilePicture: data.profilePicture || "/taskflow.png",
+            };
           } catch (error) {
-            console.error(`Error fetching agent for ID ${id}:`, error);
-            nameMap[id] = "Unknown";
+            console.error(`❌ Error fetching user ${id}`, error);
+            dataMap[id] = { name: "", profilePicture: "/taskflow.png" };
           }
         })
       );
 
-      setAgentNames(nameMap);
+      setAgentData(dataMap);
     };
 
     if (updatedUser.length > 0) {
@@ -69,6 +81,7 @@ const Table: React.FC<TableProps> = ({
     }
   }, [updatedUser]);
 
+  // ✅ CLEAN: simplified logic for conditional rendering
   const tableRows = useMemo(() => {
     return updatedUser.map((post) => {
       const borderLeftClass =
@@ -99,7 +112,10 @@ const Table: React.FC<TableProps> = ({
             className={`px-6 py-4 text-xs ${borderLeftClass}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {(bulkEditMode || bulkChangeMode || bulkEditStatusMode || bulkRemoveMode) && (
+            {(bulkEditMode ||
+              bulkChangeMode ||
+              bulkEditStatusMode ||
+              bulkRemoveMode) && (
               <input
                 type="checkbox"
                 checked={selectedUsers.has(post.id)}
@@ -110,7 +126,10 @@ const Table: React.FC<TableProps> = ({
           </td>
 
           {Role !== "Special Access" && (
-            <td className="px-6 py-4 text-xs" onClick={(e) => e.stopPropagation()}>
+            <td
+              className="px-6 py-4 text-xs"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button
                 className="block px-4 py-2 text-[10px] font-bold text-black bg-blue-300 rounded-lg hover:bg-orange-300 hover:rounded-full hover:shadow-md w-full text-left flex items-center gap-1"
                 onClick={() => handleEdit(post)}
@@ -120,22 +139,37 @@ const Table: React.FC<TableProps> = ({
             </td>
           )}
 
+          {/* ✅ Fixed agent name display */}
           <td className="px-6 py-4 text-xs capitalize text-orange-700">
-            {agentNames[post.referenceid] || "Loading..."}
+            {agentData[post.referenceid] ? (
+              <div className="flex items-center gap-2">
+                <img
+                  src={agentData[post.referenceid].profilePicture}
+                  alt={agentData[post.referenceid].name || "Agent"}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                />
+                <span>{agentData[post.referenceid].name || "Unknown"}</span>
+              </div>
+            ) : (
+              <span className="text-gray-400 italic">Loading...</span>
+            )}
           </td>
+
           <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
           <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
           <td className="px-6 py-4 text-xs">{post.typeclient}</td>
           <td className="px-6 py-4 text-xs capitalize">{post.address}</td>
-          <td className="px-6 py-4 text-xs capitalize">{post.deliveryaddress}</td>
+          <td className="px-6 py-4 text-xs capitalize">
+            {post.deliveryaddress}
+          </td>
           <td className="px-6 py-4 text-xs capitalize">{post.area}</td>
           <td className="px-4 py-2 text-xs align-top">
             <div className="flex flex-col gap-1">
               <span className="text-white bg-blue-400 p-2 rounded">
-                Creation Date: {post.date_created}
+                Creation Date: {formatDate(Number(post.date_created))}
               </span>
               <span className="text-white bg-green-500 p-2 rounded">
-                Date of Last Update: {post.date_updated}
+                Last Update: {formatDate(Number(post.date_updated))}
               </span>
             </div>
           </td>
@@ -153,7 +187,7 @@ const Table: React.FC<TableProps> = ({
     handleEdit,
     handleSelectUser,
     formatDate,
-    agentNames,
+    agentData,
   ]);
 
   return (

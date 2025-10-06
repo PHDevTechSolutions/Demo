@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (id) {
       const user = await db.collection("users").findOne(
         { ReferenceID: id },
-        { projection: { Firstname: 1, Lastname: 1, ReferenceID: 1, _id: 0 } }
+        { projection: { Firstname: 1, Lastname: 1, profilePicture: 1, ReferenceID: 1, _id: 0 } }
       );
 
       if (!user) {
@@ -47,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Lastname: 1,
         ReferenceID: 1,
         TSM: 1,
+        profilePicture: 1,
         _id: 0,
       })
       .toArray();

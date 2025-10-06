@@ -34,35 +34,44 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
   const [filterTypeClient, setFilterTypeClient] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [agentNames, setAgentNames] = useState<Record<string, string>>({});
 
+  // ✅ Store both name and profile picture per agent
+  const [agentData, setAgentData] = useState<
+    Record<string, { name: string; profilePicture: string }>
+  >({});
+
+  // 🔧 Helper to safely parse dates
   const parseDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
   };
 
+  // ✅ Fetch agent info (name + photo)
   useEffect(() => {
     const fetchAgents = async () => {
       const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
-      const nameMap: Record<string, string> = {};
+      const dataMap: Record<string, { name: string; profilePicture: string }> = {};
 
       await Promise.all(
         uniqueReferenceIds.map(async (id) => {
           try {
             const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
             const data = await res.json();
-            nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+
+            dataMap[id] = {
+              name: `${data.Lastname || ""}, ${data.Firstname || ""}`.trim(),
+              profilePicture: data.profilePicture || "/taskflow.png",
+            };
           } catch (error) {
             console.error(`Error fetching user ${id}`, error);
-            nameMap[id] = "";
+            dataMap[id] = { name: "", profilePicture: "/taskflow.png" };
           }
         })
       );
 
-      setAgentNames(nameMap);
+      setAgentData(dataMap);
     };
 
     if (posts.length > 0) {
@@ -70,6 +79,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
     }
   }, [posts]);
 
+  // ✅ Group by company name
   const groupedData: Record<string, Post[]> = posts.reduce(
     (acc: Record<string, Post[]>, post: Post) => {
       const company = post.companyname || "Unknown Company";
@@ -80,13 +90,14 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
     {}
   );
 
+  // ✅ Format PHP currency
   const formatSales = (value: number | string | null | undefined) => {
     const parsed =
       typeof value === "string"
         ? parseFloat(value)
         : typeof value === "number"
-          ? value
-          : 0;
+        ? value
+        : 0;
     const number = isNaN(parsed) ? 0 : parsed;
     return number.toLocaleString("en-PH", {
       style: "currency",
@@ -94,11 +105,13 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
     });
   };
 
+  // ✅ Unique typeclient list
   const uniqueTypeClients = useMemo(() => {
     const allTypes = posts.map((p) => p.typeclient.toUpperCase());
     return ["All", ...Array.from(new Set(allTypes))];
   }, [posts]);
 
+  // ✅ Apply filters + sort
   const filteredAndSortedData = useMemo(() => {
     const start = parseDate(startDate);
     const end = parseDate(endDate);
@@ -155,7 +168,10 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         new Set(filteredEntries.map((e) => e.typeclient.toUpperCase()))
       ).join(", ");
       const referenceid = filteredEntries[0]?.referenceid || "";
-      const agentName = agentNames[referenceid] || "";
+      const agent = agentData[referenceid] || {
+        name: "Unknown",
+        profilePicture: "/taskflow.png",
+      };
 
       return {
         companyName,
@@ -163,7 +179,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         averageSales,
         typeClients,
         targetQuota,
-        agentName,
+        referenceid,
+        agent,
         latestDate: latestDate ? latestDate.toISOString().split("T")[0] : "",
       };
     });
@@ -171,8 +188,9 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
     mapped.sort((a, b) => b.totalSales - a.totalSales);
 
     return mapped;
-  }, [groupedData, filterTypeClient, startDate, endDate, agentNames]);
+  }, [groupedData, filterTypeClient, startDate, endDate, agentData]);
 
+  // ✅ Pagination
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -195,15 +213,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
     setCurrentPage(1);
   };
 
+  // ✅ Render
   return (
     <div>
+      {/* Filters */}
       <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4 flex-wrap">
+          {/* Filter Type */}
           <div className="flex items-center gap-2">
-            <label
-              htmlFor="typeClientFilter"
-              className="font-semibold text-xs whitespace-nowrap"
-            >
+            <label htmlFor="typeClientFilter" className="font-semibold text-xs">
               Filter by Type of Client:
             </label>
             <select
@@ -223,10 +241,9 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
             </select>
           </div>
 
+          {/* Date Range */}
           <div className="flex items-center gap-2">
-            <label className="font-semibold text-xs whitespace-nowrap">
-              Start Date:
-            </label>
+            <label className="font-semibold text-xs">Start Date:</label>
             <input
               type="date"
               value={startDate}
@@ -237,11 +254,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
               className="border px-3 py-2 rounded text-xs"
             />
           </div>
-
           <div className="flex items-center gap-2">
-            <label className="font-semibold text-xs whitespace-nowrap">
-              End Date:
-            </label>
+            <label className="font-semibold text-xs">End Date:</label>
             <input
               type="date"
               value={endDate}
@@ -254,6 +268,7 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
           </div>
         </div>
 
+        {/* Items per page + Export */}
         <div className="flex-shrink-0 flex items-center gap-2">
           <select
             id="itemsPerPage"
@@ -271,14 +286,15 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto relative">
         <table className="min-w-full table-auto">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
-              <th className="px-6 py-4 font-semibold text-gray-700">Agent Name</th>
-              <th className="px-6 py-4 font-semibold text-gray-700">Company Name</th>
-              <th className="px-6 py-4 font-semibold text-gray-700">Type of Client</th>
-              <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales (SI)</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Agent</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Company</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Client Type</th>
+              <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales</th>
               <th className="px-6 py-4 font-semibold text-gray-700">Date</th>
             </tr>
           </thead>
@@ -290,34 +306,24 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
                 </td>
               </tr>
             ) : (
-              paginatedData.map(
-                ({
-                  companyName,
-                  totalSales,
-                  typeClients,
-                  agentName,
-                  latestDate,
-                }) => {
-                  return (
-                    <tr key={companyName} className="bg-white hover:bg-gray-50">
-                      <td className="px-6 py-4 text-xs capitalize text-orange-700">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={userDetails.profilePicture || "/taskflow.png"}
-                            alt={agentName}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                          <span>{agentName}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-xs uppercase">{companyName}</td>
-                      <td className="px-6 py-4 text-xs">{typeClients}</td>
-                      <td className="px-6 py-4 text-xs">{formatSales(totalSales)}</td>
-                      <td className="px-6 py-4 text-xs">{latestDate}</td>
-                    </tr>
-                  );
-                }
-              )
+              paginatedData.map(({ companyName, totalSales, typeClients, agent, latestDate }) => (
+                <tr key={companyName} className="bg-white hover:bg-gray-50">
+                  <td className="px-6 py-4 text-xs text-orange-700">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={agent.profilePicture}
+                        alt={agent.name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                      <span>{agent.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs uppercase">{companyName}</td>
+                  <td className="px-6 py-4 text-xs">{typeClients}</td>
+                  <td className="px-6 py-4 text-xs">{formatSales(totalSales)}</td>
+                  <td className="px-6 py-4 text-xs">{latestDate}</td>
+                </tr>
+              ))
             )}
           </tbody>
           <tfoot className="bg-gray-200 sticky bottom-0 z-10">
@@ -332,11 +338,8 @@ const UsersTable: React.FC<UsersCardProps> = ({ posts, userDetails }) => {
         </table>
       </div>
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        goToPage={goToPage}
-      />
+      {/* Pagination */}
+      <Pagination currentPage={currentPage} totalPages={totalPages} goToPage={goToPage} />
     </div>
   );
 };

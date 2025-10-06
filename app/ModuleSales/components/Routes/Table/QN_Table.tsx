@@ -23,7 +23,9 @@ const Table: React.FC<TableProps> = ({ posts }) => {
     const [startDate, setStartDate] = useState<string>("");
     const [endDate, setEndDate] = useState<string>("");
 
-    const [agentNames, setAgentNames] = useState<Record<string, string>>({});
+    const [agentData, setAgentData] = useState<
+        Record<string, { name: string; profilePicture: string }>
+    >({});
 
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -112,22 +114,26 @@ const Table: React.FC<TableProps> = ({ posts }) => {
     useEffect(() => {
         const fetchAgents = async () => {
             const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
-            const nameMap: Record<string, string> = {};
+            const dataMap: Record<string, { name: string; profilePicture: string }> = {};
 
             await Promise.all(
                 uniqueReferenceIds.map(async (id) => {
                     try {
                         const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
                         const data = await res.json();
-                        nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
+
+                        dataMap[id] = {
+                            name: `${data.Lastname || ""}, ${data.Firstname || ""}`.trim(),
+                            profilePicture: data.profilePicture || "/taskflow.png",
+                        };
                     } catch (error) {
                         console.error(`Error fetching user ${id}`, error);
-                        nameMap[id] = "";
+                        dataMap[id] = { name: "", profilePicture: "/taskflow.png" };
                     }
                 })
             );
 
-            setAgentNames(nameMap);
+            setAgentData(dataMap);
         };
 
         if (posts.length > 0) {
@@ -230,7 +236,21 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                                     <td className="px-6 py-3">{formatCurrency(post.quotationamount)}</td>
                                     <td className="px-6 py-3 uppercase">{post.companyname}</td>
                                     <td className="px-6 py-4 text-xs capitalize text-orange-700">
-                                        {agentNames[post.referenceid] || "N/A"}
+                                        <td className="px-6 py-4 text-xs capitalize text-orange-700">
+                                            {agentData[post.referenceid] ? (
+                                                <div className="flex items-center gap-2">
+                                                    <img
+                                                        src={agentData[post.referenceid].profilePicture}
+                                                        alt={agentData[post.referenceid].name || "Agent"}
+                                                        className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                                    />
+                                                    <span>{agentData[post.referenceid].name || "Unknown"}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-gray-400 italic">Loading...</span>
+                                            )}
+                                        </td>
+
                                     </td>
                                     <td className="px-6 py-3 capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-3 capitalize">{post.remarks}</td>

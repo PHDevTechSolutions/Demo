@@ -8,6 +8,9 @@ interface TableProps {
 
 const Table: React.FC<TableProps> = ({ posts }) => {
   const [groupedUsers, setGroupedUsers] = useState<any[]>([]);
+  const [agentData, setAgentData] = useState<
+    Record<string, { profilePicture: string }>
+  >({});
   const [totals, setTotals] = useState({
     totalOutbound: 0,
     totalSuccessful: 0,
@@ -58,7 +61,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
       return acc;
     }, {} as Record<string, any>);
 
-    // 🏆 Rank based on "Successful" calls
     const sortedUsers = Object.values(grouped).sort(
       (a: any, b: any) => b.Successful - a.Successful
     );
@@ -67,12 +69,45 @@ const Table: React.FC<TableProps> = ({ posts }) => {
     setTotals({ totalOutbound, totalSuccessful, totalInbound, totalCalls });
   }, [posts]);
 
+  // 🔹 Fetch agent profile pictures
+  useEffect(() => {
+    const fetchAgents = async () => {
+      const uniqueIds = Array.from(
+        new Set(groupedUsers.map((user) => user.ReferenceID))
+      );
+
+      const dataMap: Record<string, { profilePicture: string }> = {};
+
+      await Promise.all(
+        uniqueIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+            const data = await res.json();
+            dataMap[id] = {
+              profilePicture: data.profilePicture || "/taskflow.png",
+            };
+          } catch {
+            dataMap[id] = { profilePicture: "/taskflow.png" };
+          }
+        })
+      );
+
+      setAgentData(dataMap);
+    };
+
+    if (groupedUsers.length > 0) fetchAgents();
+  }, [groupedUsers]);
+
   return (
     <div className="overflow-x-auto px-2">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         {[
-          { title: "Successful Calls", value: totals.totalSuccessful, bg: "bg-red-700" },
+          {
+            title: "Successful Calls",
+            value: totals.totalSuccessful,
+            bg: "bg-red-700",
+          },
         ].map((card, i) => (
           <div
             key={i}
@@ -98,16 +133,38 @@ const Table: React.FC<TableProps> = ({ posts }) => {
             {groupedUsers.length > 0 ? (
               groupedUsers.map((agent, index) => {
                 const rank = index + 1;
+                const profilePicture =
+                  agentData[agent.ReferenceID]?.profilePicture || "/taskflow.png";
 
                 let icon = null;
                 if (rank === 1) {
-                  icon = <FaCrown className="text-yellow-500 inline-block mr-1" size={14} />;
+                  icon = (
+                    <FaCrown
+                      className="text-yellow-500 inline-block mr-1"
+                      size={14}
+                    />
+                  );
                 } else if (rank === 2) {
-                  icon = <FaRibbon className="text-gray-400 inline-block mr-1" size={14} />;
+                  icon = (
+                    <FaRibbon
+                      className="text-gray-400 inline-block mr-1"
+                      size={14}
+                    />
+                  );
                 } else if (rank >= 3 && rank <= 10) {
-                  icon = <FaRibbon className="text-yellow-600 inline-block mr-1" size={14} />;
+                  icon = (
+                    <FaRibbon
+                      className="text-yellow-600 inline-block mr-1"
+                      size={14}
+                    />
+                  );
                 } else {
-                  icon = <IoIosRibbon className="text-red-600 inline-block mr-1" size={14} />;
+                  icon = (
+                    <IoIosRibbon
+                      className="text-red-600 inline-block mr-1"
+                      size={14}
+                    />
+                  );
                 }
 
                 return (
@@ -118,11 +175,20 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                       </span>
                     </td>
                     <td className="px-5 py-2 text-xs capitalize">
-                      {agent.AgentFirstname} {agent.AgentLastname}
-                      <br />
-                      <span className="text-gray-900 text-[10px]">
-                        ({agent.ReferenceID})
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={profilePicture}
+                          alt={`${agent.AgentFirstname} ${agent.AgentLastname}`}
+                          className="w-8 h-8 rounded-full object-cover border border-gray-300 shadow-sm"
+                        />
+                        <div>
+                          {agent.AgentFirstname} {agent.AgentLastname}
+                          <br />
+                          <span className="text-gray-900 text-[10px]">
+                            ({agent.ReferenceID})
+                          </span>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-5 py-2 text-xs font-bold text-green-700">
                       {agent.Successful}

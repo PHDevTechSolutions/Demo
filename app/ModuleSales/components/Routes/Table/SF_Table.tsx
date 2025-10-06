@@ -21,7 +21,9 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [agentNames, setAgentNames] = useState<Record<string, string>>({});
+    const [agentData, setAgentData] = useState<
+        Record<string, { name: string; profilePicture: string }>
+    >({});
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
     const parseDate = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -34,7 +36,7 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         return posts.filter((post) => {
             const postDate = parseDate(post.date_created);
             return (!start || !postDate || postDate >= start) &&
-                   (!end || !postDate || postDate <= end);
+                (!end || !postDate || postDate <= end);
         });
     }, [posts, startDate, endDate]);
 
@@ -52,19 +54,6 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
         return sortedPosts.slice(startIdx, startIdx + itemsPerPage);
     }, [sortedPosts, currentPage, itemsPerPage]);
 
-    const formatDate = (timestamp: string) => {
-        const date = new Date(timestamp);
-        return date.toLocaleString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-            timeZone: "Asia/Manila",
-        });
-    };
-
     const formatCurrency = (value: number | string) => {
         const number = typeof value === "string" ? parseFloat(value) || 0 : value || 0;
         return number.toLocaleString("en-PH", {
@@ -79,24 +68,32 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
 
     useEffect(() => {
         const fetchAgents = async () => {
-            const uniqueReferenceIds = Array.from(new Set(posts.map(p => p.referenceid)));
-            const nameMap: Record<string, string> = {};
+            const uniqueReferenceIds = Array.from(new Set(posts.map((p) => p.referenceid)));
+            const dataMap: Record<string, { name: string; profilePicture: string }> = {};
 
-            await Promise.all(uniqueReferenceIds.map(async (id) => {
-                try {
-                    const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
-                    const data = await res.json();
-                    nameMap[id] = `${data.Lastname || ""}, ${data.Firstname || ""}`.trim();
-                } catch (error) {
-                    console.error(`Error fetching user ${id}`, error);
-                    nameMap[id] = "";
-                }
-            }));
+            await Promise.all(
+                uniqueReferenceIds.map(async (id) => {
+                    try {
+                        const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(id)}`);
+                        const data = await res.json();
 
-            setAgentNames(nameMap);
+                        dataMap[id] = {
+                            name: `${data.Lastname || ""}, ${data.Firstname || ""}`.trim(),
+                            profilePicture: data.profilePicture || "/taskflow.png",
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching user ${id}`, error);
+                        dataMap[id] = { name: "", profilePicture: "/taskflow.png" };
+                    }
+                })
+            );
+
+            setAgentData(dataMap);
         };
 
-        if (posts.length > 0) fetchAgents();
+        if (posts.length > 0) {
+            fetchAgents();
+        }
     }, [posts]);
 
     return (
@@ -146,7 +143,20 @@ const Table: React.FC<TableProps> = ({ posts, handleEdit }) => {
                                     <td className="px-6 py-4 text-xs">{post.date_created}</td>
                                     <td className="px-6 py-4 text-xs">{formatCurrency(post.quotationamount)}</td>
                                     <td className="px-6 py-4 text-xs uppercase">{post.companyname}</td>
-                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">{agentNames[post.referenceid] || "N/A"}</td>
+                                    <td className="px-6 py-4 text-xs capitalize text-orange-700">
+                                        {agentData[post.referenceid] ? (
+                                            <div className="flex items-center gap-2">
+                                                <img
+                                                    src={agentData[post.referenceid].profilePicture}
+                                                    alt={agentData[post.referenceid].name || "Agent"}
+                                                    className="w-8 h-8 rounded-full object-cover border border-gray-300"
+                                                />
+                                                <span>{agentData[post.referenceid].name || "Unknown"}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-gray-400 italic">Loading...</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.contactperson}</td>
                                     <td className="px-6 py-4 text-xs capitalize">{post.remarks}</td>
                                 </tr>
