@@ -7,8 +7,6 @@ import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export const dynamic = "force-dynamic";
-
 interface ProgressItem {
   id: string;
   companyname: string;
