@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import { revalidatePath } from "next/cache";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
-
-const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL!;
-if (!TASKFLOW_DB_URL) throw new Error("❌ TASKFLOW_DB_URL is not set in environment variables.");
+const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
+if (!TASKFLOW_DB_URL) throw new Error("TASKFLOW_DB_URL is not set.");
 
 const sql = neon(TASKFLOW_DB_URL);
 
+// 🧩 API Route - Create Progress + Update Activity + Force Revalidate
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ Required field validation
+    // ✅ Required field check
     const requiredFields = ["referenceid", "manager", "tsm"];
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -25,75 +23,68 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Transaction: Insert into progress + Update activity (sabay commit)
-    const result = await sql.begin(async (tx) => {
-      // Insert into progress table
-      const progressInsert = await tx`
-        INSERT INTO progress (
-          referenceid, manager, tsm, companyname, contactperson,
-          contactnumber, emailaddress, typeclient, address, deliveryaddress,
-          area, activitynumber, source, typeactivity, activitystatus,
-          remarks, typecall, sonumber, soamount, callback, callstatus,
-          startdate, enddate, quotationnumber, quotationamount,
-          projectname, projectcategory, projecttype, targetquota,
-          paymentterm, actualsales, deliverydate, followup_date,
-          drnumber, date_created, date_updated
-        ) VALUES (
-          ${body.referenceid}, ${body.manager}, ${body.tsm}, ${body.companyname}, ${body.contactperson},
-          ${body.contactnumber}, ${body.emailaddress}, ${body.typeclient}, ${body.address}, ${body.deliveryaddress},
-          ${body.area}, ${body.activitynumber}, ${body.source}, ${body.typeactivity}, ${body.activitystatus},
-          ${body.remarks}, ${body.typecall}, ${body.sonumber}, ${body.soamount}, ${body.callback}, ${body.callstatus},
-          ${body.startdate}, ${body.enddate}, ${body.quotationnumber}, ${body.quotationamount},
-          ${body.projectname}, ${body.projectcategory}, ${body.projecttype}, ${body.targetquota},
-          ${body.paymentterm}, ${body.actualsales}, ${body.deliverydate}, ${body.followup_date},
-          ${body.drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
-        )
+    // ✅ Insert into progress
+    const progressInsert = await sql`
+      INSERT INTO progress (
+        referenceid, manager, tsm, companyname, contactperson,
+        contactnumber, emailaddress, typeclient, address, deliveryaddress,
+        area, activitynumber, source, typeactivity, activitystatus,
+        remarks, typecall, sonumber, soamount, callback, callstatus,
+        startdate, enddate, quotationnumber, quotationamount,
+        projectname, projectcategory, projecttype, targetquota,
+        paymentterm, actualsales, deliverydate, followup_date,
+        drnumber, date_created, date_updated
+      )
+      VALUES (
+        ${body.referenceid}, ${body.manager}, ${body.tsm}, ${body.companyname}, ${body.contactperson},
+        ${body.contactnumber}, ${body.emailaddress}, ${body.typeclient}, ${body.address}, ${body.deliveryaddress},
+        ${body.area}, ${body.activitynumber}, ${body.source}, ${body.typeactivity}, ${body.activitystatus},
+        ${body.remarks}, ${body.typecall}, ${body.sonumber}, ${body.soamount}, ${body.callback}, ${body.callstatus},
+        ${body.startdate}, ${body.enddate}, ${body.quotationnumber}, ${body.quotationamount},
+        ${body.projectname}, ${body.projectcategory}, ${body.projecttype}, ${body.targetquota},
+        ${body.paymentterm}, ${body.actualsales}, ${body.deliverydate}, ${body.followup_date},
+        ${body.drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+      )
+      RETURNING *;
+    `;
+
+    // ✅ Update activity table if provided
+    let activityUpdate = null;
+    if (body.activitynumber && body.activitystatus) {
+      const activityResult = await sql`
+        UPDATE activity
+        SET activitystatus = ${body.activitystatus},
+            date_updated = NOW() AT TIME ZONE 'UTC'
+        WHERE activitynumber = ${body.activitynumber}
         RETURNING *;
       `;
+      activityUpdate = activityResult[0] || null;
+    }
 
-      // Update activity status (optional)
-      const activityUpdate =
-        body.activitystatus && body.activitynumber
-          ? await tx`
-              UPDATE activity
-              SET activitystatus = ${body.activitystatus},
-                  date_updated = NOW() AT TIME ZONE 'UTC'
-              WHERE activitynumber = ${body.activitynumber}
-              RETURNING *;
-            `
-          : null;
+    // ✅ Revalidate any related paths (replace with your exact path)
+    revalidatePath("/modulesales/task/activityplanner");
 
-      return {
-        progressInsert: progressInsert[0],
-        activityUpdate: activityUpdate?.[0] || null,
-      };
-    });
-
-    // ✅ Response
     return NextResponse.json(
       {
         success: true,
-        message: "Progress and activity updated successfully.",
-        progress: result.progressInsert,
-        activityUpdate: result.activityUpdate,
+        progress: progressInsert[0],
+        activityUpdate,
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
-        },
-      }
+      { status: 200 }
     );
   } catch (error: any) {
-    console.error("❌ POST /CreateProgress error:", error);
+    console.error("❌ Error in CreateProgress:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Internal server error",
+        error: error.message || "Internal server error while creating progress",
       },
       { status: 500 }
     );
   }
 }
+
+// 🚀 Force fresh fetches (no cache)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
