@@ -24,99 +24,77 @@ async function create(data: any) {
     }
 
     // 🔎 Check if company already exists
-    const checkQuery = `
-      SELECT * FROM accounts
-      WHERE companyname = $1
-      LIMIT 1;
+    const existingAccount = await Xchire_sql`
+      SELECT * FROM accounts WHERE companyname = ${companyname} LIMIT 1;
     `;
-    const existingAccount = await Xchire_sql(checkQuery, [companyname]);
     const accountExists = existingAccount.length > 0;
 
     // 📝 Insert into activity table
-    const activityColumns = [
-      "referenceid", "manager", "tsm", "companyname", "contactperson",
-      "contactnumber", "emailaddress", "typeclient", "address", "deliveryaddress", "area",
-      "projectname", "projectcategory", "projecttype", "source",
-      "activitystatus", "activitynumber", "targetquota"
-    ];
-    const activityValues = [
-      referenceid, manager, tsm, companyname, contactperson,
-      contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
-      projectname, projectcategory, projecttype, source,
-      activitystatus || null, activitynumber || null, targetquota || null
-    ];
-    const activityPlaceholders = activityValues.map((_, i) => `$${i + 1}`).join(", ");
-    const activityQuery = `
-      INSERT INTO activity (${activityColumns.join(", ")}, date_created, date_updated)
-      VALUES (${activityPlaceholders}, NOW()', NOW()')
+    const activityResult = await Xchire_sql`
+      INSERT INTO activity (
+        referenceid, manager, tsm, companyname, contactperson,
+        contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
+        projectname, projectcategory, projecttype, source,
+        activitystatus, activitynumber, targetquota
+      )
+      VALUES (
+        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
+        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
+        ${projectname}, ${projectcategory}, ${projecttype}, ${source},
+        ${activitystatus || null}, ${activitynumber || null}, ${targetquota || null}
+      )
       RETURNING *;
     `;
-    const activityResult = await Xchire_sql(activityQuery, activityValues);
-    const insertedActivity = activityResult[0];
 
-    if (!insertedActivity) {
-      throw new Error("Failed to insert into activity table.");
-    }
+    const insertedActivity = activityResult[0];
+    if (!insertedActivity) throw new Error("Failed to insert into activity table.");
 
     const newActivityNumber = insertedActivity.activitynumber;
 
     // 🏢 Insert into accounts table if company is new
     if (!accountExists) {
-      const accountsQuery = `
+      const accountsResult = await Xchire_sql`
         INSERT INTO accounts (
           referenceid, manager, tsm, companyname, contactperson,
-          contactnumber, emailaddress, typeclient, address, deliveryaddress, area, status, companygroup, date_created, date_updated
+          contactnumber, emailaddress, typeclient, address, deliveryaddress, area, 
+          status, companygroup
         ) VALUES (
-          $1, $2, $3, $4, $5,
-          $6, $7, $8, $9, $10, $11, $12, $13,
-          NOW()',
-          NOW()'
-        ) RETURNING *;
+          ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
+          ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
+          ${status}, ${companygroup}
+        )
+        RETURNING *;
       `;
-      const accountsValues = [
-        referenceid, manager, tsm, companyname, contactperson,
-        contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
-        status, companygroup
-      ];
-      const accountsResult = await Xchire_sql(accountsQuery, accountsValues);
 
-      if (!accountsResult[0]) {
-        throw new Error("Failed to insert into accounts table.");
-      }
+      if (!accountsResult[0]) throw new Error("Failed to insert into accounts table.");
     } else {
-      // ✅ Always update date_updated if account exists
-      const updateDateUpdatedQuery = `
-        UPDATE accounts
-        SET date_updated = NOW()'
-        WHERE companyname = $1;
+      // ✅ Update date_updated only if company exists
+      await Xchire_sql`
+        UPDATE accounts SET date_updated = DEFAULT WHERE companyname = ${companyname};
       `;
-      await Xchire_sql(updateDateUpdatedQuery, [companyname]);
     }
 
     // 📈 Insert into progress table
-    const progressColumns = [
-      ...activityColumns,
-      "typeactivity", "callback", "callstatus", "typecall",
-      "remarks", "quotationnumber", "quotationamount", "sonumber", "soamount",
-      "startdate", "enddate"
-    ];
-    const progressValues = [
-      ...activityValues,
-      typeactivity, callback || null, callstatus || null, typecall || null,
-      remarks || null, quotationnumber || null, quotationamount || null,
-      sonumber || null, soamount || null, startdate || null, enddate || null
-    ];
-
-    // Update activitynumber value for progress insert
-    progressValues[progressColumns.indexOf("activitynumber")] = newActivityNumber;
-
-    const progressPlaceholders = progressValues.map((_, i) => `$${i + 1}`).join(", ");
-    const progressQuery = `
-      INSERT INTO progress (${progressColumns.join(", ")}, date_created, date_updated)
-      VALUES (${progressPlaceholders}, NOW()', NOW()')
+    const progressResult = await Xchire_sql`
+      INSERT INTO progress (
+        referenceid, manager, tsm, companyname, contactperson,
+        contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
+        projectname, projectcategory, projecttype, source,
+        typeactivity, callback, callstatus, typecall,
+        remarks, quotationnumber, quotationamount, sonumber, soamount,
+        startdate, enddate, activitystatus, activitynumber, targetquota
+      )
+      VALUES (
+        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
+        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
+        ${projectname}, ${projectcategory}, ${projecttype}, ${source},
+        ${typeactivity}, ${callback || null}, ${callstatus || null}, ${typecall || null},
+        ${remarks || null}, ${quotationnumber || null}, ${quotationamount || null},
+        ${sonumber || null}, ${soamount || null}, ${startdate || null}, ${enddate || null},
+        ${activitystatus || null}, ${newActivityNumber || null}, ${targetquota || null}
+      )
       RETURNING *;
     `;
-    const progressResult = await Xchire_sql(progressQuery, progressValues);
 
     if (!progressResult[0]) {
       throw new Error("Failed to insert into progress table.");
@@ -126,7 +104,7 @@ async function create(data: any) {
       success: true,
       activity: insertedActivity,
       progress: progressResult[0],
-      accountExists
+      accountExists,
     };
   } catch (error: any) {
     console.error("Error inserting activity, accounts, and progress:", error);

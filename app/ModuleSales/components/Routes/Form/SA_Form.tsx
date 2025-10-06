@@ -175,7 +175,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     projecttype: string;
     source: string;
     targetquota: string;
-
   };
 
   // Fetch progress data when activitynumber change
