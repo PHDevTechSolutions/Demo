@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
+import { useRouter } from "next/navigation"; // ✅ For router.refresh()
+
 // Routes
 import Inquiries from "./Columns/Inquiries";
 import Companies from "./Columns/Companies";
@@ -72,47 +74,45 @@ const allColumns: Column[] = [
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
+  const router = useRouter(); // ✅ use router for client revalidation
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
-  // ✅ State for modal
   const [showRecentModal, setShowRecentModal] = useState(false);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
-  // ✅ States for Progress
   const [progress, setProgress] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
   const welcomeAudioRef = useRef<HTMLAudioElement>(null);
-
-  // ✅ State for TSA filter
   const [TSAOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
-  const [selectedTSA, setSelectedTSA] = useState<string>(""); // ReferenceID of selected TSA
+  const [selectedTSA, setSelectedTSA] = useState<string>("");
 
-
+  // ✅ Play welcome audio once
   useEffect(() => {
     const played = localStorage.getItem("welcomePlayed");
     if (!played && welcomeAudioRef.current) {
-      welcomeAudioRef.current.play().catch(() => { });
+      welcomeAudioRef.current.play().catch(() => {});
       localStorage.setItem("welcomePlayed", "true");
     }
   }, []);
 
-  // ✅ Play Message handler (manual)
   const handlePlayMessage = () => {
     if (welcomeAudioRef.current) {
       welcomeAudioRef.current.currentTime = 0;
-      welcomeAudioRef.current.play().catch(() => { });
+      welcomeAudioRef.current.play().catch(() => {});
     }
   };
 
-  // ✅ Fetch Progress directly here
+  // ✅ Always fetch latest progress (no cache)
   const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
     try {
       setLoading(true);
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        { cache: "no-store" }
+        {
+          cache: "no-store",
+          next: { revalidate: 0 },
+        }
       );
       const data = await res.json();
       setProgress(data?.data || []);
@@ -128,28 +128,30 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     fetchProgress();
   }, [userDetails?.ReferenceID]);
 
+  // ✅ Fetch recent activities
   const fetchProgressData = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     try {
       const res = await fetch(
-        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`
+        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`,
+        {
+          cache: "no-store",
+          next: { revalidate: 0 },
+        }
       );
       if (!res.ok) return;
 
       const result = await res.json();
       let activities = result?.data || [];
 
-      // ✅ compute kahapon range
       const today = new Date();
       const yesterdayStart = new Date(today);
       yesterdayStart.setDate(today.getDate() - 1);
       yesterdayStart.setHours(0, 0, 0, 0);
-
       const yesterdayEnd = new Date(today);
       yesterdayEnd.setDate(today.getDate() - 1);
       yesterdayEnd.setHours(23, 59, 59, 999);
 
-      // ✅ filter by date_updated
       activities = activities.filter((act: any) => {
         if (!act.date_created) return false;
         const updated = new Date(act.date_created);
@@ -165,14 +167,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   useEffect(() => {
     const hasSeenRecent = localStorage.getItem("hasSeenRecentActivities");
     if (!hasSeenRecent && userDetails?.ReferenceID) {
-      // auto-open modal one-time
       fetchProgressData();
       setShowRecentModal(true);
       localStorage.setItem("hasSeenRecentActivities", "true");
     }
   }, [userDetails?.ReferenceID, fetchProgressData]);
 
-
+  // ✅ Create activity with instant revalidation
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
 
@@ -193,9 +194,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        cache: "no-store",
+        next: { revalidate: 0 },
       });
 
-      // ✅ basahin body kahit error status
       let result: any = {};
       try {
         result = await res.json();
@@ -208,7 +210,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         throw new Error(result.error || "Failed to submit activity");
       }
 
-      // ✅ update status kung inquiry
       if (isInquiry && "ticketreferencenumber" in data) {
         await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateStatus", {
           method: "POST",
@@ -217,13 +218,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
             ticketreferencenumber: data.ticketreferencenumber,
             status: "used",
           }),
+          cache: "no-store",
         });
       }
 
-      // ✅ trigger reloading state bago mag-fetchProgress
+      // ✅ Real-time UI update
       setLoading(true);
       await fetchProgress();
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
+      router.refresh(); // ✅ Revalidate the page instantly
 
       toast.success("Activity successfully added!", { autoClose: 2000 });
     } catch (error: any) {
@@ -233,13 +236,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   };
 
   const toggleCollapse = (id: string) => {
-    setCollapsedColumns(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    setCollapsedColumns((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
   };
 
-  // ✅ Filter columns based on Role
-  const filteredColumns = allColumns.filter(col => {
+  const filteredColumns = allColumns.filter((col) => {
     if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
       return col.id !== "new-task" && col.id !== "in-progress";
     }
@@ -260,7 +262,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       } else return;
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          cache: "no-store",
+          next: { revalidate: 0 },
+        });
         if (!response.ok) throw new Error("Failed to fetch TSA");
 
         const data = await response.json();
@@ -317,7 +322,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       )}
 
       <div className="flex gap-4">
-        {filteredColumns.map(col => {
+        {filteredColumns.map((col) => {
           const isCollapsed = collapsedColumns.includes(col.id);
           const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
 
@@ -377,12 +382,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                       ))}
                     </div>
                   ) : (
-                    <Progress
-                      userDetails={userDetails}
-                    />
+                    <Progress userDetails={userDetails} />
                   )
                 )}
-
 
                 {col.id === "scheduled" && !isCollapsed && (
                   <>
