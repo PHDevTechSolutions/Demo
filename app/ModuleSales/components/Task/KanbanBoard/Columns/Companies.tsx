@@ -24,19 +24,9 @@ interface CompaniesProps {
   userDetails: { ReferenceID?: string } | null;
 }
 
+// Simplified company eligibility check (no localStorage)
 const isCompanyDue = (comp: Company): boolean => {
-  const lastAddedRaw = comp.id
-    ? localStorage.getItem(`lastAdded_${comp.id}`)
-    : null;
-  if (!lastAddedRaw) return true;
-
-  const lastAdded = new Date(lastAddedRaw);
-  const today = new Date();
-  const diffDays = Math.floor((+today - +lastAdded) / (1000 * 60 * 60 * 24));
-
-  if (comp.typeclient === "Top 50") return diffDays >= 10;
-  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20")
-    return diffDays >= 30;
+  // Simple rule: all companies are eligible
   return true;
 };
 
@@ -51,13 +41,11 @@ const Companies: React.FC<CompaniesProps> = ({
   const [remainingQuota, setRemainingQuota] = useState<number>(0);
   const [isSunday, setIsSunday] = useState(false);
 
-  // 🆕 Skip modal + skip status
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeSkip, setActiveSkip] = useState<{ startdate: string; enddate: string } | null>(null);
 
-  // 🧠 Check skip status for today
   const checkActiveSkip = async () => {
     if (!userDetails?.ReferenceID) return;
 
@@ -82,7 +70,6 @@ const Companies: React.FC<CompaniesProps> = ({
     }
   };
 
-  // 📦 Fetch companies (will auto-skip if active skip)
   const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) return;
 
@@ -90,7 +77,6 @@ const Companies: React.FC<CompaniesProps> = ({
     const todayStr = today.toISOString().split("T")[0];
     const dayOfWeek = today.getDay(); // 0 = Sunday
 
-    // Sunday check
     if (dayOfWeek === 0) {
       setIsSunday(true);
       setCompanies([]);
@@ -102,14 +88,12 @@ const Companies: React.FC<CompaniesProps> = ({
     try {
       setLoading(true);
 
-      // ✅ Check skip first
       const isSkipped = await checkActiveSkip();
       if (isSkipped) {
         setLoading(false);
         return;
       }
 
-      // ✅ Fetch today's quota
       const quotaRes = await fetch(
         `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
       );
@@ -118,7 +102,6 @@ const Companies: React.FC<CompaniesProps> = ({
       if (quotaData?.error) throw new Error(quotaData.error);
 
       if (quotaData.skipped) {
-        // Prevent generation if skip
         setCompanies([]);
         setRemainingQuota(0);
         setActiveSkip({
@@ -135,7 +118,6 @@ const Companies: React.FC<CompaniesProps> = ({
         return;
       }
 
-      // 🧮 If no quota today, compute fresh
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -153,11 +135,12 @@ const Companies: React.FC<CompaniesProps> = ({
       );
       const accounts = await accountsRes.json();
 
-      let companiesData: Company[] = Array.isArray(accounts)
+      const companiesData: Company[] = Array.isArray(accounts)
         ? accounts
         : accounts?.data || accounts?.companies || [];
 
       const eligibleCompanies = companiesData.filter(isCompanyDue);
+
       if (!eligibleCompanies.length) {
         setCompanies([]);
         setRemainingQuota(todayQuota);
@@ -182,7 +165,6 @@ const Companies: React.FC<CompaniesProps> = ({
       allocate(eligibleCompanies.filter((c) => c.typeclient === "CSR Client"), 3);
       allocate(eligibleCompanies.filter((c) => c.typeclient === "TSA Client"), 2);
 
-      // Fallback if quota not filled
       if (remaining > 0) {
         const pickedIds = new Set(finalCompanies.map((c) => c.id));
         const fillers = eligibleCompanies
@@ -191,7 +173,6 @@ const Companies: React.FC<CompaniesProps> = ({
         finalCompanies.push(...fillers);
       }
 
-      // Save to backend
       await fetch("/api/ModuleSales/Companies/DailyQuota", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -223,9 +204,8 @@ const Companies: React.FC<CompaniesProps> = ({
       toast.warn("🚫 Cannot add companies during skip period.");
       return;
     }
-
     handleSubmit(comp, false);
-    if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+    // Removed localStorage entirely
   };
 
   const handleSkipSubmit = async () => {
@@ -261,31 +241,6 @@ const Companies: React.FC<CompaniesProps> = ({
     }
   };
 
-  const handleCancelSkip = async () => {
-    if (!activeSkip) return;
-
-    try {
-      const res = await fetch("/api/ModuleSales/Companies/SkipQuota", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          referenceid: userDetails?.ReferenceID,
-          startdate: activeSkip.startdate,
-          enddate: activeSkip.enddate,
-        }),
-      });
-
-      const result = await res.json();
-      if (!res.ok || result.error) throw new Error(result.error);
-
-      toast.success("❌ Skip period cancelled!");
-      setActiveSkip(null);
-      await fetchCompanies();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to cancel skip");
-    }
-  };
-
   return (
     <div className="space-y-1 overflow-y-auto">
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
@@ -307,12 +262,6 @@ const Companies: React.FC<CompaniesProps> = ({
           <span>
             🚫 Active Skip: {activeSkip.startdate} → {activeSkip.enddate}
           </span>
-          {/*<button
-            onClick={handleCancelSkip}
-            className="ml-2 text-blue-600 underline hover:text-blue-800"
-          >
-            Cancel
-          </button>*/}
         </div>
       )}
 

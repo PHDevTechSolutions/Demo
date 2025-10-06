@@ -143,20 +143,9 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
-
-          {/* 🧩 Add these lines */}
-          {progress.sonumber && (
-            <p><span className="font-semibold">SO Number:</span> {progress.sonumber}</p>
-          )}
-          {progress.quotationnumber && (
-            <p><span className="font-semibold">Quotation Number:</span> {progress.quotationnumber}</p>
-          )}
-
           <p className="text-gray-500 text-[8px]">{progress.date_updated}</p>
 
-          {progress.remarks && (
-            <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>
-          )}
+          {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
 
           <div className="flex justify-end mt-2 space-x-1">
             {onDeleteClick && (
@@ -170,7 +159,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           </div>
         </div>
       )}
-
 
       <DeleteModal
         isOpen={showDeleteModal && !showFinalModal}
