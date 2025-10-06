@@ -199,14 +199,41 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  const handleAddCompany = (comp: Company) => {
+  const handleAddCompany = async (comp: Company) => {
     if (activeSkip) {
       toast.warn("🚫 Cannot add companies during skip period.");
       return;
     }
+
+    // Call parent handler
     handleSubmit(comp, false);
-    // Removed localStorage entirely
+
+    // Update local state immediately
+    setCompanies((prev) => prev.filter((c) => c.id !== comp.id));
+    setRemainingQuota((prev) => Math.max(prev - 1, 0));
+
+    // Update Supabase daily_quota
+    if (!userDetails?.ReferenceID) return;
+
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/ModuleSales/Companies/DailyQuota", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referenceid: userDetails.ReferenceID,
+          date: todayStr,
+          companies: companies.filter((c) => c.id !== comp.id), // remove used
+          remaining_quota: Math.max(remainingQuota - 1, 0),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Failed to update quota");
+    } catch (err: any) {
+      console.error("❌ Failed to update quota:", err);
+    }
   };
+
 
   const handleSkipSubmit = async () => {
     if (!startDate || !endDate) {
@@ -283,7 +310,7 @@ const Companies: React.FC<CompaniesProps> = ({
               isExpanded={isExpanded}
               onToggle={() => setExpandedIdx(isExpanded ? null : key)}
               onAdd={handleAddCompany}
-              onCancel={() => {}}
+              onCancel={() => { }}
             />
           );
         })
