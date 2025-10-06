@@ -309,68 +309,51 @@ if ("skeleton" in item) return false;
   }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  e.preventDefault();
+  setSubmitting(true);
+  const payload = { ...hiddenFields, ...formData };
 
-    const payload: any = { ...hiddenFields, ...formData };
+  if (!payload.activitynumber) {
+    toast.error("Activity number is missing!");
+    setSubmitting(false);
+    return;
+  }
 
-    if (!payload.activitynumber) {
-      toast.error("Activity number is missing!");
-      setSubmitting(false);
-      return;
-    }
+  Object.keys(payload).forEach((k) => {
+    if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
+  });
 
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] === "" || payload[key] === undefined)
-        payload[key] = null;
+  const tempId = "temp-" + Date.now();
+  setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
+
+  try {
+    const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
     });
 
-    ["soamount", "quotationamount", "targetquota", "actualsales"].forEach(
-      (field) => {
-        payload[field] = payload[field] !== null ? Number(payload[field]) : null;
-      }
-    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to submit activity");
 
-    // temporary skeleton
-    const tempId = "temp-" + Date.now();
-    setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
+    toast.success("Activity successfully added/updated!");
+    setShowForm(false);
+    resetForm();
 
-    try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+    // wait a bit for Neon to replicate the change
+    await new Promise((r) => setTimeout(r, 500));
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to submit activity");
-
-      toast.success("Activity successfully added/updated!");
-      setShowForm(false);
-      resetForm();
-
-      if (data?.data?.activity) {
-        // remove temporary skeleton
-        setProgress((prev) => prev.filter((item) => item.id !== tempId));
-        // add the new real item
-        setProgress((prev) => [data.data.activity, ...prev]);
-      }
-
-      // refresh full list to ensure latest sort order
-      fetchProgress();
-      setVisibleCount(ITEMS_PER_PAGE);
-    } catch (err: any) {
-      console.error("❌ Submit error:", err);
-      toast.error("Failed to submit activity: " + err.message);
-      setProgress((prev) => prev.filter((item) => item.id !== tempId));
-    } finally {
-      setSubmitting(false);
-      setLoading(false);
-    }
-  };
+    await fetchProgress(); // refresh after confirmed commit
+  } catch (err: any) {
+    console.error("❌ Submit error:", err);
+    toast.error("Failed to submit activity: " + err.message);
+    setProgress((prev) => prev.filter((i) => i.id !== tempId));
+  } finally {
+    setSubmitting(false);
+    setLoading(false);
+  }
+};
 
   const handleRefresh = async () => {
     setListLoading(true);
