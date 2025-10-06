@@ -317,9 +317,11 @@ if ("skeleton" in item) return false;
     return;
   }
 
-  Object.keys(payload).forEach((k) => {
-    if (payload[k] === "" || payload[k] === undefined) payload[k] = null;
-  });
+  (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
+  if (payload[key] === "" || payload[key] === undefined) {
+    payload[key] = null as any;
+  }
+});
 
   const tempId = "temp-" + Date.now();
   setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
