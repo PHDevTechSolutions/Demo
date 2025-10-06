@@ -2,105 +2,77 @@ import React, { useEffect, useState } from "react";
 import { FaPlus, FaMinus } from "react-icons/fa";
 
 interface FormFieldsProps {
-  referenceid: string; setreferenceid: (value: string) => void;
-  manager: string; setmanager: (value: string) => void;
-  tsm: string; settsm: (value: string) => void;
-  companyname: string; setcompanyname: (value: string) => void;
-  contactperson: string; setcontactperson: (value: string) => void;
-  contactnumber: string; setcontactnumber: (value: string) => void;
-  emailaddress: string; setemailaddress: (value: string) => void;
-  typeclient: string; settypeclient: (value: string) => void;
-  companygroup: string; setcompanygroup: (value: string) => void;
-  address: string; setaddress: (value: string) => void;
-  deliveryaddress: string; setdeliveryaddress: (value: string) => void;
-  area: string; setarea: (value: string) => void;
-  status: string; setstatus: (value: string) => void;
-  isMaximized?: boolean;
+  referenceid: string;
+  setreferenceid: (value: string) => void;
+  manager: string;
+  setmanager: (value: string) => void;
+  tsm: string;
+  settsm: (value: string) => void;
+  companyname: string;
+  setcompanyname: (value: string) => void;
+  contactperson: string;
+  setcontactperson: (value: string) => void;
+  contactnumber: string;
+  setcontactnumber: (value: string) => void;
+  emailaddress: string;
+  setemailaddress: (value: string) => void;
+  companygroup: string;
+  setcompanygroup: (value: string) => void;
+  address: string;
+  setaddress: (value: string) => void;
+  deliveryaddress: string;
+  setdeliveryaddress: (value: string) => void;
+  area: string;
+  setarea: (value: string) => void;
+  status: string;
+  setstatus: (value: string) => void;
   editPost?: any;
 }
 
-const FormFields: React.FC<FormFieldsProps> = ({
-  referenceid, setreferenceid,
-  manager, setmanager,
-  tsm, settsm,
-  companyname, setcompanyname,
-  contactperson, setcontactperson,
-  contactnumber, setcontactnumber,
-  emailaddress, setemailaddress,
-  typeclient, settypeclient,
-  companygroup, setcompanygroup,
-  address, setaddress,
-  deliveryaddress, setdeliveryaddress,
-  area, setarea,
-  status, setstatus,
+const FormFields: React.FC<FormFieldsProps> = (props) => {
+  const {
+    referenceid,
+    setreferenceid,
+    manager,
+    setmanager,
+    tsm,
+    settsm,
+    companyname,
+    setcompanyname,
+    contactperson,
+    setcontactperson,
+    contactnumber,
+    setcontactnumber,
+    emailaddress,
+    setemailaddress,
+    companygroup,
+    setcompanygroup,
+    address,
+    setaddress,
+    deliveryaddress,
+    setdeliveryaddress,
+    area,
+    setarea,
+    status,
+    setstatus,
+    editPost,
+  } = props;
 
-  editPost,
-}) => {
-  const [contactPersons, setContactPersons] = useState<string[]>([]);
-  const [contactNumbers, setContactNumbers] = useState<string[]>([]);
-  const [emailAddresses, setEmailAddresses] = useState<string[]>([]);
+  const [contactPersons, setContactPersons] = useState<string[]>([""]);
+  const [contactNumbers, setContactNumbers] = useState<string[]>([""]);
+  const [emailAddresses, setEmailAddresses] = useState<string[]>([""]);
 
+  // Sync split values
   useEffect(() => {
-    setContactPersons(contactperson ? contactperson.split(", ") : [""]);
-    setContactNumbers(contactnumber ? contactnumber.split(", ") : [""]);
-    setEmailAddresses(emailaddress ? emailaddress.split(", ") : [""]);
+    setContactPersons(contactperson ? contactperson.split(", ").filter(Boolean) : [""]);
+    setContactNumbers(contactnumber ? contactnumber.split(", ").filter(Boolean) : [""]);
+    setEmailAddresses(emailaddress ? emailaddress.split(", ").filter(Boolean) : [""]);
   }, [contactperson, contactnumber, emailaddress]);
 
-  // Add new fields
-  const addContactPerson = () => setContactPersons([...contactPersons, ""]);
-  const addContactNumber = () => setContactNumbers([...contactNumbers, ""]);
-  const addEmailAddress = () => setEmailAddresses([...emailAddresses, ""]);
-
-  // Remove fields
-  const removeContactPerson = (index: number) => {
-    if (contactPersons.length > 1) {
-      const updated = contactPersons.filter((_, i) => i !== index);
-      setContactPersons(updated);
-      setcontactperson(updated.join(", "));
-    }
-  };
-
-  const removeContactNumber = (index: number) => {
-    if (contactNumbers.length > 1) {
-      const updated = contactNumbers.filter((_, i) => i !== index);
-      setContactNumbers(updated);
-      setcontactnumber(updated.join(", "));
-    }
-  };
-
-  const removeEmailAddress = (index: number) => {
-    if (emailAddresses.length > 1) {
-      const updated = emailAddresses.filter((_, i) => i !== index);
-      setEmailAddresses(updated);
-      setemailaddress(updated.join(", "));
-    }
-  };
-
-  const handleContactPersonChange = (index: number, value: string) => {
-    const updated = [...contactPersons];
-    updated[index] = value;
-    setContactPersons(updated);
-    setcontactperson(updated.join(", "));
-  };
-
-  const handleContactNumberChange = (index: number, value: string) => {
-    const updated = [...contactNumbers];
-    updated[index] = value;
-    setContactNumbers(updated);
-    setcontactnumber(updated.join(", "));
-  };
-
-  const handleEmailAddressChange = (index: number, value: string) => {
-    const updated = [...emailAddresses];
-    updated[index] = value;
-    setEmailAddresses(updated);
-    setemailaddress(updated.join(", "));
-  };
-
+  // Load edit data
   useEffect(() => {
     if (editPost) {
       setcompanyname(editPost.companyname || "");
-      settypeclient(editPost.typeclient || "");
       setaddress(editPost.address || "");
       setarea(editPost.area || "");
       setstatus(editPost.status || "");
@@ -113,212 +85,208 @@ const FormFields: React.FC<FormFieldsProps> = ({
     }
   }, [editPost]);
 
-  const fieldWidthClass = "w-full";
+  // Update handlers
+  const handleContactChange =
+    (listSetter: React.Dispatch<React.SetStateAction<string[]>>, setParent: (v: string) => void) =>
+    (index: number, value: string) => {
+      const updated = [...(listSetter as any)._value];
+      updated[index] = value;
+      listSetter(updated);
+      setParent(updated.join(", "));
+    };
+
+  const handleRemove =
+    (items: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, setParent: (v: string) => void) =>
+    (index: number) => {
+      if (items.length > 1) {
+        const updated = items.filter((_, i) => i !== index);
+        setter(updated);
+        setParent(updated.join(", "));
+      }
+    };
+
+  const addNew = (setter: React.Dispatch<React.SetStateAction<string[]>>) => setter((prev) => [...prev, ""]);
 
   return (
-    <>
-      <div className={`flex flex-wrap -mx-4`}>
-        <div className={fieldWidthClass}>
-          <input type="hidden" id="referenceid" value={referenceid} onChange={(e) => setreferenceid(e.target.value)} />
-          <input type="hidden" id="manager" value={manager} onChange={(e) => setmanager(e.target.value)} />
-          <input type="hidden" id="tsm" value={tsm} onChange={(e) => settsm(e.target.value)} />
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Hidden IDs */}
+      <input type="hidden" value={referenceid} onChange={(e) => setreferenceid(e.target.value)} />
+      <input type="hidden" value={manager} onChange={(e) => setmanager(e.target.value)} />
+      <input type="hidden" value={tsm} onChange={(e) => settsm(e.target.value)} />
+
+      {/* Company Name */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Company Name</label>
+        <input
+          type="text"
+          value={companyname}
+          onChange={(e) => setcompanyname(e.target.value)}
+          className="w-full px-3 py-2 border-b text-xs capitalize"
+          required
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Affiliate */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Affiliate / Group</label>
+        <input
+          type="text"
+          value={companygroup}
+          onChange={(e) => setcompanygroup(e.target.value.replace(/[^a-zA-Z0-9,\s]/g, ""))}
+          className="w-full px-3 py-2 border-b text-xs uppercase"
+        />
+      </div>
 
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="companyname">Company Name</label>
-          <input type="text" id="companyname" value={companyname} onChange={(e) => setcompanyname(e.target.value)} className="w-full px-3 py-2 border-b text-xs capitalize" required
-          />
-        </div>
+      {/* Contact Person */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Contact Person</label>
+        {contactPersons.map((person, i) => (
+          <div key={i} className="flex gap-2 items-center mb-2">
+            <input
+              type="text"
+              value={person}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                const updated = [...contactPersons];
+                updated[i] = val;
+                setContactPersons(updated);
+                setcontactperson(updated.join(", "));
+              }}
+              className="w-full px-3 py-2 border-b text-xs capitalize"
+            />
+            {i === 0 ? (
+              <button onClick={() => addNew(setContactPersons)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
+                <FaPlus size={12} />
+              </button>
+            ) : (
+              <button onClick={() => handleRemove(contactPersons, setContactPersons, setcontactperson)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
+                <FaMinus size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
 
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="companygroup">Affiliate or Group</label>
-          <input type="text" id="companygroup" value={companygroup} onChange={(e) => {
-            const input = e.target.value;
-            const sanitized = input.replace(/[^a-zA-Z0-9,\s]/g, "");
-            setcompanygroup(sanitized);
-          }}
+      {/* Contact Number */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Contact Number</label>
+        {contactNumbers.map((num, i) => (
+          <div key={i} className="flex gap-2 items-center mb-2">
+            <input
+              type="text"
+              value={num}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9]/g, "");
+                const updated = [...contactNumbers];
+                updated[i] = val;
+                setContactNumbers(updated);
+                setcontactnumber(updated.join(", "));
+              }}
+              className="w-full px-3 py-2 border-b text-xs"
+            />
+            {i === 0 ? (
+              <button onClick={() => addNew(setContactNumbers)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
+                <FaPlus size={12} />
+              </button>
+            ) : (
+              <button onClick={() => handleRemove(contactNumbers, setContactNumbers, setcontactnumber)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
+                <FaMinus size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
 
-            className="w-full px-3 py-2 border-b text-xs uppercase"
-          />
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2">Contact Person</label>
-          {contactPersons.map((person, index) => (
-            <div key={index} className="flex items-center gap-2 mb-2">
+      {/* Email */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Email Address</label>
+        {emailAddresses.map((email, i) => {
+          const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+          return (
+            <div key={i} className="flex gap-2 items-center mb-2">
               <input
                 type="text"
-                value={person}
+                value={email}
                 onChange={(e) => {
-                  const input = e.target.value;
-                  const lettersOnly = input.replace(/[^a-zA-Z\s]/g, "");
-                  handleContactPersonChange(index, lettersOnly);
+                  const updated = [...emailAddresses];
+                  updated[i] = e.target.value;
+                  setEmailAddresses(updated);
+                  setemailaddress(updated.join(", "));
                 }}
-                className="w-full px-3 py-2 border-b text-xs capitalize"
+                className={`w-full px-3 py-2 border-b text-xs ${
+                  email && !valid ? "border-red-500" : ""
+                }`}
               />
-
-              {index === 0 && (
-                <button
-                  type="button"
-                  onClick={addContactPerson}
-                  className="p-2 hover:bg-green-700 hover:rounded-full hover:text-white"
-                >
+              {i === 0 ? (
+                <button onClick={() => addNew(setEmailAddresses)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
                   <FaPlus size={12} />
                 </button>
-              )}
-
-              {index !== 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeContactPerson(index)}
-                  className="p-2 hover:bg-red-700 hover:rounded-full hover:text-white"
-                >
+              ) : (
+                <button onClick={() => handleRemove(emailAddresses, setEmailAddresses, setemailaddress)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
                   <FaMinus size={12} />
                 </button>
               )}
             </div>
-          ))}
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2">Contact Number</label>
-          {contactNumbers.map((number, index) => (
-            <div key={index} className="flex items-center gap-2 mb-2">
-              <input
-                type="text"
-                value={number}
-                onChange={(e) => {
-                  const input = e.target.value;
-                  const numbersOnly = input.replace(/[^0-9]/g, "");
-                  handleContactNumberChange(index, numbersOnly);
-                }}
-                className="w-full px-3 py-2 border-b text-xs"
-              />
-
-              {index === 0 && (
-                <button
-                  type="button"
-                  onClick={addContactNumber}
-                  className="p-2 hover:bg-green-700 hover:rounded-full hover:text-white"
-                >
-                  <FaPlus size={12} />
-                </button>
-              )}
-
-              {index !== 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeContactNumber(index)}
-                  className="p-2 hover:bg-red-700 hover:rounded-full hover:text-white"
-                >
-                  <FaMinus size={12} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2">Email Address</label>
-          {emailAddresses.map((email, index) => {
-            const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-            return (
-              <div key={index} className="flex items-center gap-2 mb-2">
-                <input
-                  type="text"
-                  value={email}
-                  onChange={(e) => handleEmailAddressChange(index, e.target.value)}
-                  className={`w-full px-3 py-2 border-b text-xs ${email.length > 0 && !isValidEmail ? "border-red-500" : ""
-                    }`}
-                />
-
-                {index === 0 && (
-                  <button
-                    type="button"
-                    onClick={addEmailAddress}
-                    className="p-2 hover:bg-green-700 hover:rounded-full hover:text-white"
-                  >
-                    <FaPlus size={12} />
-                  </button>
-                )}
-
-                {index !== 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeEmailAddress(index)}
-                    className="p-2 hover:bg-red-700 hover:rounded-full hover:text-white"
-                  >
-                    <FaMinus size={12} />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="address">Registered Address</label>
-          <input
-            type="text"
-            value={address ?? ""}
-            onChange={(e) => setaddress(e.target.value.replace(/[^a-zA-Z0-9#.,\s]/g, ""))}
-            className="w-full px-3 py-2 border-b text-xs capitalize"
-          />
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="deliveryaddress">Delivery Address</label>
-          <input
-            type="text"
-            id="deliveryaddress"
-            value={deliveryaddress}
-            onChange={(e) => {
-              const input = e.target.value;
-              const sanitized = input.replace(/[^a-zA-Z,\s]/g, "");
-              setdeliveryaddress(sanitized);
-            }}
-            className="w-full px-3 py-2 border-b text-xs capitalize" />
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="area">Area</label>
-          <select id="typeclient" value={area ?? ""} onChange={(e) => setarea(e.target.value)} className="w-full px-3 py-2 border-b bg-white text-xs capitalize" required>
-            <option value="">Select Region</option>
-            <option value="Ilocos Region">Region I - Ilocos Region</option>
-            <option value="Cagayan Valley">Region II - Cagayan Valley</option>
-            <option value="Central Luzon">Region III - Central Luzon</option>
-            <option value="Calabarzon">Region IV - CALABARZON</option>
-            <option value="Bicol Region">Region V - Bicol Region</option>
-            <option value="Western Visayas">Region VI - Western Visayas</option>
-            <option value="Central Visayas">Region VII - Cental Visayas</option>
-            <option value="Easter Visayas">Region VIII - Easter Visayas</option>
-            <option value="Zamboanga Peninsula">Region VIX - Zamboanga Peninsula</option>
-            <option value="Northern Mindanao">Region X - Nothern Mindanao</option>
-            <option value="Davao Region">Region XI - Davao Region</option>
-            <option value="Soccsksargen">Region XII - SOCCSKSARGEN</option>
-            <option value="NCR">NCR</option>
-            <option value="CAR">CAR</option>
-            <option value="BARMM">BARMM</option>
-            <option value="Caraga">Region XIII</option>
-            <option value="Mimaropa Region">MIMAROPA Region</option>
-          </select>
-        </div>
-
-        <div className={fieldWidthClass}>
-          <label className="block text-xs font-bold mb-2" htmlFor="status">Status</label>
-          <select id="status" value={status ?? ""} onChange={(e) => setstatus(e.target.value)} className="w-full px-3 py-2 border-b bg-white text-xs capitalize" required>
-            <option value="">Select Status</option>
-            <option value="Active">Active</option>
-            <option value="New Client">New Client</option>
-            <option value="Non-Buying">Non-Buying</option>
-            <option value="Inactive">Inactive</option>
-          </select>
-        </div>
+          );
+        })}
       </div>
-    </>
+
+      {/* Address */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Registered Address</label>
+        <input
+          type="text"
+          value={address}
+          onChange={(e) => setaddress(e.target.value.replace(/[^a-zA-Z0-9#.,\s]/g, ""))}
+          className="w-full px-3 py-2 border-b text-xs capitalize"
+        />
+      </div>
+
+      {/* Delivery Address */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Delivery Address</label>
+        <input
+          type="text"
+          value={deliveryaddress}
+          onChange={(e) => setdeliveryaddress(e.target.value.replace(/[^a-zA-Z0-9#.,\s]/g, ""))}
+          className="w-full px-3 py-2 border-b text-xs capitalize"
+        />
+      </div>
+
+      {/* Area */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Area</label>
+        <select
+          value={area}
+          onChange={(e) => setarea(e.target.value)}
+          className="w-full px-3 py-2 border-b bg-white text-xs capitalize"
+          required
+        >
+          <option value="">Select Region</option>
+          <option value="NCR">NCR</option>
+          <option value="Central Luzon">Region III - Central Luzon</option>
+          <option value="Calabarzon">Region IV - CALABARZON</option>
+          <option value="Davao Region">Region XI - Davao Region</option>
+        </select>
+      </div>
+
+      {/* Status */}
+      <div>
+        <label className="block text-xs font-bold mb-2">Status</label>
+        <select
+          value={status}
+          onChange={(e) => setstatus(e.target.value)}
+          className="w-full px-3 py-2 border-b bg-white text-xs capitalize"
+          required
+        >
+          <option value="">Select Status</option>
+          <option value="Active">Active</option>
+          <option value="New Client">New Client</option>
+          <option value="Non-Buying">Non-Buying</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
   );
 };
 

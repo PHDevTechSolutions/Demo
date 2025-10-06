@@ -12,6 +12,7 @@ export async function GET() {
     try {
         const Xchire_fetch = await Xchire_sql`
             SELECT 
+                id,
                 status,
                 companyname,
                 referenceid,
