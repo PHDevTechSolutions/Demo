@@ -88,22 +88,22 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
   // Update handlers
   const handleContactChange =
     (listSetter: React.Dispatch<React.SetStateAction<string[]>>, setParent: (v: string) => void) =>
-    (index: number, value: string) => {
-      const updated = [...(listSetter as any)._value];
-      updated[index] = value;
-      listSetter(updated);
-      setParent(updated.join(", "));
-    };
+      (index: number, value: string) => {
+        const updated = [...(listSetter as any)._value];
+        updated[index] = value;
+        listSetter(updated);
+        setParent(updated.join(", "));
+      };
 
   const handleRemove =
     (items: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, setParent: (v: string) => void) =>
-    (index: number) => {
-      if (items.length > 1) {
-        const updated = items.filter((_, i) => i !== index);
-        setter(updated);
-        setParent(updated.join(", "));
-      }
-    };
+      (index: number) => {
+        if (items.length > 1) {
+          const updated = items.filter((_, i) => i !== index);
+          setter(updated);
+          setParent(updated.join(", "));
+        }
+      };
 
   const addNew = (setter: React.Dispatch<React.SetStateAction<string[]>>) => setter((prev) => [...prev, ""]);
 
@@ -198,6 +198,7 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
       </div>
 
       {/* Email */}
+      {/* Email Address */}
       <div>
         <label className="block text-xs font-bold mb-2">Email Address</label>
         {emailAddresses.map((email, i) => {
@@ -205,24 +206,36 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
           return (
             <div key={i} className="flex gap-2 items-center mb-2">
               <input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => {
+                  const val = e.target.value.trim();
                   const updated = [...emailAddresses];
-                  updated[i] = e.target.value;
+                  updated[i] = val;
                   setEmailAddresses(updated);
-                  setemailaddress(updated.join(", "));
+                  // ✅ Remove extra spaces and empty values before joining
+                  setemailaddress(updated.filter(Boolean).join(", "));
                 }}
-                className={`w-full px-3 py-2 border-b text-xs ${
-                  email && !valid ? "border-red-500" : ""
-                }`}
+                className={`w-full px-3 py-2 border-b text-xs ${email && !valid ? "border-red-500" : ""
+                  }`}
+                placeholder="name@example.com"
               />
               {i === 0 ? (
-                <button onClick={() => addNew(setEmailAddresses)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
+                <button
+                  type="button"
+                  onClick={() => addNew(setEmailAddresses)}
+                  className="p-2 hover:bg-green-600 bg-green-500 rounded-full text-white"
+                >
                   <FaPlus size={12} />
                 </button>
               ) : (
-                <button onClick={() => handleRemove(emailAddresses, setEmailAddresses, setemailaddress)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleRemove(emailAddresses, setEmailAddresses, setemailaddress)(i)
+                  }
+                  className="p-2 hover:bg-red-600 bg-red-500 rounded-full text-white"
+                >
                   <FaMinus size={12} />
                 </button>
               )}
@@ -230,6 +243,7 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
           );
         })}
       </div>
+
 
       {/* Address */}
       <div>
