@@ -49,7 +49,7 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {/* Manager or TSM sees only Tasklist and Xend-Mail */}
       {isManagerOrTSM && (
         <>
-          {renderButton("Tasklist", <FaSquareCheck />, "tasklist")}
+          {renderButton("Activity", <BsCalendar4Week />, "activity")}
           {renderButton("Xend-Mail", <SiMinutemailer />, "xendmail")}
         </>
       )}
