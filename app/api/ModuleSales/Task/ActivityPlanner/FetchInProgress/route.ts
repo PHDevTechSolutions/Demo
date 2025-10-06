@@ -20,23 +20,37 @@ export async function GET(req: Request) {
       );
     }
 
+    // ✅ Force timezone to Asia/Manila
     const Xchire_fetch = await Xchire_sql`
-      SELECT *,
-        to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila','MM/DD/YYYY HH12:MI:SS AM') AS date_created_manila,
-        to_char(date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila','MM/DD/YYYY HH12:MI:SS AM') AS date_updated_manila
-      FROM activity
-      WHERE referenceid = ${referenceid}
-      ORDER BY date_updated DESC
-      LIMIT 200;
-    `;
+  SELECT id,
+       companyname,
+       contactperson,
+       contactnumber,
+       emailaddress,
+       typeclient,
+       referenceid,
+       to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila','MM/DD/YYYY HH12:MI:SS AM') AS date_created,
+       activitynumber,
+       address,
+       area,
+       deliveryaddress,
+       ticketreferencenumber,
+       to_char(date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila','MM/DD/YYYY HH12:MI:SS AM') AS date_updated,
+       source,
+       activitystatus
+FROM activity
+WHERE referenceid = ${referenceid}
+ORDER BY date_updated DESC
+LIMIT 200;
 
-    console.log("Fetched all accounts (Manila time):", Xchire_fetch);
+`;
+    console.log("Fetched accounts (Manila time):", Xchire_fetch);
 
     return NextResponse.json({ success: true, data: Xchire_fetch }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error fetching accounts:", error);
+  } catch (Xchire_error: any) {
+    console.error("Error fetching accounts:", Xchire_error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch accounts." },
+      { success: false, error: Xchire_error.message || "Failed to fetch accounts." },
       { status: 500 }
     );
   }
