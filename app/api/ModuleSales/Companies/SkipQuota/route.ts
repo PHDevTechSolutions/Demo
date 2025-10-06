@@ -13,10 +13,7 @@ export async function POST(req: NextRequest) {
     const { referenceid, startdate, enddate, status } = body;
 
     if (!referenceid || !startdate || !enddate || !status) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const { error } = await supabase.from("skips").insert([
@@ -33,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Skip period saved successfully",
+      message: "✅ Skip period saved successfully",
     });
   } catch (err: any) {
     console.error("❌ SkipQuota POST error:", err.message);
@@ -48,10 +45,7 @@ export async function GET(req: NextRequest) {
     const referenceid = searchParams.get("referenceid");
 
     if (!referenceid) {
-      return NextResponse.json(
-        { error: "Missing referenceid" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing referenceid" }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -69,31 +63,33 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ✅ DELETE → Cancel skip period
+// ✅ DELETE → Cancel skip period (improved + flexible)
 export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
     const { referenceid, startdate, enddate } = body;
 
     if (!referenceid || !startdate || !enddate) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Normalize date format to YYYY-MM-DD only
+    const normalizedStart = startdate.split("T")[0];
+    const normalizedEnd = enddate.split("T")[0];
+
+    // Delete any skip records that overlap or match this date range
     const { error } = await supabase
       .from("skips")
       .delete()
       .eq("referenceid", referenceid)
-      .eq("startdate", startdate)
-      .eq("enddate", enddate);
+      .gte("startdate", normalizedStart)
+      .lte("enddate", normalizedEnd);
 
     if (error) throw error;
 
     return NextResponse.json({
       success: true,
-      message: "Skip period cancelled successfully",
+      message: "❌ Skip period cancelled successfully",
     });
   } catch (err: any) {
     console.error("❌ SkipQuota DELETE error:", err.message);

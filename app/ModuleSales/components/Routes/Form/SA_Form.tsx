@@ -304,13 +304,14 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     const originalActivity = activityList.find(a => a.id === selectedActivity.id);
     if (!originalActivity) return;
 
+    // ✅ Use OR so RE-SO triggers if either SO# or amount changes
     const soChanged =
-      originalActivity.sonumber !== selectedActivity.sonumber &&
+      originalActivity.sonumber !== selectedActivity.sonumber ||
       originalActivity.soamount !== selectedActivity.soamount;
 
     try {
       if (soChanged) {
-        // 1. Update the original activity to RE-SO
+        // 1️⃣ Update the original activity to mark as RE-SO
         const updatedOriginal = {
           ...selectedActivity,
           soamount: "0",
@@ -326,11 +327,15 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
         if (!updateRes.ok) throw new Error("Failed to update RE-SO activity");
 
-        // 2. Add a new duplicate with updated SO values
+        // 2️⃣ Add a new duplicate activity with updated SO values
         const newActivity = {
           ...selectedActivity,
-          id: undefined,
+          id: undefined, // avoid ID collision
           date_created: new Date().toISOString(),
+          activitystatus: "NEW", // optional reset status for clarity
+          quotationamount: selectedActivity.quotationamount || "0",
+          soamount: selectedActivity.soamount || "0",
+          actualsales: selectedActivity.actualsales || "0",
         };
 
         const postRes = await fetch("/api/ModuleSales/Task/DailyActivity/AddProgress", {
@@ -343,40 +348,44 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
         const created = await postRes.json();
 
-        // Update UI
+        // 3️⃣ Update UI state
         const updatedList = activityList
-          .map((activity) => (activity.id === selectedActivity.id ? updatedOriginal : activity))
-          .concat(created.data); // assuming the API returns { data: newActivity }
+          .map(activity => (activity.id === selectedActivity.id ? updatedOriginal : activity))
+          .concat(created.data); // Add new record from backend
 
         setActivityList(updatedList);
-        toast.success("RE-SO recorded and new activity created.");
+        toast.success("RE-SO recorded and new activity created successfully!");
       } else {
-        // Standard update
+        // 🔁 Standard update
         const response = await fetch("/api/ModuleSales/Task/DailyActivity/EditProgress", {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(selectedActivity),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...selectedActivity,
+            quotationamount: selectedActivity.quotationamount || "0",
+            soamount: selectedActivity.soamount || "0",
+            actualsales: selectedActivity.actualsales || "0",
+          }),
         });
 
         if (!response.ok) throw new Error("Standard update failed");
 
-        const updatedList = activityList.map((activity) =>
+        const updatedList = activityList.map(activity =>
           activity.id === selectedActivity.id ? selectedActivity : activity
         );
+
         setActivityList(updatedList);
         toast.success("Activity updated successfully!");
       }
 
+      // ✅ Cleanup
       setIsEditModalOpen(false);
       setSelectedActivity(null);
     } catch (error) {
       console.error("Error updating activity:", error);
-      toast.error("An error occurred while updating.");
+      toast.error("An error occurred while updating the activity.");
     }
   };
-
 
   // Close modal
   const handleModalClose = () => {
@@ -445,19 +454,19 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         />
 
         <div className="flex justify-end gap-2">
-  <button
-    type="submit"
-    disabled={!typeclient.trim()}
-    className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
+          <button
+            type="submit"
+            disabled={!typeclient.trim()}
+            className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
       ${typeclient.trim()
-        ? "bg-green-600 hover:bg-green-700 cursor-pointer"
-        : "bg-gray-400 cursor-not-allowed"
-      }`}
-  >
-    {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
-    {editUser ? "Save" : "Submit"}
-  </button>
-</div>
+                ? "bg-green-600 hover:bg-green-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+              }`}
+          >
+            {editUser ? <CiEdit size={15} /> : <CiSaveUp1 size={15} />}
+            {editUser ? "Save" : "Submit"}
+          </button>
+        </div>
 
         <div className="border-t border-gray-200 my-4"></div>
 

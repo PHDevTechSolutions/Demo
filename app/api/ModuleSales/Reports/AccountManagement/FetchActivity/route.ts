@@ -14,7 +14,7 @@ const Xchire_sql = neon(Xchire_databaseUrl);
  */
 export async function GET() {
     try {
-        const Xchire_fetch = await Xchire_sql`SELECT * FROM activity;`;
+        const Xchire_fetch = await Xchire_sql`SELECT * FROM activity ORDER BY date_updated;`;
 
         console.log("Xchire fetched accounts:", Xchire_fetch);
 

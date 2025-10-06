@@ -164,13 +164,10 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Deduplicate companies
     const uniqueCompanies = companies.filter(
-      (comp, index, self) =>
-        index === self.findIndex((c) => c.id === comp.id)
+      (comp, index, self) => index === self.findIndex((c) => c.id === comp.id)
     );
 
-    // Compute remaining
     const safeRemaining =
       typeof remaining_quota === "number"
         ? remaining_quota
