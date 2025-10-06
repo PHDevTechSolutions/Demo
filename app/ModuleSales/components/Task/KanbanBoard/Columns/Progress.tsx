@@ -258,7 +258,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     if (!stableUserDetails?.ReferenceID) return;
     setLoading(true);
     try {
-      // Always remove skeletons before fetching
       setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
 
       const res = await fetch(
@@ -281,32 +280,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
     fetchProgress();
   }, [stableUserDetails?.ReferenceID, refreshTrigger]);
 
-  const filteredProgress = useMemo(() => {
-    let items = progress.filter((item) => {
-      if ("skeleton" in item && (loading || submitting)) return true;
-      if ("skeleton" in item) return false;
-      if (!item.date_updated) return false;
-
-      const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
-
-      if (statusFilter && item.activitystatus !== statusFilter) return false;
-
-      if (searchQuery && searchQuery.trim() !== "") {
-        const normalizedQuery = searchQuery.toLowerCase().trim();
-        return (item.companyname ?? "").toLowerCase().includes(normalizedQuery);
-      }
-
-      return true;
-    });
-
-    return items.sort((a, b) => {
-      if ("skeleton" in a || "skeleton" in b) return 0;
-      return (
-        new Date((b as ProgressItem).date_updated).getTime() -
-        new Date((a as ProgressItem).date_updated).getTime()
-      );
-    });
-  }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -424,7 +397,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total:{" "}
-          <span className="text-orange-500">{filteredProgress.length}</span>
+          <span className="text-orange-500"></span>
         </span>
 
         <div className="flex items-center gap-2">
@@ -478,11 +451,9 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
         </select>
       )}
 
-      {loading || submitting ? (
-        // show skeletons only while loading/submitting
-        Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
-      ) : filteredProgress.length > 0 ? (
-        filteredProgress.slice(0, visibleCount).map((item) => (
+      {loading || submitting
+        ? Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
+        : progress.slice(0, visibleCount).map((item) => (
           <div key={item.id} className="relative">
             {"skeleton" in item && item.skeleton ? (
               <ActivitySkeleton />
@@ -496,18 +467,16 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
                 <ProgressCard
                   progress={item as ProgressItem}
                   profilePicture={userDetails?.profilePicture || "/taskflow.png"}
-                  onAddClick={() => handleAddClick(item as ProgressItem)}
+                  onAddClick={() => setShowForm(true)}
                   onDeleteClick={handleDelete}
                 />
               </>
             )}
           </div>
-        ))
-      ) : (
-        <p className="text-xs text-gray-400 italic">No activities found.</p>
-      )}
+        ))}
 
-      {visibleCount < filteredProgress.length && (
+
+      {visibleCount < progress.length && (
         <div className="flex justify-center mt-2">
           <button
             className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
