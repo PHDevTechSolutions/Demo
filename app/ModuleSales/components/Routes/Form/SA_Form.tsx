@@ -231,11 +231,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setSelectedId(id);
-    setShowDeleteModal(true);
-  };
-
   // Deletes the record after confirmation
   const confirmDelete = async () => {
     if (!selectedId) return;
