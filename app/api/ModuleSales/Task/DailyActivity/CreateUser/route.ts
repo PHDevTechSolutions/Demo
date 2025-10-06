@@ -35,13 +35,14 @@ async function create(data: any) {
         referenceid, manager, tsm, companyname, contactperson,
         contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
         projectname, projectcategory, projecttype, source,
-        activitystatus, activitynumber, targetquota
+        activitystatus, activitynumber, targetquota, date_created, date_updated
       )
       VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
         ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
         ${projectname}, ${projectcategory}, ${projecttype}, ${source},
-        ${activitystatus || null}, ${activitynumber || null}, ${targetquota || null}
+        ${activitystatus || "On Progress"}, ${activitynumber || null}, ${targetquota || null},
+        NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;
     `;
@@ -57,20 +58,21 @@ async function create(data: any) {
         INSERT INTO accounts (
           referenceid, manager, tsm, companyname, contactperson,
           contactnumber, emailaddress, typeclient, address, deliveryaddress, area, 
-          status, companygroup
+          status, companygroup, date_created, date_updated
         ) VALUES (
           ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
           ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
-          ${status}, ${companygroup}
+          ${status || "Active"}, ${companygroup || null},
+          NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
         )
         RETURNING *;
       `;
 
       if (!accountsResult[0]) throw new Error("Failed to insert into accounts table.");
     } else {
-      // ✅ Update date_updated only if company exists
+      // ✅ Update timestamp if company exists
       await Xchire_sql`
-        UPDATE accounts SET date_updated = DEFAULT WHERE companyname = ${companyname};
+        UPDATE accounts SET date_updated = NOW() AT TIME ZONE 'UTC' WHERE companyname = ${companyname};
       `;
     }
 
@@ -82,7 +84,8 @@ async function create(data: any) {
         projectname, projectcategory, projecttype, source,
         typeactivity, callback, callstatus, typecall,
         remarks, quotationnumber, quotationamount, sonumber, soamount,
-        startdate, enddate, activitystatus, activitynumber, targetquota
+        startdate, enddate, activitystatus, activitynumber, targetquota,
+        date_created, date_updated
       )
       VALUES (
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
@@ -91,14 +94,13 @@ async function create(data: any) {
         ${typeactivity}, ${callback || null}, ${callstatus || null}, ${typecall || null},
         ${remarks || null}, ${quotationnumber || null}, ${quotationamount || null},
         ${sonumber || null}, ${soamount || null}, ${startdate || null}, ${enddate || null},
-        ${activitystatus || null}, ${newActivityNumber || null}, ${targetquota || null}
+        ${activitystatus || "On Progress"}, ${newActivityNumber || null}, ${targetquota || null},
+        NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;
     `;
 
-    if (!progressResult[0]) {
-      throw new Error("Failed to insert into progress table.");
-    }
+    if (!progressResult[0]) throw new Error("Failed to insert into progress table.");
 
     return {
       success: true,
@@ -107,7 +109,7 @@ async function create(data: any) {
       accountExists,
     };
   } catch (error: any) {
-    console.error("Error inserting activity, accounts, and progress:", error);
+    console.error("❌ Error inserting activity, accounts, and progress:", error);
     return { success: false, error: error.message || "Failed to add records." };
   }
 }
@@ -118,10 +120,15 @@ export async function POST(req: Request) {
     const result = await create(body);
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error("Error in POST /api/addActivity:", error);
+    console.error("❌ Error in POST /api/addActivity:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
 }
+
+// ✅ Disable caching to ensure real-time updates
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
