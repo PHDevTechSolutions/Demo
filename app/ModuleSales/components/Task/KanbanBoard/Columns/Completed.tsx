@@ -2,24 +2,22 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { FaCircle, FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { IoSync, IoSearchOutline } from 'react-icons/io5';
+import { IoSync, IoSearchOutline } from "react-icons/io5";
 
 export interface CompletedItem {
   id: string;
   companyname: string;
   referenceid: string;
-  tsm?: string;
   date_created: string;
   date_updated?: string;
   activitystatus?: string;
   activitynumber: string;
-  profilepicture?: string;
+  typeactivity?: string;
+  remarks?: string;
   quotationnumber?: string;
   quotationamount?: string;
   soamount?: string;
   sonumber?: string;
-  typeactivity?: string;
-  remarks?: string;
   paymentterm?: string;
   deliverydate?: string;
 }
@@ -33,14 +31,22 @@ interface CompletedProps {
 const POLL_INTERVAL = 60000;
 const ITEMS_PER_PAGE = 10;
 
-const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, selectedTSA }) => {
+const Completed: React.FC<CompletedProps> = ({
+  userDetails,
+  refreshTrigger,
+  selectedTSA,
+}) => {
   const [data, setData] = useState<CompletedItem[]>([]);
+  const [agentData, setAgentData] = useState<
+    Record<string, { Firstname: string; Lastname: string; profilePicture: string }>
+  >({});
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // 🔹 Fetch completed activities
   const fetchCompleted = useCallback(async () => {
     if (!userDetails?.ReferenceID) return;
     setLoading(true);
@@ -49,7 +55,6 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchProgress?referenceid=${userDetails.ReferenceID}`
       );
-
       if (!res.ok) throw new Error("Failed to fetch completed tasks");
 
       const result = await res.json();
@@ -65,40 +70,71 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
     }
   }, [userDetails?.ReferenceID]);
 
+  // 🔹 Fetch agent info for each unique referenceid
+  const fetchAgents = useCallback(async (referenceIds: string[]) => {
+    const map: Record<string, { Firstname: string; Lastname: string; profilePicture: string }> = {};
+
+    await Promise.all(
+      referenceIds.map(async (ref) => {
+        try {
+          const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(ref)}`);
+          const data = await res.json();
+          map[ref] = {
+            Firstname: data.Firstname || "",
+            Lastname: data.Lastname || "",
+            profilePicture: data.profilePicture || "/taskflow.png",
+          };
+        } catch {
+          map[ref] = {
+            Firstname: "",
+            Lastname: "",
+            profilePicture: "/taskflow.png",
+          };
+        }
+      })
+    );
+
+    setAgentData(map);
+  }, []);
+
+  // 🔁 Re-fetch data and agent info
   useEffect(() => {
     fetchCompleted();
     const interval = setInterval(fetchCompleted, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchCompleted, refreshTrigger]);
 
+  // 🔁 Fetch agent info after data loads
+  useEffect(() => {
+    if (data.length > 0) {
+      const uniqueRefs = Array.from(new Set(data.map((d) => d.referenceid)));
+      fetchAgents(uniqueRefs);
+    }
+  }, [data, fetchAgents]);
+
   const toggleExpand = (id: string) => {
-    setExpandedItems(prev => {
+    setExpandedItems((prev) => {
       const newSet = new Set(prev);
       newSet.has(id) ? newSet.delete(id) : newSet.add(id);
       return newSet;
     });
   };
 
-  const renderField = (label: string, value?: string | null) => {
-    if (!value) return null;
-    return (
+  const renderField = (label: string, value?: string | null) =>
+    value ? (
       <p className="mb-1 text-[10px]">
         <span className="font-semibold">{label}:</span> {value}
       </p>
-    );
-  };
+    ) : null;
 
-  // Step 1: Filter by search query
-  const filteredData = data.filter(item =>
-    (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // 🔍 Filter by company name + TSA selection
+  const filteredData = data
+    .filter((item) =>
+      (item.companyname ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((item) => (selectedTSA ? item.referenceid === selectedTSA : true));
 
-  // Step 2: Apply TSA filter if selected
-  const finalFiltered = selectedTSA
-    ? filteredData.filter(item => item.referenceid === selectedTSA)
-    : filteredData;
-
-  if (loading && finalFiltered.length === 0)
+  if (loading && filteredData.length === 0)
     return (
       <div className="flex justify-center items-center py-10">
         <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -106,20 +142,24 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
       </div>
     );
 
-  if (finalFiltered.length === 0)
-    return <div className="text-center text-gray-400 italic text-xs">No completed tasks yet</div>;
+  if (filteredData.length === 0)
+    return (
+      <div className="text-center text-gray-400 italic text-xs">
+        No completed tasks yet
+      </div>
+    );
 
   return (
     <div className="space-y-1">
-      {/* Header with search + refresh */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <span className="text-xs text-gray-600 font-bold">
-          Total: <span className="text-orange-500">{finalFiltered.length}</span>
+          Total: <span className="text-orange-500">{filteredData.length}</span>
         </span>
         <div className="flex items-center gap-2">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-            onClick={() => setSearchOpen(prev => !prev)}
+            onClick={() => setSearchOpen((p) => !p)}
           >
             Search <IoSearchOutline size={15} />
           </button>
@@ -127,7 +167,11 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={fetchCompleted}
           >
-            {loading ? <IoSync size={14} className="animate-spin" /> : <IoSync size={14} />}
+            {loading ? (
+              <IoSync size={14} className="animate-spin" />
+            ) : (
+              <IoSync size={14} />
+            )}
           </button>
         </div>
       </div>
@@ -139,34 +183,44 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
             placeholder="Search..."
             className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
       )}
 
-      {/* Render Items */}
-      {finalFiltered.slice(0, visibleCount).map(item => {
+      {/* List */}
+      {filteredData.slice(0, visibleCount).map((item) => {
         const isExpanded = expandedItems.has(item.id);
+        const agent = agentData[item.referenceid];
+
         return (
           <div
-            key={item.id || `${item.referenceid}-${item.activitynumber}`}
+            key={item.id}
             className="rounded-lg shadow bg-green-100 cursor-pointer p-3"
-            onClick={() => toggleExpand(item.id || `${item.referenceid}-${item.activitynumber}`)}
+            onClick={() => toggleExpand(item.id)}
           >
             <div className="flex items-center">
               <img
-                src={item.profilepicture || userDetails?.profilePicture || "/taskflow.png"}
-                alt="Profile"
-                className="w-8 rounded-full object-cover mr-3"
+                src={agent?.profilePicture || "/taskflow.png"}
+                alt="Agent"
+                className="w-8 h-8 rounded-full object-cover mr-3 border border-gray-300"
               />
               <div className="flex flex-col flex-1">
                 <div className="flex items-center space-x-1">
                   <FaCircle className="text-green-500 w-2 h-2" />
-                  <p className="font-semibold text-[10px] uppercase">{item.companyname}</p>
+                  <p className="font-semibold text-[10px] uppercase">
+                    {item.companyname}
+                  </p>
                 </div>
+                <p className="text-[8px] text-gray-600">
+                  {agent
+                    ? `${agent.Firstname} ${agent.Lastname}`
+                    : "Loading agent..."}
+                </p>
                 {item.activitynumber && (
                   <p className="text-[8px] text-gray-600">
-                    Activity: <span className="text-black">{item.typeactivity}</span> | {item.activitynumber}
+                    Activity: <span className="text-black">{item.typeactivity}</span> |{" "}
+                    {item.activitynumber}
                   </p>
                 )}
               </div>
@@ -192,11 +246,11 @@ const Completed: React.FC<CompletedProps> = ({ userDetails, refreshTrigger, sele
         );
       })}
 
-      {visibleCount < finalFiltered.length && (
+      {visibleCount < filteredData.length && (
         <div className="flex justify-center mt-2">
           <button
             className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-            onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
+            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
           >
             View More
           </button>

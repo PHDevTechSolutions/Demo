@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import CallbackCard from "./Card/CallbackCard";
 import CallbackForm from "./Form/Callback";
 import { toast } from "react-toastify";
@@ -66,6 +66,35 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
   const [tsm, setTsm] = useState("");
   const [referenceid, setReferenceid] = useState("");
   const [manager, setManager] = useState("");
+  const [agentData, setAgentData] = useState<
+    Record<string, { Firstname: string; Lastname: string; profilePicture: string }>
+  >({});
+
+  const fetchAgents = useCallback(async (referenceIds: string[]) => {
+    const map: Record<string, { Firstname: string; Lastname: string; profilePicture: string }> = {};
+
+    await Promise.all(
+      referenceIds.map(async (ref) => {
+        try {
+          const res = await fetch(`/api/fetchagent?id=${encodeURIComponent(ref)}`);
+          const data = await res.json();
+          map[ref] = {
+            Firstname: data.Firstname || "",
+            Lastname: data.Lastname || "",
+            profilePicture: data.profilePicture || "/taskflow.png",
+          };
+        } catch {
+          map[ref] = {
+            Firstname: "",
+            Lastname: "",
+            profilePicture: "/taskflow.png",
+          };
+        }
+      })
+    );
+
+    setAgentData(map);
+  }, []);
 
   useEffect(() => {
     if (!userDetails?.ReferenceID) return;
@@ -82,14 +111,13 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
         const inquiries: Inquiry[] = Array.isArray(result.data)
           ? result.data
           : Array.isArray(result)
-            ? result
-            : [];
+          ? result
+          : [];
 
         const now = new Date();
         const startOfDay = new Date(now.setHours(0, 0, 0, 0));
         const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
-        // Filter by role
         let filtered: Inquiry[] = [];
 
         switch (userDetails.Role) {
@@ -102,21 +130,17 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
                 )
             );
             break;
-
           case "Manager":
             filtered = inquiries.filter((inq) => inq.manager === userDetails.ReferenceID);
             break;
-
           default:
             filtered = inquiries.filter((inq) => inq.referenceid === userDetails.ReferenceID);
         }
 
-        // ✅ Apply selectedTSA filter if provided
         const tsaFiltered = selectedTSA
           ? filtered.filter((inq) => inq.referenceid === selectedTSA)
           : filtered;
 
-        // Callbacks for today
         const todayCallbacks = tsaFiltered
           .filter((inq) => {
             if (!inq.callback) return false;
@@ -126,6 +150,12 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
           .sort((a, b) => (b.callback || "").localeCompare(a.callback || ""));
 
         setCallbacks(todayCallbacks);
+
+        // ✅ Fetch agent data for all reference IDs
+        const uniqueRefs = Array.from(
+          new Set(todayCallbacks.map((inq) => inq.referenceid).filter(Boolean))
+        );
+        if (uniqueRefs.length > 0) await fetchAgents(uniqueRefs);
       } catch (error) {
         console.error("❌ Failed to fetch today's callbacks:", error);
         toast.error("Failed to fetch today's callbacks.");
@@ -136,7 +166,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
     };
 
     fetchCallbacks();
-  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger, selectedTSA]);
+  }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger, selectedTSA, fetchAgents]);
 
 
   const openFormDrawer = (inq: Inquiry) => {
@@ -223,14 +253,22 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
 
       {callbacks.length > 0 ? (
         <>
-          {callbacks.slice(0, visibleCount).map((inq, index) => (
-            <CallbackCard
-              key={inq.id ?? `${inq.activitynumber}-${inq.referenceid}-${index}`}
-              inq={inq}
-              userDetails={userDetails || { ReferenceID: "" }}
-              openFormDrawer={openFormDrawer}
-            />
-          ))}
+          {callbacks.slice(0, visibleCount).map((inq, index) => {
+            const agent = agentData[inq.referenceid] || {
+              Firstname: "",
+              Lastname: "",
+              profilePicture: "/taskflow.png",
+            };
+            return (
+              <CallbackCard
+                key={inq.id ?? `${inq.activitynumber}-${inq.referenceid}-${index}`}
+                inq={inq}
+                userDetails={userDetails || { ReferenceID: "" }}
+                agent={agent}
+                openFormDrawer={openFormDrawer}
+              />
+            );
+          })}
 
           {visibleCount < callbacks.length && (
             <div className="flex justify-center">
@@ -244,10 +282,9 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
           )}
         </>
       ) : (
-        <p className="text-xs text-gray-400 italic">
-          No callbacks scheduled for today.
-        </p>
+        <p className="text-xs text-gray-400 italic">No callbacks scheduled for today.</p>
       )}
+
 
       {selectedInquiry && (
         <CallbackForm
