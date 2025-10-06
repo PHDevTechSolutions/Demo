@@ -83,7 +83,7 @@ async function insertActivity(data: any) {
 
     return {
       success: true,
-      insertedId: insertedActivity[0].id, // 🔥 direct ID return
+      insertedId: insertedActivity[0].id,
       data: {
         activity: insertedActivity[0],
         account: insertedAccount ? insertedAccount[0] : null,
@@ -106,10 +106,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result, { status: result.success ? 200 : 500 });
   } catch (error: any) {
-    console.error(
-      "❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/Create:",
-      error
-    );
+    console.error("❌ Error in POST /api/ModuleSales/Task/ActivityPlanner/Create:", error);
     return NextResponse.json(
       {
         success: false,
@@ -120,3 +117,8 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// ✅ Always get latest data, no cache
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
