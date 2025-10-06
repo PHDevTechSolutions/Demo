@@ -8,7 +8,7 @@ const supabase = createClient(
 
 const DAILY_QUOTA = 35;
 
-// ✅ GET → retrieve today's companies + computed quota
+// ✅ GET → Retrieve daily quota (with skip check)
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -22,31 +22,32 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 🗓 Normalize date to YYYY-MM-DD (for Supabase date columns)
     const currentDate = new Date(date).toISOString().split("T")[0];
 
-    // 🔎 1. Check if today is inside skip period
+    // 🔎 Check if today falls inside a skip range
     const { data: skipRows, error: skipError } = await supabase
       .from("skips")
       .select("id, startdate, enddate, status")
       .eq("referenceid", referenceid)
-      .eq("status", "skip")
-      .lte("startdate", currentDate) // start <= current
-      .gte("enddate", currentDate);  // end >= current
+      .eq("status", "skip");
 
     if (skipError) throw skipError;
 
-    if (skipRows && skipRows.length > 0) {
-      // ✅ If skipped → return empty
+    // ✅ Fix: Properly check if today is BETWEEN startdate and enddate (inclusive)
+    const isSkipped = skipRows?.some((s) => {
+      return currentDate >= s.startdate && currentDate <= s.enddate;
+    });
+
+    if (isSkipped) {
       return NextResponse.json({
         companies: [],
         remaining_quota: 0,
         skipped: true,
-        message: "Daily quota skipped due to active skip period",
+        message: "⏸ Skipped due to active skip period",
       });
     }
 
-    // 🔎 2. Check if today already exists in daily_quotas
+    // 🔎 Check if quota already exists for today
     const { data: todayRow } = await supabase
       .from("daily_quotas")
       .select("companies, remaining_quota")
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(todayRow);
     }
 
-    // 🕓 3. If wala pa → check kahapon
+    // 🕓 If not found, check yesterday
     const yesterday = new Date(currentDate);
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -77,12 +78,10 @@ export async function GET(req: NextRequest) {
       const leftover = yesterdayRow.remaining_quota ?? 0;
 
       if (leftover > 0 && Array.isArray(yesterdayRow.companies)) {
-        // ✅ Start with leftover companies
         const leftoverCompanies = yesterdayRow.companies;
-
         todayQuota = DAILY_QUOTA + leftover;
 
-        // 🔎 Fetch fresh accounts
+        // Fetch all available companies
         const { data: accounts } = await supabase
           .from("companies")
           .select("*")
@@ -90,17 +89,14 @@ export async function GET(req: NextRequest) {
 
         let newCompanies: any[] = [];
         if (accounts && accounts.length > 0) {
-          // 🟢 pick 35 bagong companies (not in leftover)
           newCompanies = accounts
             .filter((acc) => !leftoverCompanies.find((c) => c.id === acc.id))
             .sort(() => 0.5 - Math.random())
             .slice(0, DAILY_QUOTA);
         }
 
-        // 👉 Final list = kahapon + bago
         companies = [...leftoverCompanies, ...newCompanies];
 
-        // 👉 Save today
         await supabase.from("daily_quotas").upsert(
           {
             referenceid,
@@ -112,7 +108,6 @@ export async function GET(req: NextRequest) {
           { onConflict: "referenceid,date" }
         );
 
-        // 👉 Reset kahapon (leftover cleared)
         await supabase
           .from("daily_quotas")
           .update({ companies: [], remaining_quota: 0 })
@@ -123,7 +118,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 👉 Fresh start (35)
+    // 🧮 No previous data — start fresh
     return NextResponse.json({
       companies: [],
       remaining_quota: DAILY_QUOTA,
@@ -135,23 +130,19 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ✅ POST → update companies + remaining quota
+// ✅ POST → Save or update daily quota (with skip validation)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { referenceid, date, companies, remaining_quota } = body;
 
     if (!referenceid || !date || !Array.isArray(companies)) {
-      return NextResponse.json(
-        { error: "Invalid payload" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    // 🗓 Normalize date
     const currentDate = new Date(date).toISOString().split("T")[0];
 
-    // 🔎 1. Check if date is inside skip range before saving
+    // 🔎 Check skip period before saving
     const { data: skips, error: skipError } = await supabase
       .from("skips")
       .select("startdate, enddate, status")
@@ -160,32 +151,31 @@ export async function POST(req: NextRequest) {
 
     if (skipError) throw skipError;
 
-    const isSkipped = skips?.some((s) => {
-      return currentDate >= s.startdate && currentDate <= s.enddate;
-    });
+    const isSkipped = skips?.some(
+      (s) => currentDate >= s.startdate && currentDate <= s.enddate
+    );
 
     if (isSkipped) {
       return NextResponse.json({
         companies: [],
         remaining_quota: 0,
         skipped: true,
-        message: "Cannot update quota, date is inside skip period",
+        message: "🚫 Cannot update quota inside skip period",
       });
     }
 
-    // 🟢 2. Deduplicate companies list
+    // Deduplicate companies
     const uniqueCompanies = companies.filter(
       (comp, index, self) =>
         index === self.findIndex((c) => c.id === comp.id)
     );
 
-    // 🟢 3. Compute new remaining quota based on actual companies
+    // Compute remaining
     const safeRemaining =
       typeof remaining_quota === "number"
         ? remaining_quota
         : Math.max(DAILY_QUOTA - uniqueCompanies.length, 0);
 
-    // 📝 4. Upsert today’s quota
     const { data, error } = await supabase
       .from("daily_quotas")
       .upsert(
