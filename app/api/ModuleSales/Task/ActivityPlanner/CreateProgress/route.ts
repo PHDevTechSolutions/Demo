@@ -1,76 +1,16 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL;
-if (!TASKFLOW_DB_URL) throw new Error("TASKFLOW_DB_URL is not set.");
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
+const TASKFLOW_DB_URL = process.env.TASKFLOW_DB_URL!;
 const sql = neon(TASKFLOW_DB_URL);
 
-// --- Insert into progress ---
-async function insertActivity(data: any) {
-  try {
-    const {
-      referenceid, manager, tsm, companyname, contactperson,
-      contactnumber, emailaddress, typeclient, address, deliveryaddress,
-      area, activitynumber, source, typeactivity, activitystatus,
-      remarks, typecall, sonumber, soamount, callback, callstatus,
-      startdate, enddate, quotationnumber, quotationamount,
-      projectname, projectcategory, projecttype, targetquota,
-      paymentterm, actualsales, deliverydate, followup_date, drnumber
-    } = data;
-
-    const result = await sql`
-      INSERT INTO progress (
-        referenceid, manager, tsm, companyname, contactperson,
-        contactnumber, emailaddress, typeclient, address, deliveryaddress,
-        area, activitynumber, source, typeactivity, activitystatus,
-        remarks, typecall, sonumber, soamount, callback, callstatus,
-        startdate, enddate, quotationnumber, quotationamount,
-        projectname, projectcategory, projecttype, targetquota,
-        paymentterm, actualsales, deliverydate, followup_date,
-        drnumber, date_created, date_updated
-      ) VALUES (
-        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
-        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
-        ${area}, ${activitynumber}, ${source}, ${typeactivity}, ${activitystatus},
-        ${remarks}, ${typecall}, ${sonumber}, ${soamount}, ${callback}, ${callstatus},
-        ${startdate}, ${enddate}, ${quotationnumber}, ${quotationamount},
-        ${projectname}, ${projectcategory}, ${projecttype}, ${targetquota},
-        ${paymentterm}, ${actualsales}, ${deliverydate}, ${followup_date},
-        ${drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
-      )
-      RETURNING *;
-    `;
-    return { success: true, data: result[0] };
-  } catch (error: any) {
-    console.error("❌ Error inserting into progress:", error);
-    return { success: false, error: error.message || "Failed to insert activity." };
-  }
-}
-
-// --- Update activity table's activitystatus and date_updated ---
-async function updateActivityStatus(activitynumber: string, activitystatus: string) {
-  try {
-    const result = await sql`
-      UPDATE activity
-      SET activitystatus = ${activitystatus},
-          date_updated = NOW() AT TIME ZONE 'UTC'
-      WHERE activitynumber = ${activitynumber}
-      RETURNING *;
-    `;
-    return { success: true, data: result[0] || null };
-  } catch (error: any) {
-    console.error("❌ Error updating activity status:", error);
-    return { success: false, error: error.message || "Failed to update activity status." };
-  }
-}
-
-// --- API POST handler ---
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
-    // ✅ Required fields validation
     const requiredFields = ["referenceid", "manager", "tsm"];
     for (const field of requiredFields) {
       if (!body[field]) {
@@ -81,31 +21,59 @@ export async function POST(req: Request) {
       }
     }
 
-    // ✅ Insert into progress
-    const insertResult = await insertActivity(body);
-    if (!insertResult.success) {
-      return NextResponse.json(insertResult, { status: 500 });
-    }
+    const result = await sql.begin(async (tx) => {
+      const progressInsert = await tx`
+        INSERT INTO progress (
+          referenceid, manager, tsm, companyname, contactperson,
+          contactnumber, emailaddress, typeclient, address, deliveryaddress,
+          area, activitynumber, source, typeactivity, activitystatus,
+          remarks, typecall, sonumber, soamount, callback, callstatus,
+          startdate, enddate, quotationnumber, quotationamount,
+          projectname, projectcategory, projecttype, targetquota,
+          paymentterm, actualsales, deliverydate, followup_date,
+          drnumber, date_created, date_updated
+        ) VALUES (
+          ${body.referenceid}, ${body.manager}, ${body.tsm}, ${body.companyname}, ${body.contactperson},
+          ${body.contactnumber}, ${body.emailaddress}, ${body.typeclient}, ${body.address}, ${body.deliveryaddress},
+          ${body.area}, ${body.activitynumber}, ${body.source}, ${body.typeactivity}, ${body.activitystatus},
+          ${body.remarks}, ${body.typecall}, ${body.sonumber}, ${body.soamount}, ${body.callback}, ${body.callstatus},
+          ${body.startdate}, ${body.enddate}, ${body.quotationnumber}, ${body.quotationamount},
+          ${body.projectname}, ${body.projectcategory}, ${body.projecttype}, ${body.targetquota},
+          ${body.paymentterm}, ${body.actualsales}, ${body.deliverydate}, ${body.followup_date},
+          ${body.drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+        )
+        RETURNING *;
+      `;
 
-    // ✅ Update activity table if activitystatus provided
-    let activityUpdate = null;
-    if (body.activitystatus && body.activitynumber) {
-      const updateResult = await updateActivityStatus(
-        body.activitynumber,
-        body.activitystatus
-      );
-      if (!updateResult.success) {
-        console.warn("⚠️ Failed to update activity table:", updateResult.error);
-      } else {
-        activityUpdate = updateResult.data;
-      }
-    }
+      const activityUpdate =
+        body.activitystatus && body.activitynumber
+          ? await tx`
+              UPDATE activity
+              SET activitystatus = ${body.activitystatus},
+                  date_updated = NOW() AT TIME ZONE 'UTC'
+              WHERE activitynumber = ${body.activitynumber}
+              RETURNING *;
+            `
+          : null;
 
-    return NextResponse.json({
-      success: true,
-      progress: insertResult.data,
-      activityUpdate,
+      return { progressInsert: progressInsert[0], activityUpdate: activityUpdate?.[0] || null };
     });
+
+    return NextResponse.json(
+      {
+        success: true,
+        progress: result.progressInsert,
+        activityUpdate: result.activityUpdate,
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("❌ POST /api/ModuleSales/Progress error:", error);
     return NextResponse.json(
