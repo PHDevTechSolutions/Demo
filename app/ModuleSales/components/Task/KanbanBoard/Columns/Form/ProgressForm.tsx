@@ -300,7 +300,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
                     <option value="Collected">Collected</option>
                     <option value="Cancelled">Cancelled</option>
                     <option value="Loss">Loss</option>
-                    <option value="Done">Done</option>
+                    <option value="Done">Done ( Close Transaction )</option>
                   </>
                 )}
             </select>
