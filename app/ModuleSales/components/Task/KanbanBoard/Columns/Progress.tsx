@@ -253,29 +253,29 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   ];
 
   const fetchProgress = async (showSkeleton = true) => {
-  if (!stableUserDetails?.ReferenceID) return;
-  if (showSkeleton) setLoading(true);
+    if (!stableUserDetails?.ReferenceID) return;
+    if (showSkeleton) setLoading(true);
 
-  try {
-    // Remove skeletons before fetching
-    setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
+    try {
+      // Remove skeletons before fetching
+      setProgress((prev) => prev.filter((item) => !("skeleton" in item)));
 
-    const res = await fetch(
-      `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
-      { cache: "no-store" }
-    );
+      const res = await fetch(
+        `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${stableUserDetails.ReferenceID}`,
+        { cache: "no-store" }
+      );
 
-    if (!res.ok) throw new Error("Failed to fetch progress");
+      if (!res.ok) throw new Error("Failed to fetch progress");
 
-    const data = await res.json();
-    setProgress(data?.data || []);
-  } catch (err) {
-    console.error("❌ Error fetching progress:", err);
-    toast.error("Failed to fetch progress");
-  } finally {
-    if (showSkeleton) setLoading(false);
-  }
-};
+      const data = await res.json();
+      setProgress(data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching progress:", err);
+      toast.error("Failed to fetch progress");
+    } finally {
+      if (showSkeleton) setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProgress();
@@ -309,70 +309,92 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setSubmitting(true);
 
-  const payload = { ...hiddenFields, ...formData };
+    e.preventDefault();
 
-  if (!payload.activitynumber) {
-    toast.error("Activity number is missing!");
-    setSubmitting(false);
-    return;
-  }
+    setSubmitting(true);
 
-  // Replace empty strings with null (para safe sa DB)
-  (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
-    if (payload[key] === "" || payload[key] === undefined) {
-      payload[key] = null as any;
+    const payload = { ...hiddenFields, ...formData };
+
+
+    if (!payload.activitynumber) {
+
+      toast.error("Activity number is missing!");
+
+      setSubmitting(false);
+
+      return;
+
     }
-  });
 
-  // ✅ Optimistic UI update (instant feedback)
-  // ✅ Optimistic UI update (instant feedback)
-const tempId = "temp-" + Date.now();
-const optimisticItem: ProgressEntry = {
-  ...(payload as ProgressItem),
-  id: tempId,
-  date_created: new Date().toISOString(),
-  date_updated: new Date().toISOString(),
-  ticketreferencenumber: payload.ticketreferencenumber ?? "",
-  skeleton: true,
-};
-setProgress((prev) => [optimisticItem, ...prev]);
 
-  try {
-    const res = await fetch(
-      "/api/ModuleSales/Task/ActivityPlanner/CreateProgress",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        cache: "no-store",
+    (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
+
+      if (payload[key] === "" || payload[key] === undefined) {
+
+        payload[key] = null as any;
+
       }
-    );
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to submit activity");
+    });
 
-    toast.success("Activity successfully added/updated!");
-    setShowForm(false);
-    resetForm();
 
-    // small delay para mag-sync si Neon DB
-    await new Promise((r) => setTimeout(r, 300));
+    const tempId = "temp-" + Date.now();
 
-    // 🔥 fetch new data but skip skeleton
-    await fetchProgress(false);
-  } catch (err: any) {
-    console.error("❌ Submit error:", err);
-    toast.error("Failed to submit activity: " + err.message);
-    // rollback optimistic UI
-    setProgress((prev) => prev.filter((i) => i.id !== tempId));
-  } finally {
-    setSubmitting(false);
-    setLoading(false);
-  }
-};
+    setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
+
+
+    try {
+
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify(payload),
+
+        cache: "no-store",
+
+      });
+
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to submit activity");
+
+
+      toast.success("Activity successfully added/updated!");
+
+      setShowForm(false);
+
+      resetForm();
+
+
+      // wait a bit for Neon to replicate the change
+
+      await new Promise((r) => setTimeout(r, 500));
+
+
+      await fetchProgress(); // refresh after confirmed commit
+
+    } catch (err: any) {
+
+      console.error("❌ Submit error:", err);
+
+      toast.error("Failed to submit activity: " + err.message);
+
+      setProgress((prev) => prev.filter((i) => i.id !== tempId));
+
+    } finally {
+
+      setSubmitting(false);
+
+      setLoading(false);
+
+    }
+
+  };
 
   const handleRefresh = async () => {
     setListLoading(true);

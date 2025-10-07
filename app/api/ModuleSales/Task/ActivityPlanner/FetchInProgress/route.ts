@@ -45,8 +45,7 @@ export async function GET(req: Request) {
              activitystatus
       FROM activity
       WHERE referenceid = ${referenceid}
-      ORDER BY date_updated DESC
-      LIMIT 50;
+      ORDER BY date_updated DESC;
     `;
 
     console.log(`Fetched ${Xchire_fetch.length} activities for ${referenceid}`);
