@@ -80,6 +80,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [elapsed, setElapsed] = useState("0s");
   const [showOutboundModal, setShowOutboundModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   useEffect(() => {
     if (!formData.startdate) {
@@ -105,21 +106,15 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
     return () => clearInterval(interval);
   }, [formData.startdate]);
 
-  const wrappedSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // prevent default always
+  const handleSaveClick = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSummaryModal(true); // show modal first
+  };
 
-    // Only offer survey optionally for Delivered
-    //if (formData.activitystatus === "Delivered") {
-    // Ask user: send survey? (optional)
-    //const wantsSurvey = window.confirm(
-    //"Do you want to send a survey? Click 'Cancel' to skip."
-    //);
-    //if (wantsSurvey) {
-    //setShowSurveyModal(true);
-    //return; // wait for survey modal
-    //}
-    //}
-    handleFormSubmit(e);
+  const handleProceed = () => {
+    setShowSummaryModal(false);
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    handleFormSubmit(fakeEvent);
   };
 
   // ➕ detect kapag Outbound Calls napili, buksan ang modal
@@ -146,7 +141,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
         </h2>
       )}
 
-      <form onSubmit={wrappedSubmit} className="space-y-4 text-xs">
+      <form onSubmit={handleSaveClick} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
@@ -352,6 +347,45 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           </button>
         </div>
       </form>
+
+  {/* ✅ Summary Modal */}
+      {showSummaryModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[10000]">
+          <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-md p-6 animate-fadeIn">
+            <h3 className="text-lg font-bold text-center mb-4 text-gray-800">
+              🧾 Summary of Filled Fields
+            </h3>
+            <div className="max-h-[300px] overflow-y-auto text-sm text-gray-700 border p-3 rounded-lg mb-4">
+              {Object.entries(formData)
+                .filter(([key, value]) => value && value !== "")
+                .map(([key, value]) => (
+                  <div key={key} className="flex justify-between border-b py-1">
+                    <span className="font-semibold capitalize">{key}</span>
+                    <span className="text-gray-600 truncate max-w-[55%] text-right">
+                      {Array.isArray(value) ? value.join(", ") : String(value)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="px-4 py-2 text-xs bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProceed}
+                className="px-4 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showOutboundModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[10000]">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center relative animate-fadeIn">
