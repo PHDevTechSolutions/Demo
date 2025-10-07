@@ -156,26 +156,55 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             <label className="font-semibold">
               Source <span className="text-[8px] text-red-700">* Required Fields</span>
             </label>
-            <select
-              name="source"
-              value={formData.source}
-              onChange={handleFormChange}
-              className="border-b px-3 py-6 rounded text-xs"
-              required
-            >
-              <option value="">Select Source</option>
-              <option value="Existing Client">Existing Client</option>
-              <option value="CSR Inquiry">CSR Inquiry</option>
-              <option value="Outbound - Follow-up">Outbound - Follow-up</option>
-              <option value="Outbound - Touchbase">Outbound - Touchbase</option>
-              <option value="Government">Government</option>
-              <option value="Philgeps- Website">Philgeps- Website</option>
-              <option value="Philgeps">Philgeps</option>
-              <option value="Distributor">Distributor</option>
-              <option value="Modern Trade">Modern Trade</option>
-              <option value="Facebook Marketplace">Facebook Marketplace</option>
-              <option value="Walk-in / Showroom">Walk-in / Showroom</option>
-            </select>
+            <div className="flex flex-col">
+  <select
+    name="source"
+    value={formData.source}
+    onChange={handleFormChange}
+    className="border-b px-3 py-6 rounded text-xs"
+    required
+  >
+    <option value="">Select Source</option>
+    <option value="Existing Client">Existing Client</option>
+    <option value="CSR Inquiry">CSR Inquiry</option>
+    <option value="Outbound - Follow-up">Outbound - Follow-up</option>
+    <option value="Outbound - Touchbase">Outbound - Touchbase</option>
+    <option value="Government">Government</option>
+    <option value="Philgeps- Website">Philgeps- Website</option>
+    <option value="Philgeps">Philgeps</option>
+    <option value="Distributor">Distributor</option>
+    <option value="Modern Trade">Modern Trade</option>
+    <option value="Facebook Marketplace">Facebook Marketplace</option>
+    <option value="Walk-in / Showroom">Walk-in / Showroom</option>
+  </select>
+
+  {/* ✅ Span description with emoji + color */}
+  {formData.source && (
+    <span
+      className={`flex items-center gap-1 mt-1 text-[11px] italic ${
+        formData.source === "Outbound - Touchbase"
+          ? "text-green-600"
+          : formData.source === "Existing Client"
+          ? "text-orange-500"
+          : "text-gray-500"
+      }`}
+    >
+      {formData.source === "Outbound - Touchbase" ? (
+        <>
+          ✅ Recommended to appear on Dashboard Outbound Touchbase section.
+        </>
+      ) : formData.source === "Existing Client" ? (
+        <>
+          ⚠️ Not recommended to view on Dashboard Touchbase section. It also appears on Source Breakdown.
+        </>
+      ) : (
+        <>
+          ℹ️ Appears on Source Breakdown section.
+        </>
+      )}
+    </span>
+  )}
+</div>
           </div>
 
           <div className="flex flex-col mt-4">
