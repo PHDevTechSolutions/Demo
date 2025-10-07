@@ -18,6 +18,9 @@ const Table: React.FC<TableProps> = ({ posts }) => {
     totalCalls: 0,
   });
 
+  const [topWeek, setTopWeek] = useState<any>(null);
+  const [topMonth, setTopMonth] = useState<any>(null);
+
   useEffect(() => {
     let totalOutbound = 0;
     let totalSuccessful = 0;
@@ -35,6 +38,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
           Successful: 0,
           InboundCall: 0,
           TotalCalls: 0,
+          DateCreated: post.date_created,
         };
       }
 
@@ -67,6 +71,39 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
     setGroupedUsers(sortedUsers);
     setTotals({ totalOutbound, totalSuccessful, totalInbound, totalCalls });
+
+    // 🔹 Determine top weekly & monthly agents
+    const now = new Date();
+    const oneWeekAgo = new Date();
+    const oneMonthAgo = new Date();
+    oneWeekAgo.setDate(now.getDate() - 7);
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+
+    const weeklyData = posts.filter((p) => new Date(p.date_created) >= oneWeekAgo);
+    const monthlyData = posts.filter((p) => new Date(p.date_created) >= oneMonthAgo);
+
+    const groupByPeriod = (data: any[]) => {
+      const grouped = data.reduce((acc, post) => {
+        const key = `${post.AgentFirstname} ${post.AgentLastname}`;
+        if (!acc[key]) {
+          acc[key] = {
+            AgentFirstname: post.AgentFirstname,
+            AgentLastname: post.AgentLastname,
+            ReferenceID: post.referenceid,
+            Successful: 0,
+          };
+        }
+        if (post.callstatus === "Successful") acc[key].Successful += 1;
+        return acc;
+      }, {} as Record<string, any>);
+
+      return Object.values(grouped).sort(
+        (a: any, b: any) => b.Successful - a.Successful
+      )[0];
+    };
+
+    setTopWeek(groupByPeriod(weeklyData));
+    setTopMonth(groupByPeriod(monthlyData));
   }, [posts]);
 
   // 🔹 Fetch agent profile pictures
@@ -98,25 +135,50 @@ const Table: React.FC<TableProps> = ({ posts }) => {
     if (groupedUsers.length > 0) fetchAgents();
   }, [groupedUsers]);
 
+  const renderTopAgentCard = (title: string, agent: any) => {
+    if (!agent) {
+      return (
+        <div className="p-4 bg-gray-200 text-gray-500 shadow rounded-lg text-center">
+          <h3 className="text-xs font-semibold">{title}</h3>
+          <p className="text-xs mt-2">No data available</p>
+        </div>
+      );
+    }
+
+    const picture = agentData[agent.ReferenceID]?.profilePicture || "/taskflow.png";
+    return (
+      <div className="p-4 bg-white border shadow rounded-lg text-center">
+        <h3 className="text-xs font-semibold text-gray-700 mb-2">{title}</h3>
+        <img
+          src={picture}
+          alt={`${agent.AgentFirstname} ${agent.AgentLastname}`}
+          className="w-10 h-10 mx-auto rounded-full object-cover border mb-2"
+        />
+        <p className="text-sm font-bold text-gray-800">
+          {agent.AgentLastname}, {agent.AgentFirstname}
+        </p>
+        <p className="text-xs text-green-700 font-semibold">
+          {agent.Successful} Successful Calls
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div className="overflow-x-auto px-2">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-        {[
-          {
-            title: "Successful Calls",
-            value: totals.totalSuccessful,
-            bg: "bg-red-700",
-          },
-        ].map((card, i) => (
-          <div
-            key={i}
-            className={`p-4 ${card.bg} text-white shadow rounded-lg text-center`}
-          >
-            <h3 className="text-xs md:text-sm font-semibold">{card.title}</h3>
-            <p className="text-lg md:text-xl font-bold">{card.value}</p>
-          </div>
-        ))}
+      {/* Summary + Top Agent Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-4">
+        {/* Successful Calls Card */}
+        <div className="p-4 bg-red-700 text-white shadow rounded-lg text-center">
+          <h3 className="text-xs md:text-sm font-semibold">Successful Calls</h3>
+          <p className="text-lg md:text-xl font-bold">{totals.totalSuccessful}</p>
+        </div>
+
+        {/* Top Agent (Week) */}
+        {renderTopAgentCard("🏆 Top Agent of the Week", topWeek)}
+
+        {/* Top Agent (Month) */}
+        {renderTopAgentCard("👑 Top Agent of the Month", topMonth)}
       </div>
 
       {/* Ranking Table */}
@@ -137,35 +199,14 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                   agentData[agent.ReferenceID]?.profilePicture || "/taskflow.png";
 
                 let icon = null;
-                if (rank === 1) {
-                  icon = (
-                    <FaCrown
-                      className="text-yellow-500 inline-block mr-1"
-                      size={14}
-                    />
-                  );
-                } else if (rank === 2) {
-                  icon = (
-                    <FaRibbon
-                      className="text-gray-400 inline-block mr-1"
-                      size={14}
-                    />
-                  );
-                } else if (rank >= 3 && rank <= 10) {
-                  icon = (
-                    <FaRibbon
-                      className="text-yellow-600 inline-block mr-1"
-                      size={14}
-                    />
-                  );
-                } else {
-                  icon = (
-                    <IoIosRibbon
-                      className="text-red-600 inline-block mr-1"
-                      size={14}
-                    />
-                  );
-                }
+                if (rank === 1)
+                  icon = <FaCrown className="text-yellow-500 inline-block mr-1" size={14} />;
+                else if (rank === 2)
+                  icon = <FaRibbon className="text-gray-400 inline-block mr-1" size={14} />;
+                else if (rank >= 3 && rank <= 10)
+                  icon = <FaRibbon className="text-yellow-600 inline-block mr-1" size={14} />;
+                else
+                  icon = <IoIosRibbon className="text-red-600 inline-block mr-1" size={14} />;
 
                 return (
                   <tr key={index} className="border-b whitespace-nowrap">
