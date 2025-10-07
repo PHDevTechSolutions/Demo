@@ -15,7 +15,9 @@ interface QuotationPreparationProps {
   handleFormChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
-  handleProjectCategoryChange: (selected: { value: string; label: string }[] | null) => void;
+  handleProjectCategoryChange: (
+    selected: { value: string; label: string }[] | null
+  ) => void;
 }
 
 interface ShopifyProduct {
@@ -24,19 +26,20 @@ interface ShopifyProduct {
   sku: string;
 }
 
-const Option = (props: any) => {
-  return (
-    <components.Option {...props}>
-      <div>
-        <div>{props.data.title}</div>
-        <div style={{ fontSize: "10px", color: "#555" }}>{props.data.sku}</div>
-      </div>
-    </components.Option>
-  );
-};
+// Custom option for react-select
+const Option = (props: any) => (
+  <components.Option {...props}>
+    <div>
+      <div>{props.data.title}</div>
+      <div style={{ fontSize: "10px", color: "#555" }}>{props.data.sku}</div>
+    </div>
+  </components.Option>
+);
 
 const MultiValueLabel = (props: any) => (
-  <components.MultiValueLabel {...props}>{props.data.title}</components.MultiValueLabel>
+  <components.MultiValueLabel {...props}>
+    {props.data.title}
+  </components.MultiValueLabel>
 );
 
 const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
@@ -51,24 +54,25 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
   handleProjectCategoryChange,
 }) => {
   const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
+  const [useManualList, setUseManualList] = useState(false);
 
+  // Fetch product list from Shopify API
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/ModuleSales/Shopify/FetchProduct");
+        const res = await fetch("/api/ModuleSales/Shopify/FetchProduct", {
+          cache: "no-store",
+        });
         const json = await res.json();
-
         if (!json.success) throw new Error(json.error);
 
         const products: ShopifyProduct[] = json.data;
-
         const mapped = products.map((p) => ({
           value: p.sku,
           title: p.title.replace(/Super Sale\s*/i, "").trim(),
           sku: p.sku,
           label: `${p.title} | ${p.sku}`,
         }));
-
         setCategoryOptions(mapped);
       } catch (err: any) {
         console.error(err);
@@ -77,9 +81,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
     })();
   }, []);
 
+  // Auto set follow-up date based on typecall
   useEffect(() => {
     let daysToAdd = 0;
-
     if (!typecall) {
       if (followup_date !== "") {
         handleFormChange({
@@ -105,19 +109,70 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
     if (daysToAdd > 0) {
       const today = new Date();
       today.setDate(today.getDate() + daysToAdd);
-      const formattedDate = today.toISOString().split("T")[0];
-
-      if (followup_date !== formattedDate) {
+      const formatted = today.toISOString().split("T")[0];
+      if (followup_date !== formatted) {
         handleFormChange({
-          target: { name: "followup_date", value: formattedDate },
+          target: { name: "followup_date", value: formatted },
         } as React.ChangeEvent<HTMLInputElement>);
       }
     }
   }, [typecall, followup_date, handleFormChange]);
 
+  // Manual categories
+  const manualCategories = [
+    "Bollard Light",
+    "Bulb Light",
+    "Canopy Light",
+    "Downlight",
+    "Emergency Light",
+    "Exit Light",
+    "Flood Light",
+    "Garden Light",
+    "High Bay Light",
+    "Lamp Post",
+    "Light Fixtures and Housing",
+    "Linear Light",
+    "Louver Light",
+    "Neon Light",
+    "Panel Light",
+    "Pendant Light",
+    "Power Supply",
+    "Rope Light",
+    "Solar Flood Light",
+    "Solar Light",
+    "Solar Road Light",
+    "Solar Street Light",
+    "Spotlight",
+    "Street Light",
+    "Strip Light",
+    "Swimming Pool Light",
+    "Track Light",
+    "Tube Light",
+    "UV Disinfection Light",
+    "Wall Light",
+    "Weatherproof Fixture",
+    "SPF ( Special Items )",
+    "Various Lighting",
+    "Item Not Carried",
+  ];
+
   return (
     <>
-      <div className="flex flex-col">
+      {/* Toggle for data source */}
+      <div className="flex justify-between items-center mb-2">
+        <label className="font-semibold text-xs">Product Source</label>
+        <select
+          className="border px-2 py-1 rounded text-xs"
+          value={useManualList ? "manual" : "shopify"}
+          onChange={(e) => setUseManualList(e.target.value === "manual")}
+        >
+          <option value="shopify">Shopify List</option>
+          <option value="manual">Manual List</option>
+        </select>
+      </div>
+
+      {/* Project Name */}
+      <div className="flex flex-col mb-2">
         <label className="font-semibold">
           Project Name <span className="text-[8px] text-green-700">Optional</span>
         </label>
@@ -126,37 +181,66 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="projectname"
           value={projectname || ""}
           onChange={handleFormChange}
-          className="border-b px-3 py-6 rounded text-xs"
+          className="border-b px-3 py-2 rounded text-xs"
           placeholder="Enter Project Name"
         />
       </div>
 
-      <div className="flex flex-col mt-2">
-        <label className="font-semibold">
-          Product Title <span className="text-[8px] text-green-700">* Required</span>
-        </label>
-        <Select
-          options={categoryOptions}
-          isMulti
-          closeMenuOnSelect={false}
-          components={{ Option, MultiValueLabel }}
-          value={categoryOptions.filter((opt) =>
-            projectcategory.includes(opt.value)
-          )}
-          onChange={(selected: any) => {
-            const values = selected ? selected.map((s: any) => s.value) : [];
-            handleProjectCategoryChange(values);
+      {/* Project Category Selection */}
+      {!useManualList ? (
+        <div className="flex flex-col mt-2">
+          <label className="font-semibold">
+            Product Title <span className="text-[8px] text-green-700">* Required</span>
+          </label>
+          <Select
+            options={categoryOptions}
+            isMulti
+            closeMenuOnSelect={false}
+            components={{ Option, MultiValueLabel }}
+            value={categoryOptions.filter((opt) =>
+              projectcategory.includes(opt.value)
+            )}
+            onChange={(selected: any) => {
+              const values = selected ? selected.map((s: any) => s.value) : [];
+              handleProjectCategoryChange(values);
+              handleFormChange({
+                target: { name: "projectcategory", value: values },
+              } as any);
+            }}
+            className="text-xs px-3 py-1"
+            isClearable
+            required
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col mt-2">
+          <label className="font-semibold">
+            Project Category <span className="text-[8px] text-green-700">* Required</span>
+          </label>
+          <select
+            name="projectcategory"
+            value={projectcategory[0] || ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              handleProjectCategoryChange([{ value: val, label: val }]);
+              handleFormChange({
+                target: { name: "projectcategory", value: [val] },
+              } as any);
+            }}
+            className="border-b px-3 py-2 rounded text-xs capitalize"
+            required
+          >
+            <option value="">Select Category</option>
+            {manualCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
-            handleFormChange({
-              target: { name: "projectcategory", value: values },
-            } as any);
-          }}
-          className="text-xs px-3 py-6"
-          isClearable
-          required
-        />
-      </div>
-
+      {/* Customer Type */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Customer Type <span className="text-[8px] text-green-700">* Required</span>
@@ -165,7 +249,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="projecttype"
           value={projecttype}
           onChange={handleFormChange}
-          className="border-b px-3 py-6 rounded text-xs"
+          className="border-b px-3 py-2 rounded text-xs"
           required
         >
           <option value="">Customer Type</option>
@@ -177,21 +261,41 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         </select>
       </div>
 
+      {/* Quotation Number */}
+      {useManualList && (
+        <div className="flex flex-col mt-2">
+          <label className="font-semibold">
+            Quotation Amount{" "}
+            <span className="text-[8px] text-green-700">* Required</span>
+          </label>
+          <input
+            type="number"
+            name="quotationamount"
+            value={quotationamount || ""}
+            onChange={handleFormChange}
+            className="border-b px-3 py-2 rounded text-xs"
+            placeholder="Enter Quotation Amount"
+            required
+          />
+        </div>
+      )}
+
+      {/* Quotation Amount */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
-          Quotation Number <span className="text-[8px] text-green-700">* Required</span>
+          Quotation Amount <span className="text-[8px] text-green-700">* Required</span>
         </label>
         <input
-          type="text"
-          name="quotationnumber"
-          value={quotationnumber || ""}
+          type="number"
+          name="quotationamount"
+          value={quotationamount || ""}
           onChange={handleFormChange}
-          className="border-b px-3 py-6 rounded text-xs"
-          placeholder="Enter Quotation Number"
+          className="border-b px-3 py-2 rounded text-xs"
           required
         />
       </div>
 
+      {/* Type Call */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Type <span className="text-[8px] text-green-700">* Required</span>
@@ -200,7 +304,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="typecall"
           value={typecall}
           onChange={handleFormChange}
-          className="border-b px-3 py-6 rounded text-xs"
+          className="border-b px-3 py-2 rounded text-xs"
           required
         >
           <option value="">Select Type</option>
@@ -211,6 +315,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         </select>
       </div>
 
+      {/* Follow Up Date */}
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Follow Up Date <span className="text-[8px] text-green-700">* Required</span>
@@ -220,7 +325,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="followup_date"
           value={followup_date || ""}
           onChange={handleFormChange}
-          className="border-b px-3 py-6 rounded text-xs"
+          className="border-b px-3 py-2 rounded text-xs"
           required
         />
       </div>

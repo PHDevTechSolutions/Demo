@@ -77,6 +77,7 @@ const Companies: React.FC<CompaniesProps> = ({
     const todayStr = today.toISOString().split("T")[0];
     const dayOfWeek = today.getDay(); // 0 = Sunday
 
+    // 🚫 No quota on Sundays
     if (dayOfWeek === 0) {
       setIsSunday(true);
       setCompanies([]);
@@ -88,12 +89,14 @@ const Companies: React.FC<CompaniesProps> = ({
     try {
       setLoading(true);
 
+      // ⏸ Check skip status
       const isSkipped = await checkActiveSkip();
       if (isSkipped) {
         setLoading(false);
         return;
       }
 
+      // 🔹 Try fetching today's quota
       const quotaRes = await fetch(
         `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
       );
@@ -101,6 +104,7 @@ const Companies: React.FC<CompaniesProps> = ({
 
       if (quotaData?.error) throw new Error(quotaData.error);
 
+      // 🚫 If skipped, show message
       if (quotaData.skipped) {
         setCompanies([]);
         setRemainingQuota(0);
@@ -112,12 +116,14 @@ const Companies: React.FC<CompaniesProps> = ({
         return;
       }
 
-      if (Array.isArray(quotaData.companies) && quotaData.companies.length > 0) {
+      // ✅ FIXED: Always respect today's data (even if empty)
+      if (Array.isArray(quotaData.companies)) {
         setCompanies(quotaData.companies);
-        setRemainingQuota(quotaData.remaining_quota ?? 35);
-        return;
+        setRemainingQuota(quotaData.remaining_quota ?? 0);
+        return; // ⛔ Stop here — no regeneration
       }
 
+      // 🕓 If no record exists for today → check yesterday
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split("T")[0];
@@ -130,6 +136,7 @@ const Companies: React.FC<CompaniesProps> = ({
       const carryOver = yestData?.remaining_quota ?? 0;
       const todayQuota = 35 + carryOver;
 
+      // 🧾 Fetch company accounts
       const accountsRes = await fetch(
         `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
       );
@@ -147,6 +154,7 @@ const Companies: React.FC<CompaniesProps> = ({
         return;
       }
 
+      // 🎲 Randomized picking
       const pickRandom = (arr: Company[], count: number) =>
         [...arr].sort(() => 0.5 - Math.random()).slice(0, count);
 
@@ -159,12 +167,14 @@ const Companies: React.FC<CompaniesProps> = ({
         remaining -= picked.length;
       };
 
+      // 🎯 Distribution logic
       allocate(eligibleCompanies.filter((c) => c.typeclient === "Top 50"), 15);
       allocate(eligibleCompanies.filter((c) => c.typeclient === "Next 30"), 10);
       allocate(eligibleCompanies.filter((c) => c.typeclient === "Balance 20"), 5);
       allocate(eligibleCompanies.filter((c) => c.typeclient === "CSR Client"), 3);
       allocate(eligibleCompanies.filter((c) => c.typeclient === "TSA Client"), 2);
 
+      // Fillers if remaining
       if (remaining > 0) {
         const pickedIds = new Set(finalCompanies.map((c) => c.id));
         const fillers = eligibleCompanies
@@ -173,6 +183,7 @@ const Companies: React.FC<CompaniesProps> = ({
         finalCompanies.push(...fillers);
       }
 
+      // 💾 Save today's generated quota
       await fetch("/api/ModuleSales/Companies/DailyQuota", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,13 +198,14 @@ const Companies: React.FC<CompaniesProps> = ({
       setCompanies(finalCompanies);
       setRemainingQuota(todayQuota);
     } catch (err) {
-      console.error("Error fetching companies:", err);
+      console.error("❌ Error fetching companies:", err);
       setCompanies([]);
       setRemainingQuota(35);
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchCompanies();
