@@ -91,16 +91,19 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
       if (!progress.activitynumber) return;
       try {
         const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchTask?activitynumber=${progress.activitynumber}`
+          `/api/ModuleSales/Task/ActivityPlanner/FetchQS?activitynumber=${progress.activitynumber}`
         );
-        const data = await res.json();
-        setSoData(data);
+        const result = await res.json();
+        if (result.success) {
+          setSoData(result.data); // single object now
+        }
       } catch (err) {
         console.error("Failed to fetch SO data:", err);
       }
     };
     fetchSOData();
   }, [progress.activitynumber]);
+
 
   const projectCategoryStr = Array.isArray(progress.projectcategory)
     ? progress.projectcategory.join(", ")
@@ -159,12 +162,10 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Contact #:</span> {progress.contactnumber}</p>
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
-          <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
-
+         
           {soData && (
-            <p>
-              <span className="font-semibold">SO / Quotation:</span> {soData.sonumber} | {soData.soamount} | {soData.quotationnumber} | {soData.quotationamount}
-            </p>
+            <p><span className="font-semibold">Quotation:</span> {soData.quotationnumber} | {soData.quotationamount}</p>
+            <p><span className="font-semibold">Sales Order:</span> {soData.sonumber} | {soData.soamount}</p>
           )}
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
