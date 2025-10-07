@@ -165,6 +165,9 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
          
           {soData && (
             <p><span className="font-semibold">Quotation:</span> {soData.quotationnumber} | {soData.quotationamount}</p>
+          )}
+
+          {soData && (
             <p><span className="font-semibold">Sales Order:</span> {soData.sonumber} | {soData.soamount}</p>
           )}
 
