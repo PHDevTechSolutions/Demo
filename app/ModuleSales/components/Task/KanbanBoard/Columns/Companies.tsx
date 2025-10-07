@@ -43,8 +43,7 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState(true);
   const [remainingQuota, setRemainingQuota] = useState(0);
 
-  // ✅ Local (Philippine) date instead of UTC
-  const todayStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) return;
@@ -105,8 +104,8 @@ const Companies: React.FC<CompaniesProps> = ({
 
   const handleCancelCompany = (comp: Company) => {
     let updated = companies.filter((c) => c.id !== comp.id);
-    const eligible = companies.filter(isCompanyDue).filter((c) => !updated.some(u => u.id === c.id));
 
+    const eligible = companies.filter(isCompanyDue).filter((c) => !updated.some(u => u.id === c.id));
     if (eligible.length) updated.push(eligible[Math.floor(Math.random() * eligible.length)]);
 
     updateQuota(updated, remainingQuota);
