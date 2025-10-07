@@ -8,110 +8,135 @@ const supabase = createClient(
 
 const DAILY_QUOTA = 35;
 
-function getPHDate() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
-}
-
-// ✅ GET – retrieve or generate today’s quota
+// ✅ GET → retrieve today's companies
 export async function GET(req: NextRequest) {
   try {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday
+
+    if (dayOfWeek === 0) {
+      // Skip Sundays
+      return NextResponse.json(
+        { companies: [], remaining_quota: 0, message: "No quota on Sundays" },
+        { status: 200, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const referenceid = searchParams.get("referenceid");
-    const date = getPHDate();
+    const date = searchParams.get("date");
 
-    if (!referenceid)
-      return NextResponse.json({ error: "Missing referenceid" }, { status: 400 });
+    if (!referenceid || !date) {
+      return NextResponse.json(
+        { error: "Missing referenceid or date" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
+      );
+    }
 
-    const now = new Date();
-    if (now.getDay() === 0)
-      return NextResponse.json({ companies: [], remaining_quota: 0, message: "No quota on Sundays" });
-
-    // 1️⃣ check if today's quota exists
-    const { data: today, error: todayErr } = await supabase
+    // 1️⃣ Check if today's quota exists
+    const { data: todayRow, error } = await supabase
       .from("daily_quotas")
       .select("companies, remaining_quota")
       .eq("referenceid", referenceid)
       .eq("date", date)
-      .maybeSingle();
+      .maybeSingle(); // returns null if no row
 
-    if (todayErr) throw todayErr;
+    if (error) throw error;
 
-    // if already generated and has 35 companies, return it
-    if (today && Array.isArray(today.companies) && today.companies.length === DAILY_QUOTA) {
-      return NextResponse.json(today);
+    if (todayRow) {
+      // ✅ Return existing quota
+      return NextResponse.json(todayRow, {
+        headers: { "Cache-Control": "no-store" },
+        status: 200,
+      });
     }
 
-    // 2️⃣ get all companies for this user
-    const { data: companiesList, error: listErr } = await supabase
+    // 2️⃣ Fetch fresh companies only if no quota exists
+    const { data: accounts } = await supabase
       .from("companies")
       .select("*")
       .eq("referenceid", referenceid);
 
-    if (listErr) throw listErr;
+    const companies = (accounts || [])
+      .sort(() => 0.5 - Math.random())
+      .slice(0, DAILY_QUOTA);
 
-    // 3️⃣ shuffle and take up to 35 (or repeat if fewer)
-    let companies: any[] = [];
-    if (companiesList && companiesList.length > 0) {
-      const shuffled = [...companiesList].sort(() => 0.5 - Math.random());
-      while (companies.length < DAILY_QUOTA) {
-        const needed = DAILY_QUOTA - companies.length;
-        companies.push(...shuffled.slice(0, Math.min(needed, shuffled.length)));
-      }
-      companies = companies.slice(0, DAILY_QUOTA); // exact 35
-    }
-
-    // 4️⃣ save to DB
+    // 3️⃣ Save today's quota (upsert per user/date)
     await supabase.from("daily_quotas").upsert(
-      [{
-        referenceid,
-        date,
-        companies,
-        remaining_quota: DAILY_QUOTA,
-        updated_at: new Date().toISOString(),
-      }],
-      { onConflict: "referenceid,date" }
+      [
+        {
+          referenceid,
+          date,
+          companies,
+          remaining_quota: DAILY_QUOTA,
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      { onConflict: "referenceid,date" } // single string
     );
 
-    return NextResponse.json({ companies, remaining_quota: DAILY_QUOTA });
+    return NextResponse.json(
+      { companies, remaining_quota: DAILY_QUOTA },
+      { headers: { "Cache-Control": "no-store" }, status: 200 }
+    );
   } catch (err: any) {
-    console.error("❌ GET DailyQuota:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("❌ DailyQuota GET error:", err.message);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
 
-// ✅ POST – update quota
+// ✅ POST → update daily quota
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { referenceid, companies, remaining_quota } = body;
-    const date = getPHDate();
+    const { referenceid, date, companies, remaining_quota } = body;
 
-    if (!referenceid || !Array.isArray(companies))
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    if (!referenceid || !date || !Array.isArray(companies)) {
+      return NextResponse.json(
+        { error: "Invalid payload" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
+      );
+    }
 
-    const unique = companies.filter(
-      (c, i, arr) => i === arr.findIndex((x) => x.id === c.id)
+    // Deduplicate companies
+    const uniqueCompanies = companies.filter(
+      (c, idx, arr) => idx === arr.findIndex((x) => x.id === c.id)
     );
 
+    const safeRemaining =
+      typeof remaining_quota === "number"
+        ? remaining_quota
+        : Math.max(DAILY_QUOTA - uniqueCompanies.length, 0);
+
     await supabase.from("daily_quotas").upsert(
-      [{
-        referenceid,
-        date,
-        companies: unique,
-        remaining_quota: typeof remaining_quota === "number"
-          ? remaining_quota
-          : Math.max(DAILY_QUOTA - unique.length, 0),
-        updated_at: new Date().toISOString(),
-      }],
+      [
+        {
+          referenceid,
+          date,
+          companies: uniqueCompanies,
+          remaining_quota: safeRemaining,
+          updated_at: new Date().toISOString(),
+        },
+      ],
       { onConflict: "referenceid,date" }
     );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      { success: true, data: { companies: uniqueCompanies, remaining_quota: safeRemaining } },
+      { headers: { "Cache-Control": "no-store" }, status: 200 }
+    );
   } catch (err: any) {
-    console.error("❌ POST DailyQuota:", err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("❌ DailyQuota POST error:", err.message);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
 
+// Force dynamic rendering (no caching)
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
