@@ -95,16 +95,16 @@ const Login: React.FC = () => {
         if (result.lockUntil) {
           setLockUntil(result.lockUntil);
           toast.error(`Account locked! Try again after ${new Date(result.lockUntil).toLocaleString()}.`);
-          playSound('/login-failed.mp3'); // 🔊 Failed sound
+          playSound('/reset.mp3'); // 🔊 Failed sound
         } else {
           toast.error(result.message || 'Login failed!');
-          playSound('/login-failed.mp3'); // 🔊 Failed sound
+          playSound('/reset.mp3'); // 🔊 Failed sound
         }
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred while logging in!');
-      playSound('/login-failed.mp3'); // 🔊 Failed sound
+      playSound('/reset.mp3'); // 🔊 Failed sound
     } finally {
       setLoading(false);
     }
