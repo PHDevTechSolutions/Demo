@@ -166,10 +166,10 @@ const Table: React.FC<TableProps> = ({
           <td className="px-4 py-2 text-xs align-top">
             <div className="flex flex-col gap-1">
               <span className="text-white bg-blue-400 p-2 rounded">
-                Creation Date: {formatDate(Number(post.date_created))}
+                Creation Date: {post.date_created}
               </span>
               <span className="text-white bg-green-500 p-2 rounded">
-                Last Update: {formatDate(Number(post.date_updated))}
+                Last Update: {post.date_updated}
               </span>
             </div>
           </td>
