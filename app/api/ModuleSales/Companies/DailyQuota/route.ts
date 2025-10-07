@@ -11,47 +11,47 @@ const DAILY_QUOTA = 35;
 // ✅ GET → retrieve today's companies
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const referenceid = searchParams.get("referenceid");
-    let date = searchParams.get("date");
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday
 
-    // 🕒 Auto-correct to local (Philippine) date if not provided or outdated
-    const localDate = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
-    if (!date) date = localDate;
-
-    const dayOfWeek = new Date().getDay();
     if (dayOfWeek === 0) {
+      // Skip Sundays
       return NextResponse.json(
         { companies: [], remaining_quota: 0, message: "No quota on Sundays" },
         { status: 200, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    if (!referenceid) {
+    const { searchParams } = new URL(req.url);
+    const referenceid = searchParams.get("referenceid");
+    const date = searchParams.get("date");
+
+    if (!referenceid || !date) {
       return NextResponse.json(
-        { error: "Missing referenceid" },
+        { error: "Missing referenceid or date" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    // Check if today's quota exists
+    // 1️⃣ Check if today's quota exists
     const { data: todayRow, error } = await supabase
       .from("daily_quotas")
-      .select("companies, remaining_quota, date")
+      .select("companies, remaining_quota")
       .eq("referenceid", referenceid)
       .eq("date", date)
-      .maybeSingle();
+      .maybeSingle(); // returns null if no row
 
     if (error) throw error;
 
     if (todayRow) {
+      // ✅ Return existing quota
       return NextResponse.json(todayRow, {
         headers: { "Cache-Control": "no-store" },
         status: 200,
       });
     }
 
-    // Fetch fresh companies only if no quota exists
+    // 2️⃣ Fetch fresh companies only if no quota exists
     const { data: accounts } = await supabase
       .from("companies")
       .select("*")
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       .sort(() => 0.5 - Math.random())
       .slice(0, DAILY_QUOTA);
 
-    // Save today's quota
+    // 3️⃣ Save today's quota (upsert per user/date)
     await supabase.from("daily_quotas").upsert(
       [
         {
@@ -72,11 +72,11 @@ export async function GET(req: NextRequest) {
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: "referenceid,date" }
+      { onConflict: "referenceid,date" } // single string
     );
 
     return NextResponse.json(
-      { companies, remaining_quota: DAILY_QUOTA, date },
+      { companies, remaining_quota: DAILY_QUOTA },
       { headers: { "Cache-Control": "no-store" }, status: 200 }
     );
   } catch (err: any) {
@@ -94,16 +94,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { referenceid, date, companies, remaining_quota } = body;
 
-    if (!referenceid || !Array.isArray(companies)) {
+    if (!referenceid || !date || !Array.isArray(companies)) {
       return NextResponse.json(
         { error: "Invalid payload" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    const safeDate =
-      date || new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Manila" });
-
+    // Deduplicate companies
     const uniqueCompanies = companies.filter(
       (c, idx, arr) => idx === arr.findIndex((x) => x.id === c.id)
     );
@@ -117,7 +115,7 @@ export async function POST(req: NextRequest) {
       [
         {
           referenceid,
-          date: safeDate,
+          date,
           companies: uniqueCompanies,
           remaining_quota: safeRemaining,
           updated_at: new Date().toISOString(),
@@ -139,5 +137,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Force dynamic rendering (no caching)
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
