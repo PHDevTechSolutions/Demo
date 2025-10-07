@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
@@ -45,7 +45,7 @@ export interface ProgressItem {
 
 interface ProgressCardProps {
   progress: ProgressItem;
-  profilePicture: string;
+  profilePicture?: string;
   onAddClick: () => void;
   onDeleteClick?: (progress: ProgressItem) => Promise<void>;
 }
@@ -76,30 +76,47 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   onAddClick,
   onDeleteClick,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showFinalModal, setShowFinalModal] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [deleteStep, setDeleteStep] = useState(0); // 0 = closed, 1 = step1, 2 = step2
+  const [soData, setSoData] = useState<any>(null);
 
   if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
 
   const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
   const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";
 
-  const handleDeleteClick = useCallback(() => setShowDeleteModal(true), []);
-  const confirmDelete = useCallback(async () => {
-    if (!onDeleteClick) return;
-    try {
-      await onDeleteClick(progress);
-      setShowDeleteModal(false);
-      setShowFinalModal(true);
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  }, [onDeleteClick, progress]);
+  // Fetch SO / Quotation data based on activitynumber
+  useEffect(() => {
+    const fetchSOData = async () => {
+      if (!progress.activitynumber) return;
+      try {
+        const res = await fetch(
+          `/api/ModuleSales/Task/ActivityPlanner/FetchTask?activitynumber=${progress.activitynumber}`
+        );
+        const data = await res.json();
+        setSoData(data);
+      } catch (err) {
+        console.error("Failed to fetch SO data:", err);
+      }
+    };
+    fetchSOData();
+  }, [progress.activitynumber]);
 
   const projectCategoryStr = Array.isArray(progress.projectcategory)
     ? progress.projectcategory.join(", ")
     : progress.projectcategory || "";
+
+  const handleDeleteClick = () => setDeleteStep(1);
+
+  const confirmDelete = useCallback(async () => {
+    if (!onDeleteClick) return;
+    try {
+      await onDeleteClick(progress);
+      setDeleteStep(0);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  }, [onDeleteClick, progress]);
 
   return (
     <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
@@ -108,7 +125,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         onClick={() => setIsExpanded((prev) => !prev)}
       >
         <img
-          src={profilePicture}
+          src={profilePicture || "/default-avatar.png"}
           alt="Profile"
           className="w-8 h-8 rounded-full object-cover mr-3"
         />
@@ -143,9 +160,15 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
           <p><span className="font-semibold">Project Category:</span> {projectCategoryStr}</p>
-          <p className="text-gray-500 text-[8px]">{progress.date_updated}</p>
+
+          {soData && (
+            <p>
+              <span className="font-semibold">SO / Quotation:</span> {soData.sonumber} | {soData.soamount} | {soData.quotationnumber} | {soData.quotationamount}
+            </p>
+          )}
 
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
+          <p className="text-gray-500 text-[8px]">{progress.date_updated}</p>
 
           <div className="flex justify-end mt-2 space-x-1">
             {onDeleteClick && (
@@ -161,22 +184,20 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
       )}
 
       <DeleteModal
-        isOpen={showDeleteModal && !showFinalModal}
+        isOpen={deleteStep === 1}
         isChild={false}
         deleteTarget={progress}
         step={1}
-        onCancel={() => setShowDeleteModal(false)}
-        onContinue={() => {
-          setShowDeleteModal(false);
-          setShowFinalModal(true);
-        }}
+        onCancel={() => setDeleteStep(0)}
+        onContinue={() => setDeleteStep(2)}
       />
+
       <DeleteModal
-        isOpen={showFinalModal}
+        isOpen={deleteStep === 2}
         isChild={false}
         deleteTarget={progress}
         step={2}
-        onCancel={() => setShowFinalModal(false)}
+        onCancel={() => setDeleteStep(0)}
         onConfirm={confirmDelete}
       />
     </div>
