@@ -154,7 +154,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
           alt={`${agent.AgentFirstname} ${agent.AgentLastname}`}
           className="w-10 h-10 mx-auto rounded-full object-cover border mb-2"
         />
-        <p className="text-sm font-bold text-gray-800">
+        <p className="text-sm capitalize font-bold text-gray-800">
           {agent.AgentLastname}, {agent.AgentFirstname}
         </p>
         <p className="text-xs text-green-700 font-semibold">
