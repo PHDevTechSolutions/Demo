@@ -1,79 +1,25 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 import AddPostForm from "../../../components/Agents/ListSalesAssociate/Form";
+import SearchFilters from "../../../components/UserManagement/TerritorySalesAssociates/Filters";
+import UsersTable from "../../../components/Agents/ListSalesAssociate/Table";
+import Pagination from "../../../components/UserManagement/TerritorySalesAssociates/Pagination";
+
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// ----- Types -----
-interface UserDetails {
-  UserId: string;
-  ReferenceID: string;
-  Firstname: string;
-  Lastname: string;
-  Email: string;
-  Role: string;
-  Department: string;
-  Company: string;
-}
-
-interface User {
-  _id: string;
-  ReferenceID: string;
-  Firstname: string;
-  Lastname: string;
-  Email: string;
-  Role: string;
-  Manager?: string;
-  TSM?: string;
-  Department?: string;
-  Location?: string;
-}
-
-// ----- UsersCard Component -----
-interface UsersCardProps {
-  users: User[];
-  handleEdit: (user: User) => void;
-  tsmOptions?: { value: string; label: string }[];
-}
-
-const UsersCard: React.FC<UsersCardProps> = ({ users, handleEdit, tsmOptions }) => {
-  if (users.length === 0) return <p className="text-xs text-gray-500">No users found.</p>;
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {users.map((user) => (
-        <div key={user.ReferenceID} className="border rounded-lg p-4 hover:shadow-lg transition">
-          <p className="font-semibold">{user.Firstname} {user.Lastname}</p>
-          <p className="text-xs text-gray-500">{user.Email}</p>
-          {tsmOptions && (
-            <p className="text-xs text-gray-500">
-              TSM: {tsmOptions.find((t) => t.value === user.TSM)?.label || "N/A"}
-            </p>
-          )}
-          <button
-            className="mt-2 bg-blue-500 text-white px-2 py-1 rounded text-xs"
-            onClick={() => handleEdit(user)}
-          >
-            View / Edit
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// ----- Main Component -----
 const ListofUser: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"agents" | "tsm">("agents");
   const [showForm, setShowForm] = useState(false);
-  const [editUser, setEditUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [editUser, setEditUser] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [userDetails, setUserDetails] = useState<UserDetails>({
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postsPerPage, setPostsPerPage] = useState(12);
+
+  const [userDetails, setUserDetails] = useState({
     UserId: "",
     ReferenceID: "",
     Firstname: "",
@@ -84,13 +30,16 @@ const ListofUser: React.FC = () => {
     Company: "",
   });
 
+  const [tsaOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
   const [tsmOptions, setTSMOptions] = useState<{ value: string; label: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState("");
   const [selectedTSM, setSelectedTSM] = useState("");
 
   const [loadingUser, setLoadingUser] = useState(true);
-  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
 
-  // --- Fetch user details ---
+  const loading = loadingUser || loadingAccounts;
+
   useEffect(() => {
     const fetchUserData = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -115,70 +64,112 @@ const ListofUser: React.FC = () => {
           Company: data.Company || "",
         });
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching user data:", err);
         toast.error("Failed to load user data.");
       } finally {
         setLoadingUser(false);
       }
     };
+
     fetchUserData();
   }, []);
 
-  // --- Fetch all users ---
   useEffect(() => {
-    const fetchUsers = async () => {
-      setLoadingUsers(true);
+    const fetchTSA = async () => {
+      if (!["Territory Sales Manager", "Super Admin", "Manager"].includes(userDetails.Role)) return;
       try {
-        const response = await fetch("/api/ModuleSales/UserManagement/TerritorySalesAssociates/FetchUser");
+        const url =
+          userDetails.Role === "Territory Sales Manager" && userDetails.ReferenceID
+            ? `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`
+            : `/api/fetchtsadata?Role=Territory Sales Associate`;
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Failed to fetch agents");
+
         const data = await response.json();
-        setUsers(data);
+        setTSAOptions(
+          data.map((user: any) => ({ value: user.ReferenceID, label: `${user.Firstname} ${user.Lastname}` }))
+        );
       } catch (err) {
-        toast.error("Error fetching users.");
-        console.error(err);
-      } finally {
-        setLoadingUsers(false);
+        console.error("Error fetching TSA options:", err);
       }
     };
+    fetchTSA();
+  }, [userDetails.ReferenceID, userDetails.Role]);
+
+  useEffect(() => {
+    if (userDetails.Role !== "Manager") return;
+    const fetchTSM = async () => {
+      try {
+        const response = await fetch(`/api/fetchtsadata?Role=Territory Sales Manager`);
+        if (!response.ok) throw new Error("Failed to fetch TSMs");
+        const data = await response.json();
+        setTSMOptions(data.map((user: any) => ({ value: user.ReferenceID, label: `${user.Firstname} ${user.Lastname}` })));
+      } catch (err) {
+        console.error("Error fetching TSM options:", err);
+      }
+    };
+    fetchTSM();
+  }, [userDetails.Role]);
+
+  const fetchUsers = async () => {
+    setLoadingAccounts(true);
+    try {
+      const response = await fetch("/api/ModuleSales/UserManagement/TerritorySalesAssociates/FetchUser");
+      const data = await response.json();
+      setPosts(data);
+    } catch (err) {
+      toast.error("Error fetching users.");
+      console.error(err);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
-  // --- TSM list (for Manager) ---
-  useEffect(() => {
-    if (userDetails.Role !== "Manager") return;
-    const tsmList = users
-      .filter((u) => u.Role === "Territory Sales Manager")
-      .map((tsm) => ({ value: tsm.ReferenceID, label: `${tsm.Firstname} ${tsm.Lastname}` }));
-    setTSMOptions(tsmList);
-  }, [users, userDetails.Role]);
+  const filteredAccounts = posts.filter((post) => {
+    const excludedStatuses = ["Resigned", "Terminated"];
+    if (excludedStatuses.includes(post?.Status)) return false;
 
-  const handleEdit = (user: User) => {
-    setEditUser(user);
-    setShowForm(true);
-  };
+    const matchesSearchTerm = [post?.Firstname, post?.Lastname].some((field) =>
+      field?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  // --- Filtered Agents ---
-  const filteredAgents = users.filter((user) => {
-    if (user.Role !== "Territory Sales Associate") return false;
-    if (userDetails.Role === "Manager" && user.Manager !== userDetails.ReferenceID) return false;
-    if (selectedTSM && user.TSM !== selectedTSM) return false;
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      if (!user.Firstname.toLowerCase().includes(term) && !user.Lastname.toLowerCase().includes(term)) return false;
-    }
-    return true;
+    const referenceID = userDetails.ReferenceID;
+
+    const matchesRole = (() => {
+      switch (userDetails.Role) {
+        case "Super Admin":
+          return post?.Role === "Territory Sales Associate";
+        case "Manager":
+          return post?.Role === "Territory Sales Associate" && post?.Manager === referenceID;
+        case "Territory Sales Manager":
+          return post?.Role === "Territory Sales Associate" && post?.TSM === referenceID;
+        case "Special Access":
+          return true;
+        default:
+          return false;
+      }
+    })();
+
+    const matchesAgent = !selectedAgent || post?.referenceid === selectedAgent;
+    const matchesTSM = !selectedTSM || post?.TSM === selectedTSM;
+
+    return matchesSearchTerm && matchesRole && matchesAgent && matchesTSM;
   });
 
-  // --- Group agents by TSM ---
-  const groupedByTSM: Record<string, User[]> = {};
-  users
-    .filter((user) => user.Role === "Territory Sales Associate")
-    .forEach((agent) => {
-      const key = agent.TSM || "Unassigned";
-      if (!groupedByTSM[key]) groupedByTSM[key] = [];
-      groupedByTSM[key].push(agent);
-    });
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredAccounts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredAccounts.length / postsPerPage);
 
-  if (loadingUser || loadingUsers) return <p className="text-xs text-gray-500 p-4">Loading...</p>;
+  const handleEdit = (post: any) => {
+    setEditUser(post);
+    setShowForm(true);
+  };
 
   return (
     <SessionChecker>
@@ -186,44 +177,28 @@ const ListofUser: React.FC = () => {
         <UserFetcher>
           {(user) => (
             <div className="mx-auto p-4 text-gray-900">
-              {/* Tabs */}
-              <div className="flex gap-4 mb-4">
-                <button
-                  className={`px-4 py-2 rounded text-xs font-bold ${activeTab === "agents" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-                  onClick={() => setActiveTab("agents")}
-                >
-                  Agents
-                </button>
-                {userDetails.Role === "Manager" && (
-                  <button
-                    className={`px-4 py-2 rounded text-xs font-bold ${activeTab === "tsm" ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-                    onClick={() => setActiveTab("tsm")}
-                  >
-                    TSM
-                  </button>
-                )}
-              </div>
-
               {showForm ? (
                 <AddPostForm
                   onCancel={() => {
                     setShowForm(false);
                     setEditUser(null);
                   }}
-                  refreshPosts={() => {}}
+                  refreshPosts={fetchUsers}
                   userName={user?.userName || ""}
                   userDetails={{ id: editUser?._id || userDetails.UserId }}
                   editUser={editUser}
                 />
               ) : (
-                <>
-                  {activeTab === "agents" ? (
-                    <>
-                      <h2 className="text-lg font-bold mb-2">Agents</h2>
-                      <p className="text-xs text-gray-600 mb-4">Agents manage client relationships and drive sales.</p>
+                <div className="mb-4 p-4 bg-white shadow-md rounded-lg">
+                  <h2 className="text-lg font-bold mb-2">Agents</h2>
+                  <p className="text-xs text-gray-600 mb-4">
+                    <strong>Agents</strong> manage client relationships, drive sales, and ensure excellent service.
+                  </p>
 
+                  {["Territory Sales Manager", "Super Admin", "Manager"].includes(userDetails.Role) && (
+                    <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       {userDetails.Role === "Manager" && (
-                        <div className="mb-4">
+                        <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">Filter by TSM</label>
                           <select
                             className="w-full border rounded px-3 py-2 text-xs capitalize"
@@ -240,27 +215,55 @@ const ListofUser: React.FC = () => {
                         </div>
                       )}
 
-                      <UsersCard users={filteredAgents} handleEdit={handleEdit} tsmOptions={tsmOptions} />
-                    </>
-                  ) : (
-                    <>
-                      <h2 className="text-lg font-bold mb-2">Territory Sales Managers</h2>
-                      <p className="text-xs text-gray-600 mb-4">See all TSMs and their assigned agents.</p>
-
-                      <div className="space-y-4">
-                        {tsmOptions.map((tsm) => (
-                          <div key={tsm.value} className="border rounded-lg p-4 bg-gray-50">
-                            <p className="font-semibold text-sm mb-2">{tsm.label}</p>
-                            <UsersCard users={groupedByTSM[tsm.value] || []} handleEdit={handleEdit} />
-                          </div>
-                        ))}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1 invisible">Total</label>
+                        <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm text-center">
+                          Total Users: <span className="font-bold">{filteredAccounts.length}</span>
+                        </h1>
                       </div>
-                    </>
+                    </div>
                   )}
-                </>
+
+                  <SearchFilters
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    postsPerPage={postsPerPage}
+                    setPostsPerPage={setPostsPerPage}
+                  />
+
+                  {loading ? (
+                    <div className="flex justify-center items-center py-10">
+                      <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
+                      <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                    </div>
+                  ) : (
+                    <UsersTable posts={currentPosts} handleEdit={handleEdit} userDetails={userDetails} />
+                  )}
+
+                  <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
+
+                  <div className="text-xs mt-2">
+                    Showing {indexOfFirstPost + 1} to {Math.min(indexOfLastPost, filteredAccounts.length)} of{" "}
+                    {filteredAccounts.length} entries
+                  </div>
+                </div>
               )}
 
-              <ToastContainer position="bottom-right" autoClose={2000} hideProgressBar theme="colored" />
+              <ToastContainer
+                position="bottom-right"
+                autoClose={2000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                className="text-xs z-[99999]"
+                toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
+                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
+              />
             </div>
           )}
         </UserFetcher>
