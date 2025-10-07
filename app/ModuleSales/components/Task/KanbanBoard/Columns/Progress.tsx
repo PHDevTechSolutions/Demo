@@ -410,24 +410,41 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   };
 
   const handleDelete = async (item: ProgressItem) => {
-    dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
-    try {
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/DeleteProgress",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: item.id }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete activity");
+    if (!item?.id) {
+      toast.error("Invalid activity ID");
+      return;
+    }
 
+    const confirmed = confirm("Are you sure you want to delete this activity?");
+    if (!confirmed) return;
+
+    // Optional: mark this specific card as loading
+    dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: true });
+
+    try {
+      console.log("🧩 Deleting:", item.id);
+
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteProgress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id }),
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+      console.log("🧩 DeleteProgress Response:", data);
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete record");
+      }
+
+      // Update UI immediately
       setProgress((prev) => prev.filter((p) => p.id !== item.id));
-      toast.success("Activity deleted successfully!");
+
+      toast.success("✅ Activity deleted successfully!");
     } catch (err: any) {
       console.error("❌ Delete error:", err);
-      toast.error("Failed to delete activity: " + err.message);
+      toast.error(`Failed to delete activity: ${err.message}`);
     } finally {
       dispatchCardLoading({ type: "SET_LOADING", id: item.id, value: false });
     }
