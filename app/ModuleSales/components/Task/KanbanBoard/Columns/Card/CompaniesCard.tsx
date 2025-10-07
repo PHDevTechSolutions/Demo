@@ -78,7 +78,7 @@ const CompaniesCard: React.FC<CompaniesCardProps> = ({
             }}
             className="bg-red-500 text-white py-1 px-2 rounded text-[10px] hover:bg-red-600 flex items-center gap-1"
           >
-            <MdCancel size={10} /> Cancel
+            <MdCancel size={10} /> Replace
           </button>
         </div>
       )}

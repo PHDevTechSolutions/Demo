@@ -1,11 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import CompaniesCard from "./Card/CompaniesCard";
-import SkipModal from "./Modal/Skip";
-import { GoSkip } from "react-icons/go";
 
 interface Company {
   id?: number;
@@ -24,11 +20,18 @@ interface CompaniesProps {
   userDetails: { ReferenceID?: string } | null;
 }
 
-// Simplified company eligibility check (no localStorage)
-const isCompanyDue = (comp: Company): boolean => {
-  // Simple rule: all companies are eligible
+const isCompanyDue = (comp: Company) => {
+  const lastAdded = comp.id ? localStorage.getItem(`lastAdded_${comp.id}`) : null;
+  if (!lastAdded) return true;
+  const diffDays = Math.floor(
+    (Date.now() - new Date(lastAdded).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  if (comp.typeclient === "Top 50") return diffDays >= 10;
+  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") return diffDays >= 30;
   return true;
 };
+
+const DAILY_QUOTA = 35;
 
 const Companies: React.FC<CompaniesProps> = ({
   expandedIdx,
@@ -37,246 +40,75 @@ const Companies: React.FC<CompaniesProps> = ({
   userDetails,
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [remainingQuota, setRemainingQuota] = useState<number>(0);
-  const [isSunday, setIsSunday] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [remainingQuota, setRemainingQuota] = useState(0);
 
-  const [showSkipModal, setShowSkipModal] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [activeSkip, setActiveSkip] = useState<{ startdate: string; enddate: string } | null>(null);
-
-  const checkActiveSkip = async () => {
-    if (!userDetails?.ReferenceID) return;
-
-    const todayStr = new Date().toISOString().split("T")[0];
-    const res = await fetch(
-      `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
-    );
-    const data = await res.json();
-
-    if (data.skipped) {
-      setActiveSkip({
-        startdate: data?.startdate ?? "N/A",
-        enddate: data?.enddate ?? "N/A",
-      });
-      setCompanies([]);
-      setRemainingQuota(0);
-      toast.info("🚫 Skip period is active today.");
-      return true;
-    } else {
-      setActiveSkip(null);
-      return false;
-    }
-  };
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) return;
 
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-    const dayOfWeek = today.getDay(); // 0 = Sunday
-
-    // 🚫 No quota on Sundays
-    if (dayOfWeek === 0) {
-      setIsSunday(true);
-      setCompanies([]);
-      setRemainingQuota(0);
-      toast.info("No daily quota generated on Sundays.");
-      return;
-    }
-
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // ⏸ Check skip status
-      const isSkipped = await checkActiveSkip();
-      if (isSkipped) {
-        setLoading(false);
-        return;
-      }
-
-      // 🔹 Try fetching today's quota
-      const quotaRes = await fetch(
+      const res = await fetch(
         `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${todayStr}`
       );
-      const quotaData = await quotaRes.json();
+      const data = await res.json();
 
-      if (quotaData?.error) throw new Error(quotaData.error);
-
-      // 🚫 If skipped, show message
-      if (quotaData.skipped) {
+      if (data?.companies) {
+        setCompanies(data.companies);
+        setRemainingQuota(data.remaining_quota ?? DAILY_QUOTA);
+      } else {
         setCompanies([]);
         setRemainingQuota(0);
-        setActiveSkip({
-          startdate: quotaData.startdate ?? "N/A",
-          enddate: quotaData.enddate ?? "N/A",
-        });
-        toast.info("🚫 Skipped generation for today.");
-        return;
       }
-
-      // ✅ FIXED: Always respect today's data (even if empty)
-      if (Array.isArray(quotaData.companies)) {
-        setCompanies(quotaData.companies);
-        setRemainingQuota(quotaData.remaining_quota ?? 0);
-        return; // ⛔ Stop here — no regeneration
-      }
-
-      // 🕓 If no record exists for today → check yesterday
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-      const yestRes = await fetch(
-        `/api/ModuleSales/Companies/DailyQuota?referenceid=${userDetails.ReferenceID}&date=${yesterdayStr}`
-      );
-      const yestData = await yestRes.json();
-
-      const carryOver = yestData?.remaining_quota ?? 0;
-      const todayQuota = 35 + carryOver;
-
-      // 🧾 Fetch company accounts
-      const accountsRes = await fetch(
-        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
-      );
-      const accounts = await accountsRes.json();
-
-      const companiesData: Company[] = Array.isArray(accounts)
-        ? accounts
-        : accounts?.data || accounts?.companies || [];
-
-      const eligibleCompanies = companiesData.filter(isCompanyDue);
-
-      if (!eligibleCompanies.length) {
-        setCompanies([]);
-        setRemainingQuota(todayQuota);
-        return;
-      }
-
-      // 🎲 Randomized picking
-      const pickRandom = (arr: Company[], count: number) =>
-        [...arr].sort(() => 0.5 - Math.random()).slice(0, count);
-
-      let finalCompanies: Company[] = [];
-      let remaining = todayQuota;
-
-      const allocate = (source: Company[], count: number) => {
-        const picked = pickRandom(source, Math.min(count, remaining, source.length));
-        finalCompanies.push(...picked);
-        remaining -= picked.length;
-      };
-
-      // 🎯 Distribution logic
-      allocate(eligibleCompanies.filter((c) => c.typeclient === "Top 50"), 15);
-      allocate(eligibleCompanies.filter((c) => c.typeclient === "Next 30"), 10);
-      allocate(eligibleCompanies.filter((c) => c.typeclient === "Balance 20"), 5);
-      allocate(eligibleCompanies.filter((c) => c.typeclient === "CSR Client"), 3);
-      allocate(eligibleCompanies.filter((c) => c.typeclient === "TSA Client"), 2);
-
-      // Fillers if remaining
-      if (remaining > 0) {
-        const pickedIds = new Set(finalCompanies.map((c) => c.id));
-        const fillers = eligibleCompanies
-          .filter((c) => !pickedIds.has(c.id))
-          .slice(0, remaining);
-        finalCompanies.push(...fillers);
-      }
-
-      // 💾 Save today's generated quota
-      await fetch("/api/ModuleSales/Companies/DailyQuota", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          referenceid: userDetails.ReferenceID,
-          date: todayStr,
-          companies: finalCompanies,
-          remaining_quota: todayQuota,
-        }),
-      });
-
-      setCompanies(finalCompanies);
-      setRemainingQuota(todayQuota);
     } catch (err) {
-      console.error("❌ Error fetching companies:", err);
+      console.error(err);
       setCompanies([]);
-      setRemainingQuota(35);
+      setRemainingQuota(0);
     } finally {
       setLoading(false);
     }
   };
 
-
   useEffect(() => {
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  const handleAddCompany = async (comp: Company) => {
-    if (activeSkip) {
-      toast.warn("🚫 Cannot add companies during skip period.");
-      return;
-    }
-
-    // Call parent handler
-    handleSubmit(comp, false);
-
-    // Update local state immediately
-    setCompanies((prev) => prev.filter((c) => c.id !== comp.id));
-    setRemainingQuota((prev) => Math.max(prev - 1, 0));
-
-    // Update Supabase daily_quota
-    if (!userDetails?.ReferenceID) return;
-
+  const updateQuota = async (updatedCompanies: Company[], newQuota: number) => {
+    setCompanies(updatedCompanies);
+    setRemainingQuota(newQuota);
     try {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const res = await fetch("/api/ModuleSales/Companies/DailyQuota", {
+      await fetch("/api/ModuleSales/Companies/DailyQuota", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          referenceid: userDetails.ReferenceID,
+          referenceid: userDetails?.ReferenceID,
           date: todayStr,
-          companies: companies.filter((c) => c.id !== comp.id), // remove used
-          remaining_quota: Math.max(remainingQuota - 1, 0),
+          companies: updatedCompanies,
+          remaining_quota: newQuota,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Failed to update quota");
-    } catch (err: any) {
-      console.error("❌ Failed to update quota:", err);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleSkipSubmit = async () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select both start and end dates.");
-      return;
-    }
+  const handleAddCompany = (comp: Company) => {
+    handleSubmit(comp, false);
+    const updated = companies.filter((c) => c.id !== comp.id);
+    updateQuota(updated, Math.max(remainingQuota - 1, 0));
 
-    try {
-      const payload = {
-        startdate: startDate,
-        enddate: endDate,
-        status: "skip",
-        referenceid: userDetails?.ReferenceID,
-      };
+    if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
+  };
 
-      const res = await fetch("/api/ModuleSales/Companies/SkipQuota", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  const handleCancelCompany = (comp: Company) => {
+    let updated = companies.filter((c) => c.id !== comp.id);
 
-      const result = await res.json();
-      if (!res.ok || result.error) throw new Error(result.error);
+    const eligible = companies.filter(isCompanyDue).filter((c) => !updated.some(u => u.id === c.id));
+    if (eligible.length) updated.push(eligible[Math.floor(Math.random() * eligible.length)]);
 
-      toast.success("✅ Skip period submitted!");
-      setShowSkipModal(false);
-      setStartDate("");
-      setEndDate("");
-      await checkActiveSkip();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit skip period");
-    }
+    updateQuota(updated, remainingQuota);
   };
 
   return (
@@ -286,34 +118,14 @@ const Companies: React.FC<CompaniesProps> = ({
           <span className="mr-1">🏢</span> OB Calls:{" "}
           <span className="ml-1 text-red-500">{remainingQuota}</span>
         </span>
-
-        <button
-          onClick={() => setShowSkipModal(true)}
-          className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] hover:bg-yellow-600 flex items-center gap-1"
-        >
-          <GoSkip size={15} /> Skip Generate
-        </button>
       </h3>
-
-      {activeSkip && (
-        <div className="bg-red-100 border border-red-400 text-red-700 text-[10px] px-2 py-1 rounded-md mb-2 flex justify-between items-center">
-          <span>
-            🚫 Active Skip: {activeSkip.startdate} → {activeSkip.enddate}
-          </span>
-        </div>
-      )}
 
       {loading ? (
         <p className="text-xs text-gray-400">Loading...</p>
-      ) : isSunday ? (
-        <p className="text-xs text-gray-400 text-center">
-          🚫 No daily quota generated on Sundays
-        </p>
       ) : companies.length > 0 ? (
         companies.map((comp, idx) => {
           const key = `comp-${idx}`;
           const isExpanded = expandedIdx === key;
-
           return (
             <CompaniesCard
               key={key}
@@ -321,27 +133,15 @@ const Companies: React.FC<CompaniesProps> = ({
               isExpanded={isExpanded}
               onToggle={() => setExpandedIdx(isExpanded ? null : key)}
               onAdd={handleAddCompany}
-              onCancel={() => { }}
+              onCancel={handleCancelCompany}
             />
           );
         })
       ) : (
         <p className="text-xs text-gray-400 text-center">
-          {activeSkip
-            ? "🚫 Generation skipped during this period"
-            : "No companies found"}
+          🚫 No companies available today.
         </p>
       )}
-
-      <SkipModal
-        show={showSkipModal}
-        onClose={() => setShowSkipModal(false)}
-        startDate={startDate}
-        endDate={endDate}
-        setStartDate={setStartDate}
-        setEndDate={setEndDate}
-        handleSkipSubmit={handleSkipSubmit}
-      />
     </div>
   );
 };
