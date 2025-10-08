@@ -123,26 +123,35 @@ const Companies: React.FC<CompaniesProps> = ({
       {/* Header Section */}
       <div className="mb-2">
         {/* OB Calls Counter */}
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs font-semibold text-black">
-            📞 OB Calls:{" "} <span className="text-[8px]"> / 35 Min </span> 
-            <span className="text-orange-500 font-bold">{tapCount}</span>
-          </span>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+  {/* OB Calls Counter */}
+  <div className="flex items-center mb-1 sm:mb-0">
+    <span className="text-xs font-semibold text-black flex items-center gap-1">
+      📞 <span>OB Calls:</span>
+      <span className="text-orange-500 font-bold">
+        {tapCount}
+        <span className="text-[10px] text-gray-500 font-normal ml-1">
+          / 35 Min
+        </span>
+      </span>
+    </span>
+  </div>
 
-          {!loading && (
-            <button
-              onClick={handleReplace}
-              disabled={replacing}
-              className={`text-xs px-3 py-1 rounded-md transition-all ${
-                replacing
-                  ? "bg-gray-400 text-white cursor-not-allowed"
-                  : "bg-green-500 text-white hover:bg-green-600"
-              }`}
-            >
-              {replacing ? "Refreshing..." : "Refresh"}
-            </button>
-          )}
-        </div>
+  {/* Refresh Button */}
+  {!loading && (
+    <button
+      onClick={handleReplace}
+      disabled={replacing}
+      className={`text-xs px-3 py-1 rounded-md transition-all font-medium shadow-sm ${
+        replacing
+          ? "bg-gray-400 text-white cursor-not-allowed"
+          : "bg-green-500 text-white hover:bg-green-600"
+      }`}
+    >
+      {replacing ? "Refreshing..." : "Refresh"}
+    </button>
+  )}
+</div>
 
         {/* Companies Header */}
         <h3 className="flex items-center text-[10px] italic font-bold text-gray-600 border-t border-gray-200 pt-2">
