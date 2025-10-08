@@ -84,6 +84,7 @@ async function create({ UserId, TicketReferenceNumber, userName, Role, Reference
     CityAddress,
     CustomerSegment,
     CustomerType,
+    SourceCompany,
     createdAt,
   };
   await Xchire_db.collection("accounts").insertOne(accounts_insert);

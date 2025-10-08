@@ -1,157 +1,132 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
-const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL;
-if (!Xchire_databaseUrl) {
-  throw new Error("TASKFLOW_DB_URL is not set in the environment variables.");
+const dbUrl = process.env.TASKFLOW_DB_URL;
+if (!dbUrl) throw new Error("TASKFLOW_DB_URL is not set in environment variables.");
+
+const sql = neon(dbUrl);
+
+// 🧹 Clean values — convert "" to null or number
+function cleanValue(v: any) {
+  if (v === "" || v === undefined) return null;
+  if (!isNaN(v) && v !== null) return Number(v);
+  return v;
 }
 
-const Xchire_sql = neon(Xchire_databaseUrl);
-/**
- * Updates an existing user in the database and inserts progress and notification.
- * @param userDetails - The updated details of the user.
- * @returns Success or error response.
- */
-async function update(userDetails: any) {
+async function update(user: any) {
   try {
     const {
-      id, referenceid, manager,
-      tsm, companyname, companygroup, contactperson,
-      contactnumber, emailaddress, typeclient,
-      address, deliveryaddress, area, projectname,
-      projectcategory, projecttype, source,
-      startdate, enddate, activitynumber,
-      typeactivity, activitystatus, remarks,
-      callback, typecall, quotationnumber,
-      quotationamount, sonumber, soamount,
-      callstatus, actualsales, targetquota,
-      ticketreferencenumber, wrapup, inquiries,
-      csragent, paymentterm, deliverydate,
-    } = userDetails;
+      id, referenceid, manager, tsm,
+      companyname, companygroup, contactperson, contactnumber, emailaddress,
+      typeclient, address, deliveryaddress, area,
+      projectname, projectcategory, projecttype, source,
+      startdate, enddate, activitynumber, typeactivity,
+      activitystatus, remarks, callback, typecall,
+      quotationnumber, quotationamount, sonumber, soamount,
+      callstatus, actualsales, targetquota, ticketreferencenumber,
+      wrapup, inquiries, csragent, paymentterm, deliverydate,
+    } = user;
 
-    // ✅ Update the activity table
-    const Xchire_update = await Xchire_sql`
+    const updateRes = await sql`
       UPDATE activity
-      SET companygroup = ${companygroup}, contactperson = ${contactperson}, contactnumber = ${contactnumber}, emailaddress = ${emailaddress},
-      typeclient = ${typeclient}, address = ${address}, deliveryaddress = ${deliveryaddress}, area = ${area}, projectname = ${projectname},
-      projectcategory = ${projectcategory}, projecttype = ${projecttype}, source = ${source},
-      activitystatus = ${activitystatus}, date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
+      SET companygroup = ${companygroup}, contactperson = ${contactperson},
+          contactnumber = ${contactnumber}, emailaddress = ${emailaddress},
+          typeclient = ${typeclient}, address = ${address},
+          deliveryaddress = ${deliveryaddress}, area = ${area},
+          projectname = ${projectname}, projectcategory = ${projectcategory},
+          projecttype = ${projecttype}, source = ${source},
+          activitystatus = ${activitystatus}
       WHERE id = ${id}
       RETURNING *;
     `;
 
-    if (Xchire_update.length === 0) {
+    if (updateRes.length === 0)
       return { success: false, error: "User not found or already updated." };
-    }
 
-    // ✅ Insert all fields including ticketreferencenumber, wrapup, inquiries, and csragent into the progress table
-    await Xchire_sql`
+    await sql`
       INSERT INTO progress (
-        ticketreferencenumber, wrapup, inquiries, referenceid, manager, tsm, companyname, companygroup, contactperson,
-        contactnumber, emailaddress, typeclient, address, deliveryaddress, area, projectname, projectcategory, projecttype,
-        source, startdate, enddate, activitynumber, typeactivity, activitystatus, remarks, callback,
-        typecall, quotationnumber, quotationamount, sonumber, soamount, callstatus, date_created,
-        actualsales, targetquota, csragent, paymentterm, deliverydate
-      ) VALUES (
-        ${ticketreferencenumber}, ${wrapup}, ${inquiries}, ${referenceid}, ${manager}, ${tsm},
-        ${companyname}, ${companygroup}, ${contactperson}, ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
-        ${area}, ${projectname}, ${projectcategory}, ${projecttype}, ${source}, ${startdate}, ${enddate},
-        ${activitynumber}, ${typeactivity}, ${activitystatus}, ${remarks}, ${callback}, ${typecall},
-        ${quotationnumber}, ${quotationamount}, ${sonumber}, ${soamount}, ${callstatus},
-        CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', ${actualsales}, ${targetquota}, ${csragent}, ${paymentterm}, ${deliverydate}
+        ticketreferencenumber, wrapup, inquiries, referenceid, manager, tsm, companyname,
+        companygroup, contactperson, contactnumber, emailaddress, typeclient, address,
+        deliveryaddress, area, projectname, projectcategory, projecttype, source, startdate,
+        enddate, activitynumber, typeactivity, activitystatus, remarks, callback, typecall,
+        quotationnumber, quotationamount, sonumber, soamount, callstatus, actualsales,
+        targetquota, csragent, paymentterm, deliverydate
+      )
+      VALUES (
+        ${cleanValue(ticketreferencenumber)}, ${wrapup}, ${cleanValue(inquiries)}, ${referenceid},
+        ${manager}, ${tsm}, ${companyname}, ${companygroup}, ${contactperson},
+        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress},
+        ${area}, ${projectname}, ${projectcategory}, ${projecttype}, ${source}, ${startdate},
+        ${enddate}, ${activitynumber}, ${typeactivity}, ${activitystatus}, ${remarks},
+        ${callback}, ${typecall}, ${quotationnumber}, ${cleanValue(quotationamount)},
+        ${sonumber}, ${cleanValue(soamount)}, ${callstatus}, ${cleanValue(actualsales)},
+        ${cleanValue(targetquota)}, ${csragent}, ${cleanValue(paymentterm)}, ${deliverydate}
       );
     `;
 
-    // ✅ CASE 1: Insert Callback Notification if applicable
+    // 🟢 Notifications
     if ((typeactivity === "Outbound Call" || typeactivity === "Inbound Call") && callback) {
-      const callbackMessage = `You have a callback in "${companyname}". Please make a call or activity.`;
-
-      await Xchire_sql`
-        INSERT INTO notification (
-          referenceid, manager, tsm, csragent, message, callback, date_created, type
-        )
+      const msg = `You have a callback in "${companyname}". Please make a call or activity.`;
+      await sql`
+        INSERT INTO notification (referenceid, manager, tsm, csragent, message, callback, date_created, type)
         VALUES (
-          ${referenceid}, ${manager}, ${tsm}, 
-          ${typeclient === "CSR Inquiries" ? csragent : null}, -- Check CSR Inquiries
-          ${callbackMessage}, ${callback}, 
-          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'Callback Notification'
+          ${referenceid}, ${manager}, ${tsm},
+          ${typeclient === "CSR Inquiries" ? csragent : null},
+          ${msg}, ${callback}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'Callback Notification'
         );
       `;
     }
 
-    // ✅ CASE 2: Insert Follow-Up Notification if applicable
     if (
-      typecall === "Ringing Only" ||
-      typecall === "No Requirements" ||
-      typecall === "Sent Quotation - Standard" ||
-      typecall === "Sent Quotation - With Special Price" ||
-      typecall === "Sent Quotation - With SPF" ||
-      typecall === "Not Connected With The Company" ||
-      typecall === "Waiting for Projects" ||
-      typecall === "Cannot Be Reached"
+      [
+        "Ringing Only", "No Requirements",
+        "Sent Quotation - Standard", "Sent Quotation - With Special Price",
+        "Sent Quotation - With SPF", "Not Connected With The Company",
+        "Waiting for Projects", "Cannot Be Reached",
+      ].includes(typecall)
     ) {
-      const followUpMessage = `You have a new follow-up from "${companyname}". The status is "${typecall}". Please make an update.`;
-
-      await Xchire_sql`
-        INSERT INTO notification (
-          referenceid, manager, tsm, csragent, message, date_created, type
-        )
+      const msg = `You have a new follow-up from "${companyname}". The status is "${typecall}".`;
+      await sql`
+        INSERT INTO notification (referenceid, manager, tsm, csragent, message, date_created, type)
         VALUES (
-          ${referenceid}, ${manager}, ${tsm}, 
-          ${typeclient === "CSR Inquiries" ? csragent : null}, -- Check CSR Inquiries
-          ${followUpMessage}, 
-          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'Follow-Up Notification'
+          ${referenceid}, ${manager}, ${tsm},
+          ${typeclient === "CSR Inquiries" ? csragent : null},
+          ${msg}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'Follow-Up Notification'
         );
       `;
     }
 
-    // ✅ CASE 3: Insert CSR Notification if typeclient is CSR Inquiries
     if (typeclient === "CSR Inquiries" && csragent) {
-      const csrnotificationMessage = `The Ticket Number "${ticketreferencenumber}" of "${companyname}". and Status is "${typecall}" `;
-
-      await Xchire_sql`
-        INSERT INTO notification (
-          referenceid, manager, tsm, csragent, message, date_created, type
-        )
+      const msg = `The Ticket Number "${ticketreferencenumber}" of "${companyname}" (Status: ${typecall}).`;
+      await sql`
+        INSERT INTO notification (referenceid, manager, tsm, csragent, message, date_created, type)
         VALUES (
-          ${referenceid}, ${manager}, ${tsm}, ${csragent}, 
-          ${csrnotificationMessage},
-          CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'CSR Notification'
+          ${referenceid}, ${manager}, ${tsm}, ${csragent},
+          ${msg}, CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila', 'CSR Notification'
         );
       `;
     }
 
-    return { success: true, data: Xchire_update };
-  } catch (Xchire_error: any) {
-    console.error("Error updating user:", Xchire_error);
-    return { success: false, error: Xchire_error.message || "Failed to update user." };
+    return { success: true, data: updateRes };
+  } catch (err: any) {
+    console.error("❌ Error updating user:", err);
+    return { success: false, error: err.message || "Database update failed." };
   }
 }
 
-/**
- * Handles PUT requests for updating users.
- * @param req - The incoming request.
- * @returns Success or error response.
- */
 export async function PUT(req: Request) {
   try {
-    const Xchire_body = await req.json();
-    const { id } = Xchire_body;
-
-    // ✅ Ensure the ID is provided for the update operation
-    if (!id) {
-      return NextResponse.json(
-        { success: false, error: "User ID is required for update." },
-        { status: 400 }
-      );
+    const body = await req.json();
+    if (!body.id) {
+      return NextResponse.json({ success: false, error: "User ID is required." }, { status: 400 });
     }
 
-    const Xchire_result = await update(Xchire_body);
-    return NextResponse.json(Xchire_result);
-  } catch (Xchire_error: any) {
-    console.error("Error in PUT /api/ModuleSales/Task/DailyActivity/UpdateUser:", Xchire_error);
+    const result = await update(body);
+    return NextResponse.json(result);
+  } catch (err: any) {
+    console.error("❌ Error in PUT /EditUser:", err);
     return NextResponse.json(
-      { success: false, error: Xchire_error.message || "Internal server error" },
+      { success: false, error: err.message || "Internal server error." },
       { status: 500 }
     );
   }

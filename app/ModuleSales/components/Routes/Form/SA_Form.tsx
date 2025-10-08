@@ -103,6 +103,8 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false); // 🟢 ADD
+  const [formSummary, setFormSummary] = useState<Record<string, string | number | null>>({});
 
   const [activityList, setActivityList] = useState<{
     id: number;
@@ -210,44 +212,88 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const url = editUser ? `/api/ModuleSales/Task/DailyActivity/EditUser` : `/api/ModuleSales/Task/DailyActivity/CreateUser`;
+    const summary = {
+      Company: companyname,
+      Contact: contactperson,
+      "Contact Number": contactnumber,
+      Email: emailaddress,
+      "Client Type": typeclient,
+      "Activity Type": typeactivity,
+      Remarks: remarks,
+      Callback: callback,
+      "Quotation #": quotationnumber,
+      "Quotation Amount": quotationamount,
+      "SO #": sonumber,
+      "SO Amount": soamount,
+      "Actual Sales": actualsales,
+      "Start Date": startdate,
+      "End Date": enddate,
+    };
+
+    setFormSummary(summary);
+    setShowConfirmModal(true);
+  };
+
+  // ✅ Confirm submit (Create or Edit)
+  const handleConfirmProceed = async () => {
+    setShowConfirmModal(false);
+
+    const url = editUser
+      ? `/api/ModuleSales/Task/DailyActivity/EditUser`
+      : `/api/ModuleSales/Task/DailyActivity/CreateUser`;
     const method = editUser ? "PUT" : "POST";
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: editUser?.id, referenceid, manager, tsm, targetquota, companyname, companygroup, contactperson, contactnumber, emailaddress, typeclient,
-        address, deliveryaddress, area, projectname, projectcategory, projecttype, source, typeactivity, startdate, enddate, activitynumber, activitystatus, status, remarks,
-        callback, typecall, quotationnumber, quotationamount, sonumber, soamount, actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent, paymentterm, deliverydate,
-      }),
-      cache: "no-store",
+    // 🧹 Convert empty strings to null
+    const payload = {
+      id: editUser?.id,
+      referenceid, manager, tsm, targetquota,
+      companyname, companygroup, contactperson, contactnumber, emailaddress,
+      typeclient, address, deliveryaddress, area,
+      projectname, projectcategory, projecttype, source, typeactivity,
+      startdate, enddate, activitynumber, activitystatus, status, remarks,
+      callback, typecall, quotationnumber, quotationamount, sonumber, soamount,
+      actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent,
+      paymentterm, deliverydate,
+    };
+
+    Object.keys(payload).forEach((key) => {
+      if (payload[key as keyof typeof payload] === "") {
+        payload[key as keyof typeof payload] = null as any;
+      }
     });
 
-    // wait a bit for Neon to replicate the change
-    await new Promise((r) => setTimeout(r, 500));
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      });
 
-    await refreshPosts(); // refresh after confirmed commit
+      const data = await response.json();
+      console.log("🔍 Server response:", data);
 
-    if (response.ok) {
-      toast.success(editUser ? "User updated successfully" : "User added successfully", {
-        autoClose: 1000,
+      if (!response.ok || data.success === false) {
+        const errorMsg = data.error || "Unknown error occurred";
+        console.error("❌ Submit failed:", errorMsg);
+        toast.error(`❗ Failed: ${errorMsg}`, { autoClose: 2000 });
+        return;
+      }
+
+      toast.success(editUser ? "✅ User updated successfully" : "✅ User added successfully", {
+        autoClose: 1200,
         onClose: () => {
           onCancel();
           refreshPosts();
         },
       });
-    } else {
-      toast.error(editUser ? "Failed to update user" : "Failed to add user", {
-        autoClose: 1000,
-      });
+    } catch (err) {
+      console.error("⚠️ Network or unexpected error:", err);
+      toast.error("⚠️ Connection error. Check console for details.", { autoClose: 2000 });
     }
   };
 
-  const handleDeleteClick = (id: string) => {
-    setSelectedId(id);
-    setShowDeleteModal(true);
-  };
+  const handleCancelConfirm = () => setShowConfirmModal(false); // 🟢 ADD
 
   // Deletes the record after confirmation
   const confirmDelete = async () => {
@@ -284,23 +330,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   // Function to close modal
   const handleCloseModal = () => {
     setShowModal(false);
-  };
-
-  const handleEditClick = (activityId: number | string) => {
-    // If activityId is string, convert to number
-    const idNumber = typeof activityId === "string" ? parseInt(activityId, 10) : activityId;
-
-    if (isNaN(idNumber)) {
-      console.warn("Invalid activityId", activityId);
-      return; // or handle error
-    }
-
-    const selected = activityList.find((act) => act.id === idNumber || act.id === activityId);
-
-    if (selected) {
-      setSelectedActivity(selected);
-      setIsEditModalOpen(true);
-    }
   };
 
   // Handle input change inside modal
@@ -538,6 +567,42 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
           )}
         </div>
       </form>
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[2000] bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-4 w-full max-w-md">
+            <h2 className="font-bold text-sm mb-2">Confirm Submission</h2>
+            <p className="text-xs text-gray-600 mb-3">
+              Please review the following details before proceeding:
+            </p>
+
+            <div className="border rounded p-2 mb-3 max-h-64 overflow-y-auto text-xs">
+              {Object.entries(formSummary).map(([key, value]) => (
+                <div key={key} className="flex justify-between border-b border-gray-100 py-1">
+                  <span className="font-semibold">{key}</span>
+                  <span className="text-gray-700 text-right ml-2">{value || "-"}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={handleConfirmProceed}
+                className="bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700"
+              >
+                Proceed
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                className="bg-gray-300 text-gray-800 px-3 py-1.5 rounded text-xs hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
