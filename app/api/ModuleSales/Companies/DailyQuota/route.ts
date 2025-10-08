@@ -18,10 +18,11 @@ export async function GET(req: NextRequest) {
     const dayOfWeek = today.getDay();
     const dateStr = today.toISOString().split("T")[0];
 
+    // 🛑 Skip Sundays
     if (dayOfWeek === 0) {
       return NextResponse.json(
         { companies: [], remaining_quota: 0, message: "No quota on Sundays" },
-        { status: 200 }
+        { status: 200, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -30,10 +31,13 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get("date") || dateStr;
 
     if (!referenceid) {
-      return NextResponse.json({ error: "Missing referenceid" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing referenceid" },
+        { status: 400, headers: { "Cache-Control": "no-store" } }
+      );
     }
 
-    // ✅ Check if existing
+    // 1️⃣ Check if already generated today
     const { data: existing, error: existingError } = await supabase
       .from("daily_quotas")
       .select("companies, remaining_quota")
@@ -42,10 +46,14 @@ export async function GET(req: NextRequest) {
       .maybeSingle();
 
     if (existingError) throw existingError;
-    if (existing) return NextResponse.json(existing);
 
-    // ✅ Fetch from Neon
-    const { rows } = await sql`
+    if (existing) {
+      // ✅ Return existing daily quota
+      return NextResponse.json(existing, { headers: { "Cache-Control": "no-store" } });
+    }
+
+    // 2️⃣ Fetch fresh 35 random companies from Neon
+    const companies = await sql`
       SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, address
       FROM companies
       WHERE referenceid = ${referenceid}
@@ -53,14 +61,14 @@ export async function GET(req: NextRequest) {
       LIMIT ${DAILY_QUOTA};
     `;
 
-    const companies = JSON.parse(JSON.stringify(rows));
+    const safeCompanies = JSON.parse(JSON.stringify(companies));
 
-    // ✅ Save to Supabase
+    // 3️⃣ Save result to Supabase
     const { error: insertError } = await supabase.from("daily_quotas").insert([
       {
         referenceid,
         date,
-        companies,
+        companies: safeCompanies,
         remaining_quota: DAILY_QUOTA,
         updated_at: new Date().toISOString(),
       },
@@ -68,10 +76,16 @@ export async function GET(req: NextRequest) {
 
     if (insertError) throw insertError;
 
-    return NextResponse.json({ companies, remaining_quota: DAILY_QUOTA }, { status: 200 });
-  } catch (err) {
-    console.error("❌ DailyQuota GET error:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { companies: safeCompanies, remaining_quota: DAILY_QUOTA },
+      { headers: { "Cache-Control": "no-store" }, status: 200 }
+    );
+  } catch (err: any) {
+    console.error("❌ DailyQuota GET error:", err.message);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
 
@@ -88,10 +102,12 @@ export async function POST(req: NextRequest) {
     }
 
     const safeCompanies = Array.isArray(companies) ? companies : [];
-    const safeRemaining = typeof remaining_quota === "number"
-      ? remaining_quota
-      : Math.max(DAILY_QUOTA - safeCompanies.length, 0);
+    const safeRemaining =
+      typeof remaining_quota === "number"
+        ? remaining_quota
+        : Math.max(DAILY_QUOTA - safeCompanies.length, 0);
 
+    // ✅ Upsert (one record per user/date)
     const { error: upsertError } = await supabase.from("daily_quotas").upsert(
       [
         {
@@ -102,7 +118,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: "referenceid,date" }
+      {
+        // ⚠️ Must be a string, not array
+        onConflict: "referenceid,date",
+      }
     );
 
     if (upsertError) throw upsertError;
