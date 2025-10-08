@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/lib/ModuleCSR/mongodb"; // Import connectTo
 async function create({ UserId, TicketReferenceNumber, userName, Role, ReferenceID, CompanyName, CustomerName, Gender, ContactNumber, Email, CustomerSegment, CityAddress, Channel, WrapUp, Source, 
   CustomerType, CustomerStatus, Status, Amount, QtySold, SalesManager, SalesAgent, TicketReceived, TicketEndorsed, TsmAcknowledgeDate, TsaAcknowledgeDate,
   TsmHandlingTime, TsaHandlingTime, Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, PONumber, SODate, PaymentTerms, PaymentDate, 
-  DeliveryDate, POStatus, POSource, createdAt,
+  DeliveryDate, POStatus, POSource, SourceCompany, createdAt,
 }: {
   UserId: string;
   TicketReferenceNumber: string;
@@ -54,6 +54,7 @@ async function create({ UserId, TicketReferenceNumber, userName, Role, Reference
   QuotationNumber: string;
   QuotationAmount: string;
   createdAt: string;
+  SourceCompany: string;
 
 }) {
   const Xchire_db = await connectToDatabase();
@@ -61,7 +62,8 @@ async function create({ UserId, TicketReferenceNumber, userName, Role, Reference
   
   const Xchire_insert = { UserId, TicketReferenceNumber, userName, Role, ReferenceID, CompanyName, CustomerName, Gender, ContactNumber, Email, CustomerSegment, CityAddress, Channel, WrapUp, Source, CustomerType, 
     CustomerStatus, Status, Amount, QtySold, SalesManager, SalesAgent, TicketReceived, TicketEndorsed, TsmAcknowledgeDate, TsaAcknowledgeDate,
-    TsmHandlingTime, TsaHandlingTime, Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, PONumber, SODate, PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, createdAt, };
+    TsmHandlingTime, TsaHandlingTime, Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, PONumber, SODate, 
+    PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, SourceCompany, createdAt, };
   
   // Insert into "monitoring" collection
   await Xchire_Collection.insertOne(Xchire_insert);
@@ -98,7 +100,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "POST") {
     const { UserId, TicketReferenceNumber, userName, Role, ReferenceID, CompanyName, CustomerName, Gender, ContactNumber, Email, CustomerSegment, CityAddress, Channel, WrapUp, Source, CustomerType, 
       CustomerStatus, Status, Amount, QtySold, SalesManager, SalesAgent, TicketReceived, TicketEndorsed, TsmAcknowledgeDate, TsaAcknowledgeDate, TsmHandlingTime, 
-      TsaHandlingTime, Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, PONumber, SODate, PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, createdAt } = req.body;
+      TsaHandlingTime, Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, 
+      QuotationAmount, PONumber, SODate, PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, SourceCompany, createdAt } = req.body;
 
     // Validate required fields
     if (!CompanyName || !CustomerName) {
@@ -110,7 +113,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const Xchire_result = await create({ UserId, TicketReferenceNumber, userName, Role, ReferenceID, CompanyName, CustomerName, Gender, ContactNumber, Email, CustomerSegment, CityAddress, Channel, WrapUp, Source, CustomerType, 
         CustomerStatus, Status, Amount, QtySold, SalesManager, SalesAgent, TicketReceived, TicketEndorsed, TsmAcknowledgeDate, TsaAcknowledgeDate, TsmHandlingTime, TsaHandlingTime, 
-        Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, PONumber, SODate, PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, createdAt});
+        Remarks, Traffic, Inquiries, Department, ItemCode, ItemDescription, SONumber, SOAmount, QuotationNumber, QuotationAmount, 
+        PONumber, SODate, PaymentTerms, PaymentDate, DeliveryDate, POStatus, POSource, SourceCompany, createdAt});
       res.status(200).json(Xchire_result);
     } catch (Xchire_error) {
       console.error("Error adding account:", Xchire_error);

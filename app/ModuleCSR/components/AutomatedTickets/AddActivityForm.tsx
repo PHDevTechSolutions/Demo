@@ -39,6 +39,7 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({ userDetails, onCancel, 
     const [CustomerType, setCustomerType] = useState(editPost ? editPost.CustomerType : "");
     const [CustomerStatus, setCustomerStatus] = useState(editPost ? editPost.CustomerStatus : "");
     const [Status, setStatus] = useState(editPost ? editPost.Status : "");
+    const [SourceCompany, setSourceCompany] = useState(editPost ? editPost.SourceCompany: "");
 
     const [Amount, setAmount] = useState<number | string>(editPost ? Number(editPost.Amount) || "" : "");
     const [QtySold, setQtySold] = useState<number | string>(editPost ? Number(editPost.QtySold) || "" : "");
@@ -101,6 +102,7 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({ userDetails, onCancel, 
                     Channel,
                     WrapUp,
                     Source,
+                    SourceCompany,
                     CustomerType,
                     CustomerStatus,
                     Status,
@@ -281,6 +283,8 @@ const AddAccountForm: React.FC<AddAccountFormProps> = ({ userDetails, onCancel, 
                     setInquiries={setInquiries}
                     Department={Department}
                     setDepartment={setDepartment}
+                    SourceCompany={SourceCompany}
+                    setSourceCompany={setSourceCompany}
 
                     ItemCode={ItemCode}
                     setItemCode={setItemCode}

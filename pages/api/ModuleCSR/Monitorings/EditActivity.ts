@@ -48,6 +48,7 @@ export default async function update(req: NextApiRequest, res: NextApiResponse) 
     Inquiries, 
     Department, 
     DateClosed,
+    SourceCompany,
     createdAt,
     TicketReferenceNumber // optional: if provided, use this; otherwise, ReferenceID will be used
   } = req.body;
@@ -94,6 +95,7 @@ export default async function update(req: NextApiRequest, res: NextApiResponse) 
       Inquiries, 
       Department, 
       DateClosed,
+      SourceCompany,
       createdAt,
       updatedAt: new Date(),
     };

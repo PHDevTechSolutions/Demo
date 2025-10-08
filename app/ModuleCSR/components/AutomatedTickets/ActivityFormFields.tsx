@@ -29,6 +29,8 @@ interface FormFieldsProps {
     CustomerStatus: string; setCustomerStatus: (value: string) => void;
     Status: string; setStatus: (value: string) => void;
 
+    SourceCompany: string; setSourceCompany: (value: string) => void;
+
     Amount: number | string;
     setAmount: (value: number | string) => void;
 
@@ -91,6 +93,7 @@ const ActivityFormFields: React.FC<FormFieldsProps> = ({
     TsmHandlingTime, setTsmHandlingTime, TsaHandlingTime, setTsaHandlingTime, Remarks, setRemarks,
     ItemCode, setItemCode, ItemDescription, setItemDescription,
     Traffic, setTraffic, Inquiries, setInquiries, Department, setDepartment,
+    SourceCompany, setSourceCompany,
 
     SONumber, setSONumber, PONumber, setPONumber, SODate, setSODate, PaymentTerms, setPaymentTerms,
     QuotationNumber, setQuotationNumber, QuotationAmount, setQuotationAmount,
@@ -338,6 +341,15 @@ const ActivityFormFields: React.FC<FormFieldsProps> = ({
                         <option value="">Select Traffic</option>
                         <option value="Sales">Sales</option>
                         <option value="Non-Sales">Non-Sales</option>
+                    </select>
+                </div>
+    
+                <div className="w-full sm:w-1/2 md:w-1/2 px-4 mb-4">
+                    <label className="block text-xs font-bold mb-2 bg-yellow-300 px-2 py-1 rounded w-40" htmlFor="Traffic"><span>Source Company</span></label>
+                    <select id="SourceCompany" value={SourceCompany || ""} onChange={(e) => setSourceCompany(e.target.value)} className="w-full px-3 py-2 border bg-gray-50 rounded text-xs">
+                        <option value="">Select Source</option>
+                        <option value="Ecoshift Corporation">Ecoshift Corporation</option>
+                        <option value="Disruptive Solutions Inc">Disruptive Solutions Inc</option>
                     </select>
                 </div>
             </div>
