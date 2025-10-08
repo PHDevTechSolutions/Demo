@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { neon } from "@neondatabase/serverless";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const sql = neon(process.env.NEON_DB_URL!);
+
 const DAILY_QUOTA = 35;
 
-// ✅ GET → retrieve today's companies
+// ✅ GET → retrieve or generate companies for today
 export async function GET(req: NextRequest) {
   try {
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday
+    const dayOfWeek = today.getDay();
+    const dateStr = today.toISOString().split("T")[0];
 
     if (dayOfWeek === 0) {
-      // Skip Sundays
       return NextResponse.json(
         { companies: [], remaining_quota: 0, message: "No quota on Sundays" },
         { status: 200, headers: { "Cache-Control": "no-store" } }
@@ -24,56 +27,51 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const referenceid = searchParams.get("referenceid");
-    const date = searchParams.get("date");
+    const date = searchParams.get("date") || dateStr;
 
-    if (!referenceid || !date) {
+    if (!referenceid) {
       return NextResponse.json(
-        { error: "Missing referenceid or date" },
+        { error: "Missing referenceid" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    // 1️⃣ Check if today's quota exists
-    const { data: todayRow, error } = await supabase
+    // 1️⃣ Check if already generated today
+    const { data: existing, error: existingError } = await supabase
       .from("daily_quotas")
       .select("companies, remaining_quota")
       .eq("referenceid", referenceid)
       .eq("date", date)
-      .maybeSingle(); // returns null if no row
+      .maybeSingle();
 
-    if (error) throw error;
+    if (existingError) throw existingError;
 
-    if (todayRow) {
-      // ✅ Return existing quota
-      return NextResponse.json(todayRow, {
-        headers: { "Cache-Control": "no-store" },
-        status: 200,
-      });
+    if (existing) {
+      // ✅ Return existing daily quota
+      return NextResponse.json(existing, { headers: { "Cache-Control": "no-store" } });
     }
 
-    // 2️⃣ Fetch fresh companies only if no quota exists
-    const { data: accounts } = await supabase
-      .from("companies")
-      .select("*")
-      .eq("referenceid", referenceid);
+    // 2️⃣ Fetch fresh 35 random companies from Neon
+    const companies = await sql`
+      SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, address
+      FROM companies
+      WHERE referenceid = ${referenceid}
+      ORDER BY RANDOM()
+      LIMIT ${DAILY_QUOTA};
+    `;
 
-    const companies = (accounts || [])
-      .sort(() => 0.5 - Math.random())
-      .slice(0, DAILY_QUOTA);
+    // 3️⃣ Save result to Supabase
+    const { error: insertError } = await supabase.from("daily_quotas").insert([
+      {
+        referenceid,
+        date,
+        companies: companies,
+        remaining_quota: DAILY_QUOTA,
+        updated_at: new Date().toISOString(),
+      },
+    ]);
 
-    // 3️⃣ Save today's quota (upsert per user/date)
-    await supabase.from("daily_quotas").upsert(
-      [
-        {
-          referenceid,
-          date,
-          companies,
-          remaining_quota: DAILY_QUOTA,
-          updated_at: new Date().toISOString(),
-        },
-      ],
-      { onConflict: "referenceid,date" } // single string
-    );
+    if (insertError) throw insertError;
 
     return NextResponse.json(
       { companies, remaining_quota: DAILY_QUOTA },
@@ -88,44 +86,40 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// ✅ POST → update daily quota
+// ✅ POST → update companies & remaining quota
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { referenceid, date, companies, remaining_quota } = body;
+    const { referenceid, date, companies, remaining_quota } = await req.json();
 
-    if (!referenceid || !date || !Array.isArray(companies)) {
+    if (!referenceid || !date) {
       return NextResponse.json(
-        { error: "Invalid payload" },
+        { error: "Missing referenceid or date" },
         { status: 400, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    // Deduplicate companies
-    const uniqueCompanies = companies.filter(
-      (c, idx, arr) => idx === arr.findIndex((x) => x.id === c.id)
-    );
+    const safeCompanies = Array.isArray(companies) ? companies : [];
+    const safeRemaining = typeof remaining_quota === "number"
+      ? remaining_quota
+      : Math.max(DAILY_QUOTA - safeCompanies.length, 0);
 
-    const safeRemaining =
-      typeof remaining_quota === "number"
-        ? remaining_quota
-        : Math.max(DAILY_QUOTA - uniqueCompanies.length, 0);
-
-    await supabase.from("daily_quotas").upsert(
+    const { error: upsertError } = await supabase.from("daily_quotas").upsert(
       [
         {
           referenceid,
           date,
-          companies: uniqueCompanies,
+          companies: safeCompanies,
           remaining_quota: safeRemaining,
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: "referenceid,date" }
+      { onConflict: ["referenceid", "date"] }
     );
 
+    if (upsertError) throw upsertError;
+
     return NextResponse.json(
-      { success: true, data: { companies: uniqueCompanies, remaining_quota: safeRemaining } },
+      { success: true, companies: safeCompanies, remaining_quota: safeRemaining },
       { headers: { "Cache-Control": "no-store" }, status: 200 }
     );
   } catch (err: any) {
@@ -137,6 +131,5 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Force dynamic rendering (no caching)
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
