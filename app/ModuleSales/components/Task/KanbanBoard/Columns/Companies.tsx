@@ -125,8 +125,8 @@ const Companies: React.FC<CompaniesProps> = ({
         {/* OB Calls Counter */}
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs font-semibold text-orange-500">
-            📞 Total OB Calls:{" "}
-            <span className="text-blue-600 font-bold">{tapCount}</span>
+            📞 OB Calls:{" "}
+            <span className="text-orange-500 font-bold">{tapCount}</span>
           </span>
 
           {!loading && (
