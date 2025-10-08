@@ -43,6 +43,16 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState(true);
   const [remainingQuota, setRemainingQuota] = useState(DAILY_QUOTA);
 
+  // Function to shuffle array randomly
+  const shuffleArray = (array: Company[]): Company[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
@@ -64,13 +74,14 @@ const Companies: React.FC<CompaniesProps> = ({
       const response = await res.json();
       console.log("API Response:", response);
 
-      // ✅ FIX: Access the data property from the response
       if (response.success && Array.isArray(response.data)) {
-        // Kunin lang ang unang 35 companies
-        const first35Companies = response.data.slice(0, DAILY_QUOTA);
-        setCompanies(first35Companies);
-        setRemainingQuota(DAILY_QUOTA - first35Companies.length);
-        console.log("Companies set:", first35Companies.length);
+        // Shuffle companies randomly and take only DAILY_QUOTA
+        const shuffledCompanies = shuffleArray(response.data);
+        const random35Companies = shuffledCompanies.slice(0, DAILY_QUOTA);
+        
+        setCompanies(random35Companies);
+        setRemainingQuota(DAILY_QUOTA);
+        console.log("Random 35 companies set:", random35Companies.length);
       } else {
         console.log("No data found or invalid response structure");
         setCompanies([]);
@@ -115,12 +126,12 @@ const Companies: React.FC<CompaniesProps> = ({
           <span className="mr-1">🏢</span> OB Calls:{" "}
           <span className="ml-1 text-red-500">{remainingQuota}</span>
         </span>
-        {!loading && companies.length === 0 && (
+        {!loading && (
           <button 
             onClick={retryFetch}
             className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
           >
-            Retry
+            Refresh
           </button>
         )}
       </h3>
