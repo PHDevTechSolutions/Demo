@@ -125,7 +125,7 @@ const Companies: React.FC<CompaniesProps> = ({
         {/* OB Calls Counter */}
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs font-semibold text-black">
-            📞 OB Calls:{" "}
+            📞 OB Calls:{" "} / 35 Min
             <span className="text-orange-500 font-bold">{tapCount}</span>
           </span>
 
@@ -139,7 +139,7 @@ const Companies: React.FC<CompaniesProps> = ({
                   : "bg-green-500 text-white hover:bg-green-600"
               }`}
             >
-              {replacing ? "Replacing..." : "Replace"}
+              {replacing ? "Refreshing..." : "Refresh"}
             </button>
           )}
         </div>
