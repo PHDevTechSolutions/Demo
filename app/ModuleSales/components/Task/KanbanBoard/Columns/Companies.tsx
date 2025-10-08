@@ -29,13 +29,13 @@ const Companies: React.FC<CompaniesProps> = ({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [tapCount, setTapCount] = useState(0);
-  const [replacing, setReplacing] = useState(false); // for Replace button loading
+  const [replacing, setReplacing] = useState(false);
 
-const limit = 35;
-const isNearLimit = tapCount >= limit * 0.8;
-const isFull = tapCount >= limit;
+  const limit = 35;
+  const isNearLimit = tapCount >= limit * 0.8;
+  const isFull = tapCount >= limit;
 
-  // --- 🕓 Handle daily reset of localStorage counter ---
+  // 🕓 Handle daily reset of localStorage counter
   useEffect(() => {
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem("tapDate");
@@ -44,14 +44,13 @@ const isFull = tapCount >= limit;
     if (savedDate === today && savedCount) {
       setTapCount(parseInt(savedCount, 10));
     } else {
-      // reset for new day
       localStorage.setItem("tapDate", today);
       localStorage.setItem("tapCount", "0");
       setTapCount(0);
     }
   }, []);
 
-  // --- 🧮 Increment tap count when adding company ---
+  // 🧮 Increment tap count
   const handleAddCompany = (comp: Company) => {
     handleSubmit(comp, false);
     const newCount = tapCount + 1;
@@ -69,7 +68,7 @@ const isFull = tapCount >= limit;
     return shuffled;
   };
 
-  // 🏢 Fetch companies from API
+  // 🏢 Fetch companies
   const fetchCompanies = async (forceReplace = false) => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
@@ -85,16 +84,12 @@ const isFull = tapCount >= limit;
           userDetails.ReferenceID
         }&_t=${Date.now()}`
       );
-
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const response = await res.json();
-
       if (response.success && Array.isArray(response.data)) {
         const random35 = shuffleArray(response.data).slice(0, 35);
-
         if (forceReplace) {
-          // Clear first to force UI refresh
           setCompanies([]);
           setTimeout(() => setCompanies(random35), 100);
         } else {
@@ -117,7 +112,7 @@ const isFull = tapCount >= limit;
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  // --- 🔁 Replace button handler ---
+  // 🔁 Replace button
   const handleReplace = async () => {
     await fetchCompanies(true);
   };
@@ -127,65 +122,83 @@ const isFull = tapCount >= limit;
       {/* Header Section */}
       <div className="mb-2">
         {/* OB Calls Counter */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-  {/* OB Calls Counter */}
-  <div className="flex items-center mb-1 sm:mb-0">
-    <span className="text-xs font-semibold text-black flex items-center gap-1">
-      📞 <span>OB Calls:</span>
-      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
-  <div
-    className={`h-1 rounded-full transition-all ${
-      isFull
-        ? "bg-red-500"
-        : isNearLimit
-        ? "bg-orange-400"
-        : "bg-green-500"
-    }`}
-    style={{ width: `${Math.min((tapCount / limit) * 100, 100)}%` }}
-  />
-</div>
-    </span>
-  </div>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+          {/* Counter & Progress */}
+          <div className="flex flex-col w-full sm:w-auto">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-black flex items-center gap-1">
+                📞 OB Calls:
+              </span>
+              <span
+                className={`text-xs font-bold ${
+                  isFull
+                    ? "text-red-500"
+                    : isNearLimit
+                    ? "text-orange-500"
+                    : "text-green-600"
+                }`}
+              >
+                {tapCount}{" "}
+                <span className="text-[10px] text-gray-500 font-normal">
+                  / {limit} Min
+                </span>
+              </span>
+            </div>
 
-  {/* Refresh Button */}
-  {!loading && (
-    <button
-      onClick={handleReplace}
-      disabled={replacing}
-      className={`text-xs px-3 py-1 rounded-md transition-all font-medium shadow-sm ${
-        replacing
-          ? "bg-gray-400 text-white cursor-not-allowed"
-          : "bg-green-500 text-white hover:bg-green-600"
-      }`}
-    >
-      {replacing ? (
-  <div className="flex items-center gap-1">
-    <svg
-      className="animate-spin h-3 w-3 text-white"
-      viewBox="0 0 24 24"
-    >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      ></circle>
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      ></path>
-    </svg>
-    <span>Refreshing...</span>
-  </div>
-) : (
-  "Refresh"
-)}
-    </button>
-  )}
-</div>
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
+              <div
+                className={`h-2 rounded-full transition-all duration-500 ease-in-out ${
+                  isFull
+                    ? "bg-red-500"
+                    : isNearLimit
+                    ? "bg-orange-400"
+                    : "bg-green-500"
+                }`}
+                style={{ width: `${Math.min((tapCount / limit) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Refresh Button */}
+          {!loading && (
+            <button
+              onClick={handleReplace}
+              disabled={replacing}
+              className={`text-xs px-3 py-1 rounded-md font-medium transition-all shadow-sm ${
+                replacing
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
+              }`}
+            >
+              {replacing ? (
+                <div className="flex items-center gap-1">
+                  <svg
+                    className="animate-spin h-3 w-3 text-white"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    ></path>
+                  </svg>
+                  <span>Refreshing...</span>
+                </div>
+              ) : (
+                "Refresh"
+              )}
+            </button>
+          )}
+        </div>
 
         {/* Companies Header */}
         <h3 className="flex items-center text-[10px] italic font-bold text-gray-600 border-t border-gray-200 pt-2">
