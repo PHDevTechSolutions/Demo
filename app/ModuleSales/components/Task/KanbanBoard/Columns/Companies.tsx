@@ -107,24 +107,29 @@ const Companies: React.FC<CompaniesProps> = ({
 
   return (
     <div className="space-y-1 overflow-y-auto">
-      <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="flex items-center">
-          <span className="mr-1">🏢</span> Showing 35 Random Companies
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-500">
-            👆 Tap Count: {tapCount}
-          </span>
-          {!loading && (
-            <button
-              onClick={handleReplace}
-              className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-            >
-              Replace
-            </button>
-          )}
-        </div>
-      </h3>
+      {/* Header Section */}
+<div className="mb-2">
+  {/* OB Calls Counter */}
+  <div className="flex justify-between items-center mb-1">
+    <span className="text-[11px] font-semibold text-gray-600">
+      📞 OB Calls: <span className="text-blue-600">{tapCount}</span>
+    </span>
+
+    {!loading && (
+      <button
+        onClick={handleReplace}
+        className="text-xs bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-all"
+      >
+        Replace
+      </button>
+    )}
+  </div>
+
+  {/* Companies Header */}
+  <h3 className="flex items-center text-xs font-bold text-gray-600 border-t border-gray-200 pt-2">
+    <span className="mr-1">🏢</span> Showing 35 Random Companies
+  </h3>
+</div>
 
       {loading ? (
         <p className="text-xs text-gray-400">Loading companies...</p>
