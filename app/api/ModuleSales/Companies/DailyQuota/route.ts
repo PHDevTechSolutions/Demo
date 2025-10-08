@@ -65,19 +65,19 @@ export async function GET(req: NextRequest) {
 
     // 3️⃣ Save result to Supabase
     const { error: insertError } = await supabase.from("daily_quotas").insert([
-  {
-    referenceid,
-    date,
-    companies: rows, // ito lang ang safe value
-    remaining_quota: DAILY_QUOTA,
-    updated_at: new Date().toISOString(),
-  },
-]);
+      {
+        referenceid,
+        date,
+        companies: rows,
+        remaining_quota: DAILY_QUOTA,
+        updated_at: new Date().toISOString(),
+      },
+    ]);
 
     if (insertError) throw insertError;
 
     return NextResponse.json(
-      { companies: safeCompanies, remaining_quota: DAILY_QUOTA },
+      { companies: rows, remaining_quota: DAILY_QUOTA },
       { headers: { "Cache-Control": "no-store" }, status: 200 }
     );
   } catch (err: any) {
@@ -108,8 +108,9 @@ export async function POST(req: NextRequest) {
         : Math.max(DAILY_QUOTA - safeCompanies.length, 0);
 
     // ✅ Upsert (one record per user/date)
-    const { error: upsertError } = await supabase.from("daily_quotas").upsert(
-      [
+    const { error: upsertError } = await supabase
+      .from("daily_quotas")
+      .upsert(
         {
           referenceid,
           date,
@@ -117,12 +118,10 @@ export async function POST(req: NextRequest) {
           remaining_quota: safeRemaining,
           updated_at: new Date().toISOString(),
         },
-      ],
-      {
-        // ⚠️ Must be a string, not array
-        onConflict: "referenceid,date",
-      }
-    );
+        {
+          onConflict: 'referenceid,date'
+        }
+      );
 
     if (upsertError) throw upsertError;
 
