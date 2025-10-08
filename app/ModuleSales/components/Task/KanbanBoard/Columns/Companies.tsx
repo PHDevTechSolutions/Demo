@@ -29,6 +29,7 @@ const Companies: React.FC<CompaniesProps> = ({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [tapCount, setTapCount] = useState(0);
+  const [replacing, setReplacing] = useState(false); // for Replace button loading
 
   // --- 🕓 Handle daily reset of localStorage counter ---
   useEffect(() => {
@@ -65,16 +66,20 @@ const Companies: React.FC<CompaniesProps> = ({
   };
 
   // 🏢 Fetch companies from API
-  const fetchCompanies = async () => {
+  const fetchCompanies = async (forceReplace = false) => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (forceReplace) setReplacing(true);
+    else setLoading(true);
+
     try {
       const res = await fetch(
-        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
+        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${
+          userDetails.ReferenceID
+        }&_t=${Date.now()}`
       );
 
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -83,7 +88,14 @@ const Companies: React.FC<CompaniesProps> = ({
 
       if (response.success && Array.isArray(response.data)) {
         const random35 = shuffleArray(response.data).slice(0, 35);
-        setCompanies(random35);
+
+        if (forceReplace) {
+          // Clear first to force UI refresh
+          setCompanies([]);
+          setTimeout(() => setCompanies(random35), 100);
+        } else {
+          setCompanies(random35);
+        }
       } else {
         setCompanies([]);
       }
@@ -91,46 +103,54 @@ const Companies: React.FC<CompaniesProps> = ({
       console.error("Failed to fetch companies:", err);
       setCompanies([]);
     } finally {
-      setLoading(false);
+      if (forceReplace) setReplacing(false);
+      else setLoading(false);
     }
   };
 
-  // First load
+  // 🧩 First load
   useEffect(() => {
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
   // --- 🔁 Replace button handler ---
   const handleReplace = async () => {
-    await fetchCompanies();
+    await fetchCompanies(true);
   };
 
   return (
     <div className="space-y-1 overflow-y-auto">
       {/* Header Section */}
-<div className="mb-2">
-  {/* OB Calls Counter */}
-  <div className="flex justify-between items-center mb-1">
-    <span className="text-xs font-semibold text-orange-500">
-      📞 Total OB Calls: <span className="text-blue-600">{tapCount}</span>
-    </span>
+      <div className="mb-2">
+        {/* OB Calls Counter */}
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs font-semibold text-orange-500">
+            📞 Total OB Calls:{" "}
+            <span className="text-blue-600 font-bold">{tapCount}</span>
+          </span>
 
-    {!loading && (
-      <button
-        onClick={handleReplace}
-        className="text-xs bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition-all"
-      >
-        Replace
-      </button>
-    )}
-  </div>
+          {!loading && (
+            <button
+              onClick={handleReplace}
+              disabled={replacing}
+              className={`text-xs px-3 py-1 rounded-md transition-all ${
+                replacing
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
+              }`}
+            >
+              {replacing ? "Replacing..." : "Replace"}
+            </button>
+          )}
+        </div>
 
-  {/* Companies Header */}
-  <h3 className="flex items-center text-xs font-bold text-gray-600 border-t border-gray-200 pt-2">
-    <span className="mr-1">🏢</span> Showing 35 Random Companies
-  </h3>
-</div>
+        {/* Companies Header */}
+        <h3 className="flex items-center text-xs font-bold text-gray-600 border-t border-gray-200 pt-2">
+          <span className="mr-1">🏢</span> Showing 35 Random Companies
+        </h3>
+      </div>
 
+      {/* Company List */}
       {loading ? (
         <p className="text-xs text-gray-400">Loading companies...</p>
       ) : companies.length > 0 ? (
@@ -154,7 +174,7 @@ const Companies: React.FC<CompaniesProps> = ({
             🚫 No companies available.
           </p>
           <button
-            onClick={fetchCompanies}
+            onClick={() => fetchCompanies()}
             className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
           >
             Try Again
