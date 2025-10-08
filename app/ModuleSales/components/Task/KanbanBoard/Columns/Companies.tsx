@@ -20,19 +20,6 @@ interface CompaniesProps {
   userDetails: { ReferenceID?: string } | null;
 }
 
-const isCompanyDue = (comp: Company) => {
-  const lastAdded = comp.id ? localStorage.getItem(`lastAdded_${comp.id}`) : null;
-  if (!lastAdded) return true;
-  const diffDays = Math.floor(
-    (Date.now() - new Date(lastAdded).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  if (comp.typeclient === "Top 50") return diffDays >= 10;
-  if (comp.typeclient === "Next 30" || comp.typeclient === "Balance 20") return diffDays >= 30;
-  return true;
-};
-
-const DAILY_QUOTA = 35;
-
 const Companies: React.FC<CompaniesProps> = ({
   expandedIdx,
   setExpandedIdx,
@@ -41,9 +28,8 @@ const Companies: React.FC<CompaniesProps> = ({
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [remainingQuota, setRemainingQuota] = useState(DAILY_QUOTA);
 
-  // Function to shuffle array randomly
+  // 🔀 Shuffle helper
   const shuffleArray = (array: Company[]): Company[] => {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -53,6 +39,7 @@ const Companies: React.FC<CompaniesProps> = ({
     return shuffled;
   };
 
+  // 🏢 Fetch companies from API
   const fetchCompanies = async () => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
@@ -61,36 +48,24 @@ const Companies: React.FC<CompaniesProps> = ({
 
     setLoading(true);
     try {
-      console.log("Fetching companies from FetchAccount API...");
-
       const res = await fetch(
         `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
       );
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const response = await res.json();
-      console.log("API Response:", response);
 
       if (response.success && Array.isArray(response.data)) {
-        // Shuffle companies randomly and take only DAILY_QUOTA
-        const shuffledCompanies = shuffleArray(response.data);
-        const random35Companies = shuffledCompanies.slice(0, DAILY_QUOTA);
-        
-        setCompanies(random35Companies);
-        setRemainingQuota(DAILY_QUOTA);
-        console.log("Random 35 companies set:", random35Companies.length);
+        // Shuffle and limit to 35
+        const random35 = shuffleArray(response.data).slice(0, 35);
+        setCompanies(random35);
       } else {
-        console.log("No data found or invalid response structure");
         setCompanies([]);
-        setRemainingQuota(0);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to fetch companies:", err);
       setCompanies([]);
-      setRemainingQuota(0);
     } finally {
       setLoading(false);
     }
@@ -100,35 +75,15 @@ const Companies: React.FC<CompaniesProps> = ({
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
 
-  const handleAddCompany = (comp: Company) => {
-    handleSubmit(comp, false);
-    const updated = companies.filter((c) => c.id !== comp.id);
-    setCompanies(updated);
-    setRemainingQuota(Math.max(remainingQuota - 1, 0));
-
-    if (comp.id) localStorage.setItem(`lastAdded_${comp.id}`, new Date().toISOString());
-  };
-
-  const handleCancelCompany = (comp: Company) => {
-    let updated = companies.filter((c) => c.id !== comp.id);
-    setCompanies(updated);
-    setRemainingQuota(remainingQuota);
-  };
-
-  const retryFetch = () => {
-    fetchCompanies();
-  };
-
   return (
     <div className="space-y-1 overflow-y-auto">
       <h3 className="flex justify-between items-center text-xs font-bold text-gray-600 mb-2">
         <span className="flex items-center">
-          <span className="mr-1">🏢</span> OB Calls:{" "}
-          <span className="ml-1 text-red-500">{remainingQuota}</span>
+          <span className="mr-1">🏢</span> Showing 35 Random Companies
         </span>
         {!loading && (
-          <button 
-            onClick={retryFetch}
+          <button
+            onClick={fetchCompanies}
             className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
           >
             Refresh
@@ -148,18 +103,16 @@ const Companies: React.FC<CompaniesProps> = ({
               comp={comp}
               isExpanded={isExpanded}
               onToggle={() => setExpandedIdx(isExpanded ? null : key)}
-              onAdd={handleAddCompany}
-              onCancel={handleCancelCompany}
+              onAdd={(comp) => handleSubmit(comp, false)}
+              onCancel={() => {}}
             />
           );
         })
       ) : (
         <div className="text-center p-4">
-          <p className="text-xs text-gray-400 mb-2">
-            🚫 No companies available.
-          </p>
-          <button 
-            onClick={retryFetch}
+          <p className="text-xs text-gray-400 mb-2">🚫 No companies available.</p>
+          <button
+            onClick={fetchCompanies}
             className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
           >
             Try Again
