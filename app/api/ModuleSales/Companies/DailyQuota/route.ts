@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const sql = neon(process.env.NEON_DB_URL!);
+const sql = neon(process.env.TASKFLOW_DB_URL!);
 
 const DAILY_QUOTA = 35;
 
