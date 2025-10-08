@@ -1,4 +1,4 @@
-mo!import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
 
 // Validate environment variable and initialize database client
