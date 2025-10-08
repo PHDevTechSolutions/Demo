@@ -61,18 +61,18 @@ export async function GET(req: NextRequest) {
       LIMIT ${DAILY_QUOTA};
     `;
 
-    const safeCompanies = JSON.parse(JSON.stringify(companies));
+    const rows = Array.isArray(companies) ? companies : companies.rows ?? [];
 
     // 3️⃣ Save result to Supabase
     const { error: insertError } = await supabase.from("daily_quotas").insert([
-      {
-        referenceid,
-        date,
-        companies: safeCompanies,
-        remaining_quota: DAILY_QUOTA,
-        updated_at: new Date().toISOString(),
-      },
-    ]);
+  {
+    referenceid,
+    date,
+    companies: rows, // ito lang ang safe value
+    remaining_quota: DAILY_QUOTA,
+    updated_at: new Date().toISOString(),
+  },
+]);
 
     if (insertError) throw insertError;
 
