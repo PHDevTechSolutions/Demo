@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { neon } from "@neondatabase/serverless";
+import { Pool } from 'pg';
+
+// Use connection pool instead of direct neon client
+const pool = new Pool({
+  connectionString: process.env.TASKFLOW_DB_URL!,
+  max: 5, // maximum number of clients in the pool
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const sql = neon(process.env.TASKFLOW_DB_URL!);
-
 const DAILY_QUOTA = 35;
 
 // ✅ GET → retrieve or generate companies for today
 export async function GET(req: NextRequest) {
+  let client;
   try {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -48,21 +55,20 @@ export async function GET(req: NextRequest) {
     if (existingError) throw existingError;
 
     if (existing) {
-      // ✅ Return existing daily quota
       return NextResponse.json(existing, { headers: { "Cache-Control": "no-store" } });
     }
 
-    // 2️⃣ Fetch fresh 35 random companies from Neon
-    const companies = await sql`
+    // 2️⃣ Fetch fresh 35 random companies using connection pool
+    client = await pool.connect();
+    const result = await client.query(`
       SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, address
       FROM companies
-      WHERE referenceid = ${referenceid}
+      WHERE referenceid = $1
       ORDER BY RANDOM()
-      LIMIT ${DAILY_QUOTA};
-    `;
+      LIMIT $2;
+    `, [referenceid, DAILY_QUOTA]);
 
-    // SIMPLE FIX: Always treat result as array
-    const companiesArray = Array.isArray(companies) ? companies : [];
+    const companiesArray = result.rows;
 
     // 3️⃣ Save result to Supabase
     const { error: insertError } = await supabase.from("daily_quotas").insert([
@@ -87,10 +93,13 @@ export async function GET(req: NextRequest) {
       { error: err.message },
       { status: 500, headers: { "Cache-Control": "no-store" } }
     );
+  } finally {
+    // Always release the client back to the pool
+    if (client) client.release();
   }
 }
 
-// ✅ POST → update companies & remaining quota
+// POST method remains the same...
 export async function POST(req: NextRequest) {
   try {
     const { referenceid, date, companies, remaining_quota } = await req.json();
@@ -108,7 +117,6 @@ export async function POST(req: NextRequest) {
         ? remaining_quota
         : Math.max(DAILY_QUOTA - safeCompanies.length, 0);
 
-    // ✅ Upsert (one record per user/date)
     const { error: upsertError } = await supabase
       .from("daily_quotas")
       .upsert(
