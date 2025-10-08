@@ -43,8 +43,7 @@ export async function GET(req: Request) {
       OR manager = ${referenceid}
     )
     AND activitystatus IN ('Done','Delivered')
-  ORDER BY date_created DESC
-  LIMIT 200;
+  ORDER BY date_created DESC;
 `;
 
 
