@@ -28,6 +28,31 @@ const Companies: React.FC<CompaniesProps> = ({
 }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tapCount, setTapCount] = useState(0);
+
+  // --- 🕓 Handle daily reset of localStorage counter ---
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const savedDate = localStorage.getItem("tapDate");
+    const savedCount = localStorage.getItem("tapCount");
+
+    if (savedDate === today && savedCount) {
+      setTapCount(parseInt(savedCount, 10));
+    } else {
+      // reset for new day
+      localStorage.setItem("tapDate", today);
+      localStorage.setItem("tapCount", "0");
+      setTapCount(0);
+    }
+  }, []);
+
+  // --- 🧮 Increment tap count when adding company ---
+  const handleAddCompany = (comp: Company) => {
+    handleSubmit(comp, false);
+    const newCount = tapCount + 1;
+    setTapCount(newCount);
+    localStorage.setItem("tapCount", newCount.toString());
+  };
 
   // 🔀 Shuffle helper
   const shuffleArray = (array: Company[]): Company[] => {
@@ -57,7 +82,6 @@ const Companies: React.FC<CompaniesProps> = ({
       const response = await res.json();
 
       if (response.success && Array.isArray(response.data)) {
-        // Shuffle and limit to 35
         const random35 = shuffleArray(response.data).slice(0, 35);
         setCompanies(random35);
       } else {
@@ -71,9 +95,15 @@ const Companies: React.FC<CompaniesProps> = ({
     }
   };
 
+  // First load
   useEffect(() => {
     fetchCompanies();
   }, [userDetails?.ReferenceID]);
+
+  // --- 🔁 Replace button handler ---
+  const handleReplace = async () => {
+    await fetchCompanies();
+  };
 
   return (
     <div className="space-y-1 overflow-y-auto">
@@ -81,14 +111,19 @@ const Companies: React.FC<CompaniesProps> = ({
         <span className="flex items-center">
           <span className="mr-1">🏢</span> Showing 35 Random Companies
         </span>
-        {!loading && (
-          <button
-            onClick={fetchCompanies}
-            className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-          >
-            Refresh
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-500">
+            👆 Tap Count: {tapCount}
+          </span>
+          {!loading && (
+            <button
+              onClick={handleReplace}
+              className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
+            >
+              Replace
+            </button>
+          )}
+        </div>
       </h3>
 
       {loading ? (
@@ -103,14 +138,16 @@ const Companies: React.FC<CompaniesProps> = ({
               comp={comp}
               isExpanded={isExpanded}
               onToggle={() => setExpandedIdx(isExpanded ? null : key)}
-              onAdd={(comp) => handleSubmit(comp, false)}
+              onAdd={() => handleAddCompany(comp)} // ✅ counted here
               onCancel={() => {}}
             />
           );
         })
       ) : (
         <div className="text-center p-4">
-          <p className="text-xs text-gray-400 mb-2">🚫 No companies available.</p>
+          <p className="text-xs text-gray-400 mb-2">
+            🚫 No companies available.
+          </p>
           <button
             onClick={fetchCompanies}
             className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
