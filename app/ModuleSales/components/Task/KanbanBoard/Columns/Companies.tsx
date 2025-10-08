@@ -52,24 +52,27 @@ const Companies: React.FC<CompaniesProps> = ({
     setLoading(true);
     try {
       console.log("Fetching companies from FetchAccount API...");
-      
+
       const res = await fetch(
         `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
       );
-      
+
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      
-      const data = await res.json();
-      console.log("API Response:", data);
 
-      if (data && Array.isArray(data)) {
+      const response = await res.json();
+      console.log("API Response:", response);
+
+      // ✅ FIX: Access the data property from the response
+      if (response.success && Array.isArray(response.data)) {
         // Kunin lang ang unang 35 companies
-        const first35Companies = data.slice(0, DAILY_QUOTA);
+        const first35Companies = response.data.slice(0, DAILY_QUOTA);
         setCompanies(first35Companies);
         setRemainingQuota(DAILY_QUOTA - first35Companies.length);
+        console.log("Companies set:", first35Companies.length);
       } else {
+        console.log("No data found or invalid response structure");
         setCompanies([]);
         setRemainingQuota(0);
       }
