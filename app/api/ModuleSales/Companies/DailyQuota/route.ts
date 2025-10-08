@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 2️⃣ Fetch fresh 35 random companies from Neon
-    const companiesResult = await sql`
+    const companies = await sql`
       SELECT id, companyname, contactperson, contactnumber, emailaddress, typeclient, address
       FROM companies
       WHERE referenceid = ${referenceid}
@@ -61,16 +61,8 @@ export async function GET(req: NextRequest) {
       LIMIT ${DAILY_QUOTA};
     `;
 
-    // Fix: Handle the result properly based on Neon's return type
-    let companiesArray: any[] = [];
-    
-    if (Array.isArray(companiesResult)) {
-      companiesArray = companiesResult;
-    } else if (companiesResult && typeof companiesResult === 'object' && 'rows' in companiesResult) {
-      companiesArray = (companiesResult as any).rows ?? [];
-    } else {
-      companiesArray = [];
-    }
+    // SIMPLE FIX: Always treat result as array
+    const companiesArray = Array.isArray(companies) ? companies : [];
 
     // 3️⃣ Save result to Supabase
     const { error: insertError } = await supabase.from("daily_quotas").insert([
