@@ -56,37 +56,23 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const [activeLimit, setActiveLimit] = useState(PAGE_SIZE);
   const [completedLimit, setCompletedLimit] = useState(PAGE_SIZE);
 
-  const STORAGE_KEY = `tasks_${userDetails?.ReferenceID}`;
-
-  const fetchTasks = async (forceRefresh = false) => {
+  // ✅ Fetch tasks directly from API (no localStorage)
+  const fetchTasks = async () => {
     if (!userDetails?.ReferenceID) return;
-
     setLoading(true);
 
     try {
-      // 1️⃣ Try from localStorage if not forced refresh
-      if (!forceRefresh) {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed: Note[] = JSON.parse(stored);
-          setTasks(parsed);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // 2️⃣ Fetch from API
       const res = await fetch(
-  `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`,
-  { cache: "no-store" } // ✅ always fresh
-);
+        `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`,
+        { cache: "no-store" }
+      );
       if (!res.ok) throw new Error("Failed to fetch tasks");
 
       const data = await res.json();
       const fetchedTasks: Note[] = Array.isArray(data.data) ? data.data : [];
 
       const userTasks = fetchedTasks
-        .filter(task => task.referenceid === userDetails.ReferenceID)
+        .filter((task) => task.referenceid === userDetails.ReferenceID)
         .sort((a, b) => {
           const dateA = a.date_updated ? new Date(a.date_updated) : new Date(a.date_created);
           const dateB = b.date_updated ? new Date(b.date_updated) : new Date(b.date_created);
@@ -94,9 +80,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
         });
 
       setTasks(userTasks);
-
-      // 3️⃣ Save to localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userTasks));
     } catch (error: any) {
       toast.error(error.message || "Something went wrong while fetching tasks");
     } finally {
@@ -112,13 +95,13 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   const handleRefresh = async () => {
     setRefreshing(true);
     toast.info("Refreshing data...");
-    await fetchTasks(true); // force API refresh
+    await fetchTasks();
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     const term = searchTerm.toLowerCase();
     const searchMatch = Object.values(task).some(
-      val => val && val.toString().toLowerCase().includes(term)
+      (val) => val && val.toString().toLowerCase().includes(term)
     );
     const statusMatch = statusFilter
       ? (task.activitystatus || "").toLowerCase() === statusFilter.toLowerCase()
@@ -129,9 +112,9 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
   });
 
   const activeTasks = filteredTasks.filter(
-    task => !["delivered"].includes((task.activitystatus || "").toLowerCase())
+    (task) => !["delivered"].includes((task.activitystatus || "").toLowerCase())
   );
-  const completedTasks = filteredTasks.filter(task =>
+  const completedTasks = filteredTasks.filter((task) =>
     ["delivered", "done", "completed"].includes((task.activitystatus || "").toLowerCase())
   );
 
@@ -158,12 +141,12 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
           placeholder="Search..."
           className="shadow-sm border px-3 py-2 rounded text-xs w-full md:w-auto flex-grow capitalize"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         <select
           className="shadow-sm border px-3 py-2 rounded text-xs w-full md:w-auto"
           value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
+          onChange={(e) => setStatusFilter(e.target.value)}
         >
           <option value="">All Status</option>
           {[
@@ -177,7 +160,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
             "so-done",
             "cancelled",
             "loss",
-          ].map(status => (
+          ].map((status) => (
             <option className="capitalize" key={status} value={status}>
               {status}
             </option>
@@ -187,13 +170,13 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
           type="date"
           className="shadow-sm border px-3 py-2 rounded text-xs w-full md:w-auto"
           value={dateFrom}
-          onChange={e => setDateFrom(e.target.value)}
+          onChange={(e) => setDateFrom(e.target.value)}
         />
         <input
           type="date"
           className="shadow-sm border px-3 py-2 rounded text-xs w-full md:w-auto"
           value={dateTo}
-          onChange={e => setDateTo(e.target.value)}
+          onChange={(e) => setDateTo(e.target.value)}
         />
       </div>
 
