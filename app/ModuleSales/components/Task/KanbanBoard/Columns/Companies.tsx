@@ -54,7 +54,7 @@ const Companies: React.FC<CompaniesProps> = ({
       console.log("Fetching companies from FetchAccount API...");
       
       const res = await fetch(
-        `/api/ModuleSales/Companies/FetchAccount?referenceid=${userDetails.ReferenceID}`
+        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}`
       );
       
       if (!res.ok) {
