@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         },
       ],
-      { onConflict: ["referenceid", "date"] }
+      { onConflict: "referenceid,date" }
     );
 
     if (upsertError) throw upsertError;
