@@ -145,7 +145,7 @@ const Companies: React.FC<CompaniesProps> = ({
         </div>
 
         {/* Companies Header */}
-        <h3 className="flex items-center text-xs font-bold text-gray-600 border-t border-gray-200 pt-2">
+        <h3 className="flex items-center text-[10px] italic font-bold text-gray-600 border-t border-gray-200 pt-2">
           <span className="mr-1">🏢</span> Showing 35 Random Companies
         </h3>
       </div>
