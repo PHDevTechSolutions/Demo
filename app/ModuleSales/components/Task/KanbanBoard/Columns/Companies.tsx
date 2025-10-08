@@ -31,6 +31,10 @@ const Companies: React.FC<CompaniesProps> = ({
   const [tapCount, setTapCount] = useState(0);
   const [replacing, setReplacing] = useState(false); // for Replace button loading
 
+const limit = 35;
+const isNearLimit = tapCount >= limit * 0.8;
+const isFull = tapCount >= limit;
+
   // --- 🕓 Handle daily reset of localStorage counter ---
   useEffect(() => {
     const today = new Date().toDateString();
@@ -128,12 +132,18 @@ const Companies: React.FC<CompaniesProps> = ({
   <div className="flex items-center mb-1 sm:mb-0">
     <span className="text-xs font-semibold text-black flex items-center gap-1">
       📞 <span>OB Calls:</span>
-      <span className="text-orange-500 font-bold">
-        {tapCount}
-        <span className="text-[10px] text-gray-500 font-normal ml-1">
-          / 35 Min
-        </span>
-      </span>
+      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+  <div
+    className={`h-1 rounded-full transition-all ${
+      isFull
+        ? "bg-red-500"
+        : isNearLimit
+        ? "bg-orange-400"
+        : "bg-green-500"
+    }`}
+    style={{ width: `${Math.min((tapCount / limit) * 100, 100)}%` }}
+  />
+</div>
     </span>
   </div>
 
@@ -148,7 +158,31 @@ const Companies: React.FC<CompaniesProps> = ({
           : "bg-green-500 text-white hover:bg-green-600"
       }`}
     >
-      {replacing ? "Refreshing..." : "Refresh"}
+      {replacing ? (
+  <div className="flex items-center gap-1">
+    <svg
+      className="animate-spin h-3 w-3 text-white"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      ></circle>
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      ></path>
+    </svg>
+    <span>Refreshing...</span>
+  </div>
+) : (
+  "Refresh"
+)}
     </button>
   )}
 </div>
