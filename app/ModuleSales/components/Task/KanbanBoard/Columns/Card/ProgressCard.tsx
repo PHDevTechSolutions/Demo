@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, memo } from "react";
-import { FaChevronDown, FaChevronUp, FaPen, FaTrash } from "react-icons/fa";
+import { FaChevronDown, FaChevronUp, FaPen, FaTrash, FaInfoCircle } from "react-icons/fa";
 import DeleteModal from "../Modal/Delete";
 import DoughnutChart from "../Chart/Doughnut";
 
@@ -45,6 +45,7 @@ export interface ProgressItem {
 
 interface ProgressCardProps {
   progress: ProgressItem;
+  allProgress?: ProgressItem[];
   profilePicture?: string;
   onAddClick: () => void;
   onDeleteClick?: (progress: ProgressItem) => Promise<void>;
@@ -72,12 +73,14 @@ const STATUS_BG: Record<string, string> = {
 
 const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   progress,
+  allProgress,
   profilePicture,
   onAddClick,
   onDeleteClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [deleteStep, setDeleteStep] = useState(0); // 0 = closed, 1 = step1, 2 = step2
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [showInfo, setShowInfo] = useState(false); // ✅ for duplicate modal
   const [soData, setSoData] = useState<any>(null);
 
   if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
@@ -85,7 +88,14 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
   const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";
 
-  // Fetch SO / Quotation data based on activitynumber
+  // ✅ Find duplicates (same companyname, not done/delivered)
+  const duplicates =
+    allProgress?.filter(
+      (item) =>
+        item.companyname === progress.companyname && item.id !== progress.id
+    ) || [];
+
+
   useEffect(() => {
     const fetchSOData = async () => {
       if (!progress.activitynumber) return;
@@ -94,20 +104,13 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           `/api/ModuleSales/Task/ActivityPlanner/FetchQS?activitynumber=${progress.activitynumber}`
         );
         const result = await res.json();
-        if (result.success) {
-          setSoData(result.data); // single object now
-        }
+        if (result.success) setSoData(result.data);
       } catch (err) {
         console.error("Failed to fetch SO data:", err);
       }
     };
     fetchSOData();
   }, [progress.activitynumber]);
-
-
-  const projectCategoryStr = Array.isArray(progress.projectcategory)
-    ? progress.projectcategory.join(", ")
-    : progress.projectcategory || "";
 
   const handleDeleteClick = () => setDeleteStep(1);
 
@@ -123,6 +126,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
 
   return (
     <div className={`rounded-lg shadow overflow-hidden relative p-2 ${bgColor}`}>
+      {/* Header */}
       <div
         className="flex items-center mb-2 cursor-pointer"
         onClick={() => setIsExpanded((prev) => !prev)}
@@ -145,8 +149,24 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
           )}
         </div>
         <div className="flex items-center space-x-2">
+          {/* ✅ Info Button */}
+          {duplicates.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowInfo(true);
+              }}
+              className="px-2 py-1 bg-purple-500 text-white text-[10px] rounded hover:bg-purple-600 flex items-center gap-1"
+              title="Show duplicate transactions"
+            >
+              <FaInfoCircle size={10} /> Info
+            </button>
+          )}
           <button
-            onClick={onAddClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddClick();
+            }}
             className="px-2 py-1 bg-blue-500 text-white text-[10px] rounded hover:bg-blue-600 flex items-center gap-1"
           >
             <FaPen size={10} /> Update
@@ -156,37 +176,52 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         </div>
       </div>
 
+      {/* Expanded Content */}
       {isExpanded && (
         <div className="pl-2 mb-2 text-[10px]">
           <p><span className="font-semibold">Contact Person:</span> {progress.contactperson}</p>
           <p><span className="font-semibold">Contact #:</span> {progress.contactnumber}</p>
           <p><span className="font-semibold">Email:</span> {progress.emailaddress}</p>
           <p><span className="font-semibold">Type:</span> {progress.typeclient}</p>
-         
           {soData && (
-            <p><span className="font-semibold">Quotation:</span> {soData.quotationnumber} | {soData.quotationamount}</p>
+            <>
+              <p><span className="font-semibold">Quotation:</span> {soData.quotationnumber} | {soData.quotationamount}</p>
+              <p><span className="font-semibold">Sales Order:</span> {soData.sonumber} | {soData.soamount}</p>
+            </>
           )}
-
-          {soData && (
-            <p><span className="font-semibold">Sales Order:</span> {soData.sonumber} | {soData.soamount}</p>
-          )}
-
           {progress.remarks && <p><span className="font-semibold">Remarks:</span> {progress.remarks}</p>}
           <p className="text-gray-500 text-[8px]">{progress.date_updated}</p>
+        </div>
+      )}
 
-          <div className="flex justify-end mt-2 space-x-1">
-            {onDeleteClick && (
-              <button
-                onClick={handleDeleteClick}
-                className="px-2 py-1 bg-red-500 text-white text-[10px] rounded hover:bg-red-600 flex items-center gap-1"
+      {/* ✅ Duplicate Info Modal */}
+      {showInfo && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-[300px] p-3 text-[10px]">
+            <h3 className="font-bold text-[11px] mb-2 text-center">
+              Duplicate Transactions for {progress.companyname}
+            </h3>
+            {duplicates.map((dup) => (
+              <div
+                key={dup.id}
+                className="border p-2 mb-1 rounded bg-gray-50"
               >
-                <FaTrash size={10} /> Delete
-              </button>
-            )}
+                <p><span className="font-semibold">Status:</span> {dup.activitystatus}</p>
+                <p><span className="font-semibold">Activity #:</span> {dup.activitynumber}</p>
+                <p><span className="font-semibold">Remarks:</span> {dup.remarks || "N/A"}</p>
+              </div>
+            ))}
+            <button
+              onClick={() => setShowInfo(false)}
+              className="w-full mt-2 bg-purple-500 hover:bg-purple-600 text-white py-1 rounded"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
 
+      {/* Delete Modals */}
       <DeleteModal
         isOpen={deleteStep === 1}
         isChild={false}
@@ -195,7 +230,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
         onCancel={() => setDeleteStep(0)}
         onContinue={() => setDeleteStep(2)}
       />
-
       <DeleteModal
         isOpen={deleteStep === 2}
         isChild={false}

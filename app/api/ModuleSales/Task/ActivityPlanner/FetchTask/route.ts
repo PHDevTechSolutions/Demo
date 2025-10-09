@@ -34,6 +34,9 @@ export async function GET(req: Request) {
         activitystatus,
         typeactivity,
         remarks,
+        callstatus,
+        typecall,
+        source,
         startdate,
         enddate,
         to_char(

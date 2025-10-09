@@ -6,6 +6,7 @@ import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { motion } from "framer-motion";
 
 interface ProgressItem {
   id: string;
@@ -65,6 +66,7 @@ interface ProgressProps {
   searchQuery?: string;
   progress?: any[];
   loading?: boolean;
+  setHoveredCompany: (name: string | null) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -87,7 +89,7 @@ const cardLoadingReducer = (
   }
 };
 
-const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
+const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) => {
   const stableUserDetails = useMemo(
     () => userDetails,
     [userDetails?.ReferenceID]
@@ -309,91 +311,51 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
   }, [progress, statusFilter, searchQuery, loading, submitting]);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault();
-
     setSubmitting(true);
-
     const payload = { ...hiddenFields, ...formData };
 
-
     if (!payload.activitynumber) {
-
       toast.error("Activity number is missing!");
-
       setSubmitting(false);
-
       return;
-
     }
 
-
     (Object.keys(payload) as (keyof typeof payload)[]).forEach((key) => {
-
       if (payload[key] === "" || payload[key] === undefined) {
-
         payload[key] = null as any;
-
       }
-
     });
 
-
     const tempId = "temp-" + Date.now();
-
     setProgress((prev) => [{ id: tempId, skeleton: true }, ...prev]);
-
 
     try {
 
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/CreateProgress", {
-
         method: "POST",
-
         headers: { "Content-Type": "application/json" },
-
         body: JSON.stringify(payload),
-
         cache: "no-store",
-
       });
 
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Failed to submit activity");
-
-
       toast.success("Activity successfully added/updated!");
-
       setShowForm(false);
-
       resetForm();
-
-
       // wait a bit for Neon to replicate the change
-
       await new Promise((r) => setTimeout(r, 500));
-
-
       await fetchProgress(); // refresh after confirmed commit
-
     } catch (err: any) {
-
       console.error("❌ Submit error:", err);
-
       toast.error("Failed to submit activity: " + err.message);
-
       setProgress((prev) => prev.filter((i) => i.id !== tempId));
-
     } finally {
-
       setSubmitting(false);
-
       setLoading(false);
-
     }
-
   };
 
   const handleRefresh = async () => {
@@ -520,15 +482,29 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
       )}
 
       {loading || submitting ? (
-        // show skeletons only while loading/submitting
         Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
       ) : filteredProgress.length > 0 ? (
-        filteredProgress.slice(0, visibleCount).map((item) => (
-          <div key={item.id} className="relative">
-            {"skeleton" in item && item.skeleton ? (
-              <ActivitySkeleton />
-            ) : (
-              <>
+        filteredProgress.slice(0, visibleCount).map((item) => {
+          if ("skeleton" in item && item.skeleton) {
+            return <ActivitySkeleton key={item.id} />;
+          }
+
+          const companyName = (item as ProgressItem).companyname?.trim() || "";
+
+          return (
+            <div
+              key={item.id}
+              className="relative"
+              onMouseEnter={() => {
+                if (!("skeleton" in item)) {
+                  setHoveredCompany(item.companyname);
+                }
+              }}
+              onMouseLeave={() => setHoveredCompany(null)}
+
+            >
+              {/* 🟢 Main Progress Card */}
+              <div className="relative">
                 {cardLoading[item.id] && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-50">
                     <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
@@ -540,10 +516,10 @@ const Progress: React.FC<ProgressProps> = ({ userDetails }) => {
                   onAddClick={() => handleAddClick(item as ProgressItem)}
                   onDeleteClick={handleDelete}
                 />
-              </>
-            )}
-          </div>
-        ))
+              </div>
+            </div>
+          );
+        })
       ) : (
         <p className="text-xs text-gray-400 italic">No activities found.</p>
       )}

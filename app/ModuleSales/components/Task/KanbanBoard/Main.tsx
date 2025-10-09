@@ -4,11 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
-import { useRouter } from "next/navigation"; // ✅ For router.refresh()
+import { useRouter } from "next/navigation";
+import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
 
 // Routes
 import Inquiries from "./Columns/Inquiries";
 import Companies from "./Columns/Companies";
+import Duplication from "./Columns/Duplication";
 import Progress from "./Columns/Progress";
 import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
@@ -69,6 +71,7 @@ interface KanbanBoardProps {
 const allColumns: Column[] = [
   { id: "new-task", title: "New Task" },
   { id: "in-progress", title: "In Progress" },
+  { id: "duplication", title: "Duplication" },
   { id: "scheduled", title: "Scheduled" },
   { id: "completed", title: "Completed" },
 ];
@@ -85,12 +88,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const welcomeAudioRef = useRef<HTMLAudioElement>(null);
   const [TSAOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedTSA, setSelectedTSA] = useState<string>("");
+  const [hoveredCompany, setHoveredCompany] = useState<string | null>(null);
 
   // ✅ Play welcome audio once
   useEffect(() => {
     const played = localStorage.getItem("welcomePlayed");
     if (!played && welcomeAudioRef.current) {
-      welcomeAudioRef.current.play().catch(() => {});
+      welcomeAudioRef.current.play().catch(() => { });
       localStorage.setItem("welcomePlayed", "true");
     }
   }, []);
@@ -98,7 +102,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const handlePlayMessage = () => {
     if (welcomeAudioRef.current) {
       welcomeAudioRef.current.currentTime = 0;
-      welcomeAudioRef.current.play().catch(() => {});
+      welcomeAudioRef.current.play().catch(() => { });
     }
   };
 
@@ -243,7 +247,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   const filteredColumns = allColumns.filter((col) => {
     if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
-      return col.id !== "new-task" && col.id !== "in-progress";
+      return col.id !== "new-task" && col.id !== "in-progress" && col.id !== "duplication";
     }
     return true;
   });
@@ -321,88 +325,166 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         </div>
       )}
 
-      <div className="flex gap-4">
-        {filteredColumns.map((col) => {
-          const isCollapsed = collapsedColumns.includes(col.id);
-          const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
+      <div className="relative">
+        {/* ⬅️ Left Scroll Button */}
+        <button
+          onClick={() => {
+            const container = document.getElementById("kanban-scroll");
+            if (container) container.scrollBy({ left: -container.clientWidth, behavior: "smooth" });
+          }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-md rounded-full p-4"
+        >
+          <HiOutlineChevronLeft />
+        </button>
 
-          return (
-            <div
-              key={col.id}
-              className={`flex flex-col border-l pl-2 pr-0 py-2 relative transition-all duration-300 ${isCollapsed ? "w-12" : "flex-1"}`}
-            >
-              <div className="flex justify-between items-center mb-2">
-                {!isCollapsed && (
-                  <h2 className="font-semibold text-gray-700 text-center border-b w-full">
-                    {col.title}
-                  </h2>
-                )}
-                {isSchedOrCompleted && (
-                  <button
-                    onClick={() => toggleCollapse(col.id)}
-                    className="ml-2 text-gray-600 hover:text-gray-900"
-                    title={isCollapsed ? "Show Column" : "Collapse Column"}
-                  >
-                    <BsArrowsCollapseVertical size={15} />
-                  </button>
-                )}
-              </div>
+        {/* Kanban Columns Container */}
+        <div
+          id="kanban-scroll"
+          className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-2"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {filteredColumns.map((col) => {
+            const isCollapsed = collapsedColumns.includes(col.id);
+            const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
 
-              <div className={`space-y-4 overflow-y-auto max-h-[600px] ${isCollapsed ? "hidden" : ""}`}>
-                {col.id === "new-task" && !isCollapsed && (
-                  <>
-                    <Inquiries
-                      expandedIdx={expandedIdx}
-                      setExpandedIdx={setExpandedIdx}
-                      handleSubmit={handleSubmit}
+            return (
+              <div
+                key={col.id}
+                className={`flex-shrink-0 w-[33.33%] min-w-[33.33%] snap-center border rounded-lg bg-white shadow-sm p-3 transition-all duration-300 ${isCollapsed ? "w-12 min-w-12" : ""
+                  }`}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  {!isCollapsed && (
+                    <h2 className="font-semibold text-gray-700 text-center border-b w-full">
+                      {col.title}
+                    </h2>
+                  )}
+                  {isSchedOrCompleted && (
+                    <button
+                      onClick={() => toggleCollapse(col.id)}
+                      className="ml-2 text-gray-600 hover:text-gray-900"
+                      title={isCollapsed ? "Show Column" : "Collapse Column"}
+                    >
+                      <BsArrowsCollapseVertical size={15} />
+                    </button>
+                  )}
+                </div>
+
+                <div
+                  className={`space-y-4 overflow-y-auto max-h-[600px] ${isCollapsed ? "hidden" : ""
+                    }`}
+                >
+                  {col.id === "new-task" && !isCollapsed && (
+                    <>
+                      <Inquiries
+                        expandedIdx={expandedIdx}
+                        setExpandedIdx={setExpandedIdx}
+                        handleSubmit={handleSubmit}
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                      />
+                      <Companies
+                        expandedIdx={expandedIdx}
+                        setExpandedIdx={setExpandedIdx}
+                        handleSubmit={handleSubmit}
+                        userDetails={userDetails}
+                      />
+                    </>
+                  )}
+
+                  {col.id === "in-progress" && !isCollapsed && (
+                    loading ? (
+                      <div className="space-y-2">
+                        {[...Array(3)].map((_, idx) => (
+                          <div
+                            key={idx}
+                            className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
+                          >
+                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Progress 
+                      userDetails={userDetails}
+                      setHoveredCompany={setHoveredCompany}
+                       />
+                    )
+                  )}
+
+                  {col.id === "duplication" && !isCollapsed && (
+                    loading ? (
+                      <div className="space-y-2">
+                        {[...Array(3)].map((_, idx) => (
+                          <div
+                            key={idx}
+                            className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
+                          >
+                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Duplication
+                       userDetails={userDetails}
+                       hoveredCompany={hoveredCompany}
+                        />
+                    )
+                  )}
+
+
+                  {col.id === "scheduled" && !isCollapsed && (
+                    <>
+                      <Callbacks
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                        selectedTSA={selectedTSA}
+                      />
+                      <FollowUp
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                        selectedTSA={selectedTSA}
+                      />
+                      <Meetings
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                      />
+                      <SiteVisit
+                        userDetails={userDetails}
+                        refreshTrigger={refreshTrigger}
+                      />
+                    </>
+                  )}
+
+                  {col.id === "completed" && !isCollapsed && (
+                    <Completed
                       userDetails={userDetails}
                       refreshTrigger={refreshTrigger}
+                      selectedTSA={selectedTSA}
                     />
-                    <Companies
-                      expandedIdx={expandedIdx}
-                      setExpandedIdx={setExpandedIdx}
-                      handleSubmit={handleSubmit}
-                      userDetails={userDetails}
-                    />
-                  </>
-                )}
-
-                {col.id === "in-progress" && !isCollapsed && (
-                  loading ? (
-                    <div className="space-y-2">
-                      {[...Array(3)].map((_, idx) => (
-                        <div
-                          key={idx}
-                          className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
-                        >
-                          <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-                          <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-                          <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Progress userDetails={userDetails} />
-                  )
-                )}
-
-                {col.id === "scheduled" && !isCollapsed && (
-                  <>
-                    <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
-                    <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
-                    <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                    <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
-                  </>
-                )}
-
-                {col.id === "completed" && !isCollapsed && (
-                  <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* ➡️ Right Scroll Button */}
+        <button
+          onClick={() => {
+            const container = document.getElementById("kanban-scroll");
+            if (container) container.scrollBy({ left: container.clientWidth, behavior: "smooth" });
+          }}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-md rounded-full p-4"
+        >
+          <HiOutlineChevronRight />
+        </button>
       </div>
+
 
       <Recent
         show={showRecentModal}

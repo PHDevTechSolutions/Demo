@@ -33,14 +33,8 @@ export async function GET(req: Request) {
           date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila',
           'MM/DD/YYYY HH12:MI:SS AM'
         ) AS date_created,
-        date_updated,
-        quotationnumber,
-        sonumber,
-        projectcategory,
-        soamount,
-        actualsales,
-        quotationamount
-      FROM progress
+        date_updated
+      FROM activity
       WHERE activitynumber = ${activitynumber}
       ORDER BY date_updated DESC;
     `;

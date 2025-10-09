@@ -26,6 +26,9 @@ interface Note {
   sonumber: string;
   quotationamount: string;
   soamount: string;
+  callstatus: string;
+  source: string;
+  typecall: string;
 }
 
 interface UserDetails {
