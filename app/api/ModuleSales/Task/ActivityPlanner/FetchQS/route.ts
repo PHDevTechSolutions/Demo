@@ -25,7 +25,6 @@ export async function GET(req: Request) {
         manager,
         tsm,
         activitystatus,
-        typeactivity,
         remarks,
         startdate,
         enddate,
