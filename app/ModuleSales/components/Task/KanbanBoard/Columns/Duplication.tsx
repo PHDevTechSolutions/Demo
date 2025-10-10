@@ -7,7 +7,7 @@ import { FaClone, FaInfoCircle, FaExclamationTriangle } from "react-icons/fa";
 
 interface ProgressItem {
   id: string;
-  companyname: string;
+  companyname: string | null;
   contactperson: string;
   contactnumber: string;
   emailaddress: string;
@@ -66,11 +66,12 @@ const Duplication: React.FC<DuplicationProps> = ({
     fetchProgress();
   }, [userDetails?.ReferenceID]);
 
-  // 🧠 Group by company name
+  // 🧠 Group companies by name safely
   const duplicateCompanies = useMemo(() => {
     const grouped: Record<string, ProgressItem[]> = {};
     progress.forEach((item) => {
-      const name = item.companyname?.trim().toLowerCase();
+      const name =
+        item.companyname?.trim()?.toLowerCase() || "unnamed company";
       if (!grouped[name]) grouped[name] = [];
       grouped[name].push(item);
     });
@@ -79,14 +80,18 @@ const Duplication: React.FC<DuplicationProps> = ({
     return Object.values(grouped).filter((items) => items.length > 1);
   }, [progress]);
 
-  // 🟠 Get duplicates for hovered company
+  // 🟠 Get duplicates for hovered company (safe)
   const hoveredDuplicates = useMemo(() => {
     if (!hoveredCompany) return [];
-    const match = duplicateCompanies.find(
-      (group) =>
-        group[0].companyname.trim().toLowerCase() ===
-        hoveredCompany.trim().toLowerCase()
-    );
+
+    const target = hoveredCompany?.trim()?.toLowerCase();
+    if (!target) return [];
+
+    const match = duplicateCompanies.find((group) => {
+      const name = group[0]?.companyname?.trim()?.toLowerCase() || "unnamed company";
+      return name === target;
+    });
+
     return match || [];
   }, [hoveredCompany, duplicateCompanies]);
 
@@ -174,7 +179,7 @@ const Duplication: React.FC<DuplicationProps> = ({
             ) : (
               duplicateCompanies.map((group) => (
                 <motion.div
-                  key={group[0].companyname}
+                  key={group[0].companyname || group[0].id}
                   layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -182,7 +187,7 @@ const Duplication: React.FC<DuplicationProps> = ({
                   className="border border-gray-200 rounded-lg p-2 shadow-sm text-xs bg-white"
                 >
                   <p className="font-semibold text-gray-700 text-[10px] uppercase">
-                    {group[0].companyname}
+                    {group[0].companyname || "Unnamed Company"}
                   </p>
                   <p className="text-gray-500 text-[10px]">
                     {group.length} duplicate entries
@@ -213,7 +218,7 @@ const Duplication: React.FC<DuplicationProps> = ({
                 }`}
               >
                 <p className="font-semibold text-gray-700 text-[10px] uppercase">
-                  {item.companyname}
+                  {item.companyname || "Unnamed Company"}
                 </p>
                 <p className="text-gray-600">{item.contactperson}</p>
                 <p className="text-gray-500 text-[8px]">
