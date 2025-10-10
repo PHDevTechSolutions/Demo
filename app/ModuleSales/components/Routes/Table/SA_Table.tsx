@@ -471,8 +471,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
                 >
                   <MdDeleteForever size={12} /> Delete
                 </button>
-
-                {["SO-Done", "Quote-Done", "Done", "Delivered"].includes(post.activitystatus) && (
+                {/*{["SO-Done", "Quote-Done", "Done", "Delivered"].includes(post.activitystatus) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -482,7 +481,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
                   >
                     🔁 Re-Open
                   </button>
-                )}
+                )}*/}
               </div>
             )}
           </td>
