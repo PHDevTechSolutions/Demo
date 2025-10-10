@@ -289,6 +289,16 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       if ("skeleton" in item) return false;
       if (!item.date_updated) return false;
 
+      if (
+        item.activitystatus === "Cold" ||
+        item.activitystatus === "Warm" ||
+        item.activitystatus === "Hot" ||
+        item.activitystatus === "Done" ||
+        item.activitystatus === "Delivered"
+      ) {
+        return false;
+      }
+
       const itemDate = new Date(item.date_updated).toISOString().split("T")[0];
 
       if (statusFilter && item.activitystatus !== statusFilter) return false;

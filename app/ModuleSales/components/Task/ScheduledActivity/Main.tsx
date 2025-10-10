@@ -11,6 +11,9 @@ interface Post {
   ticketreferencenumber: string;
   date_created: string;
   date_updated: string | null;
+  source: string;
+  typeactivity: string;
+  targetquota: string;
 }
 
 interface UserDetails {

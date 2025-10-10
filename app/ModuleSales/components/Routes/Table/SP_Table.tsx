@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 
 interface Post {
@@ -43,6 +44,21 @@ const getQuarter = (month: number) => {
   return Math.ceil(month / 3);
 };
 
+// 🧮 Helper: count working days (Mon–Sat) from 1st of month to *yesterday*
+const getWorkingDaysPassed = (year: number, month: number) => {
+  const today = new Date();
+  const currentDay = today.getDate();
+  let workingDays = 0;
+
+  for (let day = 1; day < currentDay; day++) {
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay(); // 0 = Sunday
+    if (dayOfWeek !== 0) workingDays++; // count Mon–Sat only
+  }
+
+  return workingDays;
+};
+
 const Table: React.FC<TableProps> = ({ posts }) => {
   const [groupedData, setGroupedData] = useState<{ [key: string]: GroupedData }>({});
   const [activeTab, setActiveTab] = useState<"MTD" | "YTD" | "Quarterly">("MTD");
@@ -55,7 +71,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
   const currentMonth = today.getMonth() + 1;
 
   useEffect(() => {
-    const fixedDays = 26;
+    const fixedDays = 26; // Max working days per month
     const parPercentages: { [key: number]: number } = {
       1: 8.3,
       2: 16.6,
@@ -88,7 +104,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         if (selectedYear) {
           return postYear === selectedYear;
         }
-
         return postYear === currentYear;
       }
 
@@ -101,7 +116,6 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
       return false;
     });
-
 
     const grouped = filteredPosts.reduce((acc: { [key: string]: GroupedData }, post: Post) => {
       const date = new Date(post.date_created);
@@ -124,12 +138,16 @@ const Table: React.FC<TableProps> = ({ posts }) => {
       }
 
       if (!acc[key]) {
-        const daysLapsed =
-          activeTab === "MTD"
-            ? Math.min(today.getDate(), fixedDays)
-            : activeTab === "YTD"
-              ? fixedDays * 12
-              : fixedDays * 3; 
+        let daysLapsed = 0;
+
+        if (activeTab === "MTD") {
+          const workingDaysPassed = getWorkingDaysPassed(currentYear, currentMonth);
+          daysLapsed = Math.min(workingDaysPassed, fixedDays);
+        } else if (activeTab === "YTD") {
+          daysLapsed = fixedDays * 12;
+        } else if (activeTab === "Quarterly") {
+          daysLapsed = fixedDays * 3;
+        }
 
         const parPercentage =
           activeTab === "YTD"
@@ -167,6 +185,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
 
   return (
     <div className="overflow-x-auto">
+      {/* --- Tabs --- */}
       <div className="mb-4 border-b border-gray-200">
         <nav className="flex space-x-4">
           <button
@@ -174,10 +193,11 @@ const Table: React.FC<TableProps> = ({ posts }) => {
               setActiveTab("MTD");
               setSelectedQuarter(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${activeTab === "MTD"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
-              }`}
+            className={`py-2 px-4 text-xs font-medium ${
+              activeTab === "MTD"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500"
+            }`}
           >
             MTD
           </button>
@@ -187,10 +207,11 @@ const Table: React.FC<TableProps> = ({ posts }) => {
               setSelectedMonth(null);
               setSelectedQuarter(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${activeTab === "YTD"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
-              }`}
+            className={`py-2 px-4 text-xs font-medium ${
+              activeTab === "YTD"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500"
+            }`}
           >
             YTD
           </button>
@@ -199,15 +220,17 @@ const Table: React.FC<TableProps> = ({ posts }) => {
               setActiveTab("Quarterly");
               setSelectedMonth(null);
             }}
-            className={`py-2 px-4 text-xs font-medium ${activeTab === "Quarterly"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
-              }`}
+            className={`py-2 px-4 text-xs font-medium ${
+              activeTab === "Quarterly"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-gray-500"
+            }`}
           >
             Quarterly
           </button>
         </nav>
 
+        {/* --- Filters --- */}
         <div className="mb-4 mt-4 flex items-center gap-4">
           {(activeTab === "MTD" || activeTab === "YTD") && (
             <>
@@ -277,6 +300,7 @@ const Table: React.FC<TableProps> = ({ posts }) => {
         </div>
       </div>
 
+      {/* --- Table --- */}
       <table className="min-w-full table-auto">
         <thead className="bg-gray-100">
           <tr className="text-xs text-left whitespace-nowrap border-l-4 border-orange-400">
@@ -285,8 +309,8 @@ const Table: React.FC<TableProps> = ({ posts }) => {
               {activeTab === "MTD"
                 ? "Month"
                 : activeTab === "YTD"
-                  ? "Year"
-                  : "Quarter"}
+                ? "Year"
+                : "Quarter"}
             </th>
             <th className="px-6 py-4 font-semibold text-gray-700">Target</th>
             <th className="px-6 py-4 font-semibold text-gray-700">Actual Sales</th>
@@ -296,6 +320,8 @@ const Table: React.FC<TableProps> = ({ posts }) => {
             <th className="px-6 py-4 font-semibold text-gray-700">% To Plan</th>
           </tr>
         </thead>
+
+        {/* --- Grand Total Row --- */}
         {Object.keys(groupedData).length > 0 && (
           <thead className="bg-gray-200 font-semibold text-xs">
             {(() => {
@@ -314,15 +340,10 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                   ? (totals.totalActual / totals.totalTarget) * 100
                   : 0;
 
-              const percentToPlan =
-                totals.totalTarget > 0
-                  ? (totals.totalActual / totals.totalTarget) * 100
-                  : 0;
-
               return (
                 <tr>
                   <td className="px-6 py-3 text-left">Grand Total</td>
-                  <td className="px-6 py-3 text-right" colSpan={1}></td>
+                  <td className="px-6 py-3" colSpan={1}></td>
                   <td className="px-6 py-3">₱{formatCurrency(totals.totalTarget)}</td>
                   <td className="px-6 py-3">₱{formatCurrency(totals.totalActual)}</td>
                   <td className="px-6 py-3">{achievement.toFixed(2)}%</td>
@@ -330,12 +351,14 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                   <td className="px-6 py-3 text-red-700">
                     ₱{formatCurrency(totals.totalVariance)}
                   </td>
-                  <td className="px-6 py-3">{percentToPlan.toFixed(2)}%</td>
+                  <td className="px-6 py-3">{achievement.toFixed(2)}%</td>
                 </tr>
               );
             })()}
           </thead>
         )}
+
+        {/* --- Individual Rows --- */}
         <tbody className="divide-y divide-gray-100">
           {Object.keys(groupedData).length > 0 ? (
             Object.values(groupedData).map((group) => {
@@ -362,17 +385,23 @@ const Table: React.FC<TableProps> = ({ posts }) => {
                   <td className="px-6 py-4 text-xs">
                     ₱{formatCurrency(group.totalActualSales)}
                   </td>
-                  <td className="px-6 py-4 text-xs">{achievement.toFixed(2)}%</td>
-                  <td className="px-6 py-4 text-xs">{group.parPercentage.toFixed(2)}%</td>
+                  <td className="px-6 py-4 text-xs">
+                    {achievement.toFixed(2)}%
+                  </td>
+                  <td className="px-6 py-4 text-xs">
+                    {group.parPercentage.toFixed(2)}%
+                  </td>
                   <td className="px-6 py-4 text-xs font-semibold text-red-700">
                     ₱{formatCurrency(group.mtdVariance)}
                   </td>
                   <td className="px-6 py-4 text-xs">
                     {group.targetQuota
-                      ? Math.round((group.totalActualSales / group.targetQuota) * 100)
-                      : 0}%
+                      ? Math.round(
+                          (group.totalActualSales / group.targetQuota) * 100
+                        )
+                      : 0}
+                    %
                   </td>
-
                 </tr>
               );
             })

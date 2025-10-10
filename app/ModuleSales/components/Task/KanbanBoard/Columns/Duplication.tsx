@@ -66,15 +66,20 @@ const Duplication: React.FC<DuplicationProps> = ({
     fetchProgress();
   }, [userDetails?.ReferenceID]);
 
-  // 🧠 Group companies by name safely
+  // 🧠 Exclude finished or cold statuses
+  const excludedStatuses = ["Cold", "Warm", "Hot", "Done", "Deleted", "Completed"];
+
+  // 🧠 Group companies by name safely and filter valid ones
   const duplicateCompanies = useMemo(() => {
     const grouped: Record<string, ProgressItem[]> = {};
-    progress.forEach((item) => {
-      const name =
-        item.companyname?.trim()?.toLowerCase() || "unnamed company";
-      if (!grouped[name]) grouped[name] = [];
-      grouped[name].push(item);
-    });
+
+    progress
+      .filter((item) => !excludedStatuses.includes(item.activitystatus || ""))
+      .forEach((item) => {
+        const name = item.companyname?.trim()?.toLowerCase() || "unnamed company";
+        if (!grouped[name]) grouped[name] = [];
+        grouped[name].push(item);
+      });
 
     // Only include companies with more than 1 entry
     return Object.values(grouped).filter((items) => items.length > 1);
@@ -88,7 +93,8 @@ const Duplication: React.FC<DuplicationProps> = ({
     if (!target) return [];
 
     const match = duplicateCompanies.find((group) => {
-      const name = group[0]?.companyname?.trim()?.toLowerCase() || "unnamed company";
+      const name =
+        group[0]?.companyname?.trim()?.toLowerCase() || "unnamed company";
       return name === target;
     });
 

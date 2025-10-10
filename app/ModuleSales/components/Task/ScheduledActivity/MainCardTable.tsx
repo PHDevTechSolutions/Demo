@@ -21,6 +21,9 @@ interface Post {
     date_created: string;
     date_updated: string | null;
     activitynumber: string;
+    source: string;
+    typeactivity: string;
+    targetquota: string;
 }
 
 interface MainCardTableProps {

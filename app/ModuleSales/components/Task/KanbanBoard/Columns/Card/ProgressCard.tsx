@@ -83,7 +83,11 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   const [showInfo, setShowInfo] = useState(false); // ✅ for duplicate modal
   const [soData, setSoData] = useState<any>(null);
 
-  if (progress.activitystatus === "Done" || progress.activitystatus === "Delivered") return null;
+  if (
+    progress.activitystatus === "Cold" 
+    || progress.activitystatus === "Warm" || progress.activitystatus === "Hot" 
+    || progress.activitystatus === "Done" || progress.activitystatus === "Delivered"
+  ) return null;
 
   const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;
   const bgColor = STATUS_BG[progress.activitystatus || ""] || "bg-orange-100";

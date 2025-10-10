@@ -139,7 +139,7 @@ const HistoricalRecordsCarousel: React.FC<HistoricalRecordsCarouselProps> = ({
                     activity.activitystatus
                   )}`}
                 >
-                  {activity.activitystatus}
+                  {activity.activitystatus} / {activity.activitynumber}
                 </span>
                 <span className="text-[10px] text-gray-500">
                   {activity.date_created
@@ -175,12 +175,12 @@ const HistoricalRecordsCarousel: React.FC<HistoricalRecordsCarouselProps> = ({
                   {activity.callstatus}
                 </p>
                 <p>
-                  <span className="font-semibold">Q#:</span>{" "}
-                  {activity.quotationnumber || "—"}
+                  <span className="font-semibold">Quotation Summary:</span>{" "}
+                  {activity.quotationnumber || "—"} / {activity.quotationamount || "—"}
                 </p>
                 <p>
-                  <span className="font-semibold">SO#:</span>{" "}
-                  {activity.sonumber || "—"}
+                  <span className="font-semibold">SO Summary:</span>{" "}
+                  {activity.sonumber || "—"} / {activity.soamount || "—"}
                 </p>
                 <p>
                   <span className="font-semibold">Actual Sales:</span>{" "}
