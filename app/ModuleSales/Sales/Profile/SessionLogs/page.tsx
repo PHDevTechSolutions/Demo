@@ -120,7 +120,11 @@ const SessionLogs: React.FC = () => {
   );
 
   if (loading)
-    return <div className="p-6 text-center text-gray-600 text-lg">Loading...</div>;
+    return <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+      <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+      <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+      <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+    </div>;
 
   return (
     <SessionChecker>

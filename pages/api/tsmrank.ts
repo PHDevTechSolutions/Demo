@@ -16,8 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const users = await db.collection("users")
                 .find({
-                    Role: { $in: rolesArray },
-                    Status: { $nin: ["Resigned", "Terminated"] }
+                    Role: { $in: rolesArray }
                 })
                 .project({ Firstname: 1, Lastname: 1, ReferenceID: 1, profilePicture: 1, Status: 1, _id: 0 })
                 .toArray();

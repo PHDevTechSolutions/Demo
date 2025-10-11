@@ -168,7 +168,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
     setReopenType(null);
   };
 
-
   const handleConfirmReopen = async () => {
     if (!selectedActivity) return;
 
@@ -471,7 +470,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
                 >
                   <MdDeleteForever size={12} /> Delete
                 </button>
-                {/*{["SO-Done", "Quote-Done", "Done", "Delivered"].includes(post.activitystatus) && (
+                {["SO-Done", "Quote-Done", "Done", "Delivered"].includes(post.activitystatus) && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -481,7 +480,7 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
                   >
                     🔁 Re-Open
                   </button>
-                )}*/}
+                )}
               </div>
             )}
           </td>
@@ -533,24 +532,40 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
 
       {/* 🟢 Re-Open Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[999]">
-          <div className="bg-white rounded-xl shadow-lg w-[400px] p-6 relative">
-            <h2 className="text-lg font-bold mb-3 text-center">Re-Open Activity</h2>
-            <div className="space-y-2 text-sm">{renderModalContent()}</div>
-
-            <div className="mt-5 flex justify-end gap-3 text-xs">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-green-600 to-green-700">
+              <h3 className="text-white font-semibold text-lg">Re-Open Activity</h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-300 text-gray-800 px-4 py-1 rounded hover:bg-gray-400"
+                className="text-white hover:text-gray-200 transition text-lg"
+              >
+                ✖
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-3 text-sm text-gray-700 max-h-[400px] overflow-y-auto">
+              {renderModalContent()}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 text-xs"
               >
                 Close
               </button>
               <button
                 onClick={handleConfirmReopen}
-                disabled={(selectedActivity?.activitystatus === "Done" && !reopenType) || loading}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                disabled={
+                  (selectedActivity?.activitystatus === "Done" && !reopenType) || loading
+                }
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 text-xs"
               >
-                Confirm
+                {loading ? "Processing..." : "Confirm"}
               </button>
             </div>
           </div>

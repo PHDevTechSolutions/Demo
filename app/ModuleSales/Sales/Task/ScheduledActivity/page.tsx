@@ -1,7 +1,7 @@
-"use client"; // 🔹 Dapat pinakauna
+"use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation"; // 🔹 App Router
+import { useRouter } from "next/navigation";
 import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
@@ -15,6 +15,8 @@ import Tools from "../../../components/Task/Tools/Sidebar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BsArrowLeft } from 'react-icons/bs';
+import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
+
 const ListofUser: React.FC = () => {
   const router = useRouter();
 
@@ -26,7 +28,7 @@ const ListofUser: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState<boolean>(true);
   const [loadingAccounts, setLoadingAccounts] = useState<boolean>(true);
-
+  const [refreshing, setRefreshing] = useState(false);
   const [userDetails, setUserDetails] = useState<any>({
     UserId: "",
     Firstname: "",
@@ -198,6 +200,11 @@ const ListofUser: React.FC = () => {
       .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
   }, [posts, searchTerm, startDate, endDate, selectedAgent, userDetails]);
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAccount();
+  };
+
   return (
     <SessionChecker>
       <ParentLayout>
@@ -216,7 +223,7 @@ const ListofUser: React.FC = () => {
                     router.push(url);
                   }}
                 >
-                 <BsArrowLeft /> View Dashboard
+                  <BsArrowLeft /> View Dashboard
                 </button>
 
                 <button
@@ -228,7 +235,7 @@ const ListofUser: React.FC = () => {
                     router.push(url);
                   }}
                 >
-                 <BsArrowLeft /> View Clients
+                  <BsArrowLeft /> View Clients
                 </button>
 
                 {activeTab === "scheduled" && (
@@ -270,6 +277,30 @@ const ListofUser: React.FC = () => {
                           </h1>
                         </div>
                       )}
+
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-lg font-semibold text-black">Manual Task</h2>
+                      <button
+                        onClick={handleRefresh}
+                        className="flex items-center bg-gray-100 gap-2 text-xs px-3 py-2 rounded transition"
+                      >
+                        {refreshing ? (
+                          <>
+                            <AiOutlineLoading size={14} className="animate-spin" />
+                            <span>Refreshing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <AiOutlineReload size={14} className="text-gray-700" />
+                            <span>Refresh</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-sm text-gray-500 mb-4">
+                      Track, manage, and update your daily activities.
+                    </p>
 
                     <Filters
                       searchTerm={searchTerm}

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { FiTrash2, FiChevronRight } from "react-icons/fi";
 import Select, { components } from "react-select";
 import { toast } from "react-toastify";
+import DeleteConfirmationModal from "./DeleteModal";
 
 interface Note {
   id: number;
@@ -67,6 +68,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const handleRowClick = (task: Note) => {
     setSelectedTask(task);
@@ -159,19 +162,16 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
 
     try {
       setLoadingDelete(true);
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/DeleteTask",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteTask", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteId }),
+      });
 
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
@@ -183,8 +183,11 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       toast.error("❌ Failed to delete task.");
     } finally {
       setLoadingDelete(false);
+      setShowDeleteModal(false);
+      setDeleteId(null);
     }
   };
+
 
   const renderTaskRow = (task: Note) => {
     const isDisabled = ["delivered", "done", "completed"].includes(
@@ -250,17 +253,14 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         {/* ✅ Delete button (appears on hover, fixed to right) */}
         {hoveredRow === task.id && (
           <td
-            className="
-      absolute right-0 top-0 h-full flex items-center 
-      bg-white/90 border-l px-2 transition-opacity duration-300 
-      opacity-0 group-hover:opacity-100
-    "
-          >
+            className="absolute right-0 top-0 h-full flex items-center bg-white/90 border-l px-2 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
             <button
               className="flex items-center gap-1 px-3 py-6 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
               onClick={(e) => {
-                e.stopPropagation(); // prevent triggering row click
-                handleDelete(task.id);
+                e.stopPropagation();
+                setSelectedTask(null); // close form
+                setDeleteId(task.id);
+                setShowDeleteModal(true);
               }}
               disabled={loadingDelete}
             >
@@ -269,9 +269,22 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
             </button>
           </td>
         )}
+
+        {/* Delete Modal */}
+        <DeleteConfirmationModal
+          show={showDeleteModal}
+          onCancel={() => {
+            setShowDeleteModal(false);
+            setDeleteId(null);
+          }}
+          onConfirm={handleDelete}
+          loading={loadingDelete}
+        />
+
       </tr>
     );
   };
+
 
   return (
     <div className="mb-4 border-b relative">
@@ -331,10 +344,10 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
       {/* Slide-up edit form */}
       <div
-        className={`fixed bottom-0 left-0 right-0 bg-white shadow-xl border-t transform transition-transform duration-300 z-[999] ${selectedTask ? "translate-y-0" : "translate-y-full"
+        className={`fixed bottom-0 left-0 right-0 bg-white shadow-xl border-t transform transition-transform duration-300 z-[999] ${selectedTask && !showDeleteModal ? "translate-y-0" : "translate-y-full"
           }`}
       >
-        {selectedTask && (
+        {selectedTask && !showDeleteModal && (
           <form className="p-4 grid grid-cols-2 gap-4" onSubmit={handleSave}>
             <h4 className="col-span-2 text-sm font-semibold mb-2">
               Edit Task for {selectedTask.companyname}

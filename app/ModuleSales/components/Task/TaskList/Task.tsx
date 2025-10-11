@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import { IoSync } from "react-icons/io5";
+import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
 import "react-toastify/dist/ReactToastify.css";
 import Table from "./Table/Table";
 
@@ -97,7 +97,6 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    toast.info("Refreshing data...");
     await fetchTasks();
   };
 
@@ -127,10 +126,19 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
         <h2 className="text-lg font-semibold text-black">Task List</h2>
         <button
           onClick={handleRefresh}
-          className="p-2 rounded-full bg-orange-500 hover:bg-orange-600 transition"
-          title="Refresh"
+          className="flex items-center bg-gray-100 gap-2 text-xs px-3 py-2 rounded transition"
         >
-          <IoSync size={18} className={refreshing ? "animate-spin text-blue-500" : "text-white"} />
+          {refreshing ? (
+            <>
+              <AiOutlineLoading size={14} className="animate-spin" />
+              <span>Refreshing...</span>
+            </>
+          ) : (
+            <>
+              <AiOutlineReload size={14} className="text-gray-700" />
+              <span>Refresh</span>
+            </>
+          )}
         </button>
       </div>
       <p className="text-sm text-gray-500 mb-4">
@@ -184,9 +192,10 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-10">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-          <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+        <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+          <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+          <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+          <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
         </div>
       ) : filteredTasks.length === 0 ? (
         <p className="text-gray-500 text-sm">No tasks found.</p>

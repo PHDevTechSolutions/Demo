@@ -6,6 +6,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { BsArrowsCollapseVertical } from 'react-icons/bs';
 import { useRouter } from "next/navigation";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
+import { HiOutlineDuplicate } from 'react-icons/hi';
+import { HiPlay } from 'react-icons/hi';
+import { RiTimelineView } from 'react-icons/ri';
 
 // Routes
 import Inquiries from "./Columns/Inquiries";
@@ -89,6 +92,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   const [TSAOptions, setTSAOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedTSA, setSelectedTSA] = useState<string>("");
   const [hoveredCompany, setHoveredCompany] = useState<string | null>(null);
+  const [showDuplication, setShowDuplication] = useState(false);
 
   // ✅ Play welcome audio once
   useEffect(() => {
@@ -246,9 +250,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   };
 
   const filteredColumns = allColumns.filter((col) => {
-    if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
-      return col.id !== "new-task" && col.id !== "in-progress" && col.id !== "duplication";
+    // Duplication column only shows if showDuplication is true
+    if (col.id === "duplication" && !showDuplication) return false;
+
+    // Example: hide new-task and in-progress for certain roles
+    if (
+      userDetails?.Role === "Territory Sales Manager" ||
+      userDetails?.Role === "Manager"
+    ) {
+      return col.id !== "new-task" && col.id !== "in-progress";
     }
+
     return true;
   });
 
@@ -287,7 +299,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
   }, [userDetails?.ReferenceID, userDetails?.Role]);
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full p-2">
+      <h2 className="text-lg p-2 font-semibold text-black">Kanban Board</h2>
+      <p className="text-sm text-gray-500 px-2 mb-4">
+        This section allows you to track, manage, and update your daily activities.
+      </p>
       <audio ref={welcomeAudioRef} src="/welcome.mp3" preload="auto" />
       <div className="flex justify-end gap-2 mb-3">
         <button
@@ -295,15 +311,25 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
             fetchProgressData();
             setShowRecentModal(true);
           }}
-          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
         >
-          📌 View Recent Activities
+          <RiTimelineView /> View Recent Activities
         </button>
         <button
           onClick={handlePlayMessage}
-          className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+          className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1"
         >
-          ▶ Play Message
+          <HiPlay /> Play Message
+        </button>
+        <button
+          onClick={() => setShowDuplication((prev) => !prev)}
+          className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+        >
+          {showDuplication ? "Hide Duplicate" : (
+            <>
+              <HiOutlineDuplicate /> Show Duplicate
+            </>
+          )}
         </button>
       </div>
 
@@ -407,35 +433,44 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                         ))}
                       </div>
                     ) : (
-                      <Progress 
-                      userDetails={userDetails}
-                      setHoveredCompany={setHoveredCompany}
-                       />
-                    )
-                  )}
-
-                  {col.id === "duplication" && !isCollapsed && (
-                    loading ? (
-                      <div className="space-y-2">
-                        {[...Array(3)].map((_, idx) => (
-                          <div
-                            key={idx}
-                            className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
-                          >
-                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <Duplication
-                       userDetails={userDetails}
-                       hoveredCompany={hoveredCompany}
+                      <div>
+                        <Progress
+                          userDetails={userDetails}
+                          setHoveredCompany={setHoveredCompany}
                         />
+                      </div>
                     )
                   )}
 
+                  {col.id === "duplication" && !isCollapsed && showDuplication && (
+                    <>
+                      {loading ? (
+                        <div className="space-y-2 transition-all duration-300 snap-center">
+                          {[...Array(3)].map((_, idx) => (
+                            <div
+                              key={idx}
+                              className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
+                            >
+                              <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                              <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                              <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          key={col.id}
+                          className={`snap-center bg-white shadow-sm transition-all duration-300 ${isCollapsed ? "w-12 min-w-12" : ""}`}
+                        >
+                          <Duplication
+                            userDetails={userDetails}
+                            hoveredCompany={hoveredCompany}
+                          />
+                        </div>
+
+                      )}
+                    </>
+                  )}
 
                   {col.id === "scheduled" && !isCollapsed && (
                     <>
@@ -484,7 +519,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           <HiOutlineChevronRight />
         </button>
       </div>
-
 
       <Recent
         show={showRecentModal}

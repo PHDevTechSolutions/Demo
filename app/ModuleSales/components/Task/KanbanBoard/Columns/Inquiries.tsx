@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
+import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
+import { ToastContainer, toast } from "react-toastify";
 import InquiryModal from "./Modal/Inquiry";
 
 interface Inquiry {
@@ -38,6 +40,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
 }) => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   // ⏱ elapsed time refresh
@@ -100,11 +103,17 @@ const Inquiries: React.FC<InquiriesProps> = ({
     return `${hrs}h ${min}m ${sec}s`;
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchInquiries();
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-10">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-        <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+      <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+        <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+        <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+        <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
       </div>
     );
   }
@@ -113,10 +122,28 @@ const Inquiries: React.FC<InquiriesProps> = ({
 
   return (
     <div className="space-y-1 overflow-y-auto">
-      <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
-        <span className="mr-1">📋</span>CSR Inquiries:{" "}
-        <span className="ml-1 text-orange-500">{inquiries.length}</span>
-      </h3>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+        <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
+          <span className="mr-1">📋</span>CSR Inquiries:{" "}
+          <span className="ml-1 text-orange-500">{inquiries.length}</span>
+        </h3>
+        <button
+          onClick={handleRefresh}
+          className="flex items-center bg-gray-100 gap-2 text-xs px-3 py-2 rounded transition"
+        >
+          {refreshing ? (
+            <>
+              <AiOutlineLoading size={14} className="animate-spin" />
+              <span>Refreshing...</span>
+            </>
+          ) : (
+            <>
+              <AiOutlineReload size={14} className="text-gray-700" />
+              <span>Refresh</span>
+            </>
+          )}
+        </button>
+      </div>
 
       {visibleInquiries.length > 0 ? (
         visibleInquiries.map((inq, idx) => {

@@ -87,51 +87,51 @@ const ListofUser: React.FC = () => {
     }, []);
 
     const filteredAccounts = Array.isArray(posts)
-  ? posts
-      .filter((post) => {
-        // 🔹 Ensure companyname exists
-        if (!post?.companyname) return false;
+        ? posts
+            .filter((post) => {
+                // 🔹 Ensure companyname exists
+                if (!post?.companyname) return false;
 
-        // 🔹 Search term filter
-        const matchesSearchTerm = post.companyname
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+                // 🔹 Search term filter
+                const matchesSearchTerm = post.companyname
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase());
 
-        // 🔹 Date range filter
-        const postDate = post.date_created ? new Date(post.date_created) : null;
-        const isWithinDateRange =
-          (!startDate || (postDate && postDate >= new Date(startDate))) &&
-          (!endDate || (postDate && postDate <= new Date(endDate)));
+                // 🔹 Date range filter
+                const postDate = post.date_created ? new Date(post.date_created) : null;
+                const isWithinDateRange =
+                    (!startDate || (postDate && postDate >= new Date(startDate))) &&
+                    (!endDate || (postDate && postDate <= new Date(endDate)));
 
-        // 🔹 Client type filter (if typeclient exists in your data)
-        const matchesClientType = selectedClientType
-          ? post.typeclient === selectedClientType
-          : true;
+                // 🔹 Client type filter (if typeclient exists in your data)
+                const matchesClientType = selectedClientType
+                    ? post.typeclient === selectedClientType
+                    : true;
 
-        // 🔹 Role-based filtering
-        const role = userDetails.Role;
-        const refID = String(userDetails.ReferenceID || "");
-        let roleMatch = false;
+                // 🔹 Role-based filtering
+                const role = userDetails.Role;
+                const refID = String(userDetails.ReferenceID || "");
+                let roleMatch = false;
 
-        if (role === "Super Admin" || role === "Special Access") {
-          roleMatch = true; // lahat pwede
-        } else if (role === "Manager") {
-          roleMatch = String(post.manager) === refID;
-        } else if (role === "Territory Sales Manager") {
-          roleMatch = String(post.tsm) === refID;
-        } else if (role === "Territory Sales Associate") {
-          roleMatch = String(post.referenceid) === refID;
-        }
+                if (role === "Super Admin" || role === "Special Access") {
+                    roleMatch = true; // lahat pwede
+                } else if (role === "Manager") {
+                    roleMatch = String(post.manager) === refID;
+                } else if (role === "Territory Sales Manager") {
+                    roleMatch = String(post.tsm) === refID;
+                } else if (role === "Territory Sales Associate") {
+                    roleMatch = String(post.referenceid) === refID;
+                }
 
-        return matchesSearchTerm && isWithinDateRange && matchesClientType && roleMatch;
-      })
-      .sort((a, b) => {
-        // 🔹 Sort by date_created descending
-        const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
-        const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
-        return dateB - dateA;
-      })
-  : [];
+                return matchesSearchTerm && isWithinDateRange && matchesClientType && roleMatch;
+            })
+            .sort((a, b) => {
+                // 🔹 Sort by date_created descending
+                const dateA = a.date_created ? new Date(a.date_created).getTime() : 0;
+                const dateB = b.date_created ? new Date(b.date_created).getTime() : 0;
+                return dateB - dateA;
+            })
+        : [];
 
     return (
         <SessionChecker>
@@ -154,9 +154,10 @@ const ListofUser: React.FC = () => {
                                                 setSearchTerm={setSearchTerm}
                                             />
                                             {loading ? (
-                                                <div className="flex justify-center items-center py-10">
-                                                    <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                                                    <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                                <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+                                                    <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                                                    <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                                                    <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
                                                 </div>
                                             ) : (
                                                 <>

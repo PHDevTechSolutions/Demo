@@ -292,9 +292,10 @@ const ListofUser: React.FC = () => {
                                     />
 
                                     {loading ? (
-                                        <div className="flex justify-center items-center py-10">
-                                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                                        <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+                                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
                                         </div>
                                     ) : (
                                         <>

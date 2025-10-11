@@ -18,7 +18,6 @@ interface FormProps {
     setEndDate: (value: string) => void;
     handleSubmit: () => void;
     resetForm: () => void;
-    handleDelete: (id: number) => void;
     dateUpdated?: string;
 }
 
@@ -37,7 +36,6 @@ const Form: React.FC<FormProps> = ({
     setEndDate,
     handleSubmit,
     resetForm,
-    handleDelete,
     dateUpdated,
 }) => {
     const [relativeTime, setRelativeTime] = useState("");
@@ -196,20 +194,6 @@ const Form: React.FC<FormProps> = ({
                         </button>
                     )}
                 </div>
-
-                {editingId && (
-                    <button
-                        onClick={() => {
-                            if (confirm("Are you sure you want to delete this activity?")) {
-                                handleDelete(editingId);
-                                resetForm();
-                            }
-                        }}
-                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition flex items-center gap-1"
-                    >
-                        <MdDelete size={18} /> Delete
-                    </button>
-                )}
             </div>
 
         </div>

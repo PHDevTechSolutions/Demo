@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { IoSync, IoSearchOutline, IoFilter } from "react-icons/io5";
+import { IoSearchOutline, IoFilter } from "react-icons/io5";
+import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
 import ProgressCard from "./Card/ProgressCard";
 import ProgressForm from "./Form/ProgressForm";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { motion } from "framer-motion";
 
 interface ProgressItem {
   id: string;
@@ -372,10 +372,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
     setListLoading(true);
     try {
       await fetchProgress();
-      toast.info("Refreshing data...");
     } catch (err) {
       console.error(err);
-      toast.error("Failed to refresh data");
     } finally {
       setListLoading(false);
     }
@@ -454,13 +452,19 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
             Filter <IoFilter size={15} />
           </button>
           <button
-            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={handleRefresh}
+            className="flex items-center bg-gray-100 gap-2 text-xs px-3 py-2 rounded transition"
           >
             {listLoading ? (
-              <IoSync size={14} className="animate-spin" />
+              <>
+                <AiOutlineLoading size={14} className="animate-spin" />
+                <span>Refreshing...</span>
+              </>
             ) : (
-              <IoSync size={14} />
+              <>
+                <AiOutlineReload size={14} className="text-gray-700" />
+                <span>Refresh</span>
+              </>
             )}
           </button>
         </div>

@@ -176,23 +176,41 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
             )}
 
             {showDeleteModal && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-[999]">
-                    <div className="bg-white rounded-lg p-4 w-[300px]">
-                        <h2 className="text-sm font-bold mb-2">Confirm Delete</h2>
-                        <p className="text-xs mb-4">
-                            Deleting this activity will <strong>not</strong> remove its historical records.
-                            Those entries will remain in the archive unless you delete them from the Historical&nbsp;Records
-                        </p>
-                        <div className="flex justify-end gap-2">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-red-500 to-red-600">
+                            <h3 className="text-white font-semibold text-lg">Confirm Delete</h3>
                             <button
-                                className="px-3 py-1 text-xs rounded bg-gray-200"
                                 onClick={() => setShowDeleteModal(false)}
+                                className="text-white hover:text-gray-200 transition text-lg"
+                            >
+                                ✖
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 text-xs text-gray-700 space-y-2">
+                            <p>
+                                Deleting this activity will <strong>not</strong> remove its historical records.
+                            </p>
+                            <p>
+                                Those entries will remain in the archive unless you delete them from the{" "}
+                                <strong>Historical Records</strong>.
+                            </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-3 border-t bg-gray-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 text-xs"
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-3 py-1 text-xs rounded bg-red-500 text-white"
                                 onClick={handleDelete}
+                                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-xs"
                             >
                                 Delete
                             </button>
@@ -200,6 +218,7 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                     </div>
                 </div>
             )}
+
 
             <ToastContainer
                 position="top-right"

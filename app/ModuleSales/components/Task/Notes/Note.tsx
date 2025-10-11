@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { AiOutlineDelete } from 'react-icons/ai';
 import Form from "./Form";
 
 interface Note {
@@ -42,6 +43,9 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
     const [activitystatus, setActivityStatus] = useState("");
     const [typeactivity, setTypeActivity] = useState("");
@@ -175,6 +179,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     };
 
     const handleDelete = async (id: number) => {
+        setShowDeleteModal(false);
         syncToCache(notes.filter(n => n.id !== id));
 
         try {
@@ -227,9 +232,10 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 border-t">
                 <div className="col-span-1">
                     {loading ? (
-                        <div className="flex justify-center items-center py-10">
-                            <div className="w-6 h-6 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin"></div>
-                            <span className="ml-2 text-xs text-gray-500">Loading data...</span>
+                        <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
+                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
+                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
                         </div>
                     ) : (
                         <div className="flex flex-col">
@@ -272,6 +278,17 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                                                 {formatRelativeDate(note.date_created)}
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteTargetId(note.id);
+                                                setShowDeleteModal(true);
+                                            }}
+                                            title="Delete?"
+                                            className="bg-red-400 text-white shadow-md rounded text-xs p-2"
+                                        >
+                                            <AiOutlineDelete />
+                                        </button>
                                     </div>
                                 ))}
 
@@ -289,6 +306,49 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                     )}
                 </div>
 
+                {showDeleteModal && (
+                    <div className="fixed inset-0 z-[9999] bg-opacity-[10] flex items-center justify-center bg-black/20 p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-red-500 to-red-600">
+                                <h3 className="text-white font-semibold text-lg">Confirm Delete</h3>
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className="text-white hover:text-gray-200 transition text-lg"
+                                >
+                                    ✖
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-6 text-xs text-gray-700 space-y-2">
+                                <p>
+                                    Are you sure you want to delete this note? This action cannot be undone.
+                                </p>
+
+                            </div>
+
+                            {/* Footer */}
+                            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end gap-3">
+                                <button
+                                    onClick={() => setShowDeleteModal(false)}
+                                    disabled={loading}
+                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 text-xs"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => deleteTargetId && handleDelete(deleteTargetId)}
+                                    disabled={loading}
+                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-xs"
+                                >
+                                    {loading ? "Deleting..." : "Delete"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="col-span-3">
                     <Form
                         editingId={editingId}
@@ -305,8 +365,9 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                         setEndDate={setEndDate}
                         handleSubmit={handleSubmit}
                         resetForm={resetForm}
-                        handleDelete={handleDelete}
-                        dateUpdated={editingId ? notes.find(n => n.id === editingId)?.date_updated || "" : ""}
+                        dateUpdated={
+                            editingId ? notes.find((n) => n.id === editingId)?.date_updated || "" : ""
+                        }
                     />
                 </div>
             </div>

@@ -16,10 +16,11 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
   const [isGPTRightbarOpen, setGPTRightbarOpen] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
   const [isDarkMode, setDarkMode] = useState(
     typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
   );
+
+  const [showLogoutReminder, setShowLogoutReminder] = useState(false);
 
   // ✅ Detect if mobile
   useEffect(() => {
@@ -27,6 +28,33 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     checkScreen();
     window.addEventListener("resize", checkScreen);
     return () => window.removeEventListener("resize", checkScreen);
+  }, []);
+
+  // ✅ Show popup once per day at 4:30 PM (Asia/Manila)
+  useEffect(() => {
+    const checkTime = () => {
+      const now = new Date();
+      const manilaTime = now.toLocaleTimeString("en-PH", {
+        timeZone: "Asia/Manila",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const today = new Date().toLocaleDateString("en-PH", { timeZone: "Asia/Manila" });
+
+      const lastShownDate = localStorage.getItem("logoutReminderShownDate");
+
+      // ✅ Show once per day only
+      if (manilaTime === "16:30" && lastShownDate !== today) {
+        setShowLogoutReminder(true);
+        localStorage.setItem("logoutReminderShownDate", today);
+      }
+    };
+
+    const interval = setInterval(checkTime, 30000); // every 30 seconds
+    checkTime();
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -43,11 +71,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <div
-        className={`flex-grow transition-all duration-300 ${
-          !isMobile ? "ml-64" : ""
-        }`}
-      >
+      <div className={`flex-grow transition-all duration-300 ${!isMobile ? "ml-64" : ""}`}>
         <Navbar
           onToggleSidebar={() => {}}
           onToggleTheme={() => {
@@ -92,11 +116,30 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       {/* Tasky Sidebars */}
       <AIRightbar isOpen={isRightbarOpen} onClose={() => setRightbarOpen(false)} />
       <GPTRightbar isOpen={isGPTRightbarOpen} onClose={() => setGPTRightbarOpen(false)} />
+
+      {/* ✅ Logout Reminder Modal */}
+      {showLogoutReminder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm text-center animate-fadeIn">
+            <h2 className="text-lg font-bold mb-2 text-gray-800">
+              ⏰ Don’t forget to logout your account!
+            </h2>
+            <p className="text-gray-600 text-sm mb-4">
+              💪 Keep up the great work and happy selling!
+            </p>
+            <button
+              onClick={() => setShowLogoutReminder(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// ✅ Proper Layout Wrapper
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   return <ParentLayout>{children}</ParentLayout>;
 }
