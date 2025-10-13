@@ -202,7 +202,7 @@ const Companies: React.FC<CompaniesProps> = ({
           <div className="flex flex-col w-full sm:w-auto">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-black flex items-center gap-1">
-                📞 OB Calls:
+                📞 OB Calls: 
               </span>
               <span
                 className={`text-xs font-bold ${isFull ? "text-red-500" : isNearLimit ? "text-orange-500" : "text-green-600"
@@ -210,7 +210,7 @@ const Companies: React.FC<CompaniesProps> = ({
               >
                 {tapCount}{" "}
                 <span className="text-[10px] text-gray-500 font-normal">
-                  / {limit} Min
+                  / {limit} Minimum
                 </span>
               </span>
             </div>

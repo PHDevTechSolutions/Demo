@@ -80,7 +80,7 @@ const allColumns: Column[] = [
 ];
 
 const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
-  const router = useRouter(); // ✅ use router for client revalidation
+  const router = useRouter();
   const [expandedIdx, setExpandedIdx] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
@@ -110,17 +110,14 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-  // ✅ Always fetch latest progress (no cache)
+  // ✅ Always fetch latest progress
   const fetchProgress = async () => {
     if (!userDetails?.ReferenceID) return;
     try {
       setLoading(true);
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchInProgress?referenceid=${userDetails.ReferenceID}`,
-        {
-          cache: "no-store",
-          next: { revalidate: 0 },
-        }
+        { cache: "no-store", next: { revalidate: 0 } }
       );
       const data = await res.json();
       setProgress(data?.data || []);
@@ -142,13 +139,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     try {
       const res = await fetch(
         `/api/ModuleSales/Task/ActivityPlanner/FetchTask?referenceid=${userDetails.ReferenceID}`,
-        {
-          cache: "no-store",
-          next: { revalidate: 0 },
-        }
+        { cache: "no-store", next: { revalidate: 0 } }
       );
       if (!res.ok) return;
-
       const result = await res.json();
       let activities = result?.data || [];
 
@@ -181,10 +174,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   }, [userDetails?.ReferenceID, fetchProgressData]);
 
-  // ✅ Create activity with instant revalidation
+  // ✅ Submit new activity
   const handleSubmit = async (data: Partial<Company | Inquiry>, isInquiry: boolean) => {
     if (!userDetails) return;
-
     const payload = {
       referenceid: userDetails.ReferenceID,
       manager: userDetails.Manager,
@@ -203,21 +195,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         cache: "no-store",
-        next: { revalidate: 0 },
       });
-
-      let result: any = {};
-      try {
-        result = await res.json();
-      } catch {
-        result = { error: "No response body from server" };
-      }
-
-      if (!res.ok) {
-        console.error("❌ Backend error:", result);
-        throw new Error(result.error || "Failed to submit activity");
-      }
-
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Failed to submit activity");
       if (isInquiry && "ticketreferencenumber" in data) {
         await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateStatus", {
           method: "POST",
@@ -229,13 +209,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           cache: "no-store",
         });
       }
-
-      // ✅ Real-time UI update
-      setLoading(true);
       await fetchProgress();
       setRefreshTrigger((prev) => prev + 1);
-      router.refresh(); // ✅ Revalidate the page instantly
-
+      router.refresh();
       toast.success("Activity successfully added!", { autoClose: 2000 });
     } catch (error: any) {
       console.error("❌ Error submitting activity:", error);
@@ -243,31 +219,27 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     }
   };
 
-  const toggleCollapse = (id: string) => {
+  const toggleCollapse = (id: string) =>
     setCollapsedColumns((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
     );
-  };
 
+  // ✅ Hide duplication column and button if Role === "Manager"
   const filteredColumns = allColumns.filter((col) => {
-    // Duplication column only shows if showDuplication is true
+    if (col.id === "duplication" && userDetails?.Role === "Manager") return false;
     if (col.id === "duplication" && !showDuplication) return false;
 
-    // Example: hide new-task and in-progress for certain roles
-    if (
-      userDetails?.Role === "Territory Sales Manager" ||
-      userDetails?.Role === "Manager"
-    ) {
+    if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
       return col.id !== "new-task" && col.id !== "in-progress";
     }
 
     return true;
   });
 
+  // ✅ Fetch TSA
   useEffect(() => {
     const fetchTSA = async () => {
       if (!userDetails?.ReferenceID) return;
-
       let url = "";
       if (userDetails.Role === "Territory Sales Manager") {
         url = `/api/fetchtsadata?Role=Territory Sales Associate&tsm=${userDetails.ReferenceID}`;
@@ -278,12 +250,8 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       } else return;
 
       try {
-        const response = await fetch(url, {
-          cache: "no-store",
-          next: { revalidate: 0 },
-        });
+        const response = await fetch(url, { cache: "no-store" });
         if (!response.ok) throw new Error("Failed to fetch TSA");
-
         const data = await response.json();
         const options = data.map((user: any) => ({
           value: user.ReferenceID,
@@ -294,7 +262,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         console.error("❌ Error fetching TSA:", err);
       }
     };
-
     fetchTSA();
   }, [userDetails?.ReferenceID, userDetails?.Role]);
 
@@ -304,55 +271,61 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       <p className="text-sm text-gray-500 px-2 mb-4">
         This section allows you to track, manage, and update your daily activities.
       </p>
+
       <audio ref={welcomeAudioRef} src="/welcome.mp3" preload="auto" />
+
       <div className="flex justify-end gap-2 mb-3">
+        {(userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") && (
+          <div className="flex gap-2 items-center">
+            <label className="text-xs font-semibold">Filter By TSA:</label>
+            <select
+              value={selectedTSA}
+              onChange={(e) => setSelectedTSA(e.target.value)}
+              className="px-3 py-2 text-xs border rounded flex items-center gap-1 capitalize"
+            >
+              <option value="">All</option>
+              {TSAOptions.map((tsa) => (
+                <option key={tsa.value} value={tsa.value}>
+                  {tsa.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <button
           onClick={() => {
             fetchProgressData();
             setShowRecentModal(true);
           }}
-          className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
+          className="px-3 py-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-1"
         >
           <RiTimelineView /> View Recent Activities
         </button>
+
         <button
           onClick={handlePlayMessage}
-          className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1"
+          className="px-3 py-2 text-xs bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1"
         >
           <HiPlay /> Play Message
         </button>
-        <button
-          onClick={() => setShowDuplication((prev) => !prev)}
-          className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
-        >
-          {showDuplication ? "Hide Duplicate" : (
-            <>
-              <HiOutlineDuplicate /> Show Duplicate
-            </>
-          )}
-        </button>
+
+        {/* 🔒 Duplication button hidden for Managers */}
+        {userDetails?.Role !== "Manager" && (
+          <button
+            onClick={() => setShowDuplication((prev) => !prev)}
+            className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
+          >
+            {showDuplication ? "Hide Duplicate" : (
+              <>
+                <HiOutlineDuplicate /> Show Duplicate
+              </>
+            )}
+          </button>
+        )}
       </div>
 
-      {(userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") && (
-        <div className="flex gap-2 items-center">
-          <label className="text-xs font-semibold">Filter TSA:</label>
-          <select
-            value={selectedTSA}
-            onChange={(e) => setSelectedTSA(e.target.value)}
-            className="shadow-sm border px-3 py-2 rounded text-xs capitalize"
-          >
-            <option value="">All</option>
-            {TSAOptions.map((tsa) => (
-              <option key={tsa.value} value={tsa.value}>
-                {tsa.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
+      {/* ✅ Kanban Columns */}
       <div className="relative">
-        {/* ⬅️ Left Scroll Button */}
         <button
           onClick={() => {
             const container = document.getElementById("kanban-scroll");
@@ -363,22 +336,19 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           <HiOutlineChevronLeft />
         </button>
 
-        {/* Kanban Columns Container */}
         <div
           id="kanban-scroll"
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth px-2"
-          style={{ scrollSnapType: "x mandatory" }}
         >
           {filteredColumns.map((col) => {
             const isCollapsed = collapsedColumns.includes(col.id);
             const isSchedOrCompleted = col.id === "scheduled" || col.id === "completed";
-
             return (
               <div
                 key={col.id}
-                className={`flex-shrink-0 w-[33.33%] min-w-[33.33%] snap-center border rounded-lg bg-white shadow-sm p-3 transition-all duration-300 ${isCollapsed ? "w-12 min-w-12" : ""
-                  }`}
+                className={`flex-shrink-0 w-[33.33%] min-w-[33.33%] snap-center border rounded-lg bg-white shadow-sm p-3 transition-all duration-300 ${isCollapsed ? "w-12 min-w-12" : ""}`}
               >
+                {/* Header */}
                 <div className="flex justify-between items-center mb-2">
                   {!isCollapsed && (
                     <h2 className="font-semibold text-gray-700 text-center border-b w-full">
@@ -396,11 +366,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                   )}
                 </div>
 
-                <div
-                  className={`space-y-4 overflow-y-auto max-h-[600px] ${isCollapsed ? "hidden" : ""
-                    }`}
-                >
-                  {col.id === "new-task" && !isCollapsed && (
+                {/* Content */}
+                <div className={`${isCollapsed ? "hidden" : "space-y-4 overflow-y-auto max-h-[600px]"}`}>
+                  {col.id === "new-task" && (
                     <>
                       <Inquiries
                         expandedIdx={expandedIdx}
@@ -418,89 +386,32 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                     </>
                   )}
 
-                  {col.id === "in-progress" && !isCollapsed && (
+                  {col.id === "in-progress" && (
                     loading ? (
-                      <div className="space-y-2">
-                        {[...Array(3)].map((_, idx) => (
-                          <div
-                            key={idx}
-                            className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
-                          >
-                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-                          </div>
-                        ))}
-                      </div>
+                      <div className="animate-pulse text-xs text-gray-400">Loading...</div>
                     ) : (
-                      <div>
-                        <Progress
-                          userDetails={userDetails}
-                          setHoveredCompany={setHoveredCompany}
-                        />
-                      </div>
+                      <Progress
+                        userDetails={userDetails}
+                        setHoveredCompany={setHoveredCompany}
+                      />
                     )
                   )}
 
-                  {col.id === "duplication" && !isCollapsed && showDuplication && (
-                    <>
-                      {loading ? (
-                        <div className="space-y-2 transition-all duration-300 snap-center">
-                          {[...Array(3)].map((_, idx) => (
-                            <div
-                              key={idx}
-                              className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm"
-                            >
-                              <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-                              <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-                              <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div
-                          key={col.id}
-                          className={`snap-center bg-white shadow-sm transition-all duration-300 ${isCollapsed ? "w-12 min-w-12" : ""}`}
-                        >
-                          <Duplication
-                            userDetails={userDetails}
-                            hoveredCompany={hoveredCompany}
-                          />
-                        </div>
+                  {col.id === "duplication" && showDuplication && (
+                    <Duplication userDetails={userDetails} hoveredCompany={hoveredCompany} />
+                  )}
 
-                      )}
+                  {col.id === "scheduled" && (
+                    <>
+                      <Callbacks userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
+                      <FollowUp userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
+                      <Meetings userDetails={userDetails} refreshTrigger={refreshTrigger} />
+                      <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     </>
                   )}
 
-                  {col.id === "scheduled" && !isCollapsed && (
-                    <>
-                      <Callbacks
-                        userDetails={userDetails}
-                        refreshTrigger={refreshTrigger}
-                        selectedTSA={selectedTSA}
-                      />
-                      <FollowUp
-                        userDetails={userDetails}
-                        refreshTrigger={refreshTrigger}
-                        selectedTSA={selectedTSA}
-                      />
-                      <Meetings
-                        userDetails={userDetails}
-                        refreshTrigger={refreshTrigger}
-                      />
-                      <SiteVisit
-                        userDetails={userDetails}
-                        refreshTrigger={refreshTrigger}
-                      />
-                    </>
-                  )}
-
-                  {col.id === "completed" && !isCollapsed && (
-                    <Completed
-                      userDetails={userDetails}
-                      refreshTrigger={refreshTrigger}
-                      selectedTSA={selectedTSA}
-                    />
+                  {col.id === "completed" && (
+                    <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
                   )}
                 </div>
               </div>
@@ -508,7 +419,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
           })}
         </div>
 
-        {/* ➡️ Right Scroll Button */}
         <button
           onClick={() => {
             const container = document.getElementById("kanban-scroll");
@@ -520,11 +430,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
         </button>
       </div>
 
-      <Recent
-        show={showRecentModal}
-        onClose={() => setShowRecentModal(false)}
-        activities={recentActivities}
-      />
+      <Recent show={showRecentModal} onClose={() => setShowRecentModal(false)} activities={recentActivities} />
     </div>
   );
 };

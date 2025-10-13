@@ -86,7 +86,8 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
   if (
     progress.activitystatus === "Cold" 
     || progress.activitystatus === "Warm" || progress.activitystatus === "Hot" 
-    || progress.activitystatus === "Done" || progress.activitystatus === "Delivered"
+    || progress.activitystatus === "Done" || progress.activitystatus === "Deleted" 
+    || progress.activitystatus === "Delivered"
   ) return null;
 
   const percent = STATUS_PERCENT[progress.activitystatus || "On Progress"] || 0;

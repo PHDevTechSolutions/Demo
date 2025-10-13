@@ -70,6 +70,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [editEnabled, setEditEnabled] = useState(false);
+  const [showEnableModal, setShowEnableModal] = useState(false);
 
   const handleRowClick = (task: Note) => {
     setSelectedTask(task);
@@ -188,22 +190,15 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
     }
   };
 
-
   const renderTaskRow = (task: Note) => {
-    const isDisabled = ["delivered", "done", "completed"].includes(
-      (task.activitystatus || "").toLowerCase()
-    );
+    const isCompleted = ["completed", "done", "delivered"].includes((task.activitystatus || "").toLowerCase());
+    const canEdit = editEnabled || !isCompleted;
 
     return (
       <tr
         key={task.id}
-        className={`relative group hover:bg-gray-50 border-b ${isDisabled
-          ? "cursor-not-allowed opacity-60"
-          : "cursor-pointer hover:shadow-sm"
-          }`}
-        onClick={() => {
-          if (!isDisabled) handleRowClick(task);
-        }}
+        className={`relative group hover:bg-gray-50 border-b ${canEdit ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
+        onClick={() => canEdit && handleRowClick(task)}
         onMouseEnter={() => setHoveredRow(task.id)}
         onMouseLeave={() => setHoveredRow(null)}
       >
@@ -251,7 +246,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
           </div>
         </td>
         {/* ✅ Delete button (appears on hover, fixed to right) */}
-        {hoveredRow === task.id && (
+        {hoveredRow === task.id && canEdit && (
           <td
             className="absolute right-0 top-0 h-full flex items-center bg-white/90 border-l px-2 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
             <button
@@ -285,22 +280,43 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
     );
   };
 
-
   return (
     <div className="mb-4 border-b relative">
-      <h3
-        className="text-xs font-semibold text-gray-700 mb-4 mt-4 pb-1 flex items-center gap-2 cursor-pointer select-none"
-        onClick={toggleCollapse}
-      >
-        <FiChevronRight
-          className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-90"
-            }`}
-        />
-        <span>{title}</span>
-        <span className="bg-gray-200 px-2 py-0.5 text-[10px] rounded-full">
-          {tasks.length}
-        </span>
-      </h3>
+      <div className="flex justify-between items-center mb-2">
+        <h3
+          className="text-xs font-semibold text-gray-700 mt-4 pb-1 flex items-center gap-2 cursor-pointer select-none"
+          onClick={toggleCollapse}
+        >
+          <FiChevronRight
+            className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-90"}`}
+          />
+          <span>{title}</span>
+          <span className="bg-gray-200 px-2 py-0.5 text-[10px] rounded-full">{tasks.length}</span>
+        </h3>
+
+        {/* ✅ Show Enable Edit button only in Completed Tasks tab */}
+        {title.toLowerCase().includes("completed") && (
+          <button
+            onClick={() => {
+              if (editEnabled) {
+                // 🔹 If already editing, clicking again disables it
+                setEditEnabled(false);
+                toast.info("Editing disabled for completed tasks");
+              } else {
+                // 🔹 Otherwise show confirmation modal
+                setShowEnableModal(true);
+              }
+            }}
+            className={`px-3 py-1.5 text-xs rounded font-medium shadow-sm transition-all ${editEnabled
+              ? "bg-green-500 text-white hover:bg-green-600"
+              : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+              }`}
+          >
+            {editEnabled ? "Close Edit" : "Enable Edit"}
+          </button>
+        )}
+
+      </div>
 
       {!collapsed && (
         <>
@@ -340,6 +356,54 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
             </div>
           )}
         </>
+      )}
+
+      {showEnableModal && (
+        <div className="fixed inset-0 z-[9999] bg-opacity-[10] flex items-center justify-center bg-black/20 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
+
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-yellow-400 to-yellow-500">
+              <h3 className="text-white font-semibold text-lg">⚠️ Enable Editing</h3>
+              <button
+                onClick={() => setShowEnableModal(false)}
+                className="text-white hover:text-gray-200 transition text-lg"
+              >
+                ✖
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 text-xs text-gray-700 space-y-2">
+              <p>
+                You are enabling editing or deleting for completed tasks. Please make sure updates are correct
+                to avoid affecting reports and historical data.
+              </p>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEnableModal(false)}
+                disabled={loading}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setEditEnabled(true);
+                  setShowEnableModal(false);
+                  toast.info("Editing enabled for completed tasks");
+                }}
+                className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 text-xs"
+              >
+                {loading ? "Confirming..." : "Confirm"}
+              </button>
+            </div>
+
+          </div>
+        </div>
       )}
 
       {/* Slide-up edit form */}

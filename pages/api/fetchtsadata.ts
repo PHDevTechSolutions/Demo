@@ -16,10 +16,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Role is required" });
     }
 
-    // Build the query filter
+    // 🔹 Build query filter
     const filter: any = {
       Role,
-      Status: { $nin: ["Resigned", "Terminated"] }, // exclude resigned or terminated users
+      Status: { $nin: ["Resigned", "Terminated"] },
     };
 
     if (tsm) {
@@ -30,14 +30,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       filter.Manager = manager;
     }
 
-    const users = await db.collection("users")
+    // 🔹 Include profilePicture in projection
+    const users = await db
+      .collection("users")
       .find(filter)
       .project({
         Firstname: 1,
         Lastname: 1,
         ReferenceID: 1,
+        Email: 1,
         TSM: 1,
         Manager: 1,
+        Position: 1,
+        Status: 1,
+        profilePicture: 1, // 🟢 Added this
         _id: 0,
       })
       .toArray();

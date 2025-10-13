@@ -91,19 +91,26 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
         try {
             if (!userDetails || !userDetails.ReferenceID) return;
 
-            const res = await fetch(
-                `/api/ModuleSales/Task/ActivityPlanner/FetchMeeting?referenceid=${userDetails.ReferenceID}`
-            );
+            let url = `/api/ModuleSales/Task/ActivityPlanner/FetchMeeting`;
+
+            // 🧠 Add filtering logic based on role
+            if (userDetails.Role === "Manager") {
+                url += `?manager=${userDetails.ReferenceID}`;
+            } else if (userDetails.Role === "TSM") {
+                url += `?tsm=${userDetails.ReferenceID}`;
+            } else {
+                url += `?referenceid=${userDetails.ReferenceID}`;
+            }
+
+            const res = await fetch(url);
             const data = await res.json();
 
             if (!res.ok || !data.success)
                 throw new Error(data.error || "Failed to fetch meetings");
 
-            const filteredMeetings = data.meetings.filter(
-                (m: MeetingItem) =>
-                    m.referenceid &&
-                    m.referenceid === userDetails.ReferenceID &&
-                    (m.typeactivity === "Client Meeting" || m.typeactivity === "Group Meeting")
+            // 🧩 For managers and TSMs, they can see meetings of their handled agents
+            const filteredMeetings = data.meetings.filter((m: MeetingItem) =>
+                m.typeactivity === "Client Meeting" || m.typeactivity === "Group Meeting"
             );
 
             const today = getNowInPH();
@@ -127,6 +134,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
             toast.error(err.message || "Failed to load meetings");
         }
     };
+
 
     useEffect(() => {
         fetchMeetings();
@@ -224,7 +232,7 @@ const Meetings: React.FC<MeetingsProps> = ({ userDetails, refreshTrigger }) => {
                                     </p>
                                     <p>
                                         🕒 <span className="font-semibold">Created:</span>{" "}
-                                       {m.date_created || "-"}
+                                        {m.date_created || "-"}
                                     </p>
                                 </div>
                             )}

@@ -10,18 +10,21 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 
 export const dynamic = "force-dynamic";
 
-// ✅ PUT → update existing progress record
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      id, // 🔹 ID now comes from body
+      id,
       typeactivity,
       sonumber,
       quotationnumber,
       soamount,
       quotationamount,
       projectcategory,
+      remarks,
+      callstatus,
+      source,
+      typecall,
     } = body;
 
     if (!id) {
@@ -40,8 +43,12 @@ export async function PUT(req: NextRequest) {
           soamount = $4,
           quotationamount = $5,
           projectcategory = $6,
+          remarks = $7,
+          callstatus = $8,
+          source = $9,
+          typecall = $10,
           date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
-      WHERE id = $7;
+      WHERE id = $11;
       `,
       [
         typeactivity,
@@ -50,6 +57,10 @@ export async function PUT(req: NextRequest) {
         soamount,
         quotationamount,
         projectcategory,
+        remarks,
+        callstatus,
+        source,
+        typecall,
         id,
       ]
     );

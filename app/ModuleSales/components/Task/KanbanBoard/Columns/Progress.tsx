@@ -294,6 +294,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
         item.activitystatus === "Warm" ||
         item.activitystatus === "Hot" ||
         item.activitystatus === "Done" ||
+        item.activitystatus === "Deleted" ||
         item.activitystatus === "Delivered"
       ) {
         return false;
