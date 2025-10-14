@@ -9,8 +9,7 @@ import SearchFilters from "../../../components/AutomatedTickets/SearchFilters";
 import AccountsTable from "../../../components/AutomatedTickets/ActivityTable";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { CiCirclePlus } from "react-icons/ci";
-import { CiImport, CiExport } from "react-icons/ci";
+import { CiCirclePlus, CiExport } from "react-icons/ci";
 import ExcelJS from "exceljs";
 
 const ActivityPage: React.FC = () => {
@@ -24,61 +23,19 @@ const ActivityPage: React.FC = () => {
     const [TicketEndorsed, setTicketEndorsed] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [postToDelete, setPostToDelete] = useState<string | null>(null);
-    const [startDate, setStartDate] = useState(""); // Default to null
-    const [endDate, setEndDate] = useState(""); // Default to null
-
-    const [userDetails, setUserDetails] = useState({
-        UserId: "", ReferenceID: "", Firstname: "", Lastname: "", Email: "", Role: "",
-    });
-
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [showAccessModal, setShowAccessModal] = useState(false);
 
-    // Fetch user data based on query parameters (user ID)
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const params = new URLSearchParams(window.location.search);
-            const userId = params.get("id");
-
-            if (userId) {
-                try {
-                    const response = await fetch(`/api/user?id=${encodeURIComponent(userId)}`);
-                    if (!response.ok) throw new Error("Failed to fetch user data");
-                    const data = await response.json();
-                    setUserDetails({
-                        UserId: data._id, // Set the user's id here
-                        ReferenceID: data.ReferenceID || "",  // <-- Siguraduhin na ito ay may value
-                        Firstname: data.Firstname || "",
-                        Lastname: data.Lastname || "",
-                        Email: data.Email || "",
-                        Role: data.Role || "",
-                    });
-                } catch (err: unknown) {
-                    console.error("Error fetching user data:", err);
-                    setError("Failed to load user data. Please try again later.");
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                setError("User ID is missing.");
-                setLoading(false);
-            }
-        };
-
-        fetchUserData();
-    }, []);
-
-    // Fetch accounts from the API
+    // ✅ Fetch activity list
     const fetchActivity = async () => {
         try {
             const response = await fetch("/api/ModuleCSR/Monitorings/FetchActivity");
             const data = await response.json();
             setPosts(data);
         } catch (error) {
-            toast.error("Error fetching accounts.");
-            console.error("Error fetching accounts:", error);
+            toast.error("Error fetching activities.");
+            console.error("Error fetching activities:", error);
         }
     };
 
@@ -86,6 +43,7 @@ const ActivityPage: React.FC = () => {
         fetchActivity();
     }, []);
 
+    // ✅ Update status
     const handleStatusUpdate = async (id: string, newStatus: string) => {
         try {
             const response = await fetch("/api/ModuleCSR/Monitorings/UpdateStatus", {
@@ -95,15 +53,15 @@ const ActivityPage: React.FC = () => {
             });
 
             if (response.ok) {
-                setPosts((prevPosts) =>
-                    prevPosts.map((post) =>
-                        post._id === id ? { ...post, Status: newStatus } : post
+                setPosts((prev) =>
+                    prev.map((p) =>
+                        p._id === id ? { ...p, Status: newStatus } : p
                     )
                 );
                 toast.success("Status updated successfully.");
             } else {
-                const errorData = await response.json();
-                toast.error(errorData.error || "Failed to update status.");
+                const err = await response.json();
+                toast.error(err.error || "Failed to update status.");
             }
         } catch (error) {
             toast.error("Failed to update status.");
@@ -111,82 +69,94 @@ const ActivityPage: React.FC = () => {
         }
     };
 
-    const handleRemarksUpdate = async (id: string, NewRemarks: string) => {
+    // ✅ Update remarks
+    const handleRemarksUpdate = async (id: string, newRemarks: string) => {
         try {
             const response = await fetch("/api/ModuleCSR/Monitorings/UpdateRemarks", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, Remarks: NewRemarks }),
+                body: JSON.stringify({ id, Remarks: newRemarks }),
             });
 
             if (response.ok) {
-                setPosts((prevPosts) =>
-                    prevPosts.map((post) =>
-                        post._id === id ? { ...post, Remarks: NewRemarks } : post
+                setPosts((prev) =>
+                    prev.map((p) =>
+                        p._id === id ? { ...p, Remarks: newRemarks } : p
                     )
                 );
-                toast.success("Status updated successfully.");
+                toast.success("Remarks updated successfully.");
             } else {
-                const errorData = await response.json();
-                toast.error(errorData.error || "Failed to update status.");
+                const err = await response.json();
+                toast.error(err.error || "Failed to update remarks.");
             }
         } catch (error) {
-            toast.error("Failed to update status.");
-            console.error("Error updating status:", error);
+            toast.error("Failed to update remarks.");
+            console.error("Error updating remarks:", error);
         }
     };
 
-    // Filter accounts based on search term, channel, sales agent, and date range
-    const filteredAccounts = posts.filter((post) => {
-        const matchesSearchTerm =
-            post.CompanyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            post.CustomerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (post.TicketReferenceNumber && post.TicketReferenceNumber.includes(searchTerm)) ||
-            post.ContactNumber?.includes(searchTerm);
+    // ✅ Filter posts based on role & search
+    // ✅ Filter posts based on role & search
+    const filteredAccounts = (posts: any[], user: any) => {
+        if (!user) return [];
 
-        const matchesStatus = selectedStatus ? post.Status?.includes(selectedStatus) : true;
-        const matchesSalesAgent = salesAgent ? post.SalesAgent?.toLowerCase().includes(salesAgent.toLowerCase()) : true;
+        return posts.filter((post) => {
+            const matchesSearch =
+                post.CompanyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                post.CustomerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                post.TicketReferenceNumber?.includes(searchTerm) ||
+                post.ContactNumber?.includes(searchTerm);
 
-        const postDate = post?.createdAt ? new Date(post.createdAt) : null;
+            const matchesStatus = selectedStatus
+                ? post.Status?.includes(selectedStatus)
+                : true;
 
-        let isWithinDateRange = true;
+            const matchesSalesAgent = salesAgent
+                ? post.SalesAgent?.toLowerCase().includes(salesAgent.toLowerCase())
+                : true;
 
-        if (startDate && postDate) {
-            const start = new Date(startDate);
-            start.setHours(0, 0, 0, 0);
-            isWithinDateRange = postDate >= start;
-        }
+            const postDate = post?.createdAt ? new Date(post.createdAt) : null;
+            let isWithinRange = true;
 
-        if (endDate && postDate) {
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            isWithinDateRange = isWithinDateRange && postDate <= end;
-        }
+            if (startDate && postDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                isWithinRange = postDate >= start;
+            }
 
-        if (userDetails.Role === "Super Admin") {
-            return matchesSearchTerm && matchesStatus && matchesSalesAgent && isWithinDateRange;
-        } else if (userDetails.Role === "Admin") {
-            return (
-                post.Role === "Staff" &&
-                matchesSearchTerm &&
-                matchesStatus &&
-                matchesSalesAgent &&
-                isWithinDateRange
-            );
-        } else if (userDetails.Role === "Staff") {
-            return (
-                post.ReferenceID === userDetails.ReferenceID &&
-                matchesSearchTerm &&
-                matchesStatus &&
-                matchesSalesAgent &&
-                isWithinDateRange
-            );
-        }
+            if (endDate && postDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                isWithinRange = isWithinRange && postDate <= end;
+            }
 
-        return false;
-    });
+            // ✅ Role-based filtering logic
+            if (user.Role === "Super Admin") {
+                return matchesSearch && matchesStatus && matchesSalesAgent && isWithinRange;
+            } else if (user.Role === "Admin") {
+                return (
+                    post.Role === "Staff" &&
+                    matchesSearch &&
+                    matchesStatus &&
+                    matchesSalesAgent &&
+                    isWithinRange
+                );
+            } else if (user.Role === "Staff") {
+                return (
+                    (post.ReferenceID === user.ReferenceID || post.userName === user.userName) &&
+                    matchesSearch &&
+                    matchesStatus &&
+                    matchesSalesAgent &&
+                    isWithinRange
+                );
+            }
 
-    const exportToExcel = () => {
+            return false;
+        });
+    };
+
+    // ✅ Export Excel
+    const exportToExcel = (data: any[]) => {
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet("Automated Tickets");
 
@@ -217,44 +187,14 @@ const ActivityPage: React.FC = () => {
             { header: 'Department', key: 'Department', width: 20 },
             { header: 'Sales Manager', key: 'SalesManager', width: 25 },
             { header: 'Sales Agent', key: 'SalesAgent', width: 25 },
-            { header: 'Remarks', key: 'Remarks', width: 30 }
+            { header: 'Remarks', key: 'Remarks', width: 30 },
         ];
 
-        filteredAccounts.forEach((post) => {
-            worksheet.addRow({
-                userName: post.userName || '',
-                TicketReferenceNumber: post.TicketReferenceNumber || '',
-                TicketReceived: post.TicketReceived ? new Date(post.TicketReceived).toLocaleString() : '',
-                TicketEndorsed: post.TicketEndorsed ? new Date(post.TicketEndorsed).toLocaleString() : '',
-                CompanyName: post.CompanyName || '',
-                CustomerName: post.CustomerName || '',
-                ContactNumber: post.ContactNumber || '',
-                Email: post.Email || '',
-                Gender: post.Gender || '',
-                CustomerSegment: post.CustomerSegment || '',
-                CityAddress: post.CityAddress || '',
-                Traffic: post.Traffic || '',
-                Channel: post.Channel || '',
-                WrapUp: post.WrapUp || '',
-                Source: post.Source || '',
-                SONumber: post.SONumber || '',
-                Amount: post.Amount || '',
-                QtySold: post.QtySold || '',
-                QuotationNumber: post.QuotationNumber || '',
-                QuotationAmount: post.QuotationAmount || '',
-                CustomerType: post.CustomerType || '',
-                CustomerStatus: post.CustomerStatus || '',
-                Status: post.Status || '',
-                Department: post.Department || '',
-                SalesManager: post.SalesManager || '',
-                SalesAgent: post.SalesAgent || '',
-                Remarks: post.Remarks || ''
-            });
-        });
+        data.forEach((p) => worksheet.addRow(p));
 
         workbook.xlsx.writeBuffer().then((buffer) => {
             const blob = new Blob([buffer], {
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -263,34 +203,27 @@ const ActivityPage: React.FC = () => {
         });
     };
 
-
-
-    // Edit post function
     const handleEdit = (post: any) => {
         setEditPost(post);
         setShowForm(true);
     };
 
-    // Show delete modal
     const confirmDelete = (postId: string) => {
         setPostToDelete(postId);
         setShowDeleteModal(true);
     };
 
-    // Delete post function
     const handleDelete = async () => {
         if (!postToDelete) return;
         try {
             const response = await fetch(`/api/ModuleCSR/Monitorings/DeleteActivity`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: postToDelete }),
             });
 
             if (response.ok) {
-                setPosts(posts.filter((post) => post._id !== postToDelete));
+                setPosts(posts.filter((p) => p._id !== postToDelete));
                 toast.success("Account deleted successfully.");
             } else {
                 toast.error("Failed to delete account.");
@@ -304,118 +237,122 @@ const ActivityPage: React.FC = () => {
         }
     };
 
-    //const isRestrictedUser =
-    //userDetails?.Role !== "Super Admin" && userDetails?.Role !== "Admin" && userDetails?.ReferenceID !== "LR-CSR-849432";
-
-    // Automatically show modal if the user is restricted
-    //useEffect(() => {
-    //if (isRestrictedUser) {
-    //setShowAccessModal(true);
-    //} else {
-    //setShowAccessModal(false);
-    //}
-    //}, [isRestrictedUser]);
-
     return (
         <SessionChecker>
             <ParentLayout>
                 <UserFetcher>
-                    {(user) => (
-                        <div className="container mx-auto p-4 relative">
-                            <div className="grid grid-cols-1 md:grid-cols-1">
-                                {showForm ? (
-                                    <AddAccountForm
-                                        onCancel={() => {
-                                            setShowForm(false);
-                                            setEditPost(null);
-                                        }}
-                                        refreshPosts={fetchActivity}
-                                        userName={user ? user.userName : ""}
-                                        userDetails={{
-                                            id: editPost ? editPost.UserId : userDetails.UserId,
-                                            Role: user ? user.Role : "",
-                                            ReferenceID: user ? user.ReferenceID : "", // <-- Ito ang dapat mong suriin
-                                        }}
-                                        editPost={editPost}
-                                    />
+                    {(user) => {
+                        // ✅ Wait until user is fully loaded
+                        if (!user?.ReferenceID) {
+                            return (
+                                <div className="flex justify-center items-center py-10 text-gray-500 text-sm">
+                                    Loading user details...
+                                </div>
+                            );
+                        }
 
-                                ) : (
-                                    <>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <button className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-blue-900 hover:text-white transition" onClick={() => setShowForm(true)} >
-                                                <CiCirclePlus size={20} />Add Ticket
-                                            </button>
-                                            <div className="flex gap-2">
+                        const visibleAccounts = filteredAccounts(posts, user);
 
-                                                <button onClick={exportToExcel} className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-orange-500 hover:text-white transition">
-                                                    <CiExport size={16} /> Export
+                        return (
+                            <div className="container mx-auto p-4 relative">
+                                <div className="grid grid-cols-1">
+                                    {showForm ? (
+                                        <AddAccountForm
+                                            onCancel={() => {
+                                                setShowForm(false);
+                                                setEditPost(null);
+                                            }}
+                                            refreshPosts={fetchActivity}
+                                            userName={user.userName}
+                                            userDetails={{
+                                                id: editPost ? editPost.UserId : user.id,
+                                                Role: user.Role,
+                                                ReferenceID: user.ReferenceID,
+                                            }}
+                                            editPost={editPost}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <button
+                                                    className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-blue-900 hover:text-white transition"
+                                                    onClick={() => setShowForm(true)}
+                                                >
+                                                    <CiCirclePlus size={20} /> Add Ticket
                                                 </button>
 
+                                                <button
+                                                    onClick={() => exportToExcel(visibleAccounts)}
+                                                    className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-orange-500 hover:text-white transition"
+                                                >
+                                                    <CiExport size={16} /> Export
+                                                </button>
                                             </div>
-                                        </div>
-                                        <h2 className="text-lg font-bold mb-2">Automated Tickets</h2>
-                                        <p className="text-xs mb-4">
-                                            This section provides an overview of ticket management, including the creation of new tickets and
-                                            a list of endorsed, closed, and open tickets. It allows filtering based on various criteria to help
-                                            track and manage ticket statuses efficiently.
-                                        </p>
-                                        <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
-                                            <SearchFilters
-                                                searchTerm={searchTerm}
-                                                setSearchTerm={setSearchTerm}
-                                                selectedStatus={selectedStatus}
-                                                setselectedStatus={setselectedStatus}
-                                                salesAgent={salesAgent}
-                                                setSalesAgent={setSalesAgent}
-                                                TicketReceived={TicketReceived}
-                                                setTicketReceived={setTicketReceived}
-                                                TicketEndorsed={TicketEndorsed}
-                                                setTicketEndorsed={setTicketEndorsed}
-                                                startDate={startDate}
-                                                setStartDate={setStartDate}
-                                                endDate={endDate}
-                                                setEndDate={setEndDate}
-                                            />
-                                            <AccountsTable
-                                                posts={filteredAccounts}
-                                                handleEdit={handleEdit}
-                                                handleDelete={confirmDelete}
-                                                handleStatusUpdate={handleStatusUpdate}
-                                                handleRemarksUpdate={handleRemarksUpdate}
-                                            />
-                                        </div>
-                                    </>
-                                )}
 
-                                {showAccessModal && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 rounded-md">
-                                        <div className="bg-white p-6 rounded shadow-lg w-96">
-                                            <h2 className="text-lg font-bold text-red-600 mb-4">⚠️ Access Denied</h2>
-                                            <p className="text-sm text-gray-700 mb-4">
-                                                You do not have the necessary permissions to perform this action.
-                                                Only <strong>Super Admin</strong> or <strong>Leroux Y Xchire</strong> can access this section.
+                                            <h2 className="text-lg font-bold mb-2">Automated Tickets</h2>
+                                            <p className="text-xs mb-4">
+                                                This section provides an overview of ticket management, including the creation of new tickets and
+                                                a list of endorsed, closed, and open tickets. It allows filtering based on various criteria to help
+                                                track and manage ticket statuses efficiently.
                                             </p>
-                                        </div>
-                                    </div>
-                                )}
 
-                                {showDeleteModal && (
-                                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                                        <div className="bg-white p-4 rounded shadow-lg">
-                                            <h2 className="text-xs font-bold mb-4">Confirm Deletion</h2>
-                                            <p className="text-xs">Are you sure you want to delete this account?</p>
-                                            <div className="mt-4 flex justify-end">
-                                                <button className="bg-red-500 text-white text-xs px-4 py-2 rounded mr-2" onClick={handleDelete}>Delete</button>
-                                                <button className="bg-gray-300 text-xs px-4 py-2 rounded" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                                            <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">
+                                                <SearchFilters
+                                                    searchTerm={searchTerm}
+                                                    setSearchTerm={setSearchTerm}
+                                                    selectedStatus={selectedStatus}
+                                                    setselectedStatus={setselectedStatus}
+                                                    salesAgent={salesAgent}
+                                                    setSalesAgent={setSalesAgent}
+                                                    TicketReceived={TicketReceived}
+                                                    setTicketReceived={setTicketReceived}
+                                                    TicketEndorsed={TicketEndorsed}
+                                                    setTicketEndorsed={setTicketEndorsed}
+                                                    startDate={startDate}
+                                                    setStartDate={setStartDate}
+                                                    endDate={endDate}
+                                                    setEndDate={setEndDate}
+                                                />
+
+                                                <AccountsTable
+                                                    posts={visibleAccounts}
+                                                    handleEdit={handleEdit}
+                                                    handleDelete={confirmDelete}
+                                                    handleStatusUpdate={handleStatusUpdate}
+                                                    handleRemarksUpdate={handleRemarksUpdate}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {showDeleteModal && (
+                                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                                            <div className="bg-white p-4 rounded shadow-lg">
+                                                <h2 className="text-xs font-bold mb-4">Confirm Deletion</h2>
+                                                <p className="text-xs">Are you sure you want to delete this account?</p>
+                                                <div className="mt-4 flex justify-end">
+                                                    <button
+                                                        className="bg-red-500 text-white text-xs px-4 py-2 rounded mr-2"
+                                                        onClick={handleDelete}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                    <button
+                                                        className="bg-gray-300 text-xs px-4 py-2 rounded"
+                                                        onClick={() => setShowDeleteModal(false)}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
 
-                                <ToastContainer className="text-xs" autoClose={1000} />
+                                    <ToastContainer className="text-xs" autoClose={1000} />
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        );
+                    }}
                 </UserFetcher>
             </ParentLayout>
         </SessionChecker>
