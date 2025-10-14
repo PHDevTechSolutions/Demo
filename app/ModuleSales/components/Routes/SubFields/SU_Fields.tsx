@@ -26,6 +26,7 @@ interface SubmenuProps {
   remarks: string; setremarks: (value: string) => void;
   paymentterm: string; setpaymentterm: (value: string) => void;
   deliverydate: string; setdeliverydate: (value: string) => void;
+  drnumber: string; setdrnumber: (value: string) => void;
   setShowFields: (value: boolean) => void;
   setShowOutboundFields: (value: boolean) => void;
   setShowInboundFields: (value: boolean) => void;
@@ -75,6 +76,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   remarks, setremarks,
   paymentterm, setpaymentterm,
   deliverydate, setdeliverydate,
+  drnumber, setdrnumber,
   setShowFields,
   setShowOutboundFields,
   setShowInboundFields,
@@ -135,17 +137,22 @@ const Submenu: React.FC<SubmenuProps> = ({
             value={activityOptions.find(opt => opt.value === typeactivity)}
             placeholder="Select an activity"
             isClearable
+            isDisabled={activitystatus === "Delivered"} // 🔒 disable when Delivered
             classNamePrefix="react-select"
             styles={{
               control: (provided, state) => ({
                 ...provided,
                 border: "none",
-                borderBottom: state.isFocused ? "2px solid #3B82F6" : "1px solid #D1D5DB", // blue on focus, gray otherwise
+                borderBottom: state.isFocused ? "2px solid #3B82F6" : "1px solid #D1D5DB",
                 boxShadow: "none",
                 borderRadius: "0px",
                 minHeight: "36px",
                 fontSize: "12px",
-                backgroundColor: "white",
+                backgroundColor:
+                  activitystatus === "Delivered" ? "#E5E7EB" : "white", // 🔒 gray out when disabled
+                color: activitystatus === "Delivered" ? "#6B7280" : "inherit",
+                cursor: activitystatus === "Delivered" ? "not-allowed" : "default",
+                opacity: activitystatus === "Delivered" ? 0.7 : 1,
               }),
               menu: (provided) => ({
                 ...provided,
@@ -158,6 +165,7 @@ const Submenu: React.FC<SubmenuProps> = ({
               }),
             }}
           />
+
         </div>
 
         {typeactivity === "Outbound calls" && (
@@ -201,7 +209,14 @@ const Submenu: React.FC<SubmenuProps> = ({
 
       <div className="flex flex-wrap -mx-4 mt-4">
         {activitystatus === "Delivered" && (
-          <DeliveryFields {...{ paymentterm, setpaymentterm, activitystatus, setactivitystatus, actualsales, setactualsales, emailaddress, setemailaddress, deliverydate, setdeliverydate }} />
+          <DeliveryFields {...{ 
+            paymentterm, setpaymentterm, 
+            activitystatus, setactivitystatus, 
+            actualsales, setactualsales, 
+            emailaddress, setemailaddress, 
+            deliverydate, setdeliverydate,
+            drnumber, setdrnumber
+           }} />
         )}
       </div>
     </div>

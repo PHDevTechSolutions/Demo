@@ -64,6 +64,7 @@ interface FormFieldsProps {
     csragent: string; setcsragent: (value: string) => void;
     paymentterm: string; setpaymentterm: (value: string) => void;
     deliverydate: string; setdeliverydate: (value: string) => void;
+    drnumber: string; setdrnumber: (value: string) => void;
 
     currentRecords: Activity[];
     editPost?: any;
@@ -111,6 +112,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
 
     paymentterm, setpaymentterm,
     deliverydate, setdeliverydate,
+    drnumber, setdrnumber,
     editPost,
 }) => {
     const [showFields, setShowFields] = useState(false);
@@ -192,6 +194,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
                 callstatus={callstatus} setcallstatus={setcallstatus}
                 activitynumber={activitynumber} setactivitynumber={setactivitynumber}
                 activitystatus={activitystatus} setactivitystatus={setactivitystatus}
+                drnumber={drnumber} setdrnumber={setdrnumber}
                 setShowFields={setShowFields}
                 setShowOutboundFields={setShowOutboundFields}
                 setShowInboundFields={setShowInboundFields}

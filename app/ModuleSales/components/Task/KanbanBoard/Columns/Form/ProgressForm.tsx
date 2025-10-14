@@ -177,10 +177,10 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               {formData.source && (
                 <span
                   className={`flex items-center gap-1 mt-1 text-[11px] italic ${formData.source === "Outbound - Touchbase"
-                      ? "text-green-600"
-                      : formData.source === "Existing Client"
-                        ? "text-orange-500"
-                        : "text-gray-500"
+                    ? "text-green-600"
+                    : formData.source === "Existing Client"
+                      ? "text-orange-500"
+                      : "text-gray-500"
                     }`}
                 >
                   {formData.source === "Outbound - Touchbase" ? (
@@ -209,8 +209,13 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               name="typeactivity"
               value={formData.typeactivity}
               onChange={handleFormChange}
-              className="border border-dashed bg-orange-100 px-3 py-6 rounded text-xs"
+              className={`border border-dashed px-3 py-6 rounded text-xs ${formData.activitystatus === "Delivered"
+                  ? "bg-gray-200 cursor-not-allowed text-gray-500"
+                  : "bg-orange-100"
+                }`}
+              disabled={formData.activitystatus === "Delivered"}
             >
+
               <option value="">Select Activity</option>
               <option value="Admin- Supplier Accreditation">Admin- Supplier Accreditation</option>
               <option value="Admin- Credit Terms Application">Admin- Credit Terms Application</option>

@@ -24,7 +24,7 @@ async function update(user: any) {
       activitystatus, remarks, callback, typecall,
       quotationnumber, quotationamount, sonumber, soamount,
       callstatus, actualsales, targetquota, ticketreferencenumber,
-      wrapup, inquiries, csragent, paymentterm, deliverydate,
+      wrapup, inquiries, csragent, paymentterm, deliverydate, drnumber,
     } = user;
 
     const updateRes = await sql`
@@ -50,7 +50,7 @@ async function update(user: any) {
         deliveryaddress, area, projectname, projectcategory, projecttype, source, startdate,
         enddate, activitynumber, typeactivity, activitystatus, remarks, callback, typecall,
         quotationnumber, quotationamount, sonumber, soamount, callstatus, actualsales,
-        targetquota, csragent, paymentterm, deliverydate
+        targetquota, csragent, paymentterm, deliverydate, drnumber
       )
       VALUES (
         ${cleanValue(ticketreferencenumber)}, ${wrapup}, ${cleanValue(inquiries)}, ${referenceid},
@@ -60,7 +60,7 @@ async function update(user: any) {
         ${enddate}, ${activitynumber}, ${typeactivity}, ${activitystatus}, ${remarks},
         ${callback}, ${typecall}, ${quotationnumber}, ${cleanValue(quotationamount)},
         ${sonumber}, ${cleanValue(soamount)}, ${callstatus}, ${cleanValue(actualsales)},
-        ${cleanValue(targetquota)}, ${csragent}, ${cleanValue(paymentterm)}, ${deliverydate}
+        ${cleanValue(targetquota)}, ${csragent}, ${cleanValue(paymentterm)}, ${deliverydate}, ${drnumber}
       );
     `;
 

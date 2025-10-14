@@ -104,7 +104,7 @@ const Login: React.FC = () => {
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred while logging in!');
-      playSound('/reset.mp3'); // 🔊 Failed sound
+      playSound('/login-failed.mp3'); // 🔊 Failed sound
     } finally {
       setLoading(false);
     }

@@ -41,7 +41,7 @@ const QuotationFields: React.FC<QuotationFieldsProps> = ({
         <input
           type="text"
           value={quotationnumber || ""}
-          onChange={handleQuotationNumberChange}
+          onChange={(e) => setquotationnumber(e.target.value)}
           className="w-full px-3 py-2 border-b text-xs uppercase"
           required
         />

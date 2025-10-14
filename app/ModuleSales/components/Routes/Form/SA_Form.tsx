@@ -92,7 +92,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
   const [paymentterm, setpaymentterm] = useState(editUser ? editUser.paymentterm : "");
   const [deliverydate, setdeliverydate] = useState(editUser ? editUser.deliverydate : "");
-
+  const [drnumber, setdrnumber] = useState(editUser?.drnumber || "");
   const [currentPage, setCurrentPage] = useState(1);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -253,7 +253,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       startdate, enddate, activitynumber, activitystatus, status, remarks,
       callback, typecall, quotationnumber, quotationamount, sonumber, soamount,
       actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent,
-      paymentterm, deliverydate,
+      paymentterm, deliverydate, drnumber,
     };
 
     Object.keys(payload).forEach((key) => {
@@ -479,6 +479,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
 
           paymentterm={paymentterm} setpaymentterm={setpaymentterm}
           deliverydate={deliverydate} setdeliverydate={setdeliverydate}
+          drnumber={drnumber} setdrnumber={setdrnumber}
 
           currentRecords={currentRecords}
           editPost={editUser}
@@ -489,7 +490,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
             type="submit"
             disabled={!typeclient.trim()}
             className={`px-3 py-2 rounded text-[10px] flex items-center gap-1 text-white 
-      ${typeclient.trim()
+              ${typeclient.trim()
                 ? "bg-green-600 hover:bg-green-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
               }`}

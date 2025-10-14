@@ -40,7 +40,7 @@ const SoFields: React.FC<QuotationFieldsProps> = ({
                 <input
                     type="text"
                     value={sonumber || ""}
-                    onChange={handleSONumberChange}
+                    onChange={(e) => setsonumber(e.target.value)}
                     className="w-full px-3 py-2 border-b text-xs uppercase"
                     required
                 />
