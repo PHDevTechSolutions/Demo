@@ -95,7 +95,7 @@ const Card: React.FC<SourceProps> = ({ filteredAccounts, userDetails }) => {
     return null;
 
   return (
-    <section className="bg-white select-none">
+    <section className="select-none">
       <div className="w-full sm:w-96 ml-auto">
         <div className="bg-blue-100 rounded-lg p-4 shadow overflow-hidden">
           {/* Header */}
