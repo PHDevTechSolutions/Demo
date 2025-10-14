@@ -12,7 +12,7 @@ const Area: React.FC<AreaProps> = ({ area, setarea }) => {
       value={area ?? ""}
       onChange={(e) => setarea(e.target.value)}
       className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
-      required
+      
     >
       <option value="">Select Region</option>
       <option value="Ilocos Region">Region I - Ilocos Region</option>

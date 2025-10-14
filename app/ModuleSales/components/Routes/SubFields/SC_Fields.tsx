@@ -259,7 +259,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
               value={contactnumber ?? ""}
               onChange={(e) => setcontactnumber(e.target.value)}
               className="w-full px-3 py-2 border-b text-xs"
-              required
+              
             />
           </div>
 
@@ -272,7 +272,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
               value={emailaddress ?? ""}
               onChange={(e) => setemailaddress(e.target.value)}
               className="w-full px-3 py-2 border-b text-xs"
-              required
+              
             />
           </div>
 
