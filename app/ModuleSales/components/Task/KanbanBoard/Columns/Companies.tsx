@@ -61,8 +61,8 @@ const Companies: React.FC<CompaniesProps> = ({
     return shuffled;
   };
 
-  // 🏢 Fetch companies
-  // Sa fetchCompanies function, lagyan ng proper error handling:
+  const today = new Date().toISOString().split("T")[0];
+
   const fetchCompanies = async (forceReplace = false) => {
     if (!userDetails?.ReferenceID) {
       setLoading(false);
@@ -83,7 +83,16 @@ const Companies: React.FC<CompaniesProps> = ({
       const response = await res.json();
 
       if (response.success && Array.isArray(response.data)) {
-        const random35 = shuffleArray(response.data).slice(0, 35);
+        const today = new Date().toISOString().split("T")[0];
+        const validCompanies = response.data.filter((comp: any) => {
+          return (
+            !comp.next_available_date ||
+            comp.next_available_date.split("T")[0] === today
+          );
+        });
+
+        // 🔀 Shuffle and slice to 35 max
+        const random35 = shuffleArray(validCompanies).slice(0, 35);
         setCompanies(random35);
       } else {
         setCompanies([]);
@@ -97,6 +106,7 @@ const Companies: React.FC<CompaniesProps> = ({
       setReplacing(false);
     }
   };
+
 
   // 🧩 First load
   useEffect(() => {
@@ -159,17 +169,32 @@ const Companies: React.FC<CompaniesProps> = ({
 
   // 🔁 Add company and refresh list
   const handleAddCompany = async (comp: Company) => {
+    // 1️⃣ Submit to inquiry or target handler
     handleSubmit(comp, false);
 
-    // Remove added company from list
+    try {
+      // 2️⃣ Update next_available_date based on typeclient
+      await fetch(`/api/ModuleSales/Companies/CompanyAccounts/UpdateAvailability`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: comp.id,
+          typeclient: comp.typeclient,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to update company availability:", err);
+    }
+
+    // 3️⃣ Remove from list (already handled)
     setCompanies((prev) => prev.filter((c) => c.id !== comp.id));
 
-    // Increment tap count
+    // 4️⃣ Increment tap count
     const newCount = tapCount + 1;
     setTapCount(newCount);
     localStorage.setItem("tapCount", newCount.toString());
 
-    // Fetch new unique company to refill list to 35
+    // 5️⃣ Fetch new company to keep 35 slots full
     if (userDetails?.ReferenceID) {
       try {
         const res = await fetch(
@@ -177,12 +202,12 @@ const Companies: React.FC<CompaniesProps> = ({
         );
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const response = await res.json();
+
         if (response.success && Array.isArray(response.data)) {
           const existingIds = new Set(companies.map((c) => c.id).concat(comp.id));
           const available = response.data.filter((c: Company) => !existingIds.has(c.id));
-
           if (available.length > 0) {
-            const needed = 35 - (companies.length - 1); // after removing added company
+            const needed = 35 - (companies.length - 1);
             const shuffled = shuffleArray(available).slice(0, needed);
             setCompanies((prev) => [...prev, ...shuffled]);
           }
@@ -202,7 +227,7 @@ const Companies: React.FC<CompaniesProps> = ({
           <div className="flex flex-col w-full sm:w-auto">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-black flex items-center gap-1">
-                📞 OB Calls: 
+                📞 OB Calls:
               </span>
               <span
                 className={`text-xs font-bold ${isFull ? "text-red-500" : isNearLimit ? "text-orange-500" : "text-green-600"

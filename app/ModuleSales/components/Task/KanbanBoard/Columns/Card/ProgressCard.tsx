@@ -106,7 +106,7 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
       if (!progress.activitynumber) return;
       try {
         const res = await fetch(
-          `/api/ModuleSales/Task/ActivityPlanner/FetchQS?activitynumber=${progress.activitynumber}`
+          `/api/ModuleSales/Task/ActivityPlanner/FetchSQ?activitynumber=${progress.activitynumber}`
         );
         const result = await res.json();
         if (result.success) setSoData(result.data);

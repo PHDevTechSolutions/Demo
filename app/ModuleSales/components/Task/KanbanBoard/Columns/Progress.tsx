@@ -249,7 +249,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
     "Quote-Done",
     "SO-Done",
     "Assisted",
-    "Paid",
     "Collected",
     "On Progress",
   ];
@@ -295,6 +294,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
         item.activitystatus === "Hot" ||
         item.activitystatus === "Done" ||
         item.activitystatus === "Deleted" ||
+        item.activitystatus === "Paid" ||
         item.activitystatus === "Delivered"
       ) {
         return false;
