@@ -74,18 +74,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
   };
 
   useEffect(() => {
-    if (!userDetails?.ReferenceID) {
-      setLoading(false);
-      return;
-    }
-
+    if (!userDetails?.ReferenceID) return;
     const load = async () => {
-      setLoading(true);
       const inquiriesData = await fetchInquiries(userDetails.ReferenceID);
       setInquiries(inquiriesData);
-      setLoading(false);
+      setLoading(false); // ✅ Add this line
     };
-
     load();
   }, [userDetails?.ReferenceID, refreshTrigger]);
 
@@ -104,9 +98,14 @@ const Inquiries: React.FC<InquiriesProps> = ({
   };
 
   const handleRefresh = async () => {
+    if (!userDetails?.ReferenceID) return;
     setRefreshing(true);
-    await fetchInquiries();
+    const updated = await fetchInquiries(userDetails.ReferenceID);
+    setInquiries(updated);
+    setRefreshing(false);
+    toast.success("Inquiries refreshed!", { autoClose: 1000 });
   };
+
 
   if (loading) {
     return (
