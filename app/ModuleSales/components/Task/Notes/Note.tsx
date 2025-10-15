@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AiOutlineDelete } from 'react-icons/ai';
+import { AiOutlineDelete } from "react-icons/ai";
+import { IoSearchOutline, IoFilter } from "react-icons/io5";
 import Form from "./Form";
 
 interface Note {
@@ -52,6 +53,11 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     const [remarks, setRemarks] = useState("");
     const [startdate, setStartDate] = useState("");
     const [enddate, setEndDate] = useState("");
+
+    const [showSearch, setShowSearch] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterType, setFilterType] = useState("All");
 
     const activityTypes = [
         "Assisting Other Agent Clients",
@@ -197,11 +203,22 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         }
     };
 
-    const filteredNotes = notes.filter(note => {
-        if (!activityTypes.includes(note.typeactivity)) return false;
-        if (userDetails.Role === "Super Admin") return true;
-        return note.referenceid === userDetails.ReferenceID;
-    });
+    const filteredNotes = notes
+        // only show notes within the allowed types
+        .filter(note => activityTypes.includes(note.typeactivity))
+        // apply dropdown filter
+        .filter(note => filterType === "All" || note.typeactivity === filterType)
+        // apply search
+        .filter(note =>
+            note.typeactivity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            note.remarks.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        // apply user role visibility
+        .filter(note =>
+            userDetails.Role === "Super Admin" ||
+            note.referenceid === userDetails.ReferenceID
+        );
+
 
     const formatRelativeDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -224,7 +241,61 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
 
     return (
         <div className="w-full bg-white">
-            <h2 className="text-lg p-4 font-semibold text-black">Notes</h2>
+            <div className="flex items-center justify-between p-4">
+                <h2 className="text-lg font-semibold text-black">Notes</h2>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowSearch(prev => !prev)}
+                        className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs">
+                        <IoSearchOutline
+                            className={`cursor-pointer text-xl ${showSearch ? "text-blue-600" : "text-gray-600"}`}
+                            title="Search Notes"
+                            size={15}
+                        />  Search
+                    </button>
+                    <button
+                        onClick={() => setShowFilter(prev => !prev)}
+                        className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs">
+                        <IoFilter
+                            className={`cursor-pointer text-xl ${showFilter ? "text-blue-600" : "text-gray-600"}`}
+                            size={15}
+                            title="Filter by Type"
+                        /> Filter
+                    </button>
+                </div>
+            </div>
+
+            {/* Search bar */}
+            {showSearch && (
+                <div className="p-3 mb-2 border-b bg-gray-50">
+                    <input
+                        type="text"
+                        placeholder="Search by remarks or type..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring focus:ring-blue-200"
+                    />
+                </div>
+            )}
+
+            {/* Filter dropdown */}
+            {showFilter && (
+                <div className="p-3 mb-2 border-b bg-gray-50">
+                    <select
+                        value={filterType}
+                        onChange={e => setFilterType(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring focus:ring-blue-200"
+                    >
+                        <option value="All">All Types</option>
+                        {activityTypes.map((type, idx) => (
+                            <option key={idx} value={type}>
+                                {type}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             <p className="text-sm text-gray-500 px-4 mb-4">
                 This section allows you to track, manage, and update your daily activities.
             </p>
