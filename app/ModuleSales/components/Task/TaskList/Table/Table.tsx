@@ -169,6 +169,9 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
     try {
       setLoadingDelete(true);
+      toast.info("Deleting task...");
+
+      // 🧩 Send delete request to backend
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteTask", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -179,16 +182,20 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       if (!result.success) throw new Error(result.error);
 
       toast.success("🗑️ Task deleted successfully!");
-      if (onRefresh) onRefresh();
+
+      // 🔄 Ensure fresh data is re-fetched before closing modal
+      if (onRefresh) await onRefresh();
     } catch (err: any) {
       console.error("Delete failed:", err);
       toast.error("❌ Failed to delete task.");
     } finally {
+      // 🧹 Cleanup
       setLoadingDelete(false);
       setShowDeleteModal(false);
       setDeleteId(null);
     }
   };
+
 
   const renderTaskRow = (task: Note) => {
     const isCompleted = ["completed", "done", "delivered"].includes((task.activitystatus || "").toLowerCase());
