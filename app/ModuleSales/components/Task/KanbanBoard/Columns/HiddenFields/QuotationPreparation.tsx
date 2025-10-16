@@ -344,6 +344,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="followup_date"
           value={followup_date || ""}
           onChange={handleFormChange}
+          min={new Date().toISOString().slice(0, 16)}
           className="border-b px-3 py-2 rounded text-xs"
           required
         />

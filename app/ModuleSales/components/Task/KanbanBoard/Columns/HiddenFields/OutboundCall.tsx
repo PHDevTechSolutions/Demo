@@ -83,7 +83,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
         } else if (typecall === "Cannot Be Reached") {
             daysToAdd = 3;
         } else if (typecall === "Not Connected with the Company") {
-            minutesToAdd = 15; 
+            minutesToAdd = 15;
         } else if (typecall === "Waiting for Future Projects") {
             daysToAdd = 30;
         }
@@ -126,6 +126,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                         name="callback"
                         value={callback}
                         onChange={handleFormChange}
+                        min={new Date().toISOString().slice(0, 16)} // ⛔ disables past dates
                         className="w-full px-3 py-6 border rounded text-xs mt-2"
                     />
                 )}
@@ -192,7 +193,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                     )}
                 </select>
             </div>
-            
+
             <div className="flex flex-col">
                 <label className="font-semibold">
                     Follow Up Date{" "}
@@ -203,6 +204,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                     name="followup_date"
                     value={followup_date || ""}
                     onChange={handleFormChange}
+                    min={new Date().toISOString().slice(0, 16)}
                     className="border-b px-3 py-6 rounded text-xs"
                     required
                 />

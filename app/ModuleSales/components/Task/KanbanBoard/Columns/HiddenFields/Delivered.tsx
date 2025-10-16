@@ -66,6 +66,7 @@ const Delivered: React.FC<DeliveredProps> = ({ formData, handleFormChange }) => 
           name="deliverydate"
           value={formData.deliverydate || ""}
           onChange={handleFormChange}
+          min={new Date().toISOString().slice(0, 16)}
           className="border-b px-3 py-6 rounded text-xs resize-none h-20"
           required
         />
