@@ -209,6 +209,7 @@ const TaskList: React.FC<TaskProps> = ({ userDetails }) => {
               limit={activeLimit}
               setLimit={setActiveLimit}
               onRefresh={handleRefresh}
+              
             />
           )}
           {completedTasks.length > 0 && (

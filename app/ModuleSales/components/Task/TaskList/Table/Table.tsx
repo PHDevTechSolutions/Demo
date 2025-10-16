@@ -198,14 +198,16 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
 
   const renderTaskRow = (task: Note) => {
-    const isCompleted = ["completed", "done", "delivered"].includes((task.activitystatus || "").toLowerCase());
+    const isCompleted = ["completed", "done", "delivered"].includes(
+      (task.activitystatus || "").toLowerCase()
+    );
     const canEdit = editEnabled || !isCompleted;
 
     return (
       <tr
         key={task.id}
-        className={`relative group hover:bg-gray-50 border-b ${canEdit ? "cursor-pointer" : "opacity-60 cursor-not-allowed"}`}
-        onClick={() => canEdit && handleRowClick(task)}
+        className={`relative group hover:bg-gray-50 border-b ${canEdit ? "cursor-pointer" : "opacity-60 cursor-not-allowed"
+          }`}
         onMouseEnter={() => setHoveredRow(task.id)}
         onMouseLeave={() => setHoveredRow(null)}
       >
@@ -252,10 +254,22 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
             </span>
           </div>
         </td>
-        {/* ✅ Delete button (appears on hover, fixed to right) */}
+
+        {/* ✅ Hover Actions (Edit + Delete) */}
         {hoveredRow === task.id && canEdit && (
-          <td
-            className="absolute right-0 top-0 h-full flex items-center bg-white/90 border-l px-2 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+          <td className="absolute right-0 top-0 h-full flex items-center bg-white/95 border-l px-2 gap-2 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            {/* Edit Button */}
+            <button
+              className="flex items-center gap-1 px-3 py-6 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRowClick(task); // open edit form
+              }}
+            >
+              ✏️ Edit
+            </button>
+
+            {/* Delete Button */}
             <button
               className="flex items-center gap-1 px-3 py-6 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
               onClick={(e) => {
@@ -282,10 +296,10 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
           onConfirm={handleDelete}
           loading={loadingDelete}
         />
-
       </tr>
     );
   };
+
 
   return (
     <div className="mb-4 border-b relative">
