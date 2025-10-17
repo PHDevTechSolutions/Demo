@@ -107,7 +107,6 @@ const Companies: React.FC<CompaniesProps> = ({
     }
   };
 
-
   // 🧩 First load
   useEffect(() => {
     fetchCompanies();
@@ -218,6 +217,16 @@ const Companies: React.FC<CompaniesProps> = ({
     }
   };
 
+  const handleRefresh = async () => {
+    if (replacing || !userDetails?.ReferenceID) return;
+
+    setReplacing(true);
+    await fetchCompanies(true);
+
+    // Small delay para may visible feedback (spinner)
+    setTimeout(() => setReplacing(false), 500);
+  };
+
   return (
     <div className="space-y-1 overflow-y-auto">
       {/* Header Section */}
@@ -252,25 +261,40 @@ const Companies: React.FC<CompaniesProps> = ({
 
           {/* Refresh Button */}
           <button
-            onClick={handleReplace}
-            disabled={replacing || !userDetails?.ReferenceID || companies.length === 0}
-            className={`text-xs px-3 py-1 rounded-md font-medium shadow-sm flex items-center gap-1 ${replacing || !userDetails?.ReferenceID || companies.length === 0
-              ? "bg-gray-400 text-white cursor-not-allowed animate-pulse"
-              : "bg-green-500 text-white hover:bg-green-600"
+            onClick={handleRefresh}
+            disabled={replacing || !userDetails?.ReferenceID}
+            className={`text-xs px-3 py-1 rounded-md font-medium shadow-sm flex items-center gap-1 ${replacing || !userDetails?.ReferenceID
+                ? "bg-gray-400 text-white cursor-not-allowed animate-pulse"
+                : "bg-green-500 text-white hover:bg-green-600"
               }`}
           >
             {replacing ? (
               <>
-                <svg className="animate-spin h-3 w-3 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                <svg
+                  className="animate-spin h-3 w-3 text-white"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  ></path>
                 </svg>
-                <span>Replacing...</span>
+                <span>Refreshing...</span>
               </>
             ) : (
               "Refresh"
             )}
           </button>
+
         </div>
 
         <h3 className="flex items-center text-[10px] italic font-bold text-gray-600 border-t border-gray-200 pt-2">
