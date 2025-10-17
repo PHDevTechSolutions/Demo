@@ -73,44 +73,13 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
   const [editEnabled, setEditEnabled] = useState(false);
   const [showEnableModal, setShowEnableModal] = useState(false);
 
-  const handleRowClick = (task: Note) => {
-    setSelectedTask(task);
-    setFormData({
-      typeactivity: task.typeactivity,
-      sonumber: task.sonumber,
-      quotationnumber: task.quotationnumber,
-      soamount: task.soamount,
-      quotationamount: task.quotationamount,
-      callstatus: task.callstatus,
-      source: task.source,
-      typecall: task.typecall,
-      remarks: task.remarks,
-      projectcategory: task.projectcategory
-        ? typeof task.projectcategory === "string"
-          ? task.projectcategory.split(",").map((s) => s.trim())
-          : task.projectcategory
-        : [],
-    });
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   useEffect(() => {
-    (async () => {
+    const fetchProducts = async () => {
       try {
         const res = await fetch("/api/ModuleSales/Shopify/FetchProduct");
         const json = await res.json();
 
         if (!json.success) throw new Error(json.error);
-
         const products: ShopifyProduct[] = json.data;
 
         const mapped = products.map((p) => ({
@@ -123,10 +92,38 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         setCategoryOptions(mapped);
       } catch (err: any) {
         console.error(err);
-        toast.error("Failed to load product titles from Shopify");
+        toast.error("⚠️ Failed to load product titles from Shopify");
       }
-    })();
+    };
+
+    fetchProducts();
   }, []);
+
+  const handleRowClick = (task: Note) => {
+    setSelectedTask(task);
+    setFormData({
+      typeactivity: task.typeactivity,
+      sonumber: task.sonumber,
+      quotationnumber: task.quotationnumber,
+      soamount: task.soamount,
+      quotationamount: task.quotationamount,
+      callstatus: task.callstatus,
+      source: task.source,
+      typecall: task.typecall,
+      remarks: task.remarks,
+      projectcategory:
+        typeof task.projectcategory === "string"
+          ? task.projectcategory.split(",").map((s) => s.trim())
+          : task.projectcategory || [],
+    });
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,31 +131,26 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
     try {
       setLoading(true);
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/UpdateTask",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: selectedTask.id,
-            ...formData,
-            // 🔹 ensure array → string bago isave
-            projectcategory: Array.isArray(formData.projectcategory)
-              ? formData.projectcategory.join(",")
-              : formData.projectcategory,
-          }),
-        }
-      );
+      const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateTask", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedTask.id,
+          ...formData,
+          projectcategory: Array.isArray(formData.projectcategory)
+            ? formData.projectcategory.join(",")
+            : formData.projectcategory,
+        }),
+      });
 
-      if (!res.ok) throw new Error("Failed to update progress");
+      if (!res.ok) throw new Error("Failed to update task");
+      toast.success("✅ Task updated successfully!");
 
-      toast.success("✅ Progress updated successfully!");
       setSelectedTask(null);
-
-      if (onRefresh) onRefresh();
+      if (onRefresh) await onRefresh();
     } catch (err) {
       console.error(err);
-      toast.error("❌ Failed to update progress.");
+      toast.error("❌ Failed to update task");
     } finally {
       setLoading(false);
     }
@@ -169,9 +161,8 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
 
     try {
       setLoadingDelete(true);
-      toast.info("Deleting task...");
+      toast.info("🗑️ Deleting task...");
 
-      // 🧩 Send delete request to backend
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/DeleteTask", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -181,21 +172,17 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       const result = await res.json();
       if (!result.success) throw new Error(result.error);
 
-      toast.success("🗑️ Task deleted successfully!");
-
-      // 🔄 Ensure fresh data is re-fetched before closing modal
+      toast.success("✅ Task deleted!");
       if (onRefresh) await onRefresh();
     } catch (err: any) {
       console.error("Delete failed:", err);
-      toast.error("❌ Failed to delete task.");
+      toast.error("❌ Failed to delete task");
     } finally {
-      // 🧹 Cleanup
       setLoadingDelete(false);
       setShowDeleteModal(false);
       setDeleteId(null);
     }
   };
-
 
   const renderTaskRow = (task: Note) => {
     const isCompleted = ["completed", "done", "delivered"].includes(
@@ -211,33 +198,26 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
         onMouseEnter={() => setHoveredRow(task.id)}
         onMouseLeave={() => setHoveredRow(null)}
       >
-        <td className="px-2 py-6 text-xs capitalize w-[300px] whitespace-normal break-words">
+        <td className="px-2 py-6 text-xs w-[300px] whitespace-normal break-words">
           {task.remarks}
         </td>
-        <td className="px-6 py-6 text-xs uppercase">
-          {task.companyname}
-          <br />
-          {task.contactnumber}
-          <span className="lowercase ml-1 text-gray-500 italic text-[10px]">
-            {task.emailaddress}
-          </span>
+        <td className="px-6 py-6 text-xs">
+          <div className="font-medium uppercase">{task.companyname}</div>
+          <div className="text-gray-600">{task.contactnumber}</div>
+          <div className="text-[10px] italic text-gray-400">{task.emailaddress}</div>
         </td>
         <td className="px-6 py-6 text-xs">{task.typeactivity}</td>
         <td className="px-6 py-6 text-xs">
-          <div className="flex flex-col">
-            <span>{task.quotationnumber}</span>
-            <span className="text-gray-500 text-[11px]">
-              {task.quotationamount ? `₱${task.quotationamount}` : ""}
-            </span>
-          </div>
+          <div>{task.quotationnumber}</div>
+          {task.quotationamount && (
+            <div className="text-gray-500 text-[11px]">₱{task.quotationamount}</div>
+          )}
         </td>
         <td className="px-6 py-6 text-xs">
-          <div className="flex flex-col">
-            <span>{task.sonumber}</span>
-            <span className="text-gray-500 text-[11px]">
-              {task.soamount ? `₱${task.soamount}` : ""}
-            </span>
-          </div>
+          <div>{task.sonumber}</div>
+          {task.soamount && (
+            <div className="text-gray-500 text-[11px]">₱{task.soamount}</div>
+          )}
         </td>
         <td className="px-6 py-6 text-xs">
           {new Date(task.date_created).toLocaleString()}
@@ -249,7 +229,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
               alt="Responsible"
               className="w-6 h-6 rounded-full object-cover"
             />
-            <span className="text-xs">
+            <span>
               {userDetails.Firstname} {userDetails.Lastname}
             </span>
           </div>
@@ -299,7 +279,6 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       </tr>
     );
   };
-
 
   return (
     <div className="mb-4 border-b relative">
