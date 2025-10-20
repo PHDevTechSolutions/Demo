@@ -7,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaGlobeAsia } from 'react-icons/fa';
 import { BsCalendar2Week } from 'react-icons/bs';
+import { v4 as uuidv4 } from 'uuid';
 
 const Login: React.FC = () => {
   const [Email, setEmail] = useState('');
@@ -14,7 +15,6 @@ const Login: React.FC = () => {
   const [Department, setDepartment] = useState('');
   const [loading, setLoading] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
   const [lockUntil, setLockUntil] = useState<string | null>(null);
   const [formattedLockUntil, setFormattedLockUntil] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ const Login: React.FC = () => {
     }
   }, [lockUntil]);
 
-  // 🔊 Function to play sound
+  // 🔊 Play sound helper
   const playSound = (file: string) => {
     const audio = new Audio(file);
     audio.play().catch((err) => {
@@ -34,6 +34,34 @@ const Login: React.FC = () => {
     });
   };
 
+  // 🧩 Generate or get deviceId (saved in browser)
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem("deviceId");
+    if (!deviceId) {
+      deviceId = uuidv4();
+      localStorage.setItem("deviceId", deviceId);
+    }
+    return deviceId;
+  };
+
+  // 📍 Get location if allowed
+  const getLocation = async () => {
+    if (!navigator.geolocation) return null;
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject)
+      );
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+    } catch {
+      console.warn("User denied location access");
+      return null;
+    }
+  };
+
+  // 🧠 Login handler
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!Email || !Password || !Department) return toast.error('All fields are required!');
@@ -64,7 +92,10 @@ const Login: React.FC = () => {
           return;
         }
 
-        // ✅ Log login activity
+        // ✅ Log login activity with location & deviceId
+        const deviceId = getDeviceId();
+        const location = await getLocation();
+
         await fetch('/api/log-activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,11 +104,13 @@ const Login: React.FC = () => {
             department: Department,
             status: 'login',
             timestamp: new Date().toISOString(),
+            deviceId,
+            location,
           }),
         });
 
         toast.success('Login successful!');
-        playSound('/login.mp3'); // 🔊 Success sound
+        playSound('/login.mp3');
 
         setTimeout(() => {
           if (result.Role === "Manager" && result.Department === "Sales") {
@@ -95,21 +128,22 @@ const Login: React.FC = () => {
         if (result.lockUntil) {
           setLockUntil(result.lockUntil);
           toast.error(`Account locked! Try again after ${new Date(result.lockUntil).toLocaleString()}.`);
-          playSound('/reset.mp3'); // 🔊 Failed sound
+          playSound('/reset.mp3');
         } else {
           toast.error(result.message || 'Login failed!');
-          playSound('/reset.mp3'); // 🔊 Failed sound
+          playSound('/reset.mp3');
         }
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred while logging in!');
-      playSound('/login-failed.mp3'); // 🔊 Failed sound
+      playSound('/login-failed.mp3');
     } finally {
       setLoading(false);
     }
   }, [Email, Password, Department, router]);
 
+  // 🧱 UI
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-cover bg-left" style={{ backgroundImage: "url('/ecoshift-wallpaper.jpg')" }}>
       <div className="flex w-full max-w-4xl bg-white rounded-sm shadow-xl overflow-hidden">
