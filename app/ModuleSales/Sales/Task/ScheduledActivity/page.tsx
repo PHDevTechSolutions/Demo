@@ -184,7 +184,7 @@ const ListofUser: React.FC = () => {
         if (post.activitystatus === "Deleted") return false;
 
         const matchesCompany = (post.companyname || "").toLowerCase().includes(searchTerm.toLowerCase());
-        const postDate = post.date_created ? new Date(post.date_created) : null;
+        const postDate = post.date_updated ? new Date(post.date_updated) : null;
         const matchesDate = (!startDate || (postDate && postDate >= new Date(startDate))) &&
           (!endDate || (postDate && postDate <= new Date(endDate)));
 
@@ -197,7 +197,7 @@ const ListofUser: React.FC = () => {
           return matchesCompany && matchesDate && matchesAgent && post.referenceid === userDetails.ReferenceID;
         }
       })
-      .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime());
+      .sort((a, b) => new Date(b.date_updated).getTime() - new Date(a.date_updated).getTime());
   }, [posts, searchTerm, startDate, endDate, selectedAgent, userDetails]);
 
   const handleRefresh = async () => {
