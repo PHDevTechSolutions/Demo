@@ -110,6 +110,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
       callstatus: task.callstatus,
       source: task.source,
       typecall: task.typecall,
+      activitystatus: task.activitystatus,
       remarks: task.remarks,
       projectcategory:
         typeof task.projectcategory === "string"
@@ -202,7 +203,7 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
           {task.remarks}
         </td>
         <td className="px-6 py-6 text-xs">
-          <div className="font-medium uppercase">{task.companyname}</div>
+          <div className="font-medium uppercase">{task.companyname}<br />{task.activitystatus}</div>
           <div className="text-gray-600">{task.contactnumber}</div>
           <div className="text-[10px] italic text-gray-400">{task.emailaddress}</div>
         </td>
@@ -516,6 +517,19 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                   />
                 </div>
 
+                <div>
+                  <label className="text-xs text-gray-600">Status</label>
+                  <select name="activitystatus"
+                    value={formData.activitystatus || ""}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded text-xs">
+                    <option value="Assisted">Assisted</option>
+                    <option value="Quote-Done">Quote-Done</option>
+                    <option value="SO-Done">SO-Done</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                </div>
+
                 {/* Remarks */}
                 <div className="col-span-2">
                   <label className="text-xs text-gray-600">Remarks</label>
@@ -551,6 +565,19 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                     onChange={handleInputChange}
                     className="w-full border p-2 rounded text-xs"
                   />
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-600">Status</label>
+                  <select name="activitystatus"
+                    value={formData.activitystatus || ""}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded text-xs">
+                    <option value="Assisted">Assisted</option>
+                    <option value="Quote-Done">Quote-Done</option>
+                    <option value="SO-Done">SO-Done</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
                 </div>
 
                 {/* Remarks */}
@@ -627,6 +654,19 @@ const Table: React.FC<TableProps> = ({ title, tasks, userDetails, limit, setLimi
                     <option value="">Select Status</option>
                     <option value="Successful">Successful</option>
                     <option value="Unsuccessful">Unsuccessful</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-600">Status</label>
+                  <select name="activitystatus"
+                    value={formData.activitystatus || ""}
+                    onChange={handleInputChange}
+                    className="w-full border p-2 rounded text-xs">
+                    <option value="Assisted">Assisted</option>
+                    <option value="Quote-Done">Quote-Done</option>
+                    <option value="SO-Done">SO-Done</option>
+                    <option value="Delivered">Delivered</option>
                   </select>
                 </div>
 

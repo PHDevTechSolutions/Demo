@@ -25,6 +25,7 @@ export async function PUT(req: NextRequest) {
       callstatus,
       source,
       typecall,
+      activitystatus,
     } = body;
 
     if (!id) {
@@ -47,8 +48,9 @@ export async function PUT(req: NextRequest) {
           callstatus = $8,
           source = $9,
           typecall = $10,
+          activitystatus = $11,
           date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
-      WHERE id = $11;
+      WHERE id = $12;
       `,
       [
         typeactivity,
@@ -61,6 +63,7 @@ export async function PUT(req: NextRequest) {
         callstatus,
         source,
         typecall,
+        activitystatus,
         id,
       ]
     );
