@@ -35,7 +35,8 @@ async function update(user: any) {
           deliveryaddress = ${deliveryaddress}, area = ${area},
           projectname = ${projectname}, projectcategory = ${projectcategory},
           projecttype = ${projecttype}, source = ${source},
-          activitystatus = ${activitystatus}
+          activitystatus = ${activitystatus},
+          date_updated = CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Manila'
       WHERE id = ${id}
       RETURNING *;
     `;
