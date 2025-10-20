@@ -15,7 +15,7 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 export async function GET() {
     try {
         // ✅ Order by latest date first
-        const Xchire_fetch = await Xchire_sql`SELECT * FROM activity ORDER BY date_updated DESC;`;
+        const Xchire_fetch = await Xchire_sql`SELECT * FROM activity;`;
 
         console.log("Xchire fetched accounts:", Xchire_fetch);
 
