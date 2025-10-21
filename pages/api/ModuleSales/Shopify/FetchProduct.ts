@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const SHOPIFY_PRODUCT_TOKEN = process.env.SHOPIFY_PRODUCT_TOKEN!;
 
   try {
-    const url = `https://${SHOPIFY_STORE}/admin/api/2024-04/products.json?limit=250`;
+    const url = `https://${SHOPIFY_STORE}/admin/api/2024-04/products.json?limit=500`;
     const response = await fetch(url, {
       headers: {
         "X-Shopify-Access-Token": SHOPIFY_PRODUCT_TOKEN,
