@@ -89,7 +89,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
       await audioLogoutRef.current.play().catch(() => { });
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for sound to play
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     try {
       await fetch("/api/log-activity", {

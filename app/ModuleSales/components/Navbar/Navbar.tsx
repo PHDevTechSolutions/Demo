@@ -40,6 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
   const [userReferenceId, setUserReferenceId] = useState("");
   const [TargetQuota, setUserTargetQuota] = useState("");
   const [Role, setUserRole] = useState("");
+  const [Department, setDepartment] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -194,6 +195,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
           setUserReferenceId(data.ReferenceID || "");
           setUserTargetQuota(data.TargetQuota || "");
           setUserRole(data.Role || "");
+          setDepartment(data.Department || "");
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
@@ -248,23 +250,48 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
 
   const totalNotifCount = notifications.filter((notif) => notif.status === "Unread").length;
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const audioLogoutRef = useRef<HTMLAudioElement>(null);
+
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    // Play logout sound if available
+    if (audioLogoutRef.current) {
+      audioLogoutRef.current.currentTime = 0;
+      await audioLogoutRef.current.play().catch(() => { });
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500)); // optional delay for sound
+
     try {
       await fetch("/api/log-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: userEmail,
+          email: userEmail,        // <-- use your state here
+          department: Department || "",  // <-- use Role or another state for dept
           status: "logout",
           timestamp: new Date().toISOString(),
         }),
       });
     } catch (err) {
-      console.error("Logout log failed:", err);
+      console.error("Failed to log logout activity", err);
+      // Optional: save to sessionStorage to retry later
+      sessionStorage.setItem("pendingLogout", JSON.stringify({
+        email: userEmail,
+        department: Role || "",
+        status: "logout",
+        timestamp: new Date().toISOString()
+      }));
     }
+
+    // Clear session and redirect
     sessionStorage.clear();
     router.replace("/Login");
   };
+
 
   return (
     <div className={`sticky top-0 z-[999] flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
