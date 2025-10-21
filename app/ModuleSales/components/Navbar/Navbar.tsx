@@ -257,7 +257,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    // Play logout sound if available
+    // 🔊 Play logout sound if available
     if (audioLogoutRef.current) {
       audioLogoutRef.current.currentTime = 0;
       await audioLogoutRef.current.play().catch(() => { });
@@ -265,33 +265,64 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
 
     await new Promise((resolve) => setTimeout(resolve, 500)); // optional delay for sound
 
+    // 🧩 Get deviceId from localStorage
+    const deviceId = localStorage.getItem("deviceId") || "Unknown";
+
+    // 📍 Get location if allowed
+    let location: { latitude: number; longitude: number } | null = null;
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+        location = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+      } catch {
+        console.warn("User denied location access");
+      }
+    }
+
+    // 🔹 Get client public IP
+    const getIp = async () => {
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip || "Unknown";
+      } catch {
+        return "Unknown";
+      }
+    };
+    const ipAddress = await getIp();
+
+    // 🔹 Prepare log data
+    const logData = {
+      email: userEmail,               // from your state
+      department: Department || "",   // or Role if needed
+      status: "logout",
+      timestamp: new Date().toISOString(),
+      deviceId,
+      location,
+      ipAddress,
+    };
+
     try {
       await fetch("/api/log-activity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: userEmail,        // <-- use your state here
-          department: Department || "",  // <-- use Role or another state for dept
-          status: "logout",
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(logData),
       });
     } catch (err) {
       console.error("Failed to log logout activity", err);
-      // Optional: save to sessionStorage to retry later
-      sessionStorage.setItem("pendingLogout", JSON.stringify({
-        email: userEmail,
-        department: Role || "",
-        status: "logout",
-        timestamp: new Date().toISOString()
-      }));
+      // fallback: save to sessionStorage to retry later
+      sessionStorage.setItem("pendingLogout", JSON.stringify(logData));
     }
 
     // Clear session and redirect
     sessionStorage.clear();
     router.replace("/Login");
   };
-
 
   return (
     <div className={`sticky top-0 z-[999] flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>

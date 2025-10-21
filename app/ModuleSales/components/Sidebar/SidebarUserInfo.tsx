@@ -91,6 +91,37 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // 🧩 Get deviceId from localStorage
+    const deviceId = localStorage.getItem("deviceId") || "Unknown";
+
+    // 📍 Get location if allowed
+    let location: { latitude: number; longitude: number } | null = null;
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject)
+        );
+        location = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+      } catch {
+        console.warn("User denied location access");
+      }
+    }
+
+    // 🔹 Get IP (fallback: server-side will handle x-forwarded-for if behind proxy)
+    const getIp = async () => {
+      try {
+        const res = await fetch("https://api.ipify.org?format=json");
+        const data = await res.json();
+        return data.ip || "Unknown";
+      } catch {
+        return "Unknown";
+      }
+    };
+    const ipAddress = await getIp();
+
     try {
       await fetch("/api/log-activity", {
         method: "POST",
@@ -100,6 +131,9 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
           department: userDetails.Department,
           status: "logout",
           timestamp: new Date().toISOString(),
+          deviceId,
+          location,
+          ipAddress,
         }),
       });
     } catch (err) {
@@ -109,6 +143,7 @@ const SidebarUserInfo: React.FC<SidebarUserInfoProps> = ({
     sessionStorage.clear();
     router.replace("/Login");
   };
+
 
   if (collapsed) return null;
 
