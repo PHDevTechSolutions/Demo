@@ -11,6 +11,7 @@ interface Company {
   emailaddress: string;
   typeclient: string;
   address?: string;
+  next_available_date: string;
 }
 
 interface CompaniesProps {
