@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const db = await connectToDatabase();
 
-    // Get client IP
+    // Get client IP s
     const xForwardedFor = req.headers['x-forwarded-for'];
     const ip =
       (typeof xForwardedFor === 'string' ? xForwardedFor.split(',')[0].trim() : undefined) ||
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'Unknown';
 
     const userAgent = req.headers['user-agent'] || 'Unknown';
-
+   
     const doc: any = {
       email,
       department,
