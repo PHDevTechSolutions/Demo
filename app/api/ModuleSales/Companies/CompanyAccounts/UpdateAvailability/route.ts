@@ -20,9 +20,15 @@ async function updateNextAvailableDate(id: string, typeclient: string) {
     const today = new Date();
     let nextDate = new Date(today);
 
+    // 🗓️ Logic per typeclient
     if (typeclient === "Top 50") {
       nextDate.setDate(today.getDate() + 15);
-    } else if (typeclient === "Next 30" || typeclient === "Balance 20") {
+    } else if (
+      typeclient === "Next 30" ||
+      typeclient === "Balance 20" ||
+      typeclient === "TSA Client" ||
+      typeclient === "CSR Client"
+    ) {
       nextDate.setMonth(today.getMonth() + 1);
     }
 
@@ -34,10 +40,18 @@ async function updateNextAvailableDate(id: string, typeclient: string) {
       RETURNING *;
     `;
 
-    return { success: true, data: Xchire_update, next_available_date: nextDate };
+    return {
+      success: true,
+      data: Xchire_update,
+      next_available_date: nextDate,
+    };
   } catch (Xchire_error: any) {
     console.error("Xchire error updating next_available_date:", Xchire_error);
-    return { success: false, error: Xchire_error.message || "Failed to update next_available_date." };
+    return {
+      success: false,
+      error:
+        Xchire_error.message || "Failed to update next_available_date.",
+    };
   }
 }
 
@@ -53,7 +67,10 @@ export async function PUT(req: Request) {
   } catch (Xchire_error: any) {
     console.error("Xchire error in PUT /UpdateAvailability:", Xchire_error);
     return NextResponse.json(
-      { success: false, error: Xchire_error.message || "Internal server error" },
+      {
+        success: false,
+        error: Xchire_error.message || "Internal server error",
+      },
       { status: 500 }
     );
   }

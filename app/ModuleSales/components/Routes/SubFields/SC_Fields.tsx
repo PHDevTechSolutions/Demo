@@ -21,6 +21,8 @@ export interface CompanyOption {
 
 interface SelectCompanyProps {
   referenceid: string;
+  companyid: string | number;
+  setcompanyid: (val: string | number) => void;
   companyname: string;
   setcompanyname: (val: string) => void;
   companygroup: string;
@@ -58,6 +60,8 @@ interface SelectCompanyProps {
 
 const SelectCompany: React.FC<SelectCompanyProps> = ({
   referenceid,
+  companyid,
+  setcompanyid,
   companyname,
   setcompanyname,
   companygroup,
@@ -108,6 +112,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
 
   const handleCompanySelect = (selected: any) => {
     if (selected?.id) {
+      setcompanyid(selected.id);
       setcompanyname(selected.companyname);
       setcontactperson(selected.contactperson);
       setcontactnumber(selected.contactnumber);
@@ -119,6 +124,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
       setarea(selected.area);
       setstatus(selected.status);
     } else {
+      setcompanyid("");
       setcompanyname("");
       setcontactperson("");
       setcontactnumber("");
@@ -231,6 +237,12 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
       {isExpanded && (
         <div className="flex flex-wrap -mx-4 transition-all duration-300 ease-in-out">
           <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
+          <input
+              type="hidden"
+              value={companyid ?? ""}
+              onChange={(e) => setcompanyid(e.target.value)}
+              className="w-full px-3 py-2 border-b text-xs capitalize"
+            />
             <label className="block text-xs font-bold mb-2">Affiliate Name</label>
             <input
               type="text"

@@ -23,11 +23,12 @@ interface Activity {
 }
 
 interface FormFieldsProps {
+    
     referenceid: string; setreferenceid: (value: string) => void;
     manager: string; setmanager: (value: string) => void;
     tsm: string; settsm: (value: string) => void;
     targetquota: string; settargetquota: (value: string) => void;
-
+    companyid: string | number; setcompanyid: (value: string | number) => void;
     companyname: string; setcompanyname: (value: string) => void;
     companygroup: string; setcompanygroup: (value: string) => void;
     contactperson: string; setcontactperson: (value: string) => void;
@@ -72,6 +73,7 @@ interface FormFieldsProps {
 
 const UserFormFields: React.FC<FormFieldsProps> = ({
     referenceid, setreferenceid,
+    companyid, setcompanyid,
     manager, setmanager,
     tsm, settsm,
     targetquota, settargetquota,
@@ -156,6 +158,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
            <div className="border-t border-gray-200 my-4"></div>
             <SelectCompany
                 referenceid={referenceid}
+                companyid={companyid} setcompanyid={setcompanyid}
                 setcompanyname={setcompanyname} companyname={companyname}
                 setcompanygroup={setcompanygroup} companygroup={companygroup}
                 setcontactperson={setcontactperson} contactperson={contactperson}
@@ -179,6 +182,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
 
             <div className="border-t border-gray-400 border-dashed my-4"></div>
             <Submenu
+            
                 typeactivity={typeactivity} settypeactivity={settypeactivity}
                 setemailaddress={setemailaddress} emailaddress={emailaddress}
                 remarks={remarks} setremarks={setremarks}

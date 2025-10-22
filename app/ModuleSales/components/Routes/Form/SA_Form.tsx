@@ -18,6 +18,7 @@ interface AddUserFormProps {
     targetquota: string;
   };
   companyData?: {
+    id: number;
     companyname: string;
     companygroup: string;
     typeclient: string;
@@ -52,7 +53,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   const [manager, setManager] = useState(userDetails.manager || "");
   const [tsm, setTsm] = useState(userDetails.tsm || "");
   const [targetquota, setTargetQuota] = useState(userDetails.targetquota || "");
-
+  const [companyid, setcompanyid] = useState(editUser ? editUser.companyid : companyData?.id || null);
   const [companyname, setcompanyname] = useState(editUser ? editUser.companyname : companyData?.companyname || "");
   const [companygroup, setcompanygroup] = useState(editUser ? editUser.companygroup : companyData?.companygroup || "");
   const [typeclient, settypeclient] = useState(editUser ? editUser.typeclient : companyData?.typeclient || "");
@@ -246,6 +247,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     // 🧹 Convert empty strings to null
     const payload = {
       id: editUser?.id,
+      companyid,
       referenceid, manager, tsm, targetquota,
       companyname, companygroup, contactperson, contactnumber, emailaddress,
       typeclient, address, deliveryaddress, area,
@@ -263,6 +265,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     });
 
     try {
+      // 🔹 1️⃣ Main Save: Create or Edit activity
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -280,18 +283,56 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         return;
       }
 
-      toast.success(editUser ? "✅ User updated successfully" : "✅ User added successfully", {
-        autoClose: 1200,
-        onClose: () => {
-          onCancel();
-          refreshPosts();
-        },
-      });
+      // 🔹 2️⃣ Conditional Update: only for Outbound Calls + Assisted
+      if (typeactivity?.toLowerCase() === "outbound calls" && activitystatus?.toLowerCase() === "assisted") {
+        console.log("🚀 Calling UpdateAvailability for:", companyid, typeclient);
+
+        try {
+          const updateRes = await fetch(
+            `/api/ModuleSales/Companies/CompanyAccounts/UpdateAvailability`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: companyid,
+                typeclient: payload.typeclient,
+              }),
+              cache: "no-store",
+            }
+          );
+
+          const updateData = await updateRes.json();
+          console.log("✅ UpdateAvailability result:", updateData);
+
+          if (!updateData.success) {
+            console.error("⚠️ UpdateAvailability failed:", updateData.error);
+            toast.warning(`⚠️ UpdateAvailability failed: ${updateData.error}`);
+          }
+        } catch (updateErr) {
+          console.error("❌ Error updating company availability:", updateErr);
+        }
+      }
+
+
+      // 🔹 3️⃣ Success message + refresh UI
+      toast.success(
+        editUser ? "✅ User updated successfully" : "✅ User added successfully",
+        {
+          autoClose: 1200,
+          onClose: () => {
+            onCancel();
+            refreshPosts();
+          },
+        }
+      );
     } catch (err) {
       console.error("⚠️ Network or unexpected error:", err);
-      toast.error("⚠️ Connection error. Check console for details.", { autoClose: 2000 });
+      toast.error("⚠️ Connection error. Check console for details.", {
+        autoClose: 2000,
+      });
     }
   };
+
 
   const handleCancelConfirm = () => setShowConfirmModal(false); // 🟢 ADD
 
@@ -438,6 +479,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
           The process of <strong>creating</strong> or <strong>editing an activity</strong> involves updating key information associated with a company. When adding or editing an account, fields such as company name, contact details, client type, and status play an essential role in maintaining accurate and up-to-date records. These fields ensure smooth management and tracking of company accounts within the system, allowing for better organization and coordination. Properly updating these details is crucial for improving communication and ensuring the integrity of the data throughout the process.
         </p>
         <FormFields
+          companyid={companyid} setcompanyid={setcompanyid}
           referenceid={referenceid} setreferenceid={setReferenceid}
           manager={manager} setmanager={setManager}
           tsm={tsm} settsm={setTsm}
