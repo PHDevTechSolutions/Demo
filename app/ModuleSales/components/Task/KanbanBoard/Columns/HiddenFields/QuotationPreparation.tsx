@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Select, { components } from "react-select";
 import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
 
 interface QuotationPreparationProps {
   typecall: string;
@@ -23,7 +24,7 @@ interface QuotationPreparationProps {
 interface ShopifyProduct {
   id: number;
   title: string;
-  sku: string;
+  variants: { sku: string }[];
 }
 
 // Custom option for react-select
@@ -37,9 +38,7 @@ const Option = (props: any) => (
 );
 
 const MultiValueLabel = (props: any) => (
-  <components.MultiValueLabel {...props}>
-    {props.data.title}
-  </components.MultiValueLabel>
+  <components.MultiValueLabel {...props}>{props.data.title}</components.MultiValueLabel>
 );
 
 const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
@@ -56,32 +55,86 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
   const [categoryOptions, setCategoryOptions] = useState<any[]>([]);
   const [useManualList, setUseManualList] = useState(false);
 
-  // Fetch product list from Shopify API
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/ModuleSales/Shopify/FetchProduct", {
-          cache: "no-store",
-        });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error);
+  const manualCategories = useMemo(
+    () => [
+      "Bollard Light",
+      "Bulb Light",
+      "Canopy Light",
+      "Downlight",
+      "Emergency Light",
+      "Exit Light",
+      "Flood Light",
+      "Garden Light",
+      "High Bay Light",
+      "Lamp Post",
+      "Light Fixtures and Housing",
+      "Linear Light",
+      "Louver Light",
+      "Neon Light",
+      "Panel Light",
+      "Pendant Light",
+      "Power Supply",
+      "Rope Light",
+      "Solar Flood Light",
+      "Solar Light",
+      "Solar Road Light",
+      "Solar Street Light",
+      "Spotlight",
+      "Street Light",
+      "Strip Light",
+      "Swimming Pool Light",
+      "Track Light",
+      "Tube Light",
+      "UV Disinfection Light",
+      "Wall Light",
+      "Weatherproof Fixture",
+      "SPF ( Special Items )",
+      "Various Lighting",
+      "Item Not Carried",
+    ],
+    []
+  );
 
-        const products: ShopifyProduct[] = json.data;
-        const mapped = products.map((p) => ({
-          value: p.sku,
-          title: p.title.replace(/Super Sale\s*/i, "").trim(),
-          sku: p.sku,
-          label: `${p.title} | ${p.sku}`,
-        }));
-        setCategoryOptions(mapped);
-      } catch (err: any) {
-        console.error(err);
-        toast.error("Failed to load product titles from Shopify");
-      }
-    })();
+  // =====================
+  // Fetch products from Shopify with search
+  // =====================
+  const fetchProducts = async (search: string) => {
+    try {
+      const res = await fetch(
+        `/api/ModuleSales/Shopify/FetchProduct?search=${encodeURIComponent(search)}`,
+        { cache: "no-store" }
+      );
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+
+      const products: ShopifyProduct[] = json.data;
+      const mapped = products.map((p) => {
+        const title = String(p.title || "");
+        return {
+          value: p.variants?.[0]?.sku || "N/A",
+          title: title.replace(/Super Sale\s*/i, "").trim(),
+          sku: p.variants?.[0]?.sku || "N/A",
+          label: `${title} | ${p.variants?.[0]?.sku || "N/A"}`,
+        };
+      });
+
+      setCategoryOptions(mapped);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Failed to load product titles from Shopify");
+    }
+  };
+
+  const debouncedFetch = useMemo(() => debounce(fetchProducts, 400), []);
+
+  useEffect(() => {
+    fetchProducts(""); // load default products
+    return () => debouncedFetch.cancel();
   }, []);
 
-  // Auto set follow-up date based on typecall
+  // =====================
+  // Auto set follow-up date
+  // =====================
   useEffect(() => {
     let daysToAdd = 0;
     if (!typecall) {
@@ -118,47 +171,9 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
     }
   }, [typecall, followup_date, handleFormChange]);
 
-  // Manual categories
-  const manualCategories = [
-    "Bollard Light",
-    "Bulb Light",
-    "Canopy Light",
-    "Downlight",
-    "Emergency Light",
-    "Exit Light",
-    "Flood Light",
-    "Garden Light",
-    "High Bay Light",
-    "Lamp Post",
-    "Light Fixtures and Housing",
-    "Linear Light",
-    "Louver Light",
-    "Neon Light",
-    "Panel Light",
-    "Pendant Light",
-    "Power Supply",
-    "Rope Light",
-    "Solar Flood Light",
-    "Solar Light",
-    "Solar Road Light",
-    "Solar Street Light",
-    "Spotlight",
-    "Street Light",
-    "Strip Light",
-    "Swimming Pool Light",
-    "Track Light",
-    "Tube Light",
-    "UV Disinfection Light",
-    "Wall Light",
-    "Weatherproof Fixture",
-    "SPF ( Special Items )",
-    "Various Lighting",
-    "Item Not Carried",
-  ];
-
   return (
     <>
-      {/* Toggle for data source */}
+      {/* Product Source */}
       <div className="flex justify-between items-center mb-2">
         <label className="font-semibold text-xs">Product Source</label>
         <select
@@ -186,7 +201,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Project Category Selection */}
+      {/* Product Selection */}
       {!useManualList ? (
         <div className="flex flex-col mt-2">
           <label className="font-semibold">
@@ -207,6 +222,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
                 target: { name: "projectcategory", value: values },
               } as any);
             }}
+            onInputChange={(inputValue) => debouncedFetch(inputValue)}
             className="text-xs px-3 py-1"
             isClearable
             required
@@ -262,24 +278,6 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
       </div>
 
       {/* Quotation Number */}
-      {useManualList && (
-        <div className="flex flex-col mt-2">
-          <label className="font-semibold">
-            Quotation Amount{" "}
-            <span className="text-[8px] text-green-700">* Required</span>
-          </label>
-          <input
-            type="number"
-            name="quotationamount"
-            value={quotationamount || ""}
-            onChange={handleFormChange}
-            className="border-b px-3 py-2 rounded text-xs"
-            placeholder="Enter Quotation Amount"
-            required
-          />
-        </div>
-      )}
-        
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Number <span className="text-[8px] text-green-700">* Required</span>
@@ -295,12 +293,11 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
         />
       </div>
 
-      {/* Quotation Number */}
+      {/* Quotation Amount (Manual only) */}
       {useManualList && (
         <div className="flex flex-col mt-2">
           <label className="font-semibold">
-            Quotation Amount{" "}
-            <span className="text-[8px] text-green-700">* Required</span>
+            Quotation Amount <span className="text-[8px] text-green-700">* Required</span>
           </label>
           <input
             type="number"
@@ -344,7 +341,7 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           name="followup_date"
           value={followup_date || ""}
           onChange={handleFormChange}
-          min={new Date().toISOString().slice(0, 16)}
+          min={new Date().toISOString().slice(0, 10)}
           className="border-b px-3 py-2 rounded text-xs"
           required
         />
