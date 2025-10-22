@@ -96,6 +96,7 @@ const Companies: React.FC<CompaniesProps> = ({
       if (response.success && Array.isArray(response.data)) {
         const todayStr = new Date().toISOString().split("T")[0];
 
+        // Helper for consistent date format
         const normalizeDate = (dateStr?: string): string | null => {
           if (!dateStr) return null;
           const d = new Date(dateStr);
@@ -105,25 +106,39 @@ const Companies: React.FC<CompaniesProps> = ({
             .split("T")[0];
         };
 
-        // ✅ Filter only available (<= today)
+        // ✅ Filter all companies with date <= today
         const validCompanies: Company[] = response.data.filter((comp: Company) => {
           const compDateStr = normalizeDate(comp.next_available_date);
-          if (!compDateStr) return true;
+          if (!compDateStr) return true; // still count if no date
           return compDateStr <= todayStr;
         });
 
-        // ✅ Split today vs past
-        const todayCompanies: Company[] = validCompanies.filter((comp: Company) => {
+        // ✅ Group companies by next_available_date
+        const todayCompanies = validCompanies.filter((comp) => {
           const compDateStr = normalizeDate(comp.next_available_date);
           return compDateStr === todayStr;
         });
 
-        const pastCompanies: Company[] = validCompanies.filter((comp: Company) => {
+        const pastCompanies = validCompanies.filter((comp) => {
           const compDateStr = normalizeDate(comp.next_available_date);
           return !compDateStr || compDateStr < todayStr;
         });
 
-        // ✅ Group past by typeclient
+        // ⚙️ NEW: detect if all companies have next_available_date
+        const allHaveDate = response.data.every(
+          (c: Company) => !!normalizeDate(c.next_available_date)
+        );
+
+        // ✅ If all have next_available_date → show only today's companies
+        if (allHaveDate) {
+          console.log("📅 All companies have next_available_date — showing today only");
+          setCompanies(todayCompanies);
+          setLoading(false);
+          setReplacing(false);
+          return;
+        }
+
+        // ✅ Continue normal logic for mixed (some null)
         const grouped = {
           top50: pastCompanies.filter((c) => c.typeclient === "Top 50"),
           next30: pastCompanies.filter((c) => c.typeclient === "Next 30"),
@@ -132,12 +147,11 @@ const Companies: React.FC<CompaniesProps> = ({
           tsa: pastCompanies.filter((c) => c.typeclient === "TSA Client"),
         };
 
-        // ✅ Shuffle each group
+        // Shuffle each group
         (Object.keys(grouped) as Array<keyof typeof grouped>).forEach((k) => {
           grouped[k] = shuffleArray(grouped[k]);
         });
 
-        // ✅ Base target counts
         const targetCounts = { top50: 20, next30: 10, balance20: 5 };
 
         let finalPast: Company[] = [
@@ -146,7 +160,7 @@ const Companies: React.FC<CompaniesProps> = ({
           ...grouped.balance20.slice(0, targetCounts.balance20),
         ];
 
-        // ✅ Fill remaining up to 35
+        // Fill remaining up to 35
         const fillPriority: Company[][] = [
           grouped.balance20.slice(targetCounts.balance20),
           grouped.next30.slice(targetCounts.next30),
@@ -161,10 +175,9 @@ const Companies: React.FC<CompaniesProps> = ({
           finalPast = [...finalPast, ...group.slice(0, needed)];
         }
 
-        // ✅ Combine today + past (may exceed 35)
         let finalList = [...todayCompanies, ...finalPast];
 
-        // 🧹 ✅ Remove duplicates by unique company name or ID
+        // 🧹 Remove duplicates
         const seen = new Set<string>();
         finalList = finalList.filter((c) => {
           const key = c.id ? String(c.id) : c.companyname.trim().toLowerCase();
@@ -191,7 +204,6 @@ const Companies: React.FC<CompaniesProps> = ({
       setReplacing(false);
     }
   };
-
 
   // 🧩 Initial fetch
   useEffect(() => {
@@ -264,10 +276,10 @@ const Companies: React.FC<CompaniesProps> = ({
               </span>
               <span
                 className={`text-xs font-bold ${isFull
-                    ? "text-red-500"
-                    : isNearLimit
-                      ? "text-orange-500"
-                      : "text-green-600"
+                  ? "text-red-500"
+                  : isNearLimit
+                    ? "text-orange-500"
+                    : "text-green-600"
                   }`}
               >
                 {tapCount}{" "}
@@ -280,10 +292,10 @@ const Companies: React.FC<CompaniesProps> = ({
             <div className="w-full bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
               <div
                 className={`h-2 rounded-full transition-all duration-500 ease-in-out ${isFull
-                    ? "bg-red-500"
-                    : isNearLimit
-                      ? "bg-orange-400"
-                      : "bg-green-500"
+                  ? "bg-red-500"
+                  : isNearLimit
+                    ? "bg-orange-400"
+                    : "bg-green-500"
                   }`}
                 style={{ width: `${Math.min((tapCount / limit) * 100, 100)}%` }}
               />
@@ -295,8 +307,8 @@ const Companies: React.FC<CompaniesProps> = ({
             onClick={handleRefresh}
             disabled={replacing || !userDetails?.ReferenceID}
             className={`text-xs px-3 py-1 rounded-md font-medium shadow-sm flex items-center gap-1 ${replacing || !userDetails?.ReferenceID
-                ? "bg-gray-400 text-white cursor-not-allowed animate-pulse"
-                : "bg-green-500 text-white hover:bg-green-600"
+              ? "bg-gray-400 text-white cursor-not-allowed animate-pulse"
+              : "bg-green-500 text-white hover:bg-green-600"
               }`}
           >
             {replacing ? (
