@@ -65,7 +65,7 @@ const AccountListPage: React.FC = () => {
     };
 
     // Show delete modal
-    const confirmDelete = (postId: string) => {
+    const confirmDelete = (postId: string) => { 
         setPostToDelete(postId);
         setShowDeleteModal(true);
     };
