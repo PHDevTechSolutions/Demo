@@ -7,7 +7,6 @@ import { BsArrowsCollapseVertical } from 'react-icons/bs';
 import { useRouter } from "next/navigation";
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
 import { HiOutlineDuplicate } from 'react-icons/hi';
-import { HiPlay } from 'react-icons/hi';
 import { RiTimelineView } from 'react-icons/ri';
 
 // Routes
@@ -18,6 +17,7 @@ import Progress from "./Columns/Progress";
 import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
 import Meetings from "./Columns/Meetings";
+//import ToDoList from "./Columns/ToDoList";
 import Completed from "./Columns/Completed";
 import SiteVisit from "./Columns/SiteVisit";
 import Recent from "./Columns/Modal/Recent";
@@ -76,6 +76,7 @@ const allColumns: Column[] = [
   { id: "in-progress", title: "In Progress" },
   { id: "duplication", title: "Duplication" },
   { id: "scheduled", title: "Scheduled" },
+  //{ id: "todo", title: "TO-DO" },
   { id: "completed", title: "Completed" },
 ];
 
@@ -395,6 +396,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                       <SiteVisit userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     </>
                   )}
+
+                  {/*{col.id === "todo" && (
+                    <>
+                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger}/>
+                    </>
+                  )}*/}
 
                   {col.id === "completed" && (
                     <Completed userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
