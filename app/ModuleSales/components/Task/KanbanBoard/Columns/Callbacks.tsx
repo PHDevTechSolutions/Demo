@@ -192,7 +192,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
         <span className="mr-1">☎️</span>Total Callbacks: <span className="ml-1 text-red-500">{callbacks.length}</span>
       </h3>
-      <span className="text-[10px]">Verify callbacks and update the status once the call is completed.</span>
+      <span className="text-xs italic">Verify callbacks and update the status once the call is completed.</span>
 
       {callbacks.length > 0 ? (
         <>

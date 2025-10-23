@@ -118,7 +118,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({
         📌 Follow-Ups:{" "}
         <span className="text-orange-500">{followUps.length}</span>
       </h3>
-      <span className="text-[10px]">Verify follow-ups and update the status once the activity is completed.</span>
+      <span className="text-xs italic">Verify follow-ups and update the status once the activity is completed.</span>
 
       {followUps.length > 0 ? (
         followUps.map((inq, idx) => (
