@@ -4,7 +4,10 @@ import { neon } from "@neondatabase/serverless";
 const Xchire_databaseUrl = process.env.TASKFLOW_DB_URL!;
 const Xchire_sql = neon(Xchire_databaseUrl);
 
+// ----- Caching & Rendering Controls -----
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,3 +40,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
