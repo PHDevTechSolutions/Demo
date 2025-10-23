@@ -1,65 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import { LuClock, LuCalendarPlus } from "react-icons/lu";
-import { FaChevronDown, FaChevronUp, FaTrash } from "react-icons/fa";
-import { toast } from "react-toastify";
+import { LuClock } from "react-icons/lu";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 interface FollowUpCardProps {
   inq: any;
   userDetails: any;
-  openFormDrawer: (inq: any) => void;
-  onDelete?: (activitynumber: string, referenceid: string) => void;
+  onStatusChange: (id: number, newStatus: string) => void;
 }
 
 const FollowUpCard: React.FC<FollowUpCardProps> = ({
   inq,
   userDetails,
-  openFormDrawer,
-  onDelete,
+  onStatusChange,
 }) => {
-  const [deleting, setDeleting] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const bgColor =
-    inq.activitystatus?.toLowerCase() === "done"
+    inq.scheduled_status === "Done"
       ? "bg-green-200"
-      : inq.activitystatus?.toLowerCase() === "ongoing"
-        ? "bg-orange-200"
-        : "bg-stone-200";
-
-  const handleDelete = async () => {
-    if (!inq.activitynumber || !inq.referenceid) return;
-    if (!confirm("Are you sure you want to delete this activity?")) return;
-
-    try {
-      setDeleting(true);
-      const res = await fetch(
-        "/api/ModuleSales/Task/ActivityPlanner/DeleteProgress",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            activitynumber: inq.activitynumber,
-            referenceid: inq.referenceid,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("✅ Activity deleted successfully!");
-        if (onDelete) onDelete(inq.activitynumber, inq.referenceid);
-      } else {
-        toast.error(data.error || "Failed to delete activity.");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("An unexpected error occurred.");
-    } finally {
-      setDeleting(false);
-    }
-  };
+      : "bg-stone-200";
 
   return (
     <div className={`rounded-lg shadow overflow-hidden ${bgColor}`}>
@@ -73,16 +34,29 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
           className="w-8 h-8 rounded-full object-cover"
         />
         <div className="flex-1">
-          <p className="font-semibold text-[10px] uppercase">{inq.companyname}</p>
+          <p className="font-semibold text-[10px] uppercase">
+            {inq.companyname}
+          </p>
           <p className="text-[9px] text-gray-600">{inq.typecall}</p>
         </div>
-        <button
-          onClick={() => openFormDrawer(inq)}
-          className="ml-auto bg-blue-500 hover:bg-blue-600 text-white text-[10px] px-2 py-1 rounded flex gap-1"
+
+        {/* ✅ Checkbox replaces Add button */}
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
         >
-          <LuCalendarPlus size={15} /> Add
-        </button>
-        <span className="text-[10px]">
+          <input
+            type="checkbox"
+            checked={inq.scheduled_status === "Done"}
+            onChange={() =>
+              onStatusChange(inq.id, inq.scheduled_status === "Done" ? "Pending" : "Done")
+            }
+            className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+          />
+
+        </div>
+
+        <span className="text-[10px] ml-1">
           {expanded ? <FaChevronUp /> : <FaChevronDown />}
         </span>
       </div>
@@ -90,28 +64,12 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
       {expanded && (
         <>
           <div className="p-3 space-y-1 text-[10px] border-t">
-            <p>
-              <span className="font-semibold">Contact #:</span>{" "}
-              {inq.contactnumber}
-            </p>
-            <p>
-              <span className="font-semibold">Email:</span> {inq.emailaddress}
-            </p>
-            <p>
-              <span className="font-semibold">Address:</span> {inq.address}
-            </p>
-            <p>
-              <span className="font-semibold">Type of Client:</span>{" "}
-              {inq.typeclient}
-            </p>
-            <p>
-              <span className="font-semibold">Remarks:</span>{" "}
-              {inq.remarks || "-"}
-            </p>
-            <p>
-              <span className="font-semibold">Status:</span>{" "}
-              {inq.activitystatus || "-"}
-            </p>
+            <p><span className="font-semibold">Contact #:</span> {inq.contactnumber}</p>
+            <p><span className="font-semibold">Email:</span> {inq.emailaddress}</p>
+            <p><span className="font-semibold">Address:</span> {inq.address}</p>
+            <p><span className="font-semibold">Type of Client:</span> {inq.typeclient}</p>
+            <p><span className="font-semibold">Remarks:</span> {inq.remarks || "-"}</p>
+            <p><span className="font-semibold">Status:</span> {inq.scheduled_status || "-"}</p>
           </div>
 
           <div className="p-2 text-gray-500 text-[9px] flex items-center justify-between border-t">
@@ -120,24 +78,14 @@ const FollowUpCard: React.FC<FollowUpCardProps> = ({
               <span>
                 {inq.followup_date
                   ? new Date(inq.followup_date).toLocaleString([], {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                   : "N/A"}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="bg-red-500 hover:bg-red-600 text-white text-[10px] px-2 py-1 rounded flex gap-1 disabled:opacity-50 items-center"
-              >
-                <FaTrash size={10} /> {deleting ? "Deleting..." : "Delete"}
-              </button>
             </div>
           </div>
         </>

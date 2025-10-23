@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import CallbackCard from "./Card/CallbackCard";
-import CallbackForm from "./Form/Callback";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -50,22 +49,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
   const [callbacks, setCallbacks] = useState<Inquiry[]>([]);
   const [visibleCount, setVisibleCount] = useState(3);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
-
-  const [activitynumber, setActivityNumber] = useState("");
-  const [companyname, setCompanyName] = useState("");
-  const [contactperson, setContactPerson] = useState("");
-  const [typeclient, setTypeClient] = useState("");
-  const [remarks, setRemarks] = useState("");
-  const [startdate, setStartDate] = useState("");
-  const [enddate, setEndDate] = useState("");
-  const [activitystatus, setActivityStatus] = useState("");
-  const [typecall, setTypeCall] = useState<"Successful" | "Unsucessful">("Successful");
-  const [typeactivity, setTypeActivity] = useState("");
-  const [tsm, setTsm] = useState("");
-  const [referenceid, setReferenceid] = useState("");
-  const [manager, setManager] = useState("");
   const [agentData, setAgentData] = useState<
     Record<string, { Firstname: string; Lastname: string; profilePicture: string }>
   >({});
@@ -168,71 +151,29 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
     fetchCallbacks();
   }, [userDetails?.ReferenceID, userDetails?.Role, refreshTrigger, selectedTSA, fetchAgents]);
 
-
-  const openFormDrawer = (inq: Inquiry) => {
-    setSelectedInquiry(inq);
-    setActivityNumber(inq.activitynumber);
-    setCompanyName(inq.companyname);
-    setContactPerson(inq.contactperson);
-    setTypeClient(inq.typeclient);
-    setRemarks(inq.remarks || "");
-    setStartDate(inq.callback?.split("T")[0] || "");
-    setEndDate("");
-    setActivityStatus(inq.activitystatus === "Done" ? "Done" : "Ongoing");
-    setTypeCall(inq.typecall === "Successful" ? "Successful" : "Unsucessful");
-    setTypeActivity(inq.typeactivity);
-    setTsm(inq.tsm);
-    setManager(inq.manager);
-    setReferenceid(inq.referenceid);
-  };
-
-  const closeFormDrawer = () => setSelectedInquiry(null);
-
-  const handleUpdate = async () => {
-    if (!selectedInquiry) return;
-
+  const handleStatusChange = async (id: number, newStatus: string) => {
     try {
-      setUpdating(true);
-
-      const isoStartDate = new Date(startdate).toISOString();
-      const isoEndDate = enddate ? new Date(enddate).toISOString() : null;
-
-      const payload = {
-        activitynumber,
-        companyname,
-        contactperson,
-        typeclient,
-        remarks,
-        startdate: isoStartDate,
-        enddate: isoEndDate,
-        activitystatus,
-        typecall,
-        typeactivity,
-        referenceid,
-        tsm,
-        manager,
-      };
-
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateProgress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ id, scheduled_status: newStatus }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Activity updated successfully!");
-        closeFormDrawer();
+        setCallbacks((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, scheduled_status: newStatus } : item
+          )
+        );
+        toast.success(`✅ Status updated to ${newStatus}`);
       } else {
-        toast.error("Failed to update activity. Please try again.");
-        console.error("❌ Update failed:", data);
+        toast.error(data.error || "Failed to update status.");
       }
-    } catch (error) {
-      console.error("❌ Error updating activity:", error);
-      toast.error("An error occurred while updating the activity.");
-    } finally {
-      setUpdating(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while updating.");
     }
   };
 
@@ -251,6 +192,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
       <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
         <span className="mr-1">☎️</span>Total Callbacks: <span className="ml-1 text-red-500">{callbacks.length}</span>
       </h3>
+      <span className="text-[10px]">Verify callbacks and update the status once the call is completed.</span>
 
       {callbacks.length > 0 ? (
         <>
@@ -266,7 +208,7 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
                 inq={inq}
                 userDetails={userDetails || { ReferenceID: "" }}
                 agent={agent}
-                openFormDrawer={openFormDrawer}
+                onStatusChange={handleStatusChange}
               />
             );
           })}
@@ -284,41 +226,6 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
         </>
       ) : (
         <p className="text-xs text-gray-400 italic">No callbacks scheduled for today.</p>
-      )}
-
-
-      {selectedInquiry && (
-        <CallbackForm
-          selectedInquiry={selectedInquiry}
-          handleUpdate={handleUpdate}
-          closeFormDrawer={closeFormDrawer}
-          activitynumber={activitynumber}
-          companyname={companyname}
-          contactperson={contactperson}
-          typeclient={typeclient}
-          typeactivity={typeactivity}
-          referenceid={referenceid}
-          tsm={tsm}
-          manager={manager}
-          remarks={remarks}
-          startdate={startdate}
-          enddate={enddate}
-          activitystatus={activitystatus}
-          typecall={typecall}
-          setActivityNumber={setActivityNumber}
-          setCompanyName={setCompanyName}
-          setContactPerson={setContactPerson}
-          setTypeClient={setTypeClient}
-          setTypeActivity={setTypeActivity}
-          setReferenceid={setReferenceid}
-          setTsm={setTsm}
-          setManager={setManager}
-          setRemarks={setRemarks}
-          setStartDate={setStartDate}
-          setEndDate={setEndDate}
-          setActivityStatus={setActivityStatus}
-          setTypeCall={setTypeCall}
-        />
       )}
 
     </div>
