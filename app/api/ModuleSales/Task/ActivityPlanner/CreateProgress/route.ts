@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         remarks, typecall, sonumber, soamount, callback, callstatus,
         startdate, enddate, quotationnumber, quotationamount,
         projectname, projectcategory, projecttype, targetquota,
-        paymentterm, actualsales, deliverydate, followup_date,
+        paymentterm, actualsales, deliverydate, followup_date, site_visit_date,
         drnumber, date_created, date_updated
       )
       VALUES (
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
         ${body.remarks}, ${body.typecall}, ${body.sonumber}, ${body.soamount}, ${body.callback}, ${body.callstatus},
         ${body.startdate}, ${body.enddate}, ${body.quotationnumber}, ${body.quotationamount},
         ${body.projectname}, ${body.projectcategory}, ${body.projecttype}, ${body.targetquota},
-        ${body.paymentterm}, ${body.actualsales}, ${body.deliverydate}, ${body.followup_date},
+        ${body.paymentterm}, ${body.actualsales}, ${body.deliverydate}, ${body.followup_date}, ${body.site_visit_date},
         ${body.drnumber}, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
       )
       RETURNING *;

@@ -39,6 +39,7 @@ export interface ProgressItem {
   actualsales: string;
   deliverydate: string;
   followup_date: string;
+  site_visit_date: string;
   ticketreferencenumber: string;
   drnumber: string;
 }

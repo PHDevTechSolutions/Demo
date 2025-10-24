@@ -42,6 +42,7 @@ interface ProgressItem {
   actualsales: string;
   deliverydate: string;
   followup_date: string;
+  site_visit_date: string;
   ticketreferencenumber: string;
   drnumber: string;
 }
@@ -131,6 +132,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
     actualsales: "",
     deliverydate: "",
     followup_date: "",
+    site_visit_date: "",
     drnumber: "",
     emailaddress: "",
     contactnumber: "",
@@ -174,6 +176,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       actualsales: "",
       deliverydate: "",
       followup_date: "",
+      site_visit_date: "",
       drnumber: "",
       emailaddress: "",
       contactnumber: "",
@@ -221,6 +224,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       actualsales: prog?.actualsales || "",
       deliverydate: prog?.deliverydate || "",
       followup_date: prog?.followup_date || "",
+      site_visit_date: prog?.site_visit_date || "",
       drnumber: prog?.drnumber || "",
       emailaddress: prog?.emailaddress || "",
       contactnumber: prog?.contactnumber || "",

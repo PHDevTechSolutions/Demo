@@ -32,6 +32,7 @@ interface ProgressFormProps {
     actualsales: string;
     deliverydate: string;
     followup_date: string;
+    site_visit_date: string;
     drnumber: string;
     emailaddress: string;
     contactnumber?: string;
@@ -81,6 +82,8 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   const [elapsed, setElapsed] = useState("0s");
   const [showOutboundModal, setShowOutboundModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [siteVisitTag, setSiteVisitTag] = useState("");
+  const [remarksText, setRemarksText] = useState("");
 
   useEffect(() => {
     if (!formData.startdate) {
@@ -123,6 +126,36 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
       setShowOutboundModal(true);
     }
   }, [formData.typeactivity]);
+
+  // ✅ Auto-append Site Visit info to remarks
+  useEffect(() => {
+    if (formData.site_visit_date) {
+      const d = new Date(formData.site_visit_date);
+      const formatted = d.toLocaleString("en-US", {
+        dateStyle: "long",
+        timeStyle: "short",
+      });
+      setSiteVisitTag(`Site Visit on ${formatted}`);
+    } else {
+      setSiteVisitTag("");
+    }
+  }, [formData.site_visit_date]);
+
+  useEffect(() => {
+    if (formData.remarks && !formData.remarks.includes("Site Visit on")) {
+      setRemarksText(formData.remarks);
+    }
+  }, [formData.remarks]);
+
+  const handleRemarksChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setRemarksText(e.target.value);
+    setFormData((p: any) => ({
+      ...p,
+      remarks: siteVisitTag
+        ? `${siteVisitTag}\n${e.target.value}`
+        : e.target.value,
+    }));
+  };
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg border-t z-[9999] max-h-[70vh] overflow-y-auto">
@@ -210,8 +243,8 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               value={formData.typeactivity}
               onChange={handleFormChange}
               className={`border border-dashed px-3 py-6 rounded text-xs ${formData.activitystatus === "Delivered"
-                  ? "bg-gray-200 cursor-not-allowed text-gray-500"
-                  : "bg-orange-100"
+                ? "bg-gray-200 cursor-not-allowed text-gray-500"
+                : "bg-orange-100"
                 }`}
               disabled={formData.activitystatus === "Delivered"}
             >
@@ -242,6 +275,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               callback={formData.callback}
               callstatus={formData.callstatus}
               followup_date={formData.followup_date}
+              site_visit_date={formData.site_visit_date}
               handleFormChange={handleFormChange}
             />
           )}
@@ -276,12 +310,20 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               Remarks<span className="text-[8px] text-red-700">* Required Fields</span>
             </label>
 
+            {siteVisitTag && (
+              <textarea
+                value={siteVisitTag}
+                readOnly
+                className="border px-3 py-2 rounded text-xs bg-gray-100 text-gray-600 mb-1 cursor-not-allowed"
+              />
+            )}
+
             <textarea
               name="remarks"
-              value={formData.remarks}
-              onChange={handleFormChange}
+              value={remarksText}
+              onChange={handleRemarksChange}
               className="border-b px-3 py-6 rounded text-xs resize-none h-20"
-              placeholder="Enter remarks"
+              placeholder="Enter additional remarks..."
               required
             />
           </div>

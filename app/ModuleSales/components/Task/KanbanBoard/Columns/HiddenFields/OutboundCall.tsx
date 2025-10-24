@@ -7,6 +7,7 @@ interface OutboundCallProps {
     callback: string;
     callstatus: string;
     followup_date: string;
+    site_visit_date: string;
     handleFormChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => void;
@@ -17,6 +18,7 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
     callback,
     callstatus,
     followup_date,
+    site_visit_date,
     handleFormChange,
 }) => {
     const [showInput, setShowInput] = useState(false);
@@ -104,32 +106,53 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
 
     return (
         <>
-            <div className="flex flex-col">
-                <label className="font-semibold">
-                    Callback <span className="text-[8px] text-green-700">Optional</span>
-                </label>
-                <select
-                    className="w-full px-3 py-6 border-b text-xs bg-white"
-                    onChange={handleCallbackChange}
-                >
-                    <option value="">Select Callback</option>
-                    <option value="Callback Tomorrow">Callback Tomorrow</option>
-                    <option value="Callback After 3 Days">Callback After 3 Days</option>
-                    <option value="Callback After a Week">Callback After a Week</option>
-                    <option value="Callback After a Month">Callback After a Month</option>
-                    <option value="Pick a DateTime">Pick a DateTime</option>
-                </select>
+            {/* ✅ Combined Container */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 🔹 Callback Section */}
+                <div className="flex flex-col">
+                    <label className="font-semibold">
+                        Callback <span className="text-[8px] text-green-700">Optional</span>
+                    </label>
+                    <select
+                        className="w-full px-3 py-6 border-b text-xs bg-white"
+                        onChange={handleCallbackChange}
+                    >
+                        <option value="">Select Callback</option>
+                        <option value="Callback Tomorrow">Callback Tomorrow</option>
+                        <option value="Callback After 3 Days">Callback After 3 Days</option>
+                        <option value="Callback After a Week">Callback After a Week</option>
+                        <option value="Callback After a Month">Callback After a Month</option>
+                        <option value="Pick a DateTime">Pick a DateTime</option>
+                    </select>
 
-                {showInput && (
+                    {showInput && (
+                        <input
+                            type="datetime-local"
+                            name="callback"
+                            value={callback}
+                            onChange={handleFormChange}
+                            min={new Date().toISOString().slice(0, 16)}
+                            className="w-full px-3 py-6 border rounded text-xs mt-2"
+                        />
+                    )}
+                </div>
+
+                {/* 🔹 Scheduled Site Visit Section */}
+                <div className="flex flex-col">
+                    <label className="font-semibold">
+                        Scheduled Site Visit{" "}
+                        <span className="text-[8px] text-green-700">* Optional</span>
+                    </label>
                     <input
                         type="datetime-local"
-                        name="callback"
-                        value={callback}
+                        name="site_visit_date"
+                        value={site_visit_date || ""}
                         onChange={handleFormChange}
-                        min={new Date().toISOString().slice(0, 16)} // ⛔ disables past dates
-                        className="w-full px-3 py-6 border rounded text-xs mt-2"
+                        min={new Date().toISOString().slice(0, 16)}
+                        className="border-b px-3 py-6 rounded text-xs"
+                        required
                     />
-                )}
+                </div>
             </div>
 
             <div className="flex flex-col">
