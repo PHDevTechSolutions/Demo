@@ -92,13 +92,11 @@ const FollowUps: React.FC<FollowUpsProps> = ({
             item.id === id ? { ...item, scheduled_status: newStatus } : item
           )
         );
-        toast.success(`✅ Status updated to ${newStatus}`);
       } else {
-        toast.error(data.error || "Failed to update status.");
+
       }
     } catch (err) {
       console.error(err);
-      toast.error("An error occurred while updating.");
     }
   };
 

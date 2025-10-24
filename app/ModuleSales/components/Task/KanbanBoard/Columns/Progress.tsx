@@ -108,6 +108,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [showFilter, setShowFilter] = useState(false);
   const [listLoading, setListLoading] = useState(false);
   const [formData, setFormData] = useState({
     activitystatus: "",
@@ -439,7 +440,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
           <span className="text-orange-500">{filteredProgress.length}</span>
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => setSearchOpen((prev) => !prev)}
@@ -452,6 +453,43 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
           >
             Filter <IoFilter size={15} />
           </button>
+
+          {/* 🔹 Filter Dropdown (toggles on button click) */}
+          {filterOpen && (
+            <div className="absolute right-16 top-8 bg-white border rounded-md shadow-md z-10 p-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setShowFilter(false); // auto-hide after selecting
+                }}
+                className="text-[11px] border rounded px-3 py-1.5 w-36"
+              >
+                <option value="All">All</option>
+                {activityStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {searchOpen && (
+            <div className="absolute right-16 top-8 bg-white border rounded-md shadow-md z-10 p-2">
+              <input
+                type="text"
+                placeholder="Search clients ..."
+                className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowFilter(false); // auto-hide after selecting
+                }}
+              />
+            </div>
+          )}
+
           <button
             onClick={handleRefresh}
             className="flex items-center bg-gray-100 gap-2 text-xs px-3 py-2 rounded transition"
@@ -470,31 +508,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
           </button>
         </div>
       </div>
-
-      {searchOpen && (
-        <input
-          type="text"
-          placeholder="Search clients ..."
-          className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      )}
-
-      {filterOpen && (
-        <select
-          className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          <option value="">All Status</option>
-          {activityStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-      )}
 
       {loading || submitting ? (
         Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)

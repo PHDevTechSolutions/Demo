@@ -18,6 +18,7 @@ const Delivered: React.FC<DeliveredProps> = ({ formData, handleFormChange }) => 
           value={formData.paymentterm || ""}
           onChange={handleFormChange}
           className="border-b px-3 py-6 rounded text-xs resize-none h-20"
+          required
         >
           <option value="">Select Payment Term</option>
           <option value="COD">COD</option>
@@ -56,6 +57,8 @@ const Delivered: React.FC<DeliveredProps> = ({ formData, handleFormChange }) => 
           required
         />
       </div>
+
+      {/*Additional Fields Invoice Number and SI Number*/}
 
       <div className="flex flex-col">
         <label className="font-semibold">

@@ -44,14 +44,15 @@ export async function GET(req: Request) {
         referenceid,
         date_created,
         typeactivity,
-        followup_date
+        followup_date,
+        scheduled_status
       FROM progress
       WHERE referenceid = ${referenceid}
          OR tsm = ${referenceid}
          OR manager = ${referenceid};
     `;
 
-    console.log("Fetched progress data:", results); // Debugging line
+    console.log("Fetched progress data:", results);
 
     return NextResponse.json({ success: true, data: results }, { status: 200 });
   } catch (error: any) {

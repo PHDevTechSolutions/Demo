@@ -25,6 +25,7 @@ interface Inquiry {
   typecall: string;
   callback?: string;
   typeactivity: string;
+  scheduled_status?: string;
 }
 
 interface UserDetails {
@@ -167,13 +168,10 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
             item.id === id ? { ...item, scheduled_status: newStatus } : item
           )
         );
-        toast.success(`✅ Status updated to ${newStatus}`);
       } else {
-        toast.error(data.error || "Failed to update status.");
       }
     } catch (err) {
       console.error(err);
-      toast.error("An error occurred while updating.");
     }
   };
 

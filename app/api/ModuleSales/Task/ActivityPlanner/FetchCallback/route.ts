@@ -40,7 +40,8 @@ export async function GET(req: Request) {
         activitystatus,
         typecall,
         callback,
-        typeactivity
+        typeactivity,
+        scheduled_status
       FROM progress
       WHERE referenceid = ${referenceid}
          OR tsm = ${referenceid}

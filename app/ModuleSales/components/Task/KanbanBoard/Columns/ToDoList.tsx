@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+import { IoFilter } from "react-icons/io5";
 
 const formatDateTimeLocal = (date: Date) => {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -42,6 +43,8 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
 }) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [filterType, setFilterType] = useState("All");
+  const [showFilter, setShowFilter] = useState(false);
+  const [tab, setTab] = useState<"Pending" | "Done">("Pending"); // ✅ New tab state
   const [showModal, setShowModal] = useState(false);
   const [typeactivity, setTypeactivity] = useState(ALLOWED_ACTIVITIES[0]);
   const [remarks, setRemarks] = useState("");
@@ -51,10 +54,8 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
-
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // 🔹 Auto-expand textarea height
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -130,7 +131,7 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
     }
   };
 
-  // 🔹 Inline Update Remarks
+  // 🔹 Update Remarks Inline
   const handleUpdateRemarks = async (id: string, newRemarks: string) => {
     try {
       await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateTodoRemarks", {
@@ -157,10 +158,10 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
     }
   };
 
-  const filteredTodos =
-    filterType === "All"
-      ? todos.filter((t) => ALLOWED_ACTIVITIES.includes(t.typeactivity))
-      : todos.filter((t) => t.typeactivity === filterType);
+  // 🔹 Filter
+  const filteredTodos = todos
+    .filter((t) => (filterType === "All" ? ALLOWED_ACTIVITIES.includes(t.typeactivity) : t.typeactivity === filterType))
+    .filter((t) => (tab === "Pending" ? t.scheduled_status !== "Done" : t.scheduled_status === "Done"));
 
   return (
     <div className="space-y-2 overflow-y-auto">
@@ -173,24 +174,59 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
           </span>
         </h3>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="text-[11px] border rounded-md p-1"
+        <div className="flex items-center gap-2 relative">
+          {/* 🔹 Filter Button */}
+          <button
+            onClick={() => setShowFilter((prev) => !prev)}
+            className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs items-center"
           >
-            <option value="All">All</option>
-            {ALLOWED_ACTIVITIES.map((a) => (
-              <option key={a}>{a}</option>
-            ))}
-          </select>
+            <IoFilter size={15} /> Filter
+          </button>
+
+          {/* 🔹 Filter Dropdown (toggles on button click) */}
+          {showFilter && (
+            <div className="absolute right-16 top-8 bg-white border rounded-md shadow-md z-10 p-2">
+              <select
+                value={filterType}
+                onChange={(e) => {
+                  setFilterType(e.target.value);
+                  setShowFilter(false); // auto-hide after selecting
+                }}
+                className="text-[11px] border rounded px-3 py-1.5 w-36"
+              >
+                <option value="All">All</option>
+                {ALLOWED_ACTIVITIES.map((a) => (
+                  <option key={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 🔹 Add Task Button */}
           <button
             onClick={() => setShowModal(true)}
-            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-md"
+            className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded"
           >
             + Add Task
           </button>
         </div>
+      </div>
+
+
+      {/* ✅ Tabs (Pending / Completed) */}
+      <div className="flex border-b mb-2">
+        {["Pending", "Done"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t as "Pending" | "Done")}
+            className={`flex-1 text-xs py-1.5 font-semibold border-b-2 transition-all ${tab === t
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-blue-500"
+              }`}
+          >
+            {t === "Pending" ? "🕐 Pending" : "✅ Completed"}
+          </button>
+        ))}
       </div>
 
       {/* Todo List */}
@@ -203,21 +239,20 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
           </div>
         ) : filteredTodos.length === 0 ? (
           <p className="text-xs text-gray-400 italic text-center py-3">
-            No tasks found.
+            No {tab === "Pending" ? "pending" : "completed"} tasks found.
           </p>
         ) : (
           filteredTodos.map((todo) => (
             <div
               key={todo.id}
               onClick={(e) => {
-                // prevent checkbox click from triggering edit
                 if ((e.target as HTMLElement).tagName === "INPUT") return;
                 setEditingId(todo.id);
                 setEditingValue(todo.remarks);
               }}
               className={`p-2 border rounded-md cursor-pointer transition-all ${todo.scheduled_status === "Done"
-                ? "bg-green-100"
-                : "bg-gray-50 hover:bg-gray-100"
+                  ? "bg-green-100"
+                  : "bg-gray-50 hover:bg-gray-100"
                 }`}
             >
               <div className="flex justify-between items-start">
@@ -232,16 +267,13 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
                         className="text-[10px] border rounded-md p-1 w-full resize-none pr-12"
                         value={editingValue}
                         onChange={(e) => setEditingValue(e.target.value)}
-                        onBlur={() =>
-                          handleUpdateRemarks(todo.id, editingValue.trim())
-                        }
+                        onBlur={() => handleUpdateRemarks(todo.id, editingValue.trim())}
                         autoFocus
                       />
-                      {/* ✅ Optional "Taps" button - bottom right */}
                       <button
                         type="button"
                         onClick={() => handleUpdateRemarks(todo.id, editingValue.trim())}
-                        className="absolute bottom-1 right-1 bg-green-600 text-white text-[9px] px-2 py-0.5 rounded-md hover:bg-green-700"
+                        className="absolute bottom-1 right-1 bg-green-600 text-white text-[9px] px-2 py-0.5 rounded hover:bg-green-700"
                       >
                         Save
                       </button>
@@ -249,7 +281,6 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
                   ) : (
                     <p className="text-[10px] text-gray-600">{todo.remarks}</p>
                   )}
-
 
                   <p className="text-[9px] text-gray-500">
                     {new Date(todo.startdate).toLocaleString()} →{" "}
@@ -269,7 +300,7 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
         )}
       </div>
 
-      {/* ✅ Modal Add */}
+      {/* ✅ Modal (Add Task) — unchanged */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">

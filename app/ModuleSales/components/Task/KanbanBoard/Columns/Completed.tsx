@@ -44,6 +44,7 @@ const Completed: React.FC<CompletedProps> = ({
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   // 🔹 Fetch completed activities
@@ -145,17 +146,34 @@ const Completed: React.FC<CompletedProps> = ({
   return (
     <div className="space-y-1">
       {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <span className="text-xs text-gray-600 font-bold">
           Total: <span className="text-orange-500">{filteredData.length}</span>
         </span>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 relative">
           <button
             className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={() => setSearchOpen((p) => !p)}
           >
             Search <IoSearchOutline size={15} />
           </button>
+
+          {searchOpen && (
+            <div className="absolute right-16 top-8 bg-white border rounded-md shadow-md z-10 p-2">
+              <input
+                type="text"
+                placeholder="Search clients ..."
+                className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowFilter(false); // auto-hide after selecting
+                }}
+              />
+            </div>
+          )}
+
           <button
             className="flex items-center gap-1 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs"
             onClick={fetchCompleted}
@@ -165,28 +183,16 @@ const Completed: React.FC<CompletedProps> = ({
         </div>
       </div>
 
-      {searchOpen && (
-        <div className="mt-2">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="border border-gray-300 rounded px-2 py-2 text-xs w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      )}
-
       {/* List */}
       {loading
         ? Array.from({ length: 5 }).map((_, i) => <ActivitySkeleton key={i} />)
         : filteredData.length === 0
-        ? (
-          <div className="text-center text-gray-400 italic text-xs">
-            No completed tasks yet
-          </div>
-        )
-        : filteredData.slice(0, visibleCount).map((item) => {
+          ? (
+            <div className="text-center text-gray-400 italic text-xs">
+              No completed tasks yet
+            </div>
+          )
+          : filteredData.slice(0, visibleCount).map((item) => {
             const isExpanded = expandedItems.has(item.id);
             const agent = agentData[item.referenceid];
 
