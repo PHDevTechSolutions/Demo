@@ -81,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isDarkMode }) => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex-col shadow-lg
+      <div className={`hidden md:flex fixed inset-y-0 left-0 z-50 h-screen transition-all duration-300 flex-col
         ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
         ${isOpen ? "w-64" : "w-16"}`}>
         <div className="flex items-center justify-center p-4">

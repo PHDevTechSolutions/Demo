@@ -43,7 +43,8 @@ const ALLOWED_ACTIVITIES = [
   "Sample Request",
   "Site Visit",
   "Technical Concern",
-  "Viber Replies"
+  "Viber Replies",
+  "Check/Read emails"
 ];
 
 const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: number }> = ({

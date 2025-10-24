@@ -37,27 +37,12 @@ interface SubmenuProps {
 }
 
 const activityOptions = [
-  "Customer Order",
-  "Customer Inquiry Sales",
-  "Documentation",
   "Follow Up",
   "FB-Marketplace",
-  "After Sales-Refund",
-  "After Sales-Repair/Replacement",
   "Quotation Preparation",
   "Sales Order Preparation",
-  "Delivery Concern",
-  "Accounting Concern",
-  "Admin- Supplier Accreditation",
-  "Admin- Credit Terms Application",
   "Inbound Call",
-  "Outbound calls",
-  "Site Visit",
-  "Check/Read emails",
-  "Bidding Preperation",
-  "Viber Replies",
-  "Technical Concern",
-  "Sample Request"
+  "Outbound calls"
 ].map(activity => ({ value: activity, label: activity }));
 
 const Submenu: React.FC<SubmenuProps> = ({
@@ -209,14 +194,14 @@ const Submenu: React.FC<SubmenuProps> = ({
 
       <div className="flex flex-wrap -mx-4 mt-4">
         {activitystatus === "Delivered" && (
-          <DeliveryFields {...{ 
-            paymentterm, setpaymentterm, 
-            activitystatus, setactivitystatus, 
-            actualsales, setactualsales, 
-            emailaddress, setemailaddress, 
+          <DeliveryFields {...{
+            paymentterm, setpaymentterm,
+            activitystatus, setactivitystatus,
+            actualsales, setactualsales,
+            emailaddress, setemailaddress,
             deliverydate, setdeliverydate,
             drnumber, setdrnumber
-           }} />
+          }} />
         )}
       </div>
     </div>
