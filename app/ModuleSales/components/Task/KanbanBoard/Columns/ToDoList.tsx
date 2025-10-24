@@ -31,10 +31,19 @@ interface TodoItem {
 }
 
 const ALLOWED_ACTIVITIES = [
+  "Admin- Supplier Accreditation",
+  "Admin- Credit Terms Application",
   "Accounting Concern",
-  "Client Meeting",
-  "Follow-up Call",
-  "Document Preparation",
+  "After Sales-Refund",
+  "After Sales-Repair/Replacement",
+  "Bidding Preperation",
+  "Customer Order",
+  "Customer Inquiry Sales",
+  "Delivery Concern",
+  "Sample Request",
+  "Site Visit",
+  "Technical Concern",
+  "Viber Replies"
 ];
 
 const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: number }> = ({
@@ -220,8 +229,8 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
             key={t}
             onClick={() => setTab(t as "Pending" | "Done")}
             className={`flex-1 text-xs py-1.5 font-semibold border-b-2 transition-all ${tab === t
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-blue-500"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-blue-500"
               }`}
           >
             {t === "Pending" ? "🕐 Pending" : "✅ Completed"}
@@ -251,8 +260,8 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
                 setEditingValue(todo.remarks);
               }}
               className={`p-2 border rounded-md cursor-pointer transition-all ${todo.scheduled_status === "Done"
-                  ? "bg-green-100"
-                  : "bg-gray-50 hover:bg-gray-100"
+                ? "bg-green-100"
+                : "bg-gray-50 hover:bg-gray-100"
                 }`}
             >
               <div className="flex justify-between items-start">

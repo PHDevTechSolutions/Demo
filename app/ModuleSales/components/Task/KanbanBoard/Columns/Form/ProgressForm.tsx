@@ -217,25 +217,12 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             >
 
               <option value="">Select Activity</option>
-              <option value="Admin- Supplier Accreditation">Admin- Supplier Accreditation</option>
-              <option value="Admin- Credit Terms Application">Admin- Credit Terms Application</option>
-              <option value="Accounting Concern">Accounting Concern</option>
-              <option value="After Sales-Refund">After Sales-Refund</option>
-              <option value="After Sales-Repair/Replacement">After Sales-Repair/Replacement</option>
-              <option value="Bidding Preperation">Bidding Preperation</option>
-              <option value="Customer Order">Customer Order</option>
-              <option value="Customer Inquiry Sales">Customer Inquiry Sales</option>
-              <option value="Delivery Concern">Delivery Concern</option>
               <option value="FB-Marketplace">FB-Marketplace</option>
               <option value="Follow Up">Follow-Up</option>
               <option value="Inbound Call">Inbound Calls</option>
               <option value="Outbound calls">Outbound Calls</option>
               <option value="Quotation Preparation">Quotation Preparation</option>
               <option value="Sales Order Preparation">Sales Order Preparation</option>
-              <option value="Sample Request">Sample Request</option>
-              <option value="Site Visit">Site Visit</option>
-              <option value="Technical Concern">Technical Concern</option>
-              <option value="Viber Replies">Viber Replies</option>
             </select>
           </div>
 
