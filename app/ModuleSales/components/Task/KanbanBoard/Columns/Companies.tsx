@@ -31,186 +31,89 @@ const Companies: React.FC<CompaniesProps> = ({
   const [loading, setLoading] = useState(true);
   const [tapCount, setTapCount] = useState(0);
   const [replacing, setReplacing] = useState(false);
-  const [replacingIdx, setReplacingIdx] = useState<number | null>(null);
+  const [currentCluster, setCurrentCluster] = useState("Top 50");
 
-  const limit = 35;
-  const isNearLimit = tapCount >= limit * 0.8;
-  const isFull = tapCount >= limit;
+  const clusterOrder = ["Top 50", "Next 30", "Balance 20", "TSA Client", "CSR Client"];
 
-  // 🔧 Normalize any date format → YYYY-MM-DD local
   const normalizeDate = (value?: string): string | null => {
     if (!value) return null;
-    try {
-      const d = new Date(value);
-      if (isNaN(d.getTime())) return null;
-      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-      return local.toISOString().split("T")[0];
-    } catch {
-      return null;
-    }
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return null;
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().split("T")[0];
   };
 
-  // 🕓 Handle daily reset of tap counter
+  // 🕓 Daily reset (back to Top 50)
   useEffect(() => {
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem("tapDate");
-    const savedCount = localStorage.getItem("tapCount");
+    const savedCluster = localStorage.getItem("clusterName");
 
-    if (savedDate === today && savedCount) {
-      setTapCount(parseInt(savedCount, 10));
+    if (savedDate === today && savedCluster) {
+      setCurrentCluster(savedCluster);
+      setTapCount(parseInt(localStorage.getItem("tapCount") || "0", 10));
     } else {
       localStorage.setItem("tapDate", today);
       localStorage.setItem("tapCount", "0");
+      localStorage.setItem("clusterName", "Top 50");
+      setCurrentCluster("Top 50");
       setTapCount(0);
     }
   }, []);
 
-  // 🔀 Shuffle helper
-  const shuffleArray = (array: Company[]): Company[] => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
+  const fetchCompanies = async () => {
+    if (!userDetails?.ReferenceID) return;
 
-  const fetchCompanies = async (forceReplace = false) => {
-    if (!userDetails?.ReferenceID) {
-      setLoading(false);
-      setReplacing(false);
-      return;
-    }
-
-    if (forceReplace) setReplacing(true);
-    else setLoading(true);
-
+    setLoading(true);
     try {
       const res = await fetch(
         `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}&_t=${Date.now()}`
       );
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const response = await res.json();
+      if (!response.success || !Array.isArray(response.data)) throw new Error("Invalid data");
 
-      if (response.success && Array.isArray(response.data)) {
-        const todayStr = new Date().toISOString().split("T")[0];
+      const allCompanies: Company[] = response.data;
+      const todayStr = new Date().toISOString().split("T")[0];
 
-        // Helper for consistent date format
-        const normalizeDate = (dateStr?: string): string | null => {
-          if (!dateStr) return null;
-          const d = new Date(dateStr);
-          if (isNaN(d.getTime())) return null;
-          return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-            .toISOString()
-            .split("T")[0];
-        };
+      // ✅ Filter only current cluster
+      const currentList = allCompanies.filter((c) => c.typeclient === currentCluster);
 
-        // ✅ Filter all companies with date <= today
-        const validCompanies: Company[] = response.data.filter((comp: Company) => {
-          const compDateStr = normalizeDate(comp.next_available_date);
-          if (!compDateStr) return true; // still count if no date
-          return compDateStr <= todayStr;
-        });
+      // ✅ Prioritize those with next_available_date = today
+      const todayCompanies = currentList.filter(
+        (c) => normalizeDate(c.next_available_date) === todayStr
+      );
 
-        // ✅ Group companies by next_available_date
-        const todayCompanies = validCompanies.filter((comp) => {
-          const compDateStr = normalizeDate(comp.next_available_date);
-          return compDateStr === todayStr;
-        });
+      // ✅ Merge both (today first, then the rest)
+      const others = currentList.filter(
+        (c) => normalizeDate(c.next_available_date) !== todayStr
+      );
 
-        const pastCompanies = validCompanies.filter((comp) => {
-          const compDateStr = normalizeDate(comp.next_available_date);
-          return !compDateStr || compDateStr < todayStr;
-        });
+      let finalList = [...todayCompanies, ...others];
 
-        // ⚙️ NEW: detect if all companies have next_available_date
-        const allHaveDate = response.data.every(
-          (c: Company) => !!normalizeDate(c.next_available_date)
-        );
+      // 🧹 Remove duplicates
+      const seen = new Set<string>();
+      finalList = finalList.filter((c) => {
+        const key = c.id ? String(c.id) : c.companyname.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
-        // ✅ If all have next_available_date → show only today's companies
-        if (allHaveDate) {
-          console.log("📅 All companies have next_available_date — showing today only");
-          setCompanies(todayCompanies);
-          setLoading(false);
-          setReplacing(false);
-          return;
-        }
-
-        // ✅ Continue normal logic for mixed (some null)
-        const grouped = {
-          top50: pastCompanies.filter((c) => c.typeclient === "Top 50"),
-          next30: pastCompanies.filter((c) => c.typeclient === "Next 30"),
-          balance20: pastCompanies.filter((c) => c.typeclient === "Balance 20"),
-          csr: pastCompanies.filter((c) => c.typeclient === "CSR Client"),
-          tsa: pastCompanies.filter((c) => c.typeclient === "TSA Client"),
-        };
-
-        // Shuffle each group
-        (Object.keys(grouped) as Array<keyof typeof grouped>).forEach((k) => {
-          grouped[k] = shuffleArray(grouped[k]);
-        });
-
-        const targetCounts = { top50: 20, next30: 10, balance20: 5 };
-
-        let finalPast: Company[] = [
-          ...grouped.top50.slice(0, targetCounts.top50),
-          ...grouped.next30.slice(0, targetCounts.next30),
-          ...grouped.balance20.slice(0, targetCounts.balance20),
-        ];
-
-        // Fill remaining up to 35
-        const fillPriority: Company[][] = [
-          grouped.balance20.slice(targetCounts.balance20),
-          grouped.next30.slice(targetCounts.next30),
-          grouped.top50.slice(targetCounts.top50),
-          grouped.csr,
-          grouped.tsa,
-        ];
-
-        for (const group of fillPriority) {
-          if (finalPast.length >= 35) break;
-          const needed = 35 - finalPast.length;
-          finalPast = [...finalPast, ...group.slice(0, needed)];
-        }
-
-        let finalList = [...todayCompanies, ...finalPast];
-
-        // 🧹 Remove duplicates
-        const seen = new Set<string>();
-        finalList = finalList.filter((c) => {
-          const key = c.id ? String(c.id) : c.companyname.trim().toLowerCase();
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-        console.log("📅 Today:", todayStr);
-        console.log("✅ Today companies:", todayCompanies.map((c) => c.companyname));
-        console.log("📊 Final total (unique):", finalList.length);
-        console.log("📊 Sample output:", finalList.slice(0, 5).map((c) => c.companyname));
-
-        setCompanies(finalList);
-      } else {
-        console.warn("⚠️ API response not successful:", response);
-        setCompanies([]);
-      }
+      setCompanies(finalList);
     } catch (err) {
-      console.error("❌ Failed to fetch companies:", err);
+      console.error("❌ Fetch error:", err);
       setCompanies([]);
     } finally {
       setLoading(false);
-      setReplacing(false);
     }
   };
 
-  // 🧩 Initial fetch
   useEffect(() => {
     fetchCompanies();
-  }, [userDetails?.ReferenceID]);
+  }, [userDetails?.ReferenceID, currentCluster]);
 
-  // ➕ Add company
   const handleAddCompany = async (comp: Company) => {
     handleSubmit(comp, false);
 
@@ -218,135 +121,65 @@ const Companies: React.FC<CompaniesProps> = ({
       await fetch(`/api/ModuleSales/Companies/CompanyAccounts/UpdateAvailability`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: comp.id,
-          typeclient: comp.typeclient,
-        }),
+        body: JSON.stringify({ id: comp.id, typeclient: comp.typeclient }),
       });
     } catch (err) {
       console.error("Failed to update company availability:", err);
     }
 
+    // Remove clicked company
     setCompanies((prev) => prev.filter((c) => c.id !== comp.id));
 
     const newCount = tapCount + 1;
     setTapCount(newCount);
     localStorage.setItem("tapCount", newCount.toString());
 
-    if (userDetails?.ReferenceID) {
-      try {
-        const res = await fetch(
-          `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${userDetails.ReferenceID}&_t=${Date.now()}`
-        );
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const response = await res.json();
-
-        if (response.success && Array.isArray(response.data)) {
-          const existingIds = new Set(companies.map((c) => c.id).concat(comp.id));
-          const available = response.data.filter((c: Company) => !existingIds.has(c.id));
-          if (available.length > 0) {
-            const needed = 35 - (companies.length - 1);
-            const shuffled = shuffleArray(available).slice(0, needed);
-            setCompanies((prev) => [...prev, ...shuffled]);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to refresh companies after add:", err);
+    // ✅ Check if all companies for current cluster are done
+    if (companies.length - 1 === 0) {
+      const currentIdx = clusterOrder.indexOf(currentCluster);
+      if (currentIdx < clusterOrder.length - 1) {
+        const nextCluster = clusterOrder[currentIdx + 1];
+        setCurrentCluster(nextCluster);
+        localStorage.setItem("clusterName", nextCluster);
+      } else {
+        console.log("🏁 All clusters completed — waiting for next available dates to recycle.");
       }
     }
   };
 
   const handleRefresh = async () => {
-    if (replacing || !userDetails?.ReferenceID) return;
+    if (replacing) return;
     setReplacing(true);
-    await fetchCompanies(true);
-    setTimeout(() => setReplacing(false), 500);
+    await fetchCompanies();
+    setTimeout(() => setReplacing(false), 300);
   };
 
   return (
     <div className="space-y-1 overflow-y-auto">
       {/* HEADER */}
       <div className="mb-2">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
-          {/* OB COUNTER */}
-          <div className="flex flex-col w-full sm:w-auto">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-black flex items-center gap-1">
-                📞 OB Calls:
-              </span>
-              <span
-                className={`text-xs font-bold ${isFull
-                  ? "text-red-500"
-                  : isNearLimit
-                    ? "text-orange-500"
-                    : "text-green-600"
-                  }`}
-              >
-                {tapCount}{" "}
-                <span className="text-[10px] text-gray-500 font-normal">
-                  / {limit} Minimum
-                </span>
-              </span>
-            </div>
-            {/* PROGRESS BAR */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-1 overflow-hidden">
-              <div
-                className={`h-2 rounded-full transition-all duration-500 ease-in-out ${isFull
-                  ? "bg-red-500"
-                  : isNearLimit
-                    ? "bg-orange-400"
-                    : "bg-green-500"
-                  }`}
-                style={{ width: `${Math.min((tapCount / limit) * 100, 100)}%` }}
-              />
-            </div>
+        <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+          <div className="text-xs font-semibold text-black">
+            📞 OB Calls: <span className="text-green-600 font-bold">{tapCount}</span>
           </div>
-
-          {/* REFRESH BUTTON */}
+          <div className="text-[10px] font-semibold italic text-gray-600">
+            Active Cluster: <span className="text-blue-600">{currentCluster}</span>
+          </div>
           <button
             onClick={handleRefresh}
-            disabled={replacing || !userDetails?.ReferenceID}
-            className={`text-xs px-3 py-1 rounded-md font-medium shadow-sm flex items-center gap-1 ${replacing || !userDetails?.ReferenceID
-              ? "bg-gray-400 text-white cursor-not-allowed animate-pulse"
-              : "bg-green-500 text-white hover:bg-green-600"
-              }`}
+            disabled={replacing}
+            className={`text-xs px-3 py-1 rounded-md ${
+              replacing ? "bg-gray-400 animate-pulse" : "bg-green-500 hover:bg-green-600"
+            } text-white font-medium shadow-sm`}
           >
-            {replacing ? (
-              <>
-                <svg
-                  className="animate-spin h-3 w-3 text-white"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                  ></path>
-                </svg>
-                <span>Refreshing...</span>
-              </>
-            ) : (
-              "Refresh"
-            )}
+            {replacing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
-
-        <h3 className="flex items-center text-[10px] italic font-bold text-gray-600 border-t border-gray-200 pt-2">
-          <span className="mr-1">🏢</span> Showing 35 Random Companies
-        </h3>
       </div>
 
       {/* LIST */}
       {loading ? (
-        <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+        <div className="animate-pulse p-4 border rounded bg-gray-50 shadow-sm">
           <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
           <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
           <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
@@ -355,19 +188,11 @@ const Companies: React.FC<CompaniesProps> = ({
         companies.map((comp, idx) => {
           const key = `comp-${idx}`;
           const isExpanded = expandedIdx === key;
-          const isReplacingItem = replacingIdx === idx;
-          if (isReplacingItem) return null;
-
-          // 💡 Highlight "today" companies in green border
           const isToday =
-            normalizeDate(comp.next_available_date) ===
-            new Date().toISOString().split("T")[0];
+            normalizeDate(comp.next_available_date) === new Date().toISOString().split("T")[0];
 
           return (
-            <div
-              key={key}
-              className={isToday ? "border-l-4 border-green-500 rounded-xl" : ""}
-            >
+            <div key={key} className={isToday ? "border-l-4 border-green-500 rounded-xl" : ""}>
               <CompaniesCard
                 comp={comp}
                 isExpanded={isExpanded}
@@ -380,7 +205,7 @@ const Companies: React.FC<CompaniesProps> = ({
       ) : (
         <div className="text-center p-4">
           <p className="text-xs text-gray-400 mb-2">
-            🚫 No companies available.
+            🚫 No companies available for this cluster.
           </p>
           <button
             onClick={() => fetchCompanies()}

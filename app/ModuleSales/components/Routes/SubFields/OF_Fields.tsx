@@ -7,6 +7,8 @@ interface OutboundFieldsProps {
     setcallstatus: (val: string) => void;
     typecall: string;
     settypecall: (val: string) => void;
+    site_visit_date?: string;
+    setSiteVisitDate?: (val: string) => void;
 }
 
 const OutboundFields: React.FC<OutboundFieldsProps> = ({
@@ -16,8 +18,9 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
     setcallstatus,
     typecall,
     settypecall,
+    site_visit_date,
+    setSiteVisitDate,
 }) => {
-
     const [showInput, setShowInput] = useState(false);
 
     const handleCallbackChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -68,6 +71,7 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
 
     return (
         <>
+            {/* CALLBACK FIELD */}
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
                 <label className="block text-xs font-bold mb-2">Callbacks</label>
                 <select
@@ -90,8 +94,24 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                 )}
             </div>
 
+            {/* SITE VISIT DATE FIELD */}
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                <label className="block text-xs font-bold mb-2">Call Status <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-bold mb-2">
+                    Date of Site Visit (Optional)
+                </label>
+                <input
+                    type="datetime-local"
+                    value={site_visit_date ?? ""}
+                    onChange={(e) => setSiteVisitDate?.(e.target.value)}
+                    className="w-full px-3 py-2 border-b text-xs capitalize"
+                />
+            </div>
+
+            {/* CALL STATUS FIELD */}
+            <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
+                <label className="block text-xs font-bold mb-2">
+                    Call Status <span className="text-red-500">*</span>
+                </label>
                 <select
                     value={callstatus}
                     onChange={(e) => setcallstatus(e.target.value)}
@@ -103,8 +123,11 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                 </select>
             </div>
 
+            {/* TYPE OF CALL FIELD */}
             <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                <label className="block text-xs font-bold mb-2">Type of Call <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-bold mb-2">
+                    Type of Call <span className="text-red-500">*</span>
+                </label>
                 <select
                     value={typecall}
                     onChange={(e) => settypecall(e.target.value)}
@@ -114,22 +137,30 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                     {callstatus === "Successful" ? (
                         <>
                             <option value="No Requirements">No Requirements</option>
-                            <option value="Waiting for Future Projects">Waiting for Future Projects</option>
+                            <option value="Waiting for Future Projects">
+                                Waiting for Future Projects
+                            </option>
                             <option value="With RFQ">With RFQ</option>
                         </>
                     ) : callstatus === "Unsuccessful" ? (
                         <>
                             <option value="Ringing Only">Ringing Only</option>
                             <option value="Cannot Be Reached">Cannot Be Reached</option>
-                            <option value="Not Connected with the Company">Not Connected with the Company</option>
+                            <option value="Not Connected with the Company">
+                                Not Connected with the Company
+                            </option>
                         </>
                     ) : (
                         <>
                             <option value="Ringing Only">Ringing Only</option>
                             <option value="No Requirements">No Requirements</option>
                             <option value="Cannot Be Reached">Cannot Be Reached</option>
-                            <option value="Not Connected with the Company">Not Connected with the Company</option>
-                            <option value="Waiting for Future Projects">Waiting for Future Projects</option>
+                            <option value="Not Connected with the Company">
+                                Not Connected with the Company
+                            </option>
+                            <option value="Waiting for Future Projects">
+                                Waiting for Future Projects
+                            </option>
                         </>
                     )}
                 </select>

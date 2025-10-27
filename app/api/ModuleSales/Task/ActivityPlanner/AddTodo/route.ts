@@ -22,11 +22,14 @@ export async function POST(req: NextRequest) {
 
     await Xchire_sql(
       `
-      INSERT INTO progress (referenceid, typeactivity, remarks, startdate, enddate, scheduled_status, date_created)
-      VALUES ($1, $2, $3, $4, $5, 'Pending', NOW());
-      `,
-      [referenceid, typeactivity, remarks || "", startdate, enddate]
+  INSERT INTO progress 
+    (referenceid, tsm, manager, typeactivity, remarks, startdate, enddate, scheduled_status, date_created)
+  VALUES 
+    ($1, $2, $3, $4, $5, $6, $7, 'Pending', NOW());
+  `,
+      [referenceid, body.tsm || "", body.manager || "", typeactivity, remarks || "", startdate, enddate]
     );
+
 
     return NextResponse.json({
       success: true,

@@ -14,7 +14,7 @@ async function create(data: any) {
       referenceid, manager, tsm, companyname, contactperson,
       contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
       projectname, projectcategory, projecttype, source, typeactivity,
-      callback, callstatus, typecall, remarks, quotationnumber,
+      callback, callstatus, typecall, site_visit_date, remarks, quotationnumber,
       quotationamount, sonumber, soamount, startdate, enddate,
       activitystatus, activitynumber, targetquota, status, companygroup,
     } = data;
@@ -82,7 +82,7 @@ async function create(data: any) {
         referenceid, manager, tsm, companyname, contactperson,
         contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
         projectname, projectcategory, projecttype, source,
-        typeactivity, callback, callstatus, typecall,
+        typeactivity, callback, callstatus, typecall, site_visit_date,
         remarks, quotationnumber, quotationamount, sonumber, soamount,
         startdate, enddate, activitystatus, activitynumber, targetquota,
         date_created, date_updated
@@ -91,7 +91,7 @@ async function create(data: any) {
         ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
         ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
         ${projectname}, ${projectcategory}, ${projecttype}, ${source},
-        ${typeactivity}, ${callback || null}, ${callstatus || null}, ${typecall || null},
+        ${typeactivity}, ${callback || null}, ${callstatus || null}, ${typecall || null}, ${site_visit_date || null},
         ${remarks || null}, ${quotationnumber || null}, ${quotationamount || null},
         ${sonumber || null}, ${soamount || null}, ${startdate || null}, ${enddate || null},
         ${activitystatus || "On Progress"}, ${newActivityNumber || null}, ${targetquota || null},

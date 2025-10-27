@@ -73,6 +73,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   const [remarks, setremarks] = useState(editUser ? editUser.remarks : "");
   const [callback, setcallback] = useState(editUser ? editUser.callback : "");
   const [typecall, settypecall] = useState(editUser ? editUser.typecall : "");
+  const [site_visit_date, setSiteVisitDate] = useState(editUser ? editUser.site_visit_date : "");
   const [quotationnumber, setquotationnumber] = useState(editUser ? editUser.quotationnumber : "");
   const [quotationamount, setquotationamount] = useState(editUser ? editUser.quotationamount : "");
   const [sonumber, setsonumber] = useState(editUser ? editUser.sonumber : "");
@@ -253,7 +254,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       typeclient, address, deliveryaddress, area,
       projectname, projectcategory, projecttype, source, typeactivity,
       startdate, enddate, activitynumber, activitystatus, status, remarks,
-      callback, typecall, quotationnumber, quotationamount, sonumber, soamount,
+      callback, typecall, site_visit_date, quotationnumber, quotationamount, sonumber, soamount,
       actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent,
       paymentterm, deliverydate, drnumber,
     };
@@ -332,7 +333,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       });
     }
   };
-
 
   const handleCancelConfirm = () => setShowConfirmModal(false); // 🟢 ADD
 
@@ -502,6 +502,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
           remarks={remarks} setremarks={setremarks}
           callback={callback} setcallback={setcallback}
           typecall={typecall} settypecall={settypecall}
+          site_visit_date={site_visit_date} setSiteVisitDate={setSiteVisitDate}
           quotationnumber={quotationnumber} setquotationnumber={setquotationnumber}
           quotationamount={quotationamount} setquotationamount={setquotationamount}
           sonumber={sonumber} setsonumber={setsonumber}

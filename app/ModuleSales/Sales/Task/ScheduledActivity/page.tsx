@@ -214,29 +214,39 @@ const ListofUser: React.FC = () => {
               <Tools activeTab={activeTab} setActiveTab={setActiveTab} userDetails={userDetails} />
 
               <div className="text-gray-900 w-full">
-                <button
-                  className="p-2 text-xs border rounded shadow-xs bg-gray-100 flex items-center mb-4 gap-1"
-                  onClick={() => {
-                    const url = userId
-                      ? `/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(userId)}`
-                      : "/ModuleSales/Sales/Dashboard";
-                    router.push(url);
-                  }}
-                >
-                  <BsArrowLeft /> View Dashboard
-                </button>
+                {/* 🔹 Breadcrumb Navigation */}
+                <nav className="flex items-center text-xs mb-4 bg-gray-50 px-3 py-2 rounded border border-gray-200 shadow-sm">
+                  <button
+                    onClick={() => {
+                      const url = userId
+                        ? `/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(userId)}`
+                        : "/ModuleSales/Sales/Dashboard";
+                      router.push(url);
+                    }}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Dashboard
+                  </button>
 
-                <button
-                  className="p-2 text-xs border rounded shadow-xs bg-gray-100 flex items-center mb-4 gap-1"
-                  onClick={() => {
-                    const url = userId
-                      ? `/ModuleSales/Sales/Companies/CompanyAccounts?id=${encodeURIComponent(userId)}`
-                      : "/ModuleSales/Sales/Companies/CompanyAccounts";
-                    router.push(url);
-                  }}
-                >
-                  <BsArrowLeft /> View Clients
-                </button>
+                  <span className="mx-2 text-gray-400">›</span>
+
+                  <button
+                    onClick={() => {
+                      const url = userId
+                        ? `/ModuleSales/Sales/Companies/CompanyAccounts?id=${encodeURIComponent(userId)}`
+                        : "/ModuleSales/Sales/Companies/CompanyAccounts";
+                      router.push(url);
+                    }}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Clients
+                  </button>
+
+                  <span className="mx-2 text-gray-400">›</span>
+
+                  <span className="text-gray-700 font-semibold">Scheduled Activity</span>
+                </nav>
+
 
                 {activeTab === "scheduled" && (
                   <div className="p-4 bg-white shadow-md rounded-lg">

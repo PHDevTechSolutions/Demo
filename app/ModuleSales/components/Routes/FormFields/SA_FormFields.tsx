@@ -46,6 +46,7 @@ interface FormFieldsProps {
     remarks: string; setremarks: (value: string) => void;
     callback: string; setcallback: (value: string) => void;
     typecall: string; settypecall: (value: string) => void;
+    site_visit_date?: string; setSiteVisitDate?: (value: string) => void;
     quotationnumber: string; setquotationnumber: (value: string) => void;
     quotationamount: string; setquotationamount: (value: string) => void;
     sonumber: string; setsonumber: (value: string) => void;
@@ -94,6 +95,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
     remarks, setremarks,
     callback, setcallback,
     typecall, settypecall,
+    site_visit_date, setSiteVisitDate,
     quotationnumber, setquotationnumber,
     quotationamount, setquotationamount,
     sonumber, setsonumber,
@@ -190,6 +192,7 @@ const UserFormFields: React.FC<FormFieldsProps> = ({
                 deliverydate={deliverydate} setdeliverydate={setdeliverydate}
                 callback={callback} setcallback={setcallback}
                 typecall={typecall} settypecall={settypecall}
+                site_visit_date={site_visit_date} setSiteVisitDate={setSiteVisitDate}
                 quotationnumber={quotationnumber} setquotationnumber={setquotationnumber}
                 quotationamount={quotationamount} setquotationamount={setquotationamount}
                 sonumber={sonumber} setsonumber={setsonumber}

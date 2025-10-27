@@ -15,6 +15,7 @@ interface SubmenuProps {
   emailaddress: string; setemailaddress: (value: string) => void;
   callback: string; setcallback: (value: string) => void;
   typecall: string; settypecall: (value: string) => void;
+  site_visit_date?: string; setSiteVisitDate?: (value: string) => void;
   quotationnumber: string; setquotationnumber: (value: string) => void;
   quotationamount: string; setquotationamount: (value: string) => void;
   sonumber: string; setsonumber: (value: string) => void;
@@ -50,6 +51,7 @@ const Submenu: React.FC<SubmenuProps> = ({
   emailaddress, setemailaddress,
   callback, setcallback,
   typecall, settypecall,
+  site_visit_date, setSiteVisitDate,
   quotationnumber, setquotationnumber,
   quotationamount, setquotationamount,
   sonumber, setsonumber,
@@ -154,7 +156,7 @@ const Submenu: React.FC<SubmenuProps> = ({
         </div>
 
         {typeactivity === "Outbound calls" && (
-          <OutboundFields {...{ callback, setcallback, callstatus, setcallstatus, typecall, settypecall }} />
+          <OutboundFields {...{ callback, setcallback, callstatus, setcallstatus, typecall, settypecall, site_visit_date, setSiteVisitDate }} />
         )}
 
         {typeactivity === "Inbound Call" && (
