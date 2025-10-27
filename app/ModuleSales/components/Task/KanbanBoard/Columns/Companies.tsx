@@ -11,7 +11,7 @@ interface Company {
   emailaddress: string;
   typeclient: string;
   address?: string;
-  next_available_date?: string;
+  next_available_date?: string | null;
 }
 
 interface CompaniesProps {
@@ -30,12 +30,11 @@ const Companies: React.FC<CompaniesProps> = ({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [tapCount, setTapCount] = useState(0);
-  const [replacing, setReplacing] = useState(false);
   const [currentCluster, setCurrentCluster] = useState("Top 50");
 
   const clusterOrder = ["Top 50", "Next 30", "Balance 20", "TSA Client", "CSR Client"];
 
-  const normalizeDate = (value?: string): string | null => {
+  const normalizeDate = (value?: string | null): string | null => {
     if (!value) return null;
     const d = new Date(value);
     if (isNaN(d.getTime())) return null;
@@ -43,7 +42,7 @@ const Companies: React.FC<CompaniesProps> = ({
     return local.toISOString().split("T")[0];
   };
 
-  // 🕓 Daily reset (back to Top 50)
+  // 🕓 Daily restore progress from localStorage
   useEffect(() => {
     const today = new Date().toDateString();
     const savedDate = localStorage.getItem("tapDate");
@@ -77,31 +76,39 @@ const Companies: React.FC<CompaniesProps> = ({
       const allCompanies: Company[] = response.data;
       const todayStr = new Date().toISOString().split("T")[0];
 
-      // ✅ Filter only current cluster
-      const currentList = allCompanies.filter((c) => c.typeclient === currentCluster);
+      let selectedCluster = "Top 50";
+      let finalList: Company[] = [];
 
-      // ✅ Prioritize those with next_available_date = today
-      const todayCompanies = currentList.filter(
-        (c) => normalizeDate(c.next_available_date) === todayStr
-      );
+      // 🔁 Step 1: Loop through clusters in order
+      for (const cluster of clusterOrder) {
+        const list = allCompanies.filter((c) => c.typeclient === cluster);
 
-      // ✅ Merge both (today first, then the rest)
-      const others = currentList.filter(
-        (c) => normalizeDate(c.next_available_date) !== todayStr
-      );
+        // ✅ Filter companies with next_available_date = today or null
+        const availableTodayOrEmpty = list.filter((c) => {
+          const date = normalizeDate(c.next_available_date);
+          return date === todayStr || date === null;
+        });
 
-      let finalList = [...todayCompanies, ...others];
+        if (availableTodayOrEmpty.length > 0) {
+          selectedCluster = cluster;
+          finalList = availableTodayOrEmpty;
+          break;
+        }
+      }
 
-      // 🧹 Remove duplicates
-      const seen = new Set<string>();
-      finalList = finalList.filter((c) => {
-        const key = c.id ? String(c.id) : c.companyname.trim().toLowerCase();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      // 🔁 Step 2: If all clusters have no (today/null), show those with next_available_date = today across all clusters
+      if (finalList.length === 0) {
+        const todayCompanies = allCompanies.filter(
+          (c) => normalizeDate(c.next_available_date) === todayStr
+        );
+        finalList = todayCompanies;
+        selectedCluster = "Recycled (Next Available Dates)";
+      }
 
+      // ✅ Step 3: Save state
       setCompanies(finalList);
+      setCurrentCluster(selectedCluster);
+      localStorage.setItem("clusterName", selectedCluster);
     } catch (err) {
       console.error("❌ Fetch error:", err);
       setCompanies([]);
@@ -127,14 +134,14 @@ const Companies: React.FC<CompaniesProps> = ({
       console.error("Failed to update company availability:", err);
     }
 
-    // Remove clicked company
+    // Remove clicked company from the list
     setCompanies((prev) => prev.filter((c) => c.id !== comp.id));
 
     const newCount = tapCount + 1;
     setTapCount(newCount);
     localStorage.setItem("tapCount", newCount.toString());
 
-    // ✅ Check if all companies for current cluster are done
+    // ✅ Move to next cluster if done
     if (companies.length - 1 === 0) {
       const currentIdx = clusterOrder.indexOf(currentCluster);
       if (currentIdx < clusterOrder.length - 1) {
@@ -145,13 +152,6 @@ const Companies: React.FC<CompaniesProps> = ({
         console.log("🏁 All clusters completed — waiting for next available dates to recycle.");
       }
     }
-  };
-
-  const handleRefresh = async () => {
-    if (replacing) return;
-    setReplacing(true);
-    await fetchCompanies();
-    setTimeout(() => setReplacing(false), 300);
   };
 
   return (
@@ -165,15 +165,6 @@ const Companies: React.FC<CompaniesProps> = ({
           <div className="text-[10px] font-semibold italic text-gray-600">
             Active Cluster: <span className="text-blue-600">{currentCluster}</span>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={replacing}
-            className={`text-xs px-3 py-1 rounded-md ${
-              replacing ? "bg-gray-400 animate-pulse" : "bg-green-500 hover:bg-green-600"
-            } text-white font-medium shadow-sm`}
-          >
-            {replacing ? "Refreshing..." : "Refresh"}
-          </button>
         </div>
       </div>
 
@@ -189,10 +180,14 @@ const Companies: React.FC<CompaniesProps> = ({
           const key = `comp-${idx}`;
           const isExpanded = expandedIdx === key;
           const isToday =
-            normalizeDate(comp.next_available_date) === new Date().toISOString().split("T")[0];
+            normalizeDate(comp.next_available_date) ===
+            new Date().toISOString().split("T")[0];
 
           return (
-            <div key={key} className={isToday ? "border-l-4 border-green-500 rounded-xl" : ""}>
+            <div
+              key={key}
+              className={isToday ? "border-l-4 border-green-500 rounded-xl" : ""}
+            >
               <CompaniesCard
                 comp={comp}
                 isExpanded={isExpanded}
@@ -205,14 +200,11 @@ const Companies: React.FC<CompaniesProps> = ({
       ) : (
         <div className="text-center p-4">
           <p className="text-xs text-gray-400 mb-2">
-            🚫 No companies available for this cluster.
+            🚫 No companies available for this cluster today.
           </p>
-          <button
-            onClick={() => fetchCompanies()}
-            className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-          >
-            Try Again
-          </button>
+          <p className="text-[10px] text-gray-500 italic">
+            (Only those with next available date = today or empty will appear.)
+          </p>
         </div>
       )}
     </div>

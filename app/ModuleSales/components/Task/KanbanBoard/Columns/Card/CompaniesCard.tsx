@@ -10,7 +10,7 @@ interface Company {
   emailaddress: string;
   typeclient: string;
   address?: string;
-  next_available_date?: string;
+  next_available_date?: string | null; 
 }
 
 interface CompaniesCardProps {
