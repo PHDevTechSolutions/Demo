@@ -29,12 +29,10 @@ const Login: React.FC = () => {
   // 🔊 Play sound helper
   const playSound = (file: string) => {
     const audio = new Audio(file);
-    audio.play().catch((err) => {
-      console.warn("Audio play prevented by browser:", err);
-    });
+    audio.play().catch(() => {});
   };
 
-  // 🧩 Generate or get deviceId (saved in browser)
+  // 🧩 Generate or get deviceId
   const getDeviceId = () => {
     let deviceId = localStorage.getItem("deviceId");
     if (!deviceId) {
@@ -61,10 +59,27 @@ const Login: React.FC = () => {
     }
   };
 
+  // 🕒 Check if login time is allowed (7AM–7PM PH time)
+  const isLoginAllowed = () => {
+    const now = new Date();
+    // Convert to PH time
+    const phTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Manila" })
+    );
+    const hour = phTime.getHours();
+    return hour >= 7 && hour < 19; // 7AM <= hour < 7PM
+  };
+
   // 🧠 Login handler
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!Email || !Password || !Department) return toast.error('All fields are required!');
+
+    // 🕐 Check login window
+    if (!isLoginAllowed()) {
+      toast.error("⏰ Login is only allowed between 7:00 AM and 7:00 PM (Philippine time).");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -77,7 +92,6 @@ const Login: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        // 🔹 Block login if Status is Resigned or Terminated
         if (result.Status === "Resigned" || result.Status === "Terminated") {
           toast.error(`Your account is ${result.Status}. Login not allowed.`);
           playSound('/login-failed.mp3');
@@ -143,27 +157,12 @@ const Login: React.FC = () => {
     }
   }, [Email, Password, Department, router]);
 
-  // 🧱 UI
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-cover bg-left" style={{ backgroundImage: "url('/ecoshift-wallpaper.jpg')" }}>
       <div className="flex w-full max-w-4xl bg-white rounded-sm shadow-xl overflow-hidden">
-        <ToastContainer
-          position="bottom-right"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="colored"
-          className="text-xs z-[99999]"
-          toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
-          progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
-        />
+        <ToastContainer position="bottom-right" autoClose={2000} theme="colored" />
 
-        {/* Left Side - Login */}
+        {/* Left Side */}
         <div className="flex flex-col justify-center w-full md:w-1/2 p-8 mt-10">
           {formattedLockUntil && (
             <div className="mb-4 text-center">
@@ -218,20 +217,14 @@ const Login: React.FC = () => {
             <p className="flex items-center gap-1">
               <FaGlobeAsia size={20} />
               Official Website:
-              <Link
-                href="https://www.ecoshiftcorp.com/"
-                className="underline text-green-700 hover:text-green-800"
-              >
+              <Link href="https://www.ecoshiftcorp.com/" className="underline text-green-700 hover:text-green-800">
                 ecoshiftcorp.com
               </Link>
             </p>
             <p className="flex items-center gap-1">
               <BsCalendar2Week size={20} />
               For Site & Client Visit:
-              <Link
-                href="https://acculog.vercel.app/Login"
-                className="underline text-green-700 hover:text-green-800"
-              >
+              <Link href="https://acculog.vercel.app/Login" className="underline text-green-700 hover:text-green-800">
                 Acculog
               </Link>
             </p>
@@ -244,15 +237,7 @@ const Login: React.FC = () => {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url('/eco.png')" }}
           />
-          <div className="absolute inset-0" />
         </div>
-
-        {/* Full-page Welcome Modal */}
-        {showWelcomeModal && (
-          <div className="fixed inset-0 bg-white z-[100000] flex items-center justify-center transition-opacity duration-300">
-            <h1 className="text-3xl font-bold text-gray-800">Welcome to Taskflow</h1>
-          </div>
-        )}
       </div>
     </div>
   );

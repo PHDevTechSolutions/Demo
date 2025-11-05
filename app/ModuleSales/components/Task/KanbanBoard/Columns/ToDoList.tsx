@@ -10,15 +10,11 @@ const formatDateTimeLocal = (date: Date) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-const getNowInPH = () => {
-  const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
-};
-
 interface UserDetails {
   ReferenceID: string;
   TSM: string;
   Manager: string;
+  role?: string;
   [key: string]: any;
 }
 
@@ -29,6 +25,7 @@ interface TodoItem {
   startdate: string;
   enddate: string;
   scheduled_status: string;
+  referenceid?: string;
 }
 
 const ALLOWED_ACTIVITIES = [
@@ -49,23 +46,18 @@ const ALLOWED_ACTIVITIES = [
   "Outbound calls",
 ];
 
-// ✅ Regex helper for detecting Site Visit pattern
 const isSiteVisitRemark = (text: string) => /Site Visit on .* at .*(AM|PM)/i.test(text);
 
-const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: number }> = ({
-  userDetails,
-  refreshTrigger,
-}) => {
+const TodoList: React.FC<{
+  userDetails: UserDetails | null;
+  refreshTrigger: number;
+  selectedTSA?: string;
+}> = ({ userDetails, refreshTrigger, selectedTSA }) => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [filterType, setFilterType] = useState("All");
   const [showFilter, setShowFilter] = useState(false);
   const [tab, setTab] = useState<"Pending" | "Done">("Pending");
   const [showModal, setShowModal] = useState(false);
-  const [typeactivity, setTypeactivity] = useState(ALLOWED_ACTIVITIES[0]);
-  const [remarks, setRemarks] = useState("");
-  const [mode, setMode] = useState("pick");
-  const [startDate, setStartDate] = useState(formatDateTimeLocal(getNowInPH()));
-  const [endDate, setEndDate] = useState(formatDateTimeLocal(getNowInPH()));
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
@@ -86,23 +78,26 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
       const res = await fetch("/api/ModuleSales/Task/ActivityPlanner/GetTodos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ referenceid: userDetails.ReferenceID }),
+        body: JSON.stringify({
+          referenceid: selectedTSA || userDetails.ReferenceID, // ✅ auto switch if TSA selected
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error);
       setTodos(data.todos || []);
     } catch (err: any) {
       console.error("❌ Fetch todos error:", err);
+      setTodos([]); // prevent stale data
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ Include selectedTSA as dependency
   useEffect(() => {
     fetchTodos();
-  }, [userDetails, refreshTrigger]);
+  }, [userDetails, refreshTrigger, selectedTSA]);
 
-  // 🔹 Toggle Done/Pending
   const toggleComplete = async (id: string, currentStatus: string) => {
     try {
       const newStatus = currentStatus === "Done" ? "Pending" : "Done";
@@ -117,7 +112,6 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
     }
   };
 
-  // 🔹 Update Remarks Inline
   const handleUpdateRemarks = async (id: string, newRemarks: string) => {
     try {
       await fetch("/api/ModuleSales/Task/ActivityPlanner/UpdateTodoRemarks", {
@@ -132,35 +126,27 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
     }
   };
 
-  // 🔹 Filtering
+  // 🔹 Filter logic
   const filteredTodos = todos
-    // 1️⃣ Base filter by selected type
     .filter((t) =>
       filterType === "All"
         ? ALLOWED_ACTIVITIES.includes(t.typeactivity)
         : t.typeactivity === filterType
     )
-
-    // 2️⃣ Show only "Outbound calls" with valid Site Visit remark
-    .filter((t) => {
-      if (t.typeactivity === "Outbound calls") {
-        return isSiteVisitRemark(t.remarks || "");
-      }
-      return true; // keep others
-    })
-
-    // 3️⃣ Filter by tab: Pending or Completed
     .filter((t) =>
-      tab === "Pending" ? t.scheduled_status !== "Done" : t.scheduled_status === "Done"
+      tab === "Pending"
+        ? t.scheduled_status !== "Done"
+        : t.scheduled_status === "Done"
+    )
+    .filter((t) =>
+      t.typeactivity === "Outbound calls" ? isSiteVisitRemark(t.remarks || "") : true
     );
 
-  // ✅ Extract only the "Site Visit on ... at ... AM/PM" portion
   const extractSiteVisitRemark = (text: string) => {
     const match = text.match(/Site Visit on .* at .*?(AM|PM)/i);
-    return match ? match[0] : text; // return the matched part only
+    return match ? match[0] : text;
   };
 
-  // ✅ Convert UTC date string to Manila timezone
   const formatToManilaTime = (utcString: string) => {
     if (!utcString) return "";
     const date = new Date(utcString);
@@ -181,7 +167,9 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-xs font-bold text-gray-600">
           ✅ Todo List:{" "}
-          <span className="text-blue-500">{loading ? "Loading..." : filteredTodos.length}</span>
+          <span className="text-blue-500">
+            {loading ? "Loading..." : filteredTodos.length}
+          </span>
         </h3>
 
         <div className="flex items-center gap-2 relative">
@@ -225,8 +213,11 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
           <button
             key={t}
             onClick={() => setTab(t as "Pending" | "Done")}
-            className={`flex-1 text-xs py-1.5 font-semibold border-b-2 transition-all ${tab === t ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-blue-500"
-              }`}
+            className={`flex-1 text-xs py-1.5 font-semibold border-b-2 transition-all ${
+              tab === t
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-blue-500"
+            }`}
           >
             {t === "Pending" ? "🕐 Pending" : "✅ Completed"}
           </button>
@@ -265,7 +256,6 @@ const TodoList: React.FC<{ userDetails: UserDetails | null; refreshTrigger: numb
         )}
       </div>
 
-      {/* ✅ Modal (Add Task) */}
       {showModal && (
         <ToDoListForm
           setShowModal={setShowModal}

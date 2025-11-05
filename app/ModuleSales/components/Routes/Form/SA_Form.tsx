@@ -249,14 +249,46 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     const payload = {
       id: editUser?.id,
       companyid,
-      referenceid, manager, tsm, targetquota,
-      companyname, companygroup, contactperson, contactnumber, emailaddress,
-      typeclient, address, deliveryaddress, area,
-      projectname, projectcategory, projecttype, source, typeactivity,
-      startdate, enddate, activitynumber, activitystatus, status, remarks,
-      callback, typecall, site_visit_date, quotationnumber, quotationamount, sonumber, soamount,
-      actualsales, callstatus, ticketreferencenumber, wrapup, inquiries, csragent,
-      paymentterm, deliverydate, drnumber,
+      referenceid,
+      manager,
+      tsm,
+      targetquota,
+      companyname,
+      companygroup,
+      contactperson,
+      contactnumber,
+      emailaddress,
+      typeclient,
+      address,
+      deliveryaddress,
+      area,
+      projectname,
+      projectcategory,
+      projecttype,
+      source,
+      typeactivity,
+      startdate,
+      enddate,
+      activitynumber,
+      activitystatus,
+      status,
+      remarks,
+      callback,
+      typecall,
+      site_visit_date,
+      quotationnumber,
+      quotationamount,
+      sonumber,
+      soamount,
+      actualsales,
+      callstatus,
+      ticketreferencenumber,
+      wrapup,
+      inquiries,
+      csragent,
+      paymentterm,
+      deliverydate,
+      drnumber,
     };
 
     Object.keys(payload).forEach((key) => {
@@ -266,7 +298,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
     });
 
     try {
-      // 🔹 1️⃣ Main Save: Create or Edit activity
+      // 🔹 1️⃣ Main save request
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -277,6 +309,16 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       const data = await response.json();
       console.log("🔍 Server response:", data);
 
+      // ⚠️ 2️⃣ Check for duplicate companyname (from backend)
+      if (data.duplicate) {
+        toast.warning(data.message || "⚠️ This account is already a client of another TSA.", {
+          autoClose: 2500,
+        });
+        return; // ⛔ Stop execution — no insert
+      }
+
+
+      // ❌ 3️⃣ Handle server errors
       if (!response.ok || data.success === false) {
         const errorMsg = data.error || "Unknown error occurred";
         console.error("❌ Submit failed:", errorMsg);
@@ -284,8 +326,11 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         return;
       }
 
-      // 🔹 2️⃣ Conditional Update: only for Outbound Calls + Assisted
-      if (typeactivity?.toLowerCase() === "outbound calls" && activitystatus?.toLowerCase() === "assisted") {
+      // 🔹 4️⃣ Optional conditional update (same as before)
+      if (
+        typeactivity?.toLowerCase() === "outbound calls" &&
+        activitystatus?.toLowerCase() === "assisted"
+      ) {
         console.log("🚀 Calling UpdateAvailability for:", companyid, typeclient);
 
         try {
@@ -314,12 +359,13 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         }
       }
 
-
-      // 🔹 3️⃣ Success message + refresh UI
+      // ✅ 5️⃣ Success message + UI refresh
       toast.success(
-        editUser ? "✅ User updated successfully" : "✅ User added successfully",
+        editUser
+          ? "✅ User updated successfully"
+          : "✅ New company, activity, and progress created successfully",
         {
-          autoClose: 1200,
+          autoClose: 1500,
           onClose: () => {
             onCancel();
             refreshPosts();
@@ -333,6 +379,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
       });
     }
   };
+
 
   const handleCancelConfirm = () => setShowConfirmModal(false); // 🟢 ADD
 
@@ -647,7 +694,6 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         </div>
       )}
 
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[1000]">
@@ -677,7 +723,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
         draggable
         pauseOnHover
         theme="colored"
-        className="text-sm z-[99999]"   // ⬅️ pinakamataas na z-index
+        className="text-sm z-[99999]"
         toastClassName={() =>
           "relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-sm"
         }

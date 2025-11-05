@@ -23,13 +23,37 @@ async function create(data: any) {
       throw new Error("Company Name and Type of Client are required.");
     }
 
-    // 🔎 Check if company already exists
+    // 🔎 1️⃣ Check for duplicate in accounts (case-insensitive)
     const existingAccount = await Xchire_sql`
-      SELECT * FROM accounts WHERE companyname = ${companyname} LIMIT 1;
+      SELECT id FROM accounts WHERE LOWER(companyname) = LOWER(${companyname}) LIMIT 1;
     `;
-    const accountExists = existingAccount.length > 0;
+    if (existingAccount.length > 0) {
+      return {
+        success: false,
+        duplicate: true,
+        message: `⚠️ Company "${companyname}" This account is already a client of another TSA.`,
+      };
+    }
 
-    // 📝 Insert into activity table
+    // 🏢 2️⃣ Insert new company in accounts
+    const accountsResult = await Xchire_sql`
+      INSERT INTO accounts (
+        referenceid, manager, tsm, companyname, contactperson,
+        contactnumber, emailaddress, typeclient, address, deliveryaddress, area, 
+        status, companygroup, date_created, date_updated
+      )
+      VALUES (
+        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
+        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
+        ${status || "Active"}, ${companygroup || null},
+        NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+      )
+      RETURNING *;
+    `;
+    const newAccount = accountsResult[0];
+    if (!newAccount) throw new Error("Failed to insert new company into accounts table.");
+
+    // 📝 3️⃣ Insert into activity table
     const activityResult = await Xchire_sql`
       INSERT INTO activity (
         referenceid, manager, tsm, companyname, contactperson,
@@ -46,37 +70,12 @@ async function create(data: any) {
       )
       RETURNING *;
     `;
+    const newActivity = activityResult[0];
+    if (!newActivity) throw new Error("Failed to insert into activity table.");
 
-    const insertedActivity = activityResult[0];
-    if (!insertedActivity) throw new Error("Failed to insert into activity table.");
+    const newActivityNumber = newActivity.activitynumber;
 
-    const newActivityNumber = insertedActivity.activitynumber;
-
-    // 🏢 Insert into accounts table if company is new
-    if (!accountExists) {
-      const accountsResult = await Xchire_sql`
-        INSERT INTO accounts (
-          referenceid, manager, tsm, companyname, contactperson,
-          contactnumber, emailaddress, typeclient, address, deliveryaddress, area, 
-          status, companygroup, date_created, date_updated
-        ) VALUES (
-          ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
-          ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
-          ${status || "Active"}, ${companygroup || null},
-          NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
-        )
-        RETURNING *;
-      `;
-
-      if (!accountsResult[0]) throw new Error("Failed to insert into accounts table.");
-    } else {
-      // ✅ Update timestamp if company exists
-      await Xchire_sql`
-        UPDATE accounts SET date_updated = NOW() AT TIME ZONE 'UTC' WHERE companyname = ${companyname};
-      `;
-    }
-
-    // 📈 Insert into progress table
+    // 📈 4️⃣ Insert into progress table
     const progressResult = await Xchire_sql`
       INSERT INTO progress (
         referenceid, manager, tsm, companyname, contactperson,
@@ -100,16 +99,15 @@ async function create(data: any) {
       RETURNING *;
     `;
 
-    if (!progressResult[0]) throw new Error("Failed to insert into progress table.");
-
     return {
       success: true,
-      activity: insertedActivity,
+      message: "✅ New company, activity, and progress created successfully.",
+      account: newAccount,
+      activity: newActivity,
       progress: progressResult[0],
-      accountExists,
     };
   } catch (error: any) {
-    console.error("❌ Error inserting activity, accounts, and progress:", error);
+    console.error("❌ Error inserting records:", error);
     return { success: false, error: error.message || "Failed to add records." };
   }
 }
@@ -128,7 +126,6 @@ export async function POST(req: Request) {
   }
 }
 
-// ✅ Disable caching to ensure real-time updates
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";

@@ -399,7 +399,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
                   {col.id === "todo" && (
                     <>
-                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger}/>
+                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA}/>
                     </>
                   )}
 
