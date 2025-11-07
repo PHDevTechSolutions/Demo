@@ -48,7 +48,7 @@ const TodoListManager: React.FC<{
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [agentData, setAgentData] = useState<Record<string, AgentData>>({});
-  const [selectedTab, setSelectedTab] = useState<"pending" | "completed">("pending");
+  const [selectedTab, setSelectedTab] = useState<"pending" | "done">("pending");
 
   // Use a ref as persistent cache to prevent re-fetching
   const agentCache = useRef<Record<string, AgentData>>({});
@@ -64,7 +64,7 @@ const TodoListManager: React.FC<{
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case "completed":
+      case "done":
         return "bg-green-500 text-white";
       case "in progress":
         return "bg-blue-500 text-white";
@@ -170,7 +170,7 @@ const TodoListManager: React.FC<{
       todos.filter((t) =>
         selectedTab === "pending"
           ? t.scheduled_status?.toLowerCase() === "pending"
-          : t.scheduled_status?.toLowerCase() === "completed"
+          : t.scheduled_status?.toLowerCase() === "done"
       ),
     [todos, selectedTab]
   );
@@ -181,7 +181,7 @@ const TodoListManager: React.FC<{
   );
 
   const completedCount = useMemo(
-    () => todos.filter((t) => t.scheduled_status?.toLowerCase() === "completed").length,
+    () => todos.filter((t) => t.scheduled_status?.toLowerCase() === "done").length,
     [todos]
   );
 
@@ -203,11 +203,11 @@ const TodoListManager: React.FC<{
         </button>
         <button
           className={`pb-2 ${
-            selectedTab === "completed"
+            selectedTab === "done"
               ? "border-b-2 border-green-500 font-semibold"
               : "text-gray-500"
           }`}
-          onClick={() => setSelectedTab("completed")}
+          onClick={() => setSelectedTab("done")}
         >
           Completed ({completedCount})
         </button>
