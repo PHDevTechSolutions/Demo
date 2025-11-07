@@ -219,7 +219,6 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             note.referenceid === userDetails.ReferenceID
         );
 
-
     const formatRelativeDate = (dateStr: string) => {
         const date = new Date(dateStr);
         const now = new Date();
