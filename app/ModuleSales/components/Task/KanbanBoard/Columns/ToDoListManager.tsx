@@ -232,7 +232,7 @@ const TodoListManager: React.FC<{
               key={todo.id}
               className="border rounded-lg p-3 bg-white shadow-sm hover:shadow-md transition text-xs"
             >
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 capitalize">
                 <img
                   src={agent?.profilePicture || "/taskflow.png"}
                   alt="Profile"
@@ -240,7 +240,7 @@ const TodoListManager: React.FC<{
                 />
                 <p className="font-semibold text-gray-800">
                   {agent
-                    ? `${agent.Firstname} ${agent.Lastname}`
+                    ? `${agent.Lastname}, ${agent.Firstname}`
                     : "Loading user..."}
                 </p>
               </div>
