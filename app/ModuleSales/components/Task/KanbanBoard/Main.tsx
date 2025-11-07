@@ -222,14 +222,28 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
   // ✅ Hide duplication column and button if Role === "Manager"
   const filteredColumns = allColumns.filter((col) => {
-    if (col.id === "duplication" && userDetails?.Role === "Manager") return false;
-    if (col.id === "duplication" && !showDuplication) return false;
+    const role = userDetails?.Role;
 
-    if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
-      return col.id !== "new-task" && col.id !== "in-progress" && col.id !== "todo";
+    // 🔒 Handle duplication column visibility
+    if (col.id === "duplication") {
+      if (role === "Manager") return false;
+      if (!showDuplication) return false;
     }
 
-    return true;
+    // 🎯 Hide specific columns based on role
+    switch (role) {
+      case "Manager":
+      case "Territory Sales Manager":
+        // Managers shouldn't see these
+        return !["new-task", "in-progress", "todo"].includes(col.id);
+
+      case "Territory Sales Associate":
+        // TSA shouldn't see todo-list
+        return col.id !== "todo-list";
+
+      default:
+        return true;
+    }
   });
 
   // ✅ Fetch TSA
@@ -401,13 +415,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
                   {col.id === "todo" && (
                     <>
-                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger}/>
+                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger} />
                     </>
                   )}
 
                   {col.id === "todo-list" && (
                     <>
-                      <ToDoListManager userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA}/>
+                      <ToDoListManager userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA} />
                     </>
                   )}
 
