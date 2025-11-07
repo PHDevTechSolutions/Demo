@@ -53,12 +53,20 @@ const TodoListManager: React.FC<{
   // Use a ref as persistent cache to prevent re-fetching
   const agentCache = useRef<Record<string, AgentData>>({});
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("en-PH", {
+  const formatDate = (timestamp: string) => {
+    if (!timestamp) return "N/A";
+
+    const date = new Date(timestamp);
+
+    // Use toLocaleString with Manila time zone
+    return date.toLocaleString("en-PH", {
+      timeZone: "Asia/Manila",
       year: "numeric",
       month: "short",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -192,21 +200,19 @@ const TodoListManager: React.FC<{
       {/* Tabs */}
       <div className="flex space-x-4 border-b border-gray-300 mb-2 text-xs">
         <button
-          className={`pb-2 ${
-            selectedTab === "pending"
+          className={`pb-2 ${selectedTab === "pending"
               ? "border-b-2 border-yellow-500 font-semibold"
               : "text-gray-500"
-          }`}
+            }`}
           onClick={() => setSelectedTab("pending")}
         >
           Pending ({pendingCount})
         </button>
         <button
-          className={`pb-2 ${
-            selectedTab === "done"
+          className={`pb-2 ${selectedTab === "done"
               ? "border-b-2 border-green-500 font-semibold"
               : "text-gray-500"
-          }`}
+            }`}
           onClick={() => setSelectedTab("done")}
         >
           Completed ({completedCount})
