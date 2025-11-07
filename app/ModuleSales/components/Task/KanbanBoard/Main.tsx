@@ -18,6 +18,7 @@ import Callbacks from "./Columns/Callbacks";
 import FollowUp from "./Columns/FollowUp";
 import Meetings from "./Columns/Meetings";
 import ToDoList from "./Columns/ToDoList";
+import ToDoListManager from "./Columns/ToDoListManager";
 import Completed from "./Columns/Completed";
 import SiteVisit from "./Columns/SiteVisit";
 import Recent from "./Columns/Modal/Recent";
@@ -77,6 +78,7 @@ const allColumns: Column[] = [
   { id: "duplication", title: "Duplication" },
   { id: "scheduled", title: "Scheduled" },
   { id: "todo", title: "TO-DO" },
+  { id: "todo-list", title: "TO-DO List" },
   { id: "completed", title: "Completed" },
 ];
 
@@ -224,7 +226,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
     if (col.id === "duplication" && !showDuplication) return false;
 
     if (userDetails?.Role === "Territory Sales Manager" || userDetails?.Role === "Manager") {
-      return col.id !== "new-task" && col.id !== "in-progress";
+      return col.id !== "new-task" && col.id !== "in-progress" && col.id !== "todo";
     }
 
     return true;
@@ -399,7 +401,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
 
                   {col.id === "todo" && (
                     <>
-                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA}/>
+                      <ToDoList userDetails={userDetails} refreshTrigger={refreshTrigger}/>
+                    </>
+                  )}
+
+                  {col.id === "todo-list" && (
+                    <>
+                      <ToDoListManager userDetails={userDetails} refreshTrigger={refreshTrigger} selectedTSA={selectedTSA}/>
                     </>
                   )}
 

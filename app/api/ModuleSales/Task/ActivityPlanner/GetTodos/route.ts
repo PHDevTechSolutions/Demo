@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     // 🔹 Fetch user’s todo list
     const todos = await Xchire_sql(
       `
-      SELECT id, typeactivity, remarks, startdate, enddate, scheduled_status, tsm
+      SELECT id, typeactivity, remarks, startdate, enddate, scheduled_status, tsm, referenceid
       FROM progress
       WHERE referenceid = $1
       ORDER BY date_created DESC;
