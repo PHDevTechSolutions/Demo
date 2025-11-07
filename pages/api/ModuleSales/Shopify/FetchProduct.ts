@@ -4,6 +4,8 @@ interface ShopifyProduct {
   id: number;
   title: string;
   sku: string;
+  body_html?: string | null;
+  image?: { src: string } | null;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -18,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     let allProducts: ShopifyProduct[] = [];
     let nextPageInfo: string | null = null;
-    const limit = 250; // Shopify max limit per page
+    const limit = 250;
 
     do {
       const url: string = nextPageInfo
@@ -34,25 +36,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (!response.ok) throw new Error(`Shopify responded ${response.status}`);
 
-      const linkHeader: string | null = response.headers.get("link");
-
+      const linkHeader = response.headers.get("link");
       const data: { products: any[] } = await response.json();
 
-      // Map products
+      // ✅ Include `image.src` + `body_html`
       const mapped: ShopifyProduct[] = data.products.map((p: any) => ({
         id: p.id,
         title: p.title,
         sku: p.variants?.[0]?.sku || "N/A",
+        body_html: p.body_html || null,
+        image: p.image ? { src: p.image.src } : null,
       }));
 
       allProducts = allProducts.concat(mapped);
 
-      // Parse next page_info from link header
-      const match: RegExpMatchArray | null = linkHeader?.match(/<[^>]+page_info=([^>]+)>; rel="next"/) ?? null;
+      // Handle pagination
+      const match = linkHeader?.match(/<[^>]+page_info=([^>]+)>; rel="next"/);
       nextPageInfo = match ? match[1] : null;
     } while (nextPageInfo);
 
-    // Optional search filter
+    // Optional: search filter
     if (search) {
       allProducts = allProducts.filter((p) =>
         p.title.toLowerCase().includes(search)
