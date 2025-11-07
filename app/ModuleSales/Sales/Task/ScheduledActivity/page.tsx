@@ -14,7 +14,6 @@ import Quote from "../../../components/Task/Quote/Main";
 import Tools from "../../../components/Task/Tools/Sidebar";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BsArrowLeft } from 'react-icons/bs';
 import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
 
 const ListofUser: React.FC = () => {
