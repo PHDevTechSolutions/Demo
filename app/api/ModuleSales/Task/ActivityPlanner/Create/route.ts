@@ -50,23 +50,36 @@ async function insertActivity(data: any) {
 
     // ✅ Insert into accounts ONLY if typeclient = CSR Inquiries
     if (typeclient === "CSR Inquiries") {
-      try {
-        insertedAccount = await sql`
-          INSERT INTO accounts (
-            referenceid, tsm, companyname, contactperson, contactnumber,
-            emailaddress, typeclient, address, status, date_created, date_updated
-          ) VALUES (
-            ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
-            ${emailaddress}, 'CSR Client', ${address}, 'Active',
-            NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
-          )
-          RETURNING *;
-        `;
-      } catch (accountErr: any) {
-        console.error("❌ Error inserting into accounts:", accountErr);
-        throw new Error(
-          `Accounts insert failed → ${accountErr.message || JSON.stringify(accountErr)}`
-        );
+      // Check for duplicate companyname in accounts table
+      const existingAccount = await sql`
+        SELECT id FROM accounts
+        WHERE companyname = ${companyname} AND status = 'Active'
+        LIMIT 1;
+      `;
+
+      if (existingAccount.length === 0) {
+        // No duplicate found, insert new account
+        try {
+          insertedAccount = await sql`
+            INSERT INTO accounts (
+              referenceid, tsm, companyname, contactperson, contactnumber,
+              emailaddress, typeclient, address, status, date_created, date_updated
+            ) VALUES (
+              ${referenceid}, ${tsm}, ${companyname}, ${contactperson}, ${contactnumber},
+              ${emailaddress}, 'CSR Client', ${address}, 'Active',
+              NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+            )
+            RETURNING *;
+          `;
+        } catch (accountErr: any) {
+          console.error("❌ Error inserting into accounts:", accountErr);
+          throw new Error(
+            `Accounts insert failed → ${accountErr.message || JSON.stringify(accountErr)}`
+          );
+        }
+      } else {
+        // Duplicate found, skip insert
+        console.log("⚠️ Duplicate CSR Client found, skipping account insert.");
       }
     }
 

@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { FaChevronDown, FaChevronUp, FaPlus } from "react-icons/fa";
 import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
@@ -78,10 +76,17 @@ const Inquiries: React.FC<InquiriesProps> = ({
     const load = async () => {
       const inquiriesData = await fetchInquiries(userDetails.ReferenceID);
       setInquiries(inquiriesData);
-      setLoading(false); // ✅ Add this line
+      setLoading(false);
     };
     load();
   }, [userDetails?.ReferenceID, refreshTrigger]);
+
+  // Filter inquiries to exclude those with status 'used' or 'Used'
+  const filteredInquiries = inquiries.filter(
+    (inq) => inq.status.toLowerCase() !== "used"
+  );
+
+  const visibleInquiries = filteredInquiries.slice(0, visibleCount);
 
   // ⏱ elapsed time computation
   const getElapsedTime = (dateStr?: string) => {
@@ -106,7 +111,6 @@ const Inquiries: React.FC<InquiriesProps> = ({
     toast.success("Inquiries refreshed!", { autoClose: 1000 });
   };
 
-
   if (loading) {
     return (
       <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
@@ -117,14 +121,12 @@ const Inquiries: React.FC<InquiriesProps> = ({
     );
   }
 
-  const visibleInquiries = inquiries.slice(0, visibleCount);
-
   return (
     <div className="space-y-1 overflow-y-auto">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
         <h3 className="flex items-center text-xs font-bold text-gray-600 mb-2">
           <span className="mr-1">📋</span>CSR Inquiries:{" "}
-          <span className="ml-1 text-orange-500">{inquiries.length}</span>
+          <span className="ml-1 text-orange-500">{filteredInquiries.length}</span>
         </h3>
         <button
           onClick={handleRefresh}
@@ -228,7 +230,7 @@ const Inquiries: React.FC<InquiriesProps> = ({
         <p className="text-xs italic text-gray-400">No inquiries found.</p>
       )}
 
-      {visibleCount < inquiries.length && (
+      {visibleCount < filteredInquiries.length && (
         <div className="flex justify-center mt-2">
           <button
             className="px-4 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
@@ -245,6 +247,8 @@ const Inquiries: React.FC<InquiriesProps> = ({
         inquiry={selectedInquiry}
         getElapsedTime={getElapsedTime}
       />
+
+      <ToastContainer />
     </div>
   );
 };
