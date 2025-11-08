@@ -177,6 +177,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
       referenceid: userDetails.ReferenceID,
       manager: userDetails.Manager,
       tsm: userDetails.TSM,
+      targetquota: userDetails.TargetQuota,
       companyname: data.companyname,
       contactperson: data.contactperson,
       contactnumber: data.contactnumber,

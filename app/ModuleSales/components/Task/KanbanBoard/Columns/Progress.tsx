@@ -229,7 +229,8 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       drnumber: prog?.drnumber || "",
       emailaddress: prog?.emailaddress || "",
       contactnumber: prog?.contactnumber || "",
-      targetquota: userDetails?.TargetQuota || "",
+      targetquota: prog?.targetquota ?? userDetails?.TargetQuota ?? "",
+
     });
 
     setShowForm(true);
@@ -441,6 +442,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
   return (
     <div className="space-y-1">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-2 md:space-y-0 md:space-x-2">
+        
         <span className="text-xs text-gray-600 font-bold">
           Total:{" "}
           <span className="text-orange-500">{filteredProgress.length}</span>

@@ -119,7 +119,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
   const handleSaveClick = (e: React.FormEvent) => {
     e.preventDefault();
-      setShowSummaryModal(true);
+    setShowSummaryModal(true);
   };
 
   const handleProceed = () => {
@@ -185,6 +185,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
       <form onSubmit={handleSaveClick} className="space-y-4 text-xs">
         <input type="hidden" name="startdate" value={formData.startdate} readOnly />
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
+        <input type="hidden" name="targetquota" value={formData.targetquota} onChange={handleFormChange} />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col mt-4">
