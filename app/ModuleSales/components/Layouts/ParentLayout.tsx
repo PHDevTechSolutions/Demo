@@ -37,43 +37,6 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     profilePicture: "",
   });
 
-  // Gmail OAuth start function
-  const startGmailAuth = () => {
-    window.location.href = "/api/gmail/auth"; // redirect to Google consent screen
-  };
-
-
-  // Get userId from query string once
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setUserId(params.get("id"));
-  }, []);
-
-  // Fetch user details when userId changes
-  useEffect(() => {
-    if (!userId) return;
-    fetch(`/api/user?id=${encodeURIComponent(userId)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setUserDetails((prev) => ({
-          ...prev,
-          Firstname: data.Firstname || prev.Firstname,
-          Lastname: data.Lastname || prev.Lastname,
-          Email: data.Email || prev.Email,
-          Department: data.Department || prev.Department,
-          Location: data.Location || prev.Location,
-          Role: data.Role || prev.Role,
-          Position: data.Position || prev.Position,
-          Company: data.Company || prev.Company,
-          Status: data.Status || prev.Status,
-          ReferenceID: data.ReferenceID || prev.ReferenceID,
-          profilePicture: data.profilePicture || prev.profilePicture,
-        }));
-      })
-      .catch((err) => console.error(err));
-  }, [userId]);
-  
-
   // Detect mobile screen
   useEffect(() => {
     const checkScreen = () => setIsMobile(window.innerWidth < 768);
@@ -110,40 +73,6 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Automatic notification email sent once per day to sieghartleroux13@gmail.com
-  useEffect(() => {
-    const notificationKey = `notificationSent_sieghartleroux13@gmail.com`;
-    const today = new Date().toLocaleDateString("en-PH", { timeZone: "Asia/Manila" });
-
-    if (localStorage.getItem(notificationKey) === today) return;
-
-    const sendNotification = async () => {
-      try {
-        await fetch("/api/sendNotificationEmail", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: "sieghartleroux13@gmail.com",
-            subject: "🟠 TaskFlow Notification: Daily Automated Notification",
-            message: `
-              <p>Hello Sieghart,</p>
-              <p>This is your automated daily notification sent by TaskFlow.</p>
-              <br/>
-              <p>– TaskFlow System</p>
-            `,
-          }),
-        });
-
-        localStorage.setItem(notificationKey, today);
-        console.log("Notification email sent to sieghartleroux13@gmail.com");
-      } catch (err) {
-        console.error("Failed to send notification email", err);
-      }
-    };
-
-    sendNotification();
-  }, []);
-
   return (
     <div
       className={`flex relative font-[Comic_Sans_MS] min-h-screen ${
@@ -169,12 +98,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
           isDarkMode={isDarkMode}
           
         />
-        <button
-            onClick={startGmailAuth}
-            className="ml-4 px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm"
-          >
-            Authorize Gmail
-          </button>
+        
         <main className="p-4">{children}</main>
         <Footer />
       </div>
