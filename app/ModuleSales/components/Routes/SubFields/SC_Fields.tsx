@@ -17,6 +17,7 @@ export interface CompanyOption {
   deliveryaddress: string;
   area: string;
   status: string;
+  referenceid?: string; // para macheck owner ng company
 }
 
 interface SelectCompanyProps {
@@ -83,15 +84,23 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
   status,
   setstatus,
 }) => {
-  const [companies, setCompanies] = useState<any[]>([]);
+  // Personal company list based on referenceid
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
+  // For global companies fetched by typed input (manual)
+  const [globalCompanies, setGlobalCompanies] = useState<CompanyOption[]>([]);
+  // Track typed input in manual mode
+  const [typedCompanyName, setTypedCompanyName] = useState("");
+  // Whether manual mode is on or off
   const [isManual, setIsManual] = useState(false);
+  // Expandable fields toggle
   const [isExpanded, setIsExpanded] = useState(false);
+  // Whether to show the “Use” button for new company
+  const [showUseButton, setShowUseButton] = useState(false);
 
+  // Fetch personal companies on mount or referenceid change
   useEffect(() => {
-    if (referenceid) {
-      fetch(
-        `/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${referenceid}`
-      )
+    if (referenceid && !isManual) {
+      fetch(`/api/ModuleSales/Companies/CompanyAccounts/FetchAccount?referenceid=${referenceid}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
@@ -104,12 +113,55 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
             );
           } else {
             console.error("Error fetching companies:", data.error);
+            setCompanies([]);
           }
         })
-        .catch((err) => console.error("Error:", err));
+        .catch((err) => {
+          console.error("Error:", err);
+          setCompanies([]);
+        });
+    } else {
+      // Clear personal companies if manual mode
+      setCompanies([]);
     }
-  }, [referenceid]);
+  }, [referenceid, isManual]);
 
+  // Fetch global companies when typing company name in manual mode (debounce recommended for production)
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isManual && typedCompanyName.trim().length > 2) {
+      setLoading(true);
+      fetch(`/api/ModuleSales/Companies/CompanyAccounts/FetchAllCompanies?search=${encodeURIComponent(typedCompanyName)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setGlobalCompanies(data.data);
+            const existingOtherOwner = data.data.find(
+              (comp: CompanyOption) =>
+                comp.companyname.toLowerCase() === typedCompanyName.toLowerCase() &&
+                comp.referenceid !== referenceid
+            );
+            setShowUseButton(!existingOtherOwner);
+          } else {
+            setGlobalCompanies([]);
+            setShowUseButton(false);
+          }
+        })
+        .catch(() => {
+          setGlobalCompanies([]);
+          setShowUseButton(false);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setGlobalCompanies([]);
+      setShowUseButton(false);
+      setLoading(false);
+    }
+  }, [typedCompanyName, isManual, referenceid]);
+
+
+  // When selecting from dropdown
   const handleCompanySelect = (selected: any) => {
     if (selected?.id) {
       setcompanyid(selected.id);
@@ -123,7 +175,9 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
       setcompanygroup(selected.companygroup);
       setarea(selected.area);
       setstatus(selected.status);
+      setIsExpanded(true); // Usually collapse expandable when selecting existing
     } else {
+      // Clear all fields
       setcompanyid("");
       setcompanyname("");
       setcontactperson("");
@@ -135,6 +189,7 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
       setcompanygroup("");
       setarea("");
       setstatus("");
+      setIsExpanded(true);
     }
   };
 
@@ -181,63 +236,104 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
                   }}
                 />
               ) : (
-                <input
-                  type="text"
-                  value={companyname ?? ""}
-                  onChange={(e) => setcompanyname(e.target.value)}
-                  className="w-full text-xs capitalize p-2 border-b"
-                />
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    value={companyname ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setcompanyname(val);
+                      setTypedCompanyName(val);
+
+                      if (val.trim() === "") {
+                        setIsExpanded(false);
+                        setShowUseButton(false);
+                      }
+                    }}
+                    className="w-full text-xs capitalize p-2 border-b pr-8" // extra padding-right para sa spinner
+                  />
+                  {loading && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      {/* Simple spinner - you can replace with any spinner component or SVG */}
+                      <svg
+                        className="animate-spin h-4 w-4 text-gray-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        ></path>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+
+
               )}
             </div>
 
-            {!isManual && (
-              <div className="w-1/2">
-                <input
-                  type="text"
-                  value={companyname ?? ""}
-                  disabled
-                  className="w-full mt-0 text-xs capitalize p-2 border-b"
-                />
-              </div>
-            )}
+            <div className="w-1/2">
+              <input
+                type="text"
+                value={companyname ?? ""}
+                disabled={!isManual}
+                className={`w-full mt-0 text-xs capitalize p-2 border-b ${isManual ? "" : "bg-gray-100"}`}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManual((prev) => !prev);
+                  setTypedCompanyName("");
+                  setShowUseButton(false);
+                  setIsExpanded(false);
+                }}
+                className="text-[10px] text-blue-500 underline mt-2"
+              >
+                {isManual
+                  ? "If Account Exists Switch to Select"
+                  : "If Account is New Switch to Manual"}
+              </button>
+            </div>
+
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsManual((prev) => !prev)}
-            className="text-[10px] text-blue-500 underline mt-2"
-          >
-            {isManual
-              ? "If Account Exists Switch to Select"
-              : "If Account is New Switch to Manual"}
-          </button>
+
+          {/* Show 'Use' button only if in manual mode, typed company is NOT existing elsewhere */}
+          {isManual && showUseButton && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              className="mt-2 text-xs bg-blue-500 text-white px-3 py-1 rounded"
+            >
+              Use
+            </button>
+          )}
+
+          {/* If typed company exists in other owner, show warning */}
+          {isManual && !showUseButton && typedCompanyName.trim().length > 2 && (
+            <p className="text-red-500 text-xs mt-1">
+              Company name already exists and is owned by another user.
+            </p>
+          )}
         </div>
       </div>
 
       {/* Expandable Fields */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xs font-bold">Customer / Account Details</h2>
-        <button
-          type="button"
-          onClick={() => setIsExpanded((prev) => !prev)}
-          className="text-[10px] text-black border shadow-sm px-2 py-1 rounded-md flex items-center gap-1"
-        >
-          {isExpanded ? (
-            <>
-              <BsArrowsCollapseVertical /> <span>Hide Fields</span>
-            </>
-          ) : (
-            <>
-              <BsArrowsExpandVertical /> <span>Show Fields</span>
-            </>
-          )}
-        </button>
-      </div>
-
       {isExpanded && (
         <div className="flex flex-wrap -mx-4 transition-all duration-300 ease-in-out">
           <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-          <input
+            <input
               type="hidden"
               value={companyid ?? ""}
               onChange={(e) => setcompanyid(e.target.value)}
@@ -271,7 +367,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
               value={contactnumber ?? ""}
               onChange={(e) => setcontactnumber(e.target.value)}
               className="w-full px-3 py-2 border-b text-xs"
-              
             />
           </div>
 
@@ -284,7 +379,6 @@ const SelectCompany: React.FC<SelectCompanyProps> = ({
               value={emailaddress ?? ""}
               onChange={(e) => setemailaddress(e.target.value)}
               className="w-full px-3 py-2 border-b text-xs"
-              
             />
           </div>
 

@@ -11,49 +11,93 @@ const Xchire_sql = neon(Xchire_databaseUrl);
 async function create(data: any) {
   try {
     const {
-      referenceid, manager, tsm, companyname, contactperson,
-      contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
-      projectname, projectcategory, projecttype, source, typeactivity,
-      callback, callstatus, typecall, site_visit_date, remarks, quotationnumber,
-      quotationamount, sonumber, soamount, startdate, enddate,
-      activitystatus, activitynumber, targetquota, status, companygroup,
+      referenceid,
+      manager,
+      tsm,
+      companyname,
+      contactperson,
+      contactnumber,
+      emailaddress,
+      typeclient,
+      address,
+      deliveryaddress,
+      area,
+      projectname,
+      projectcategory,
+      projecttype,
+      source,
+      typeactivity,
+      callback,
+      callstatus,
+      typecall,
+      site_visit_date,
+      remarks,
+      quotationnumber,
+      quotationamount,
+      sonumber,
+      soamount,
+      startdate,
+      enddate,
+      activitystatus,
+      activitynumber,
+      targetquota,
+      status,
+      companygroup,
     } = data;
 
     if (!companyname || !typeclient) {
       throw new Error("Company Name and Type of Client are required.");
     }
 
-    // 🔎 1️⃣ Check for duplicate in accounts (case-insensitive)
-    const existingAccount = await Xchire_sql`
-      SELECT id FROM accounts WHERE LOWER(companyname) = LOWER(${companyname}) LIMIT 1;
+    // 🔎 Check duplicates by companyname + contactperson (case-insensitive)
+    const existingAccounts = await Xchire_sql`
+      SELECT id, referenceid FROM accounts
+      WHERE LOWER(companyname) = LOWER(${companyname})
+        AND LOWER(contactperson) = LOWER(${contactperson});
     `;
-    if (existingAccount.length > 0) {
+
+    // Filter those owned by others
+    const otherOwners = existingAccounts.filter(
+      (acc) => acc.referenceid !== referenceid
+    );
+
+    if (otherOwners.length > 0) {
       return {
         success: false,
         duplicate: true,
-        message: `⚠️ Company "${companyname}" This account is already a client of another TSA.`,
+        message: `⚠️ Duplicate account found for company "${companyname}" with contact person "${contactperson}" owned by another TSA. Submission blocked.`,
       };
     }
 
-    // 🏢 2️⃣ Insert new company in accounts
-    const accountsResult = await Xchire_sql`
-      INSERT INTO accounts (
-        referenceid, manager, tsm, companyname, contactperson,
-        contactnumber, emailaddress, typeclient, address, deliveryaddress, area, 
-        status, companygroup, date_created, date_updated
-      )
-      VALUES (
-        ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
-        ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
-        ${status || "Active"}, ${companygroup || null},
-        NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
-      )
-      RETURNING *;
-    `;
-    const newAccount = accountsResult[0];
-    if (!newAccount) throw new Error("Failed to insert new company into accounts table.");
+    // Determine account id (existing or new)
+    let accountId: string | null = null;
 
-    // 📝 3️⃣ Insert into activity table
+    if (existingAccounts.length === 0) {
+      // No existing account found, insert new
+      const accountsResult = await Xchire_sql`
+        INSERT INTO accounts (
+          referenceid, manager, tsm, companyname, contactperson,
+          contactnumber, emailaddress, typeclient, address, deliveryaddress, area,
+          status, companygroup, date_created, date_updated
+        )
+        VALUES (
+          ${referenceid}, ${manager}, ${tsm}, ${companyname}, ${contactperson},
+          ${contactnumber}, ${emailaddress}, ${typeclient}, ${address}, ${deliveryaddress}, ${area},
+          ${status || "Active"}, ${companygroup || null},
+          NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'
+        )
+        RETURNING id;
+      `;
+      accountId = accountsResult[0]?.id;
+      if (!accountId) {
+        throw new Error("Failed to insert new company into accounts table.");
+      }
+    } else {
+      // Use existing account id (owned by self)
+      accountId = existingAccounts[0].id;
+    }
+
+    // 📝 Insert into activity table
     const activityResult = await Xchire_sql`
       INSERT INTO activity (
         referenceid, manager, tsm, companyname, contactperson,
@@ -75,7 +119,7 @@ async function create(data: any) {
 
     const newActivityNumber = newActivity.activitynumber;
 
-    // 📈 4️⃣ Insert into progress table
+    // 📈 Insert into progress table
     const progressResult = await Xchire_sql`
       INSERT INTO progress (
         referenceid, manager, tsm, companyname, contactperson,
@@ -102,7 +146,8 @@ async function create(data: any) {
     return {
       success: true,
       message: "✅ New company, activity, and progress created successfully.",
-      account: newAccount,
+      accountId,
+      accountDuplicate: existingAccounts.length > 0,
       activity: newActivity,
       progress: progressResult[0],
     };

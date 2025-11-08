@@ -119,13 +119,7 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
 
   const handleSaveClick = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.targetquota || Number(formData.targetquota) === 0) {
-      setShowQuotaWarningModal(true);
-      setShowSummaryModal(false);
-    } else {
       setShowSummaryModal(true);
-      setShowQuotaWarningModal(false);
-    }
   };
 
   const handleProceed = () => {
@@ -507,27 +501,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
         </div>
       )}
 
-      {showQuotaWarningModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[10000]">
-          <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-md p-6 animate-fadeIn">
-            <h3 className="text-lg font-bold mb-4 text-red-600">Target Quota Required</h3>
-            <p className="mb-4">
-              Your current target quota is: <strong className="text-red-600">{formData.targetquota ?? 0}</strong>.
-            </p>
-            <p className="mb-4">
-              Please update the target quota with your manager to continue using Taskflow.
-            </p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowQuotaWarningModal(false)}
-                className="px-4 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 
       <SurveyModal
