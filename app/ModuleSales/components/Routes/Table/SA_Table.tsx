@@ -124,7 +124,6 @@ const TableView: React.FC<TableViewProps> = ({ posts, handleEdit, handleDelete, 
     }
   };
 
-
   useEffect(() => {
     if (!selectedActivity?.activitynumber) return;
 
