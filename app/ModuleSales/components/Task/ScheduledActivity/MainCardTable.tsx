@@ -144,7 +144,7 @@ const MainCardTable: React.FC<MainCardTableProps> = ({
                         referenceid: editUser ? (editUser as any).referenceid : userDetails.ReferenceID,
                         manager: editUser ? (editUser as any).manager : userDetails.Manager,
                         tsm: editUser ? (editUser as any).tsm : userDetails.TSM,
-                        targetquota: editUser ? (editUser as any).targetquota : userDetails.TargetQuota,
+                        TargetQuota: editUser ? (editUser as any).targetquota : userDetails.TargetQuota,
                     }}
                     editUser={editUser}
                 />

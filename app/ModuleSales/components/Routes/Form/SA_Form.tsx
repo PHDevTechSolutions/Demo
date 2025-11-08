@@ -15,7 +15,7 @@ interface AddUserFormProps {
     referenceid: string;
     manager: string;
     tsm: string;
-    targetquota: string;
+    TargetQuota: string;
   };
   companyData?: {
     id: number;
@@ -52,7 +52,7 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onCancel, refreshPosts, userD
   const [referenceid, setReferenceid] = useState(userDetails.referenceid || "");
   const [manager, setManager] = useState(userDetails.manager || "");
   const [tsm, setTsm] = useState(userDetails.tsm || "");
-  const [targetquota, setTargetQuota] = useState(userDetails.targetquota || "");
+  const [targetquota, setTargetQuota] = useState(userDetails.TargetQuota || "");
   const [companyid, setcompanyid] = useState(editUser ? editUser.companyid : companyData?.id || null);
   const [companyname, setcompanyname] = useState(editUser ? editUser.companyname : companyData?.companyname || "");
   const [companygroup, setcompanygroup] = useState(editUser ? editUser.companygroup : companyData?.companygroup || "");
