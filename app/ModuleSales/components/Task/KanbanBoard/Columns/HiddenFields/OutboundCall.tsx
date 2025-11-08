@@ -150,7 +150,6 @@ const OutboundCall: React.FC<OutboundCallProps> = ({
                         onChange={handleFormChange}
                         min={new Date().toISOString().slice(0, 16)}
                         className="border-b px-3 py-6 rounded text-xs"
-                        required
                     />
                 </div>
             </div>

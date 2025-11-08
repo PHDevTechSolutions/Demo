@@ -6,9 +6,7 @@ import ParentLayout from "../../../components/Layouts/ParentLayout";
 import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 import Filters from "../../../components/Routes/Filters/SA_Filters";
-import TaskList from "../../../components/Task/TaskList/Task";
-import KanbanBoard from "../../../components/Task/KanbanBoard/Main";
-import Tools from "../../../components/Task/Tools/Sidebar";
+import Main from "../../../components/Task/ScheduledActivity/Main";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
@@ -16,7 +14,7 @@ import { AiOutlineLoading, AiOutlineReload } from 'react-icons/ai';
 const ListofUser: React.FC = () => {
   const router = useRouter();
 
-  const [activeTab, setActiveTab] = useState<string>("activity");
+  const [activeTab, setActiveTab] = useState<string>("scheduled");
   const [posts, setPosts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -207,83 +205,9 @@ const ListofUser: React.FC = () => {
         <UserFetcher>
           {() => (
             <div className="flex gap-4">
-              <Tools activeTab={activeTab} setActiveTab={setActiveTab} userDetails={userDetails} />
-
               <div className="text-gray-900 w-full">
-                {/* 🔹 Breadcrumb Navigation */}
-                <nav className="flex items-center text-xs mb-4 bg-gray-50 px-3 py-2 rounded border border-gray-200 shadow-sm">
-                  <button
-                    onClick={() => {
-                      const url = userId
-                        ? `/ModuleSales/Sales/Dashboard?id=${encodeURIComponent(userId)}`
-                        : "/ModuleSales/Sales/Dashboard";
-                      router.push(url);
-                    }}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Dashboard
-                  </button>
-
-                  <span className="mx-2 text-gray-400">›</span>
-
-                  <button
-                    onClick={() => {
-                      const url = userId
-                        ? `/ModuleSales/Sales/Companies/CompanyAccounts?id=${encodeURIComponent(userId)}`
-                        : "/ModuleSales/Sales/Companies/CompanyAccounts";
-                      router.push(url);
-                    }}
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Clients
-                  </button>
-
-                  <span className="mx-2 text-gray-400">›</span>
-
-                  <span className="text-gray-700 font-semibold">Scheduled Activity</span>
-                </nav>
-
-
                 {activeTab === "scheduled" && (
                   <div className="p-4 bg-white shadow-md rounded-lg">
-                    {(userDetails.Role === "Territory Sales Manager" ||
-                      userDetails.Role === "Manager" ||
-                      userDetails.Role === "Super Admin") && (
-                        <div className="mb-4 flex flex-wrap items-center space-x-4">
-                          {(userDetails.Role === "Manager" || userDetails.Role === "Super Admin") && (
-                            <>
-                              <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Filter by TSM</label>
-                              <select
-                                className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                                value={selectedTSM}
-                                onChange={(e) => setSelectedTSM(e.target.value)}
-                              >
-                                <option value="">All TSM</option>
-                                {tsmOptions.map(tsm => (
-                                  <option key={tsm.value} value={tsm.value}>{tsm.label}</option>
-                                ))}
-                              </select>
-                            </>
-                          )}
-
-                          <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Filter by TSA</label>
-                          <select
-                            className="w-full md:w-1/3 border rounded px-3 py-2 text-xs capitalize"
-                            value={selectedAgent}
-                            onChange={(e) => setSelectedAgent(e.target.value)}
-                          >
-                            <option value="">All Agents</option>
-                            {tsaOptions.map(agent => (
-                              <option key={agent.value} value={agent.value}>{agent.label}</option>
-                            ))}
-                          </select>
-
-                          <h1 className="text-xs bg-orange-500 text-white p-2 rounded shadow-sm">
-                            Total Activities: <span className="font-bold">{filteredAccounts.length}</span>
-                          </h1>
-                        </div>
-                      )}
-
                     <div className="flex justify-between items-center mb-2">
                       <h2 className="text-lg font-semibold text-black">Manual Task</h2>
                       <button
@@ -316,16 +240,10 @@ const ListofUser: React.FC = () => {
                       endDate={endDate}
                       setEndDate={setEndDate}
                     />
+
+                    <Main posts={filteredAccounts} userDetails={userDetails} fetchAccount={fetchAccount} />
                   </div>
                 )}
-
-                <div className={`${activeTab === "tasklist" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
-                  <TaskList userDetails={userDetails} />
-                </div>
-
-                <div className={`${activeTab === "activity" ? "block" : "hidden"} bg-white shadow-md rounded-lg flex`}>
-                  <KanbanBoard userDetails={userDetails} />
-                </div>
 
                 <ToastContainer
                   position="top-right"

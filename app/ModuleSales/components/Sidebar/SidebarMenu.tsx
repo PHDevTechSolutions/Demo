@@ -74,10 +74,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
         <button
           key={idx}
           onClick={() => router.push(subItem.href)}
-          className="flex items-center p-3 text-gray-800 hover:bg-orange-400 hover:text-white transition-all text-left"
+          className="flex flex-col items-start p-3 text-gray-800 hover:bg-orange-400 hover:text-white transition-all text-left"
         >
-          <FaRegCircle size={10} className="mr-2 ml-2" />
-          <span className="text-[11px]">{subItem.title}</span>
+          <div className="flex items-center">
+            <FaRegCircle size={10} className="mr-2 ml-2" />
+            <span className="text-[12px] font-medium">{subItem.title}</span>
+          </div>
+          {subItem.description && (
+            <span className="ml-6 text-[10px] text-gray-600 dark:text-gray-400 group-hover:text-white transition-colors duration-200">
+              {subItem.description}
+            </span>
+          )}
         </button>
       ))}
     </div>

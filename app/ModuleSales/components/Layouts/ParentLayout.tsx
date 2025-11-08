@@ -22,7 +22,52 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
 
   const [showLogoutReminder, setShowLogoutReminder] = useState(false);
 
-  // ✅ Detect if mobile
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userDetails, setUserDetails] = useState({
+    Firstname: "Task",
+    Lastname: "Flow",
+    Email: "",
+    Department: "",
+    Location: "",
+    Role: "",
+    Position: "",
+    Company: "",
+    Status: "",
+    ReferenceID: "",
+    profilePicture: "",
+  });
+
+  // Get userId from query string once
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setUserId(params.get("id"));
+  }, []);
+
+  // Fetch user details when userId changes
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`/api/user?id=${encodeURIComponent(userId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setUserDetails((prev) => ({
+          ...prev,
+          Firstname: data.Firstname || prev.Firstname,
+          Lastname: data.Lastname || prev.Lastname,
+          Email: data.Email || prev.Email,
+          Department: data.Department || prev.Department,
+          Location: data.Location || prev.Location,
+          Role: data.Role || prev.Role,
+          Position: data.Position || prev.Position,
+          Company: data.Company || prev.Company,
+          Status: data.Status || prev.Status,
+          ReferenceID: data.ReferenceID || prev.ReferenceID,
+          profilePicture: data.profilePicture || prev.profilePicture,
+        }));
+      })
+      .catch((err) => console.error(err));
+  }, [userId]);
+
+  // Detect mobile screen
   useEffect(() => {
     const checkScreen = () => setIsMobile(window.innerWidth < 768);
     checkScreen();
@@ -30,7 +75,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     return () => window.removeEventListener("resize", checkScreen);
   }, []);
 
-  // ✅ Show popup once per day at 4:30 PM (Asia/Manila)
+  // Logout reminder once per day at 4:30 PM Manila time
   useEffect(() => {
     const checkTime = () => {
       const now = new Date();
@@ -40,21 +85,59 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
         hour: "2-digit",
         minute: "2-digit",
       });
-      const today = new Date().toLocaleDateString("en-PH", { timeZone: "Asia/Manila" });
+      const today = new Date().toLocaleDateString("en-PH", {
+        timeZone: "Asia/Manila",
+      });
 
       const lastShownDate = localStorage.getItem("logoutReminderShownDate");
 
-      // ✅ Show once per day only
       if (manilaTime === "16:30" && lastShownDate !== today) {
         setShowLogoutReminder(true);
         localStorage.setItem("logoutReminderShownDate", today);
       }
     };
 
-    const interval = setInterval(checkTime, 30000); // every 30 seconds
+    const interval = setInterval(checkTime, 30000);
     checkTime();
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Automatic notification email sent once per day to sieghartleroux13@gmail.com
+  useEffect(() => {
+    const notificationKey = `notificationSent_sieghartleroux13@gmail.com`;
+    const today = new Date().toLocaleDateString("en-PH", { timeZone: "Asia/Manila" });
+
+    if (localStorage.getItem(notificationKey) === today) return;
+
+    const sendNotification = async () => {
+      try {
+        // If you want, you can add fetching of callbacks here to only send if callbacks exist.
+        // For simplicity, sending notification every day once.
+
+        await fetch("/api/sendNotificationEmail", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: "sieghartleroux13@gmail.com",
+            subject: "🟠 TaskFlow Notification: Daily Automated Notification",
+            message: `
+              <p>Hello Sieghart,</p>
+              <p>This is your automated daily notification sent by TaskFlow.</p>
+              <br/>
+              <p>– TaskFlow System</p>
+            `,
+          }),
+        });
+
+        localStorage.setItem(notificationKey, today);
+        console.log("Notification email sent to sieghartleroux13@gmail.com");
+      } catch (err) {
+        console.error("Failed to send notification email", err);
+      }
+    };
+
+    sendNotification();
   }, []);
 
   return (
@@ -117,7 +200,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       <AIRightbar isOpen={isRightbarOpen} onClose={() => setRightbarOpen(false)} />
       <GPTRightbar isOpen={isGPTRightbarOpen} onClose={() => setGPTRightbarOpen(false)} />
 
-      {/* ✅ Logout Reminder Modal */}
+      {/* Logout Reminder Modal */}
       {showLogoutReminder && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[99999]">
           <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm text-center animate-fadeIn">
@@ -140,6 +223,4 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
   );
 };
 
-export default function LayoutWrapper({ children }: { children: ReactNode }) {
-  return <ParentLayout>{children}</ParentLayout>;
-}
+export default ParentLayout;

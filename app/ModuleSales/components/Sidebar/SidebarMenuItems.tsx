@@ -45,6 +45,11 @@ const getMenuItems = (userId: string | null = "") => [
                 href: `/ModuleSales/Sales/Companies/Inactive${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
             { 
+                title: "Follow Ups", 
+                description: "List of OB Calls Company For Follow Ups", 
+                href: `/ModuleSales/Sales/Companies/FollowUps${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
                 title: "Group / Affiliate", 
                 description: "Grouped or Affiliated Companies", 
                 href: `/ModuleSales/Sales/Companies/GroupCompanies${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
@@ -69,6 +74,21 @@ const getMenuItems = (userId: string | null = "") => [
                 title: "Workspace", 
                 description: "Upcoming Tasks and Reminders", 
                 href: `/ModuleSales/Sales/Task/ScheduledActivity${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
+                title: "Manual Task", 
+                description: "Manual Task Creation For New Clients", 
+                href: `/ModuleSales/Sales/Task/ManualTask${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
+                title: "Notes", 
+                description: "Personal Notes and Documentation", 
+                href: `/ModuleSales/Sales/Task/Notes${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
+            },
+            { 
+                title: "Quotation", 
+                description: "Creation of Quotations", 
+                href: `/ModuleSales/Sales/Task/Quotation${userId ? `?id=${encodeURIComponent(userId)}` : ""}` 
             },
             { 
                 title: "Client Coverage Guide", 

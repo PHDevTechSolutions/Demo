@@ -6,7 +6,6 @@ import SessionChecker from "../../../components/Session/SessionChecker";
 import UserFetcher from "../../../components/User/UserFetcher";
 // Components
 import Form from "../../../components/Routes/Form/CA_Form";
-import ImportForm from "../../../components/Companies/CompanyAccounts/ImportForm";
 import SearchFilters from "../../../components/Routes/Filters/CA_Filters";
 import Container from "../../../components/Companies/CompanyAccounts/Container";
 import Pagination from "../../../components/Routes/Pagination/CA_Pagination";
@@ -55,8 +54,6 @@ const ActiveAccounts: React.FC = () => {
     const [referenceid, setReferenceID] = useState("");
     const [manager, setManager] = useState("");
     const [tsm, setTsm] = useState("");
-    const [status, setstatus] = useState("");
-    const [isMaximized, setIsMaximized] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -278,8 +275,6 @@ const ActiveAccounts: React.FC = () => {
         setShowForm(true);
     };
 
-    const fieldWidthClass = isMaximized ? "w-full sm:w-1/2 px-4 mb-4" : "w-full px-4 mb-4";
-
     return (
         <SessionChecker>
             <ParentLayout>
@@ -317,16 +312,6 @@ const ActiveAccounts: React.FC = () => {
                                                     tsm: editUser ? editUser.tsm : userDetails.TSM,
                                                 }}
                                                 editUser={editUser}
-                                            />
-                                        ) : showImportForm ? (
-                                            <ImportForm
-                                                referenceid={userDetails.ReferenceID}
-                                                manager={userDetails.Manager}
-                                                tsm={userDetails.TSM}
-                                                setShowImportForm={setShowImportForm}
-                                                status={status}
-                                                setstatus={setstatus}
-                                                fieldWidthClass={fieldWidthClass}
                                             />
                                         ) : null}
                                     </div>

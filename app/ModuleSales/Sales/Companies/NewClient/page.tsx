@@ -6,7 +6,6 @@ import UserFetcher from "../../../components/User/UserFetcher";
 
 // Components
 import Form from "../../../components/Routes/Form/CA_Form";
-import ImportForm from "../../../components/Companies/CompanyAccounts/ImportForm";
 import SearchFilters from "../../../components/Routes/Filters/CA_Filters";
 import Container from "../../../components/Companies/CompanyAccounts/Container";
 import Pagination from "../../../components/Routes/Pagination/CA_Pagination";
@@ -14,9 +13,6 @@ import Pagination from "../../../components/Routes/Pagination/CA_Pagination";
 // Toast Notifications
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-
-// Icons
-import { CiImport } from "react-icons/ci";
 
 const NewClientAccounts: React.FC = () => {
     const [showForm, setShowForm] = useState(false);
@@ -263,8 +259,6 @@ const NewClientAccounts: React.FC = () => {
         setShowForm(true);
     };
 
-    const fieldWidthClass = isMaximized ? "w-full sm:w-1/2 px-4 mb-4" : "w-full px-4 mb-4";
-
     return (
         <SessionChecker>
             <ParentLayout>
@@ -293,26 +287,7 @@ const NewClientAccounts: React.FC = () => {
                                                 }}
                                                 editUser={editUser}
                                             />
-                                        ) : showImportForm ? (
-                                            <ImportForm
-                                                referenceid={userDetails.ReferenceID}
-                                                manager={userDetails.Manager}
-                                                tsm={userDetails.TSM}
-                                                setShowImportForm={setShowImportForm}
-                                                status={status}
-                                                setstatus={setstatus}
-                                                fieldWidthClass={fieldWidthClass}
-                                            />
                                         ) : null}
-                                    </div>
-
-                                    <div className="flex justify-between items-center mb-4">
-                                        <button
-                                            className="flex items-center gap-1 border bg-white text-black text-xs px-4 py-2 shadow-sm rounded hover:bg-green-600 hover:text-white transition"
-                                            onClick={() => setShowImportForm(true)}
-                                        >
-                                            <CiImport size={15} /> Import Account
-                                        </button>
                                     </div>
 
                                     <div className="mb-4 p-4 bg-white shadow-md rounded-lg text-gray-900">

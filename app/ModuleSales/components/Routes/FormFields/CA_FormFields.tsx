@@ -155,11 +155,18 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
               className="w-full px-3 py-2 border-b text-xs capitalize"
             />
             {i === 0 ? (
-              <button onClick={() => addNew(setContactPersons)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
+              <button
+                onClick={() => addNew(setContactPersons)}
+                type="button"
+                className="p-2 hover:bg-green-600 bg-green-500 rounded-full text-white"
+              >
                 <FaPlus size={12} />
               </button>
             ) : (
-              <button onClick={() => handleRemove(contactPersons, setContactPersons, setcontactperson)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
+              <button
+                onClick={() => handleRemove(contactPersons, setContactPersons, setcontactperson)(i)}
+                type="button"
+                className="p-2 hover:bg-red-600 bg-red-500 rounded-full text-white">
                 <FaMinus size={12} />
               </button>
             )}
@@ -185,11 +192,18 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
               className="w-full px-3 py-2 border-b text-xs"
             />
             {i === 0 ? (
-              <button onClick={() => addNew(setContactNumbers)} type="button" className="p-2 hover:bg-green-600 rounded-full text-white">
+              <button onClick={() => addNew(setContactNumbers)}
+                type="button"
+                className="p-2 hover:bg-green-600 bg-green-500 rounded-full text-white"
+              >
                 <FaPlus size={12} />
               </button>
             ) : (
-              <button onClick={() => handleRemove(contactNumbers, setContactNumbers, setcontactnumber)(i)} type="button" className="p-2 hover:bg-red-600 rounded-full text-white">
+              <button
+                onClick={() => handleRemove(contactNumbers, setContactNumbers, setcontactnumber)(i)}
+                type="button"
+                className="p-2 hover:bg-red-600 bg-red-500 rounded-full text-white"
+              >
                 <FaMinus size={12} />
               </button>
             )}
@@ -197,7 +211,6 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
         ))}
       </div>
 
-      {/* Email */}
       {/* Email Address */}
       <div>
         <label className="block text-xs font-bold mb-2">Email Address</label>
@@ -277,10 +290,23 @@ const FormFields: React.FC<FormFieldsProps> = (props) => {
           required
         >
           <option value="">Select Region</option>
-          <option value="NCR">NCR</option>
+          <option value="Ilocos Region">Region I - Ilocos Region</option>
+          <option value="Cagayan Valley">Region II - Cagayan Valley</option>
           <option value="Central Luzon">Region III - Central Luzon</option>
           <option value="Calabarzon">Region IV - CALABARZON</option>
+          <option value="Bicol Region">Region V - Bicol Region</option>
+          <option value="Western Visayas">Region VI - Western Visayas</option>
+          <option value="Central Visayas">Region VII - Central Visayas</option>
+          <option value="Eastern Visayas">Region VIII - Eastern Visayas</option>
+          <option value="Zamboanga Peninsula">Region IX - Zamboanga Peninsula</option>
+          <option value="Northern Mindanao">Region X - Northern Mindanao</option>
           <option value="Davao Region">Region XI - Davao Region</option>
+          <option value="Soccsksargen">Region XII - SOCCSKSARGEN</option>
+          <option value="NCR">NCR</option>
+          <option value="CAR">CAR</option>
+          <option value="BARMM">BARMM</option>
+          <option value="Caraga">Region XIII</option>
+          <option value="Mimaropa Region">MIMAROPA Region</option>
         </select>
       </div>
 

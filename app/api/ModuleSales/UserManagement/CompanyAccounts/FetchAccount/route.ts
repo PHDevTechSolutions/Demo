@@ -25,6 +25,7 @@ export async function GET() {
                 area,
                 typeclient,
                 remarks,
+                next_available_date,
                 to_char(date_created AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_created,
                 to_char(date_updated AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila', 'MM/DD/YYYY HH12:MI:SS AM') AS date_updated
             FROM accounts;

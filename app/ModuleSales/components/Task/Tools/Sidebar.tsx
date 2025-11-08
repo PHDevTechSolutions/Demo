@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import { BsListTask, BsCalendar4Week, BsFileEarmarkCheck } from "react-icons/bs";
-import { LuNotebookPen } from "react-icons/lu";
-import { SiMinutemailer } from "react-icons/si";
+import { BsCalendar4Week } from "react-icons/bs";
 import { FaSquareCheck } from "react-icons/fa6";
 
 interface ToolsProps {
@@ -39,10 +37,6 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
         <>
           {renderButton("Activity", <BsCalendar4Week />, "activity")}
           {renderButton("Tasklist", <FaSquareCheck />, "tasklist")}
-          {renderButton("Scheduled", <BsListTask />, "scheduled")}
-          {renderButton("Notes", <LuNotebookPen />, "notes")}
-          {renderButton("Quote", <BsFileEarmarkCheck />, "quote")}
-          {renderButton("Xend-Mail", <SiMinutemailer />, "xendmail")}
         </>
       )}
 
@@ -50,7 +44,6 @@ const Tools: React.FC<ToolsProps> = ({ activeTab, setActiveTab, userDetails }) =
       {isManagerOrTSM && (
         <>
           {renderButton("Activity", <BsCalendar4Week />, "activity")}
-          {renderButton("Xend-Mail", <SiMinutemailer />, "xendmail")}
         </>
       )}
     </div>
