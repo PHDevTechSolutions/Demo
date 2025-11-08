@@ -37,6 +37,12 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
     profilePicture: "",
   });
 
+  // Gmail OAuth start function
+  const startGmailAuth = () => {
+    window.location.href = "/api/gmail/auth"; // redirect to Google consent screen
+  };
+
+
   // Get userId from query string once
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -66,6 +72,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       })
       .catch((err) => console.error(err));
   }, [userId]);
+  
 
   // Detect mobile screen
   useEffect(() => {
@@ -139,27 +146,35 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
 
   return (
     <div
-      className={`flex relative font-[Comic_Sans_MS] min-h-screen ${isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
-        }`}
+      className={`flex relative font-[Comic_Sans_MS] min-h-screen ${
+        isDarkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"
+      }`}
     >
       {/* Sidebar Desktop */}
       {!isMobile && (
         <div className="fixed top-0 left-0 h-screen z-50">
-          <Sidebar isOpen={true} onClose={() => { }} isDarkMode={isDarkMode} />
+          <Sidebar isOpen={true} onClose={() => {}} isDarkMode={isDarkMode} />
         </div>
       )}
 
       {/* Main Content */}
       <div className={`flex-grow transition-all duration-300 ${!isMobile ? "ml-64" : ""}`}>
         <Navbar
-          onToggleSidebar={() => { }}
+          onToggleSidebar={() => {}}
           onToggleTheme={() => {
             const newTheme = !isDarkMode ? "dark" : "light";
             localStorage.setItem("theme", newTheme);
             setDarkMode(!isDarkMode);
           }}
           isDarkMode={isDarkMode}
+          
         />
+        <button
+            onClick={startGmailAuth}
+            className="ml-4 px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm"
+          >
+            Authorize Gmail
+          </button>
         <main className="p-4">{children}</main>
         <Footer />
       </div>
@@ -167,7 +182,7 @@ const ParentLayout: React.FC<ParentLayoutProps> = ({ children }) => {
       {/* Sidebar Mobile */}
       {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 z-[999] border-t shadow-lg">
-          <Sidebar isOpen={true} onClose={() => { }} isDarkMode={isDarkMode} />
+          <Sidebar isOpen={true} onClose={() => {}} isDarkMode={isDarkMode} />
         </div>
       )}
 

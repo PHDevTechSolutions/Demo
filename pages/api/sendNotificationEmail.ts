@@ -1,60 +1,72 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
-const OAuth2 = google.auth.OAuth2;
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
-  }
-
   const { to, subject, message } = req.body;
 
   if (!to || !subject || !message) {
-    return res.status(400).json({ message: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields" });
   }
 
+  // Load tokens from environment or other secure storage
+  const tokensString = process.env.GMAIL_TOKENS || "{}";
+  let tokens;
   try {
-    const oauth2Client = new OAuth2(
-      process.env.GMAIL_CLIENT_ID,
-      process.env.GMAIL_CLIENT_SECRET,
-      process.env.GMAIL_REDIRECT_URI
-    );
+    tokens = JSON.parse(tokensString);
+  } catch {
+    return res.status(500).json({ error: "Invalid tokens format" });
+  }
 
-    oauth2Client.setCredentials({
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
-    });
+  if (!tokens || Object.keys(tokens).length === 0) {
+    return res.status(400).json({ error: "No Gmail tokens available" });
+  }
 
-    const accessTokenResponse = await oauth2Client.getAccessToken();
-    const accessToken = accessTokenResponse.token;
+  const oAuth2Client = new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    process.env.GMAIL_REDIRECT_URI
+  );
+  oAuth2Client.setCredentials(tokens);
 
-    if (!accessToken) {
-      return res.status(500).json({ message: "Failed to get access token" });
-    }
+  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.GMAIL_USER,
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_CLIENT_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-        accessToken,
+  const raw = makeEmailRaw(to, subject, message);
+
+  try {
+    await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw,
       },
     });
 
-    await transporter.sendMail({
-      from: `"TaskFlow Notification" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html: message,
-    });
+    return res.status(200).json({ success: true });
+  } catch (error: unknown) {
+    console.error(error);
+    // Use type guard for error.message
+    const message =
+      error && typeof error === "object" && "message" in error && typeof error.message === "string"
+        ? error.message
+        : "Unknown error";
 
-    res.status(200).json({ success: true });
-  } catch (error: any) {
-    console.error("Error sending email:", error);
-    res.status(500).json({ success: false, error: error.message });
+    return res.status(500).json({ error: message });
   }
+}
+
+// Helper function to create raw email base64url encoded
+function makeEmailRaw(to: string, subject: string, message: string) {
+  const str = [
+    `To: ${to}`,
+    "Content-Type: text/html; charset=utf-8",
+    "MIME-Version: 1.0",
+    `Subject: ${subject}`,
+    "",
+    message,
+  ].join("\n");
+
+  return Buffer.from(str)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
