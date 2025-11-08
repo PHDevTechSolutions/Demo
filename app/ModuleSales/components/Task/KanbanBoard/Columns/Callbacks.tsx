@@ -95,8 +95,8 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
         const inquiries: Inquiry[] = Array.isArray(result.data)
           ? result.data
           : Array.isArray(result)
-            ? result
-            : [];
+          ? result
+          : [];
 
         const now = new Date();
         const startOfDay = new Date(now.setHours(0, 0, 0, 0));
@@ -131,6 +131,8 @@ const Callbacks: React.FC<CallbacksProps> = ({ userDetails, refreshTrigger, sele
             const cbDate = new Date(inq.callback);
             return cbDate >= startOfDay && cbDate <= endOfDay;
           })
+          // Add this filter to exclude scheduled_status === 'done'
+          .filter((inq) => inq.scheduled_status?.toLowerCase() !== "done")
           .sort((a, b) => (b.callback || "").localeCompare(a.callback || ""));
 
         setCallbacks(todayCallbacks);

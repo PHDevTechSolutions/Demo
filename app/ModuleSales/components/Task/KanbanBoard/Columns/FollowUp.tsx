@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
 import FollowUpCard from "./Card/FollowUpCard";
 
 export const dynamic = "force-dynamic";
@@ -54,14 +53,12 @@ const FollowUps: React.FC<FollowUpsProps> = ({
         );
         const result = await res.json();
 
-        const activities: Inquiry[] = Array.isArray(result.data)
-          ? result.data
-          : [];
+        const activities: Inquiry[] = Array.isArray(result.data) ? result.data : [];
 
         const today = new Date().toISOString().split("T")[0];
-        const filtered = activities.filter((a) =>
-          a.followup_date?.startsWith(today)
-        );
+        const filtered = activities
+          .filter((a) => a.followup_date?.startsWith(today))
+          .filter((a) => a.scheduled_status?.toLowerCase() !== "done");  // Exclude done here
 
         setFollowUps(filtered);
       } catch (e) {
@@ -74,6 +71,7 @@ const FollowUps: React.FC<FollowUpsProps> = ({
 
     fetchFollowUps();
   }, [userDetails?.ReferenceID, refreshTrigger, localRefresh, selectedTSA]);
+
 
   // ✅ Update scheduled_status via API and reflect instantly
   const handleStatusChange = async (id: number, newStatus: string) => {
