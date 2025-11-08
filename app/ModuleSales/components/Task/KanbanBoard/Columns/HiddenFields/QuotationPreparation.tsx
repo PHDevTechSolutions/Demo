@@ -260,26 +260,23 @@ const QuotationPreparation: React.FC<QuotationPreparationProps> = ({
           <option value="Modern Trade">Modern Trade</option>
         </select>
       </div>
+      
+      <div className="flex flex-col mt-2">
+        <label className="font-semibold">
+          Quotation Amount{" "}
+          <span className="text-[8px] text-green-700">* Required</span>
+        </label>
+        <input
+          type="number"
+          name="quotationamount"
+          value={quotationamount || ""}
+          onChange={handleFormChange}
+          className="border-b px-3 py-2 rounded text-xs"
+          placeholder="Enter Quotation Amount"
+          required
+        />
+      </div>
 
-      {/* Quotation Number */}
-      {useManualList && (
-        <div className="flex flex-col mt-2">
-          <label className="font-semibold">
-            Quotation Amount{" "}
-            <span className="text-[8px] text-green-700">* Required</span>
-          </label>
-          <input
-            type="number"
-            name="quotationamount"
-            value={quotationamount || ""}
-            onChange={handleFormChange}
-            className="border-b px-3 py-2 rounded text-xs"
-            placeholder="Enter Quotation Amount"
-            required
-          />
-        </div>
-      )}
-        
       <div className="flex flex-col mt-2">
         <label className="font-semibold">
           Quotation Number <span className="text-[8px] text-green-700">* Required</span>
