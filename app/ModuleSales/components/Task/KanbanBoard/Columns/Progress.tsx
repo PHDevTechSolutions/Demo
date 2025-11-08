@@ -45,6 +45,7 @@ interface ProgressItem {
   site_visit_date: string;
   ticketreferencenumber: string;
   drnumber: string;
+  targetquota: string;
 }
 
 type ProgressEntry = ProgressItem | { id: string; skeleton: true };
@@ -136,13 +137,13 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
     drnumber: "",
     emailaddress: "",
     contactnumber: "",
+    targetquota: userDetails?.TargetQuota || "",
   });
 
   const [hiddenFields, setHiddenFields] = useState({
     referenceid: userDetails?.ReferenceID || "",
     tsm: userDetails?.TSM || "",
     manager: userDetails?.Manager || "",
-    targetquota: userDetails?.TargetQuota || "",
     companyname: "",
     contactnumber: "",
     emailaddress: "",
@@ -180,6 +181,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       drnumber: "",
       emailaddress: "",
       contactnumber: "",
+      targetquota: userDetails?.TargetQuota || "",
     });
 
   const handleAddClick = (prog?: ProgressItem) => {
@@ -187,7 +189,6 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       referenceid: userDetails?.ReferenceID || "",
       tsm: userDetails?.TSM || "",
       manager: userDetails?.Manager || "",
-      targetquota: userDetails?.TargetQuota || "",
       companyname: prog?.companyname || "",
       contactnumber: prog?.contactnumber || "",
       emailaddress: prog?.emailaddress || "",
@@ -228,6 +229,7 @@ const Progress: React.FC<ProgressProps> = ({ userDetails, setHoveredCompany, }) 
       drnumber: prog?.drnumber || "",
       emailaddress: prog?.emailaddress || "",
       contactnumber: prog?.contactnumber || "",
+      targetquota: userDetails?.TargetQuota || "",
     });
 
     setShowForm(true);

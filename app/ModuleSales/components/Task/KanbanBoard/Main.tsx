@@ -390,14 +390,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ userDetails }) => {
                   )}
 
                   {col.id === "in-progress" && (
-                    loading ? (
-                      <div className="animate-pulse text-xs text-gray-400">Loading...</div>
-                    ) : (
-                      <Progress
-                        userDetails={userDetails}
-                        setHoveredCompany={setHoveredCompany}
-                      />
-                    )
+                    <Progress
+                      userDetails={userDetails}
+                      setHoveredCompany={setHoveredCompany}
+                    />
                   )}
 
                   {col.id === "duplication" && showDuplication && (

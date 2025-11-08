@@ -42,6 +42,7 @@ export interface ProgressItem {
   site_visit_date: string;
   ticketreferencenumber: string;
   drnumber: string;
+  targetquota: string;
 }
 
 interface ProgressCardProps {
@@ -117,8 +118,6 @@ const ProgressCardComponent: React.FC<ProgressCardProps> = ({
     };
     fetchSOData();
   }, [progress.activitynumber]);
-
-  const handleDeleteClick = () => setDeleteStep(1);
 
   const confirmDelete = useCallback(async () => {
     if (!onDeleteClick) return;

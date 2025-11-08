@@ -36,6 +36,7 @@ interface ProgressFormProps {
     drnumber: string;
     emailaddress: string;
     contactnumber?: string;
+    targetquota: string;
   };
   handleFormChange: (
     e: React.ChangeEvent<
@@ -82,6 +83,9 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
   const [elapsed, setElapsed] = useState("0s");
   const [showOutboundModal, setShowOutboundModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showTargetQuotaModal, setShowTargetQuotaModal] = useState(false);
+  const [targetQuotaValue, setTargetQuotaValue] = useState(formData.targetquota || 0);
+  const [showQuotaWarningModal, setShowQuotaWarningModal] = useState(false);
   const [siteVisitTag, setSiteVisitTag] = useState("");
   const [remarksText, setRemarksText] = useState("");
 
@@ -109,9 +113,19 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
     return () => clearInterval(interval);
   }, [formData.startdate]);
 
+  useEffect(() => {
+    setTargetQuotaValue(formData.targetquota || "");
+  }, [formData.targetquota]);
+
   const handleSaveClick = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowSummaryModal(true); // show modal first
+    if (!formData.targetquota || Number(formData.targetquota) === 0) {
+      setShowQuotaWarningModal(true);
+      setShowSummaryModal(false);
+    } else {
+      setShowSummaryModal(true);
+      setShowQuotaWarningModal(false);
+    }
   };
 
   const handleProceed = () => {
@@ -179,61 +193,6 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
         <input type="hidden" name="enddate" value={formData.enddate} readOnly />
 
         <div className="grid grid-cols-2 gap-4">
-
-          <div className="flex flex-col mt-4">
-            <label className="font-semibold">
-              Source <span className="text-[8px] text-red-700">* Required Fields</span>
-            </label>
-            <div className="flex flex-col">
-              <select
-                name="source"
-                value={formData.source}
-                onChange={handleFormChange}
-                className="border-b px-3 py-6 rounded text-xs"
-                required
-              >
-                <option value="">Select Source</option>
-                <option value="Existing Client">Existing Client</option>
-                <option value="CSR Inquiry">CSR Inquiry</option>
-                <option value="Outbound - Follow-up">Outbound - Follow-up</option>
-                <option value="Outbound - Touchbase">Outbound - Touchbase</option>
-                <option value="Government">Government</option>
-                <option value="Philgeps- Website">Philgeps- Website</option>
-                <option value="Philgeps">Philgeps</option>
-                <option value="Distributor">Distributor</option>
-                <option value="Modern Trade">Modern Trade</option>
-                <option value="Facebook Marketplace">Facebook Marketplace</option>
-                <option value="Walk-in / Showroom">Walk-in / Showroom</option>
-              </select>
-
-              {/* ✅ Span description with emoji + color */}
-              {formData.source && (
-                <span
-                  className={`flex items-center gap-1 mt-1 text-[11px] italic ${formData.source === "Outbound - Touchbase"
-                    ? "text-green-600"
-                    : formData.source === "Existing Client"
-                      ? "text-orange-500"
-                      : "text-gray-500"
-                    }`}
-                >
-                  {formData.source === "Outbound - Touchbase" ? (
-                    <>
-                      ✅ Recommended to appear on Dashboard Outbound Touchbase section.
-                    </>
-                  ) : formData.source === "Existing Client" ? (
-                    <>
-                      ⚠️ Not recommended to view on Dashboard Touchbase section. It also appears on Source Breakdown.
-                    </>
-                  ) : (
-                    <>
-                      ℹ️ Appears on Source Breakdown section.
-                    </>
-                  )}
-                </span>
-              )}
-            </div>
-          </div>
-
           <div className="flex flex-col mt-4">
             <label className="font-semibold">
               Type of Activity <span className="text-[8px] text-red-700">* Required Fields</span>
@@ -257,6 +216,64 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
               <option value="Quotation Preparation">Quotation Preparation</option>
               <option value="Sales Order Preparation">Sales Order Preparation</option>
             </select>
+          </div>
+
+          <div className="flex flex-col mt-4">
+            <label className="font-semibold">
+              Source <span className="text-[8px] text-red-700">* Required Fields</span>
+            </label>
+            <div className="flex flex-col">
+              <select
+                name="source"
+                value={formData.source}
+                onChange={handleFormChange}
+                className="border-b px-3 py-6 rounded text-xs"
+                required
+              >
+                <option value="">Select Source</option>
+
+                {formData.typeactivity?.toLowerCase() === "outbound calls" ? (
+                  <>
+                    <option value="Outbound - Follow-up">Outbound - Follow-up</option>
+                    <option value="Outbound - Touchbase">Outbound - Touchbase</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Existing Client">Existing Client</option>
+                    <option value="CSR Inquiry">CSR Inquiry</option>
+                    <option value="Outbound - Follow-up">Outbound - Follow-up</option>
+                    <option value="Outbound - Touchbase">Outbound - Touchbase</option>
+                    <option value="Government">Government</option>
+                    <option value="Philgeps- Website">Philgeps- Website</option>
+                    <option value="Philgeps">Philgeps</option>
+                    <option value="Distributor">Distributor</option>
+                    <option value="Modern Trade">Modern Trade</option>
+                    <option value="Facebook Marketplace">Facebook Marketplace</option>
+                    <option value="Walk-in / Showroom">Walk-in / Showroom</option>
+                  </>
+                )}
+              </select>
+
+              {/* Span description with emoji + color */}
+              {formData.source && (
+                <span
+                  className={`flex items-center gap-1 mt-1 text-[11px] italic ${formData.source === "Outbound - Touchbase"
+                    ? "text-green-600"
+                    : formData.source === "Existing Client"
+                      ? "text-orange-500"
+                      : "text-gray-500"
+                    }`}
+                >
+                  {formData.source === "Outbound - Touchbase" ? (
+                    <>✅ Recommended to appear on Dashboard Outbound Touchbase section.</>
+                  ) : formData.source === "Existing Client" ? (
+                    <>⚠️ Not recommended to view on Dashboard Touchbase section. It also appears on Source Breakdown.</>
+                  ) : (
+                    <>ℹ️ Appears on Source Breakdown section.</>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
 
           {formData.typeactivity === "FB-Marketplace" && (
@@ -372,9 +389,15 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
           >
             <MdOutlineClose /> Back
           </button>
-          <button
-            type="submit"
-            className="px-3 py-3 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 flex items-center gap-1"
+          <button className="px-3 py-3 bg-green-300 rounded text-xs hover:bg-green-400 flex items-center gap-1"
+            onClick={() => {
+              setFormData((prev: any) => ({
+                ...prev,
+                targetquota: Number(targetQuotaValue), // <-- ensure number
+              }));
+              setShowTargetQuotaModal(false);
+              setShowSummaryModal(true);
+            }}
           >
             <MdEdit /> Save
           </button>
@@ -480,6 +503,28 @@ const ProgressForm: React.FC<ProgressFormProps> = ({
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {showQuotaWarningModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[10000]">
+          <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-md p-6 animate-fadeIn">
+            <h3 className="text-lg font-bold mb-4 text-red-600">Target Quota Required</h3>
+            <p className="mb-4">
+              Your current target quota is: <strong className="text-red-600">{formData.targetquota ?? 0}</strong>.
+            </p>
+            <p className="mb-4">
+              Please update the target quota with your manager to continue using Taskflow.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowQuotaWarningModal(false)}
+                className="px-4 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
