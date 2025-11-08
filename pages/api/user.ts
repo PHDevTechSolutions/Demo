@@ -16,16 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
 
       if (user) {
-        // Destructure to exclude password and handle TargetQuota / targetquota case
-        const { password, TargetQuota, targetquota, ...rest } = user;
-
-        // Normalize targetquota value: prefer lowercase, fallback to capitalized, else 0
-        const normalizedTargetQuota = targetquota ?? TargetQuota ?? 0;
-
-        res.status(200).json({
-          ...rest,
-          targetquota: normalizedTargetQuota,
-        });
+        // Respond with all user fields except the password
+        const { password, ...userData } = user;
+        res.status(200).json(userData);
       } else {
         res.status(404).json({ error: "User not found" });
       }

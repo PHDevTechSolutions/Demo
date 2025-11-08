@@ -81,7 +81,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({
             <span className="text-[12px] font-medium">{subItem.title}</span>
           </div>
           {subItem.description && (
-            <span className="ml-6 text-[10px] text-gray-600 dark:text-gray-400 group-hover:text-white transition-colors duration-200">
+            <span className="ml-6 text-[10px]">
               {subItem.description}
             </span>
           )}

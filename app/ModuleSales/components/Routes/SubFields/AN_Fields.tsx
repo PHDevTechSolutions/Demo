@@ -132,11 +132,14 @@ const Accordion: React.FC<AccordionProps> = ({
 
             <div className="flex flex-wrap -mx-4 rounded">
                 <div className="w-full sm:w-1/2 md:w-1/4 px-4 mb-4">
-                    <label className="block text-xs font-bold mb-1 text-black">Source <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-bold mb-1 text-black">
+                        Source <span className="text-red-500">*</span>
+                    </label>
                     <select
                         value={source ?? ""}
                         onChange={(e) => setsource(e.target.value)}
-                        className="w-full px-3 py-2 border-b text-xs capitalize bg-white">
+                        className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
+                    >
                         <option value="">Select Source</option>
                         <option value="Existing Client">Existing Client</option>
                         <option value="CSR Inquiry">CSR Inquiry</option>
@@ -150,8 +153,29 @@ const Accordion: React.FC<AccordionProps> = ({
                         <option value="Facebook Marketplace">Facebook Marketplace</option>
                         <option value="Walk-in / Showroom">Walk-in / Showroom</option>
                     </select>
+
+                    {/* Span description with emoji + color */}
+                    {source && (
+                        <span
+                            className={`flex items-center gap-1 mt-1 text-[11px] italic ${source === "Outbound - Touchbase"
+                                    ? "text-green-600"
+                                    : source === "Existing Client"
+                                        ? "text-orange-500"
+                                        : "text-gray-500"
+                                }`}
+                        >
+                            {source === "Outbound - Touchbase" ? (
+                                <>✅ Recommended to appear on Dashboard Outbound Touchbase section.</>
+                            ) : source === "Existing Client" ? (
+                                <>⚠️ Not recommended to view on Dashboard Touchbase section. It also appears on Source Breakdown.</>
+                            ) : (
+                                <>ℹ️ Appears on Source Breakdown section.</>
+                            )}
+                        </span>
+                    )}
                 </div>
             </div>
+
         </div>
     );
 };

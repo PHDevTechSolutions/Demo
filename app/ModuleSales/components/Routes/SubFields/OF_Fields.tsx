@@ -116,6 +116,7 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                     value={callstatus}
                     onChange={(e) => setcallstatus(e.target.value)}
                     className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
+                    required
                 >
                     <option value="">Select Status</option>
                     <option value="Successful">Successful</option>
@@ -132,6 +133,7 @@ const OutboundFields: React.FC<OutboundFieldsProps> = ({
                     value={typecall}
                     onChange={(e) => settypecall(e.target.value)}
                     className="w-full px-3 py-2 border-b text-xs capitalize bg-white"
+                    required
                 >
                     <option value="">Select Type</option>
                     {callstatus === "Successful" ? (
