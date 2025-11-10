@@ -325,9 +325,9 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleTheme, isDarkMode
   };
 
   return (
-    <div className={`sticky top-0 z-[999] flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+    <div className={`sticky top-0 z-100 flex justify-between items-center p-4 transition-all duration-300 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
       <div
-        className="relative flex items-center justify-between w-full text-xs z-[1000]"
+        className="relative flex items-center justify-between w-full text-xs z-[999]"
         ref={dropdownRef}
       >
         <div className="flex items-center gap-2">

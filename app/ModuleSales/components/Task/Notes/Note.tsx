@@ -1,11 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useEffect, useState } from "react";
 import { AiOutlineDelete } from "react-icons/ai";
 import { IoSearchOutline, IoFilter } from "react-icons/io5";
 import Form from "./Form";
+
+/* shadcn/ui components (assumed available at these paths) */
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, } from "@/components/ui/select";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 interface Note {
     id: number;
@@ -45,20 +54,37 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // delete dialog
+    const [deleteOpen, setDeleteOpen] = useState(false);
     const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
+    // filter dialog
+    const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+
+    // filters / form state
     const [activitystatus, setActivityStatus] = useState("");
     const [typeactivity, setTypeActivity] = useState("");
     const [remarks, setRemarks] = useState("");
     const [startdate, setStartDate] = useState("");
     const [enddate, setEndDate] = useState("");
 
+    // search / inline filter
     const [showSearch, setShowSearch] = useState(false);
-    const [showFilter, setShowFilter] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState("All");
 
+    const getBadgeClasses = (status: string) => {
+        switch (status) {
+            case "Completed":
+                return "success";  // assuming shadcn badge has this variant
+            case "Pending":
+                return "warning";
+            case "In Progress":
+                return "primary";
+            default:
+                return "default";
+        }
+    };
     const activityTypes = [
         "Assisting Other Agent Clients",
         "Coordination of SO To Warehouse",
@@ -68,12 +94,13 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         "Documentation",
     ];
 
+    // safe localStorage writer
     const safeSetItem = (key: string, value: string) => {
         try {
             localStorage.setItem(key, value);
         } catch (e: any) {
-            if (e.name === "QuotaExceededError" || e.code === 22) {
-                const noteKeys = Object.keys(localStorage).filter(k => k.startsWith("notes_"));
+            if (e?.name === "QuotaExceededError" || e?.code === 22) {
+                const noteKeys = Object.keys(localStorage).filter((k) => k.startsWith("notes_"));
                 if (noteKeys.length > 0) {
                     localStorage.removeItem(noteKeys[0]);
                     try {
@@ -109,12 +136,14 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                 }
             } catch (err) {
                 toast.error("Error fetching notes");
+                console.error(err);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchNotes();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userDetails.ReferenceID]);
 
     const generateActivityNumber = () => `ACT-${Date.now()}`;
@@ -135,7 +164,7 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         }
 
         const activityNumber = editingId
-            ? notes.find(n => n.id === editingId)?.activitynumber || generateActivityNumber()
+            ? notes.find((n) => n.id === editingId)?.activitynumber || generateActivityNumber()
             : generateActivityNumber();
 
         const payload: Note = {
@@ -153,7 +182,8 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             date_updated: new Date().toISOString(),
         };
 
-        syncToCache([payload, ...notes.filter(n => n.id !== payload.id)]);
+        // optimistic local update + cache
+        syncToCache([payload, ...notes.filter((n) => n.id !== payload.id)]);
 
         try {
             const url = editingId ? "/api/ModuleSales/Task/Notes/Edit" : "/api/ModuleSales/Task/Notes";
@@ -171,7 +201,8 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             resetForm();
             toast.success(editingId ? "Activity updated!" : "Activity submitted successfully!");
         } catch (err: any) {
-            toast.error(err.message || "Something went wrong!");
+            toast.error(err?.message || "Something went wrong!");
+            console.error(err);
         }
     };
 
@@ -182,11 +213,12 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         setRemarks(note.remarks);
         setStartDate(formatForInput(note.startdate));
         setEndDate(formatForInput(note.enddate));
+        // scroll into view or focus form if desired
     };
 
     const handleDelete = async (id: number) => {
-        setShowDeleteModal(false);
-        syncToCache(notes.filter(n => n.id !== id));
+        setDeleteOpen(false);
+        syncToCache(notes.filter((n) => n.id !== id));
 
         try {
             const res = await fetch("/api/ModuleSales/Task/DailyActivity/DeleteProgress", {
@@ -199,24 +231,27 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
             await res.json();
             toast.success("Activity deleted successfully!");
         } catch (err: any) {
-            toast.error(err.message || "Something went wrong while deleting!");
+            toast.error(err?.message || "Something went wrong while deleting!");
+            console.error(err);
         }
     };
 
+    // Filtering pipeline
     const filteredNotes = notes
         // only show notes within the allowed types
-        .filter(note => activityTypes.includes(note.typeactivity))
+        .filter((note) => activityTypes.includes(note.typeactivity))
         // apply dropdown filter
-        .filter(note => filterType === "All" || note.typeactivity === filterType)
+        .filter((note) => filterType === "All" || note.typeactivity === filterType)
         // apply search
-        .filter(note =>
-            note.typeactivity.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            note.remarks.toLowerCase().includes(searchTerm.toLowerCase())
+        .filter(
+            (note) =>
+                note.typeactivity.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                note.remarks.toLowerCase().includes(searchTerm.toLowerCase())
         )
         // apply user role visibility
-        .filter(note =>
-            userDetails.Role === "Super Admin" ||
-            note.referenceid === userDetails.ReferenceID
+        .filter(
+            (note) =>
+                userDetails.Role === "Super Admin" || note.referenceid === userDetails.ReferenceID
         );
 
     const formatRelativeDate = (dateStr: string) => {
@@ -235,190 +270,226 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
         if (!dateStr) return "";
         const date = new Date(dateStr);
         const pad = (n: number) => n.toString().padStart(2, "0");
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+            date.getHours()
+        )}:${pad(date.getMinutes())}`;
     };
 
     return (
         <div className="w-full bg-white">
             <div className="flex items-center justify-between p-4">
                 <h2 className="text-lg font-semibold text-black">Notes</h2>
-                <div className="flex gap-3">
-                    <button
-                        onClick={() => setShowSearch(prev => !prev)}
-                        className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs">
-                        <IoSearchOutline
-                            className={`cursor-pointer text-xl ${showSearch ? "text-blue-600" : "text-gray-600"}`}
-                            title="Search Notes"
-                            size={15}
-                        />  Search
-                    </button>
-                    <button
-                        onClick={() => setShowFilter(prev => !prev)}
-                        className="flex items-center gap-2 bg-gray-100 p-2 rounded hover:bg-gray-200 text-xs">
-                        <IoFilter
-                            className={`cursor-pointer text-xl ${showFilter ? "text-blue-600" : "text-gray-600"}`}
-                            size={15}
-                            title="Filter by Type"
-                        /> Filter
-                    </button>
+
+                <div className="flex gap-3 items-center">
+                    {/* Search toggle + input */}
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setShowSearch((s) => !s)}
+                            aria-label="Toggle search"
+                            title="Search"
+                        >
+                            <IoSearchOutline />
+                        </Button>
+                        {showSearch && (
+                            <Input
+                                aria-label="Search notes"
+                                placeholder="Search by remarks or type..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="text-xs w-[220px]"
+                            />
+                        )}
+                    </div>
+
+                    {/* Inline Filter Select */}
+                    <div className="flex items-center gap-2">
+                        <Select onValueChange={(v) => setFilterType(v)} value={filterType}>
+                            <SelectTrigger className="w-[180px] text-xs">
+                                <SelectValue placeholder="All Types" />
+                            </SelectTrigger>
+                            <SelectContent className="text-xs">
+                                <SelectGroup>
+                                    <SelectItem value="All">All Types</SelectItem>
+                                    {activityTypes.map((t, i) => (
+                                        <SelectItem key={i} value={t}>
+                                            {t}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+
+                        {/* Filter Dialog (advanced) */}
+                        <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" aria-label="Open filters">
+                                    <IoFilter />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-lg">
+                                <DialogHeader>
+                                    <DialogTitle>Advanced Filters</DialogTitle>
+                                </DialogHeader>
+
+                                <div className="space-y-3 py-2">
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Type</label>
+                                        <Select onValueChange={(v) => setFilterType(v)} value={filterType}>
+                                            <SelectTrigger className="w-full text-xs">
+                                                <SelectValue placeholder="All Types" />
+                                            </SelectTrigger>
+                                            <SelectContent className="text-xs">
+                                                <SelectGroup>
+                                                    <SelectItem value="All">All Types</SelectItem>
+                                                    {activityTypes.map((t, i) => (
+                                                        <SelectItem key={i} value={t}>
+                                                            {t}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Search</label>
+                                        <Input
+                                            placeholder="Search remarks or type..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                <DialogFooter>
+                                    <div className="flex w-full justify-end gap-2">
+                                        <Button variant="ghost" onClick={() => { setFilterType("All"); setSearchTerm(""); }}>
+                                            Reset
+                                        </Button>
+                                        <Button onClick={() => setFilterDialogOpen(false)}>Apply</Button>
+                                    </div>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
             </div>
-
-            {/* Search bar */}
-            {showSearch && (
-                <div className="p-3 mb-2 border-b bg-gray-50">
-                    <input
-                        type="text"
-                        placeholder="Search by remarks or type..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring focus:ring-blue-200"
-                    />
-                </div>
-            )}
-
-            {/* Filter dropdown */}
-            {showFilter && (
-                <div className="p-3 mb-2 border-b bg-gray-50">
-                    <select
-                        value={filterType}
-                        onChange={e => setFilterType(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring focus:ring-blue-200"
-                    >
-                        <option value="All">All Types</option>
-                        {activityTypes.map((type, idx) => (
-                            <option key={idx} value={type}>
-                                {type}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
 
             <p className="text-sm text-gray-500 px-4 mb-4">
                 This section allows you to track, manage, and update your daily activities.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 border-t">
-                <div className="col-span-1">
+            <div className="grid grid-cols-1 md:grid-cols-4 border-t gap-4 p-3">
+                {/* Left Column: Notes list */}
+                <div className="col-span-1 space-y-2 ">
                     {loading ? (
-                        <div className="animate-pulse p-4 mb-2 rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
-                            <div className="h-4 w-1/4 bg-gray-300 rounded mb-2"></div>
-                            <div className="h-3 w-1/2 bg-gray-200 rounded mb-1"></div>
-                            <div className="h-3 w-1/3 bg-gray-200 rounded"></div>
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Spinner />
+                                <div className="w-full">
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-[80%] mt-2" />
+                                </div>
+                            </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col">
-                            {filteredNotes.length === 0 && !loading && (
-                                <div className="text-gray-400 text-center text-xs">No notes yet</div>
+                        <div className="flex flex-col space-y-2">
+                            {filteredNotes.length === 0 && (
+                                <div className="text-gray-400 text-center text-xs italic py-4">No notes yet</div>
                             )}
 
                             {filteredNotes
                                 .slice(0, visibleCount)
                                 .sort((a, b) => new Date(b.date_created).getTime() - new Date(a.date_created).getTime())
-                                .map(note => (
-                                    <div
+                                .map((note) => (
+                                    <Card
                                         key={note.id}
-                                        className={`p-3 border-b shadow-sm flex justify-between items-start cursor-pointer 
-                                            ${editingId === note.id ? "bg-orange-100" : "bg-white dark:bg-gray-800"}`}
+                                        className={`cursor-pointer transition hover:shadow-md ${editingId === note.id ? "bg-orange-50" : "bg-white"
+                                            }`}
                                         onClick={() => handleEdit(note)}
                                     >
-                                        <div>
-                                            <div className="text-gray-700 text-sm font-semibold p-2">{note.typeactivity}</div>
-                                            <div className="text-xs capitalize text-gray-500 p-2">
-                                                {note.remarks.length > 60 ? note.remarks.slice(0, 60) + "..." : note.remarks}
+                                        <CardHeader className="p-3">
+                                            <CardTitle className="text-sm font-semibold">{note.typeactivity}</CardTitle>
+                                            <CardDescription className="text-xs text-gray-500 line-clamp-2">
+                                                {note.remarks.length > 120 ? note.remarks.slice(0, 120) + "..." : note.remarks}
+                                            </CardDescription>
+                                        </CardHeader>
+
+                                        <CardContent className="p-3 pt-0 flex items-center justify-between">
+                                            <div>
+
+                                                <Badge className={`inline-block text-[10px] font-medium rounded-full px-2 py-1 ${getBadgeClasses(note.activitystatus)}`}>
+                                                    {note.activitystatus}
+                                                </Badge>
+
+
+                                                <div className="text-[11px] text-gray-400 italic mt-2">{formatRelativeDate(note.date_created)}</div>
                                             </div>
 
-                                            <div className="px-2">
-                                                <span
-                                                    className={`inline-block px-2 py-1 text-[8px] font-medium rounded-full mb-2
-                                                        ${note.activitystatus === "Completed"
-                                                            ? "bg-green-100 text-green-700"
-                                                            : note.activitystatus === "Pending"
-                                                                ? "bg-yellow-100 text-yellow-700"
-                                                                : note.activitystatus === "In Progress"
-                                                                    ? "bg-blue-100 text-blue-700"
-                                                                    : "bg-gray-200 text-gray-600"
-                                                        }`}
-                                                >
-                                                    {note.activitystatus}
-                                                </span>
+                                            <div className="flex items-start gap-2">
+                                                <Dialog open={deleteOpen && deleteTargetId === note.id} onOpenChange={(v) => { if (!v) setDeleteTargetId(null); setDeleteOpen(v); }}>
+                                                    <DialogTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={(e) => { e.stopPropagation(); setDeleteTargetId(note.id); setDeleteOpen(true); }}
+                                                            aria-label="Delete note"
+                                                            title="Delete"
+                                                            className="border-red-400 text-red-500 hover:bg-red-50"
+                                                        >
+                                                            <AiOutlineDelete />
+                                                        </Button>
+                                                    </DialogTrigger>
+
+                                                    <DialogContent
+                                                        className="z-[9999] relative bg-white rounded-lg shadow-2xl border border-gray-200"
+                                                        style={{ position: "fixed" }} // ensures it stays above other fixed layers
+                                                    >
+                                                        <DialogHeader>
+                                                            <DialogTitle>Confirm Delete</DialogTitle>
+                                                        </DialogHeader>
+
+                                                        <div className="py-2 text-sm text-gray-700">
+                                                            Are you sure you want to delete this note? This action cannot be undone.
+                                                        </div>
+
+                                                        <DialogFooter>
+                                                            <div className="flex w-full justify-end gap-2">
+                                                                <Button variant="ghost" onClick={() => setDeleteOpen(false)}>
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button
+                                                                    variant="destructive"
+                                                                    onClick={() => {
+                                                                        deleteTargetId && handleDelete(deleteTargetId);
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </Button>
+                                                            </div>
+                                                        </DialogFooter>
+                                                    </DialogContent>
+                                                </Dialog>
                                             </div>
-                                            <div className="text-[11px] text-gray-400 italic font-semibold px-2">
-                                                {formatRelativeDate(note.date_created)}
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setDeleteTargetId(note.id);
-                                                setShowDeleteModal(true);
-                                            }}
-                                            title="Delete?"
-                                            className="bg-red-400 text-white shadow-md rounded text-xs p-2"
-                                        >
-                                            <AiOutlineDelete />
-                                        </button>
-                                    </div>
+                                        </CardContent>
+                                    </Card>
                                 ))}
 
                             {visibleCount < filteredNotes.length && (
                                 <div className="flex justify-center mt-2">
-                                    <button
-                                        className="w-full px-3 py-2 bg-gray-200 text-black rounded text-xs hover:bg-gray-300"
-                                        onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
-                                    >
+                                    <Button variant="outline" className="w-full text-xs" onClick={() => setVisibleCount((p) => p + ITEMS_PER_PAGE)}>
                                         View More
-                                    </button>
+                                    </Button>
                                 </div>
                             )}
                         </div>
                     )}
                 </div>
 
-                {showDeleteModal && (
-                    <div className="fixed inset-0 z-[9999] bg-opacity-[10] flex items-center justify-center bg-black/20 p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative overflow-hidden">
-                            {/* Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-red-500 to-red-600">
-                                <h3 className="text-white font-semibold text-lg">Confirm Delete</h3>
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    className="text-white hover:text-gray-200 transition text-lg"
-                                >
-                                    ✖
-                                </button>
-                            </div>
-
-                            {/* Body */}
-                            <div className="p-6 text-xs text-gray-700 space-y-2">
-                                <p>
-                                    Are you sure you want to delete this note? This action cannot be undone.
-                                </p>
-
-                            </div>
-
-                            {/* Footer */}
-                            <div className="px-6 py-3 border-t bg-gray-50 flex justify-end gap-3">
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    disabled={loading}
-                                    className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 text-xs"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => deleteTargetId && handleDelete(deleteTargetId)}
-                                    disabled={loading}
-                                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-xs"
-                                >
-                                    {loading ? "Deleting..." : "Delete"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
+                {/* Right Column: Form */}
                 <div className="col-span-3">
                     <Form
                         editingId={editingId}
@@ -435,27 +506,10 @@ const Notes: React.FC<NotesProps> = ({ posts = [], userDetails }) => {
                         setEndDate={setEndDate}
                         handleSubmit={handleSubmit}
                         resetForm={resetForm}
-                        dateUpdated={
-                            editingId ? notes.find((n) => n.id === editingId)?.date_updated || "" : ""
-                        }
+                        dateUpdated={editingId ? notes.find((n) => n.id === editingId)?.date_updated || "" : ""}
                     />
                 </div>
             </div>
-            <ToastContainer
-                position="top-right"
-                autoClose={2000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-                className="text-xs z-[99999]"
-                toastClassName="relative flex p-3 rounded-lg justify-between overflow-hidden cursor-pointer bg-white shadow-lg text-gray-800 text-xs"
-                progressClassName="bg-gradient-to-r from-green-400 to-blue-500"
-            />
         </div>
     );
 };
