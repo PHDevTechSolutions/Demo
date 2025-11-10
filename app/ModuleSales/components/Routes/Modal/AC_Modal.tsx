@@ -1,8 +1,17 @@
-// ./Modal/AC_MODAL.tsx
 "use client";
 
 import React from "react";
 import { format } from "date-fns";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface Post {
   companyname: string;
@@ -21,24 +30,22 @@ interface ModalProps {
 
 const Tools: React.FC<ModalProps> = ({ selectedDate, selectedPosts, onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative overflow-hidden">
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-blue-600 to-indigo-600">
-          <h3 className="text-white font-semibold text-lg flex items-center gap-2">
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl w-full rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+          <DialogTitle className="text-white flex items-center gap-2 text-lg font-semibold">
             🕒 Activities on {format(selectedDate, "MMMM dd, yyyy")} ({selectedPosts.length})
-          </h3>
+          </DialogTitle>
           <button
             onClick={onClose}
-            className="text-white hover:text-gray-200 transition"
+            aria-label="Close"
+            className="absolute right-4 top-4 text-white hover:text-gray-200 transition text-xl font-bold"
           >
-            ✖
+            ×
           </button>
-        </div>
+        </DialogHeader>
 
-        {/* Body */}
-        <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
+        <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto bg-white">
           {selectedPosts.length > 0 ? (
             selectedPosts.map((post, i) => (
               <div
@@ -73,18 +80,13 @@ const Tools: React.FC<ModalProps> = ({ selectedDate, selectedPosts, onClose }) =
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
+        <DialogFooter className="bg-gray-50 px-6 py-3 flex justify-end">
+          <Button onClick={onClose} variant="default" size="sm">
             Close
-          </button>
-        </div>
-
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
